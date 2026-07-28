@@ -33,7 +33,7 @@ export class AgcIoState {
   private readonly now: () => number;
 
   constructor(opts: AgcIoStateOptions = {}) {
-    this.cap = Math.max(16, opts.ringSize ?? 256);
+    this.cap = Math.max(2, opts.ringSize ?? 256);
     this.ring = new Array(this.cap);
     this.now = opts.now ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
   }
