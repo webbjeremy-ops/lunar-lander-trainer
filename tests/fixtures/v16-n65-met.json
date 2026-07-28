@@ -1,7 +1,7 @@
 {
   "kind": "agc-golden-trace",
   "label": "V16 N65 mission-elapsed-time monitor (Luminary099)",
-  "capturedAt": "2026-07-28T20:14:27.059Z",
+  "capturedAt": "2026-07-28T20:17:29.732Z",
   "metadata": {
     "protocolVersion": 2,
     "decoderSchemaVersion": 1,
@@ -167,8 +167,8 @@
   "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:17",
   "commands": [
     {
-      "tickIndex": 97,
-      "missionTimeUs": 1940000,
+      "tickIndex": 100,
+      "missionTimeUs": 2000000,
       "kind": "reset",
       "payload": null
     },
@@ -189,40 +189,40 @@
       }
     },
     {
-      "tickIndex": 63,
-      "missionTimeUs": 1260000,
+      "tickIndex": 62,
+      "missionTimeUs": 1240000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 6
       }
     },
     {
-      "tickIndex": 73,
-      "missionTimeUs": 1460000,
+      "tickIndex": 75,
+      "missionTimeUs": 1500000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 31
       }
     },
     {
-      "tickIndex": 85,
-      "missionTimeUs": 1700000,
+      "tickIndex": 86,
+      "missionTimeUs": 1720000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 6
       }
     },
     {
-      "tickIndex": 96,
-      "missionTimeUs": 1920000,
+      "tickIndex": 95,
+      "missionTimeUs": 1900000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 5
       }
     },
     {
-      "tickIndex": 107,
-      "missionTimeUs": 2140000,
+      "tickIndex": 108,
+      "missionTimeUs": 2160000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 28
@@ -551,8 +551,8 @@
       },
       "checksum": "PROG:__|VERB:_5|NOUN:_4|R1:+-_____|R2:+-_____|R3:+-__5_5|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:127",
       "snapshot": {
-        "tickIndex": 431,
-        "missionTimeUs": 8620000,
+        "tickIndex": 432,
+        "missionTimeUs": 8640000,
         "lamps": 192,
         "running": true,
         "timeScale": 1,
@@ -563,10 +563,10 @@
           32759,
           0,
           0,
-          862,
-          16328,
-          16379,
+          864,
+          16330,
           16381,
+          16383,
           0,
           0,
           0,
