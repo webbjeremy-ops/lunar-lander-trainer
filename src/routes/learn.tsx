@@ -474,6 +474,7 @@ function LearnPage() {
                 rope={rope}
                 onClient={handleClient}
                 onSnapshot={handleSnapshot}
+                disabled={dskyDisabled}
               />
             </ClientOnly>
             {/* Non-visual lesson observer — subscribes to shared client.
