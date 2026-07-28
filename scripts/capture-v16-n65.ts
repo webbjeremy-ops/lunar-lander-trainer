@@ -36,7 +36,7 @@ async function waitReady(page: import("playwright").Page, timeoutMs = 20000) {
 }
 
 async function main() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined });
   const page = await (await browser.newContext()).newPage();
   await page.goto(`${BASE_URL}/capture`, { waitUntil: "domcontentloaded" });
   await waitReady(page);
