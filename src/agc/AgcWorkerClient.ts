@@ -42,6 +42,8 @@ export interface AgcWorkerClientListeners {
   onSnapshot?: (snapshot: StateSnapshot) => void;
   onDsky?: (lamps: number, missionTimeUs: number) => void;
   onDskyDecoded?: (decoded: import("./dsky/DskyTypes").DecodedDsky, missionTimeUs: number, tickIndex: number) => void;
+  onInputAccepted?: (ev: import("./protocol").InputAcceptedEvent) => void;
+  onChannelUpdate?: (ev: import("./protocol").ChannelEventLite) => void;
   onEvent?: (ev: AgcEvent) => void;
   onDiagnostics?: (d: Diagnostics) => void;
   onFatalError?: (code: string, message: string) => void;
@@ -62,6 +64,7 @@ export class AgcWorkerClient {
   private requestCounter = 0;
   private pending = new Map<string, PendingRequest>();
   private listeners: AgcWorkerClientListeners = {};
+  private supplementaryListeners = new Set<AgcWorkerClientListeners>();
   private disposed = false;
   private visibilityHandler: ((ev?: unknown) => void) | null = null;
   private readonly pauseOnHidden: boolean;
@@ -83,7 +86,6 @@ export class AgcWorkerClient {
     if (this.pauseOnHidden && typeof document !== "undefined") {
       this.visibilityHandler = () => {
         if (document.visibilityState === "hidden") this.pause();
-        // Explicitly do NOT auto-resume on becoming visible again.
       };
       document.addEventListener("visibilitychange", this.visibilityHandler);
     }
@@ -91,6 +93,14 @@ export class AgcWorkerClient {
 
   setListeners(l: AgcWorkerClientListeners): void {
     this.listeners = l;
+  }
+
+  /** Attach a supplementary listener without displacing the primary. Returns
+   *  an unsubscribe function. Multiple call sites (e.g. Dsky component and a
+   *  LessonHost) may each register their own listener bag on the same client. */
+  addListener(l: AgcWorkerClientListeners): () => void {
+    this.supplementaryListeners.add(l);
+    return () => { this.supplementaryListeners.delete(l); };
   }
 
   crossOriginIsolated(): boolean {
@@ -173,28 +183,50 @@ export class AgcWorkerClient {
     }
 
     const msg = env.message;
+    const fanout = <K extends keyof AgcWorkerClientListeners>(
+      key: K,
+      call: (l: AgcWorkerClientListeners) => void,
+    ): void => {
+      const primary = this.listeners[key];
+      if (primary) call(this.listeners);
+      for (const sup of this.supplementaryListeners) {
+        if (sup[key]) {
+          try { call(sup); } catch { /* isolate listener errors */ }
+        }
+      }
+    };
     switch (msg.type) {
       case "ready":
         this.lastReady = msg.payload;
-        this.listeners.onReady?.(msg.payload);
+        fanout("onReady", (l) => l.onReady?.(msg.payload));
         break;
       case "stateSnapshot":
-        this.listeners.onSnapshot?.(msg.payload);
+        fanout("onSnapshot", (l) => l.onSnapshot?.(msg.payload));
         break;
       case "dskyUpdate":
-        this.listeners.onDsky?.(msg.payload.lamps, msg.payload.missionTimeUs);
+        fanout("onDsky", (l) => l.onDsky?.(msg.payload.lamps, msg.payload.missionTimeUs));
         break;
       case "dskyDecoded":
-        this.listeners.onDskyDecoded?.(msg.payload.decoded, msg.payload.missionTimeUs, msg.payload.tickIndex);
+        fanout("onDskyDecoded", (l) => l.onDskyDecoded?.(msg.payload.decoded, msg.payload.missionTimeUs, msg.payload.tickIndex));
+        break;
+      case "channelUpdate":
+        fanout("onChannelUpdate", (l) => l.onChannelUpdate?.(msg.payload));
+        break;
+      case "inputAccepted":
+        fanout("onInputAccepted", (l) => l.onInputAccepted?.(msg.payload));
         break;
       case "diagnostics":
-        this.listeners.onDiagnostics?.(msg.payload);
+        fanout("onDiagnostics", (l) => l.onDiagnostics?.(msg.payload));
         break;
       case "fatalError":
         this.handleFatal(msg.payload.code, msg.payload.message);
         break;
     }
+    // onEvent fires for every message on both primary and supplementary.
     this.listeners.onEvent?.(msg);
+    for (const sup of this.supplementaryListeners) {
+      try { sup.onEvent?.(msg); } catch { /* isolate */ }
+    }
   }
 
   private handleFatal(code: string, message: string): void {

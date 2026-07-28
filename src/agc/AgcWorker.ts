@@ -444,29 +444,50 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
     case "dskyKeyDown": {
       if (!adapter) return;
       adapter.keyPress(cmd.keyCode);
+      const eventId = state.nextEventId++;
+      const tickIndex = currentTickIndex();
+      const missionTimeUs = Number(state.clock.getMissionTimeUs());
       state.events.append({
-        missionTimeUs: Number(state.clock.getMissionTimeUs()),
+        missionTimeUs,
         kind: "dskyKeyDown",
         payload: { keyCode: cmd.keyCode },
+      });
+      send({
+        type: "inputAccepted",
+        payload: { eventId, tickIndex, missionTimeUs, kind: "dskyKeyDown", keyCode: cmd.keyCode },
       });
       return;
     }
     case "dskyKeyUp": {
       if (!adapter) return;
+      const eventId = state.nextEventId++;
+      const tickIndex = currentTickIndex();
+      const missionTimeUs = Number(state.clock.getMissionTimeUs());
       state.events.append({
-        missionTimeUs: Number(state.clock.getMissionTimeUs()),
+        missionTimeUs,
         kind: "dskyKeyUp",
         payload: { keyCode: cmd.keyCode },
+      });
+      send({
+        type: "inputAccepted",
+        payload: { eventId, tickIndex, missionTimeUs, kind: "dskyKeyUp", keyCode: cmd.keyCode },
       });
       return;
     }
     case "proceedKey": {
       if (!adapter) return;
       adapter.proceedKey(cmd.pressed);
+      const eventId = state.nextEventId++;
+      const tickIndex = currentTickIndex();
+      const missionTimeUs = Number(state.clock.getMissionTimeUs());
       state.events.append({
-        missionTimeUs: Number(state.clock.getMissionTimeUs()),
+        missionTimeUs,
         kind: "proceedKey",
         payload: { pressed: cmd.pressed },
+      });
+      send({
+        type: "inputAccepted",
+        payload: { eventId, tickIndex, missionTimeUs, kind: "proceedKey", pressed: cmd.pressed },
       });
       return;
     }

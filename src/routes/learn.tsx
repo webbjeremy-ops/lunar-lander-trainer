@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ALL_LESSONS } from "@/lessons/content";
 import { SOURCE_REGISTRY } from "@/lessons/SourceRegistry";
 import { initialLessonState, stepLesson } from "@/lessons/LessonEngine";
 import type { LessonDefinition, LessonState } from "@/lessons/types";
 import { FIXTURE_PROVENANCE } from "@/lessons/fixtureExpectations";
 import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
+import { LessonHost } from "@/lessons/LessonHost";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -71,6 +72,11 @@ function makeInertObservation(tick: number) {
   };
 }
 
+let ATTEMPT_SEQ = 0;
+function nextAttemptId(lessonId: string): string {
+  return `att-${lessonId}-${Date.now().toString(36)}-${++ATTEMPT_SEQ}`;
+}
+
 function LearnPage() {
   const [selectedId, setSelectedId] = useState<string>(ALL_LESSONS[0]!.id);
   const [states, setStates] = useState<Record<string, LessonState>>(() => {
@@ -88,6 +94,23 @@ function LearnPage() {
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
 
+  // Open a fresh attempt whenever the selected lesson has an interactive
+  // step in progress but no live attempt (freshly-entered or restarted).
+  const attemptOpenedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isInteractive || isComplete) return;
+    const key = `${lesson.id}#${state.currentStepIndex}#${state.attempt?.attemptId ?? ""}`;
+    if (state.attempt) { attemptOpenedForRef.current = key; return; }
+    if (attemptOpenedForRef.current === key) return;
+    attemptOpenedForRef.current = key;
+    const next = stepLesson(lesson, state, {
+      kind: "beginAttempt",
+      attemptId: nextAttemptId(lesson.id),
+      observation: makeInertObservation(state.lastObservationTick + 1),
+    });
+    setStates((s) => ({ ...s, [lesson.id]: next }));
+  }, [lesson, state, isInteractive, isComplete]);
+
   function ackCurrent() {
     if (!step || step.kind !== "reading") return;
     const next = stepLesson(lesson, state, {
@@ -98,7 +121,19 @@ function LearnPage() {
   }
 
   function resetLesson() {
+    attemptOpenedForRef.current = null;
     setStates((s) => ({ ...s, [lesson.id]: initialLessonState(lesson) }));
+  }
+
+  function restartInteractive() {
+    if (!isInteractive) return;
+    // Clears evidence via LessonEngine.restart and opens a new attempt.
+    const next = stepLesson(lesson, state, {
+      kind: "restart",
+      attemptId: nextAttemptId(lesson.id),
+      observation: makeInertObservation(state.lastObservationTick + 1),
+    });
+    setStates((s) => ({ ...s, [lesson.id]: next }));
   }
 
   return (
@@ -235,16 +270,36 @@ function LearnPage() {
                   </button>
                 )}
                 {isInteractive && (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex w-full flex-col gap-3">
                     <p className="text-xs text-amber-300">
-                      This step waits for authentic AGC output. Open the DSKY and follow the instructions above — the lesson engine will only advance when Luminary099 produces the required channel events.
+                      This step waits for authentic AGC output from the live
+                      Worker below. The lesson engine only advances when
+                      Luminary099 produces the required channel events.
                     </p>
-                    <Link
-                      to="/sim"
-                      className="inline-flex w-fit rounded border border-amber-500 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
-                    >
-                      Open the DSKY →
-                    </Link>
+                    <div className="rounded border border-neutral-800 bg-neutral-950/60 p-3">
+                      <LessonHost
+                        lesson={lesson}
+                        state={state}
+                        onStateChange={(next) =>
+                          setStates((s) => ({ ...s, [lesson.id]: next }))
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={restartInteractive}
+                        className="rounded border border-amber-600 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
+                      >
+                        Restart attempt
+                      </button>
+                      <Link
+                        to="/sim"
+                        className="rounded border border-neutral-700 px-3 py-2 font-mono text-xs uppercase tracking-widest text-neutral-300 hover:bg-neutral-900"
+                      >
+                        Open full DSKY workspace →
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
