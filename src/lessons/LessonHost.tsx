@@ -1,26 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import * as React from "react";
 //
-// LessonHost — bridges the live Worker-hosted AGC (via <Dsky/>) into the
-// pure LessonEngine reducer. Owns per-lesson state, an attempt cursor, and
-// bounded input/channel-event buffers. Never mutates AGC state directly.
+// LessonHost — attaches to a *shared* AgcWorkerClient owned by the /learn
+// route and observes it. Does NOT create its own Worker, does NOT render a
+// DSKY, and does NOT mirror PROG/VERB/NOUN in an aria-live region (the
+// authentic DSKY already owns the DSKY consolidated live region — a second
+// mirror would double-announce every display change).
 //
-// Design notes:
-//  - Dsky owns exactly one AgcWorkerClient; LessonHost receives the handle
-//    through the onClient callback and attaches a SUPPLEMENTARY listener so
-//    it does not displace Dsky's own listener bag.
-//  - Input eventIds are authoritative: the worker allocates them from the
-//    same monotonic counter that assigns channel eventIds, and echoes them
-//    back as `inputAccepted`. Predicates can therefore compare input and
-//    channel eventIds in a single ordered namespace.
-//  - Attempt boundaries are enforced by the LessonEngine — the host only
-//    dispatches beginAttempt when the caller opens an interactive lesson.
+// LessonHost is responsible for:
+//   - subscribing supplementary listeners on the shared client
+//   - buffering inputAccepted / channelUpdate events since the last dispatch
+//   - dispatching `observe` actions into the pure LessonEngine reducer
+//   - a single lesson-status aria-live region that announces only readiness,
+//     step transitions, completion, and errors (never per-snapshot data)
 
+import * as React from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ClientOnly } from "@tanstack/react-router";
-import { Dsky } from "@/ui/dsky/Dsky";
-import { ropeById } from "@/sim/agc/roms";
 import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
 import type {
   ChannelEventLite,
@@ -30,7 +24,7 @@ import type {
 } from "@/agc/protocol";
 import type { DecodedDsky } from "@/agc/dsky/DskyTypes";
 import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
-import { initialLessonState, stepLesson } from "./LessonEngine";
+import { stepLesson } from "./LessonEngine";
 import { FIXTURE_PROVENANCE } from "./fixtureExpectations";
 import type {
   LessonDefinition,
@@ -42,22 +36,17 @@ import type {
 
 const MAX_INPUTS = 128;
 
-function regText(reg: { digits: { value: number | null }[]; sign?: { plus: boolean; minus: boolean } }): string {
-  const sign = reg.sign ? (reg.sign.plus ? "+" : reg.sign.minus ? "-" : " ") : "";
-  const body = reg.digits.map((d) => (d.value == null ? "_" : String(d.value))).join("");
-  return `${sign}${body}`;
-}
-
 export interface LessonHostProps {
+  /** Shared client owned by the /learn route. May be null while booting. */
+  client: AgcWorkerClient | null;
   lesson: LessonDefinition;
   state: LessonState;
   onStateChange: (next: LessonState) => void;
-  /** Emitted whenever the host observes the AGC is running with a rope loaded. */
+  /** Optional: propagate ready payload up (readiness banner). */
   onReady?: (payload: ReadyPayload) => void;
 }
 
-/** Public helper: exported for tests. Turns a live worker snapshot plus
- *  attempt-scoped buffers into a LessonObservation suitable for stepLesson. */
+/** Public helper: exported for tests. */
 export function buildObservation(args: {
   snapshot: StateSnapshot;
   decoded: DecodedDsky;
@@ -80,38 +69,30 @@ export function buildObservation(args: {
 }
 
 export function LessonHost(props: LessonHostProps): React.ReactElement {
-  const { lesson, state, onStateChange } = props;
-  const rope = useMemo(() => ropeById("Luminary099"), []);
-  const clientRef = useRef<AgcWorkerClient | null>(null);
-  const [readyPayload, setReadyPayload] = useState<ReadyPayload | null>(null);
+  const { client, lesson, state, onStateChange } = props;
+  const [ready, setReady] = useState<ReadyPayload | null>(() => client?.ready() ?? null);
   const [liveDecoded, setLiveDecoded] = useState<DecodedDsky>(() => makeEmptyDecodedDsky());
-  const [latestSnapshot, setLatestSnapshot] = useState<StateSnapshot | null>(null);
+  const latestSnapshotRef = useRef<StateSnapshot | null>(null);
 
-  // Attempt-scoped input buffer. We slice by attempt startedAtCursor when
-  // constructing observations so restarting a lesson naturally invalidates
-  // stale evidence.
+  // Attempt-scoped input buffer. Attempt filter scopes by eventId >= startedAtCursor.
   const inputsRef = useRef<LessonInputEvent[]>([]);
-  // Channel events accumulated since the last dispatched observation. Reset
-  // per observation dispatch so predicates see strictly-new channel events.
   const channelBufRef = useRef<ChannelEventLite[]>([]);
   const previousDecodedRef = useRef<DecodedDsky | null>(null);
 
-  // Keep a ref of the current state so listener callbacks always see the
-  // latest reducer output without re-registering listeners.
   const stateRef = useRef<LessonState>(state);
   useEffect(() => { stateRef.current = state; }, [state]);
   const lessonRef = useRef<LessonDefinition>(lesson);
   useEffect(() => { lessonRef.current = lesson; }, [lesson]);
 
   const provenance = useMemo<LessonProvenance>(() => {
-    if (!readyPayload) return FIXTURE_PROVENANCE;
+    if (!ready) return FIXTURE_PROVENANCE;
     return {
-      ropeSha256: readyPayload.ropeSha256,
-      ropeSourceCommit: readyPayload.ropeSourceCommit,
-      emulatorCommit: readyPayload.emulatorCommit,
+      ropeSha256: ready.ropeSha256,
+      ropeSourceCommit: ready.ropeSourceCommit,
+      emulatorCommit: ready.emulatorCommit,
       decoderSchemaVersion: FIXTURE_PROVENANCE.decoderSchemaVersion,
     };
-  }, [readyPayload]);
+  }, [ready]);
   const provenanceRef = useRef(provenance);
   useEffect(() => { provenanceRef.current = provenance; }, [provenance]);
 
@@ -120,7 +101,7 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     const def = lessonRef.current;
     const step = def.steps[cur.currentStepIndex];
     if (!step || step.kind !== "interactive") return;
-    if (!cur.attempt) return; // interactive step but no open attempt
+    if (!cur.attempt) return;
     if (cur.status === "completed") return;
 
     const inputsScoped = inputsRef.current.filter(
@@ -143,15 +124,18 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     if (next !== cur) onStateChange(next);
   }, [onStateChange]);
 
-  const handleClient = useCallback((client: AgcWorkerClient | null) => {
-    clientRef.current = client;
+  // Attach supplementary listener to the shared client. Re-run only when the
+  // client identity changes — swapping listener bags on lesson change would
+  // race with in-flight events.
+  useEffect(() => {
     if (!client) return;
+    const existing = client.ready();
+    if (existing) setReady(existing);
     const unsub = client.addListener({
-      onReady: (r) => { setReadyPayload(r); props.onReady?.(r); },
-      onSnapshot: (snap) => { setLatestSnapshot(snap); },
+      onReady: (r) => { setReady(r); props.onReady?.(r); },
+      onSnapshot: (snap) => { latestSnapshotRef.current = snap; },
       onDskyDecoded: (d) => {
         setLiveDecoded(d);
-        // Dispatch when we have a matching snapshot; otherwise defer.
         const snap = latestSnapshotRef.current;
         if (snap) dispatchObservation(snap, d);
       },
@@ -171,37 +155,26 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
       },
     });
     return () => { unsub(); };
-    // We intentionally do not depend on dispatchObservation identity; the
-    // listener always reads the latest via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [client]);
 
-  // Mirror latest snapshot into a ref so onDskyDecoded can pair with it.
-  const latestSnapshotRef = useRef<StateSnapshot | null>(null);
-  useEffect(() => { latestSnapshotRef.current = latestSnapshot; }, [latestSnapshot]);
+  // Single lesson-status region — announces only meaningful transitions.
+  const statusText = ready
+    ? state.status === "completed"
+      ? `Lesson ${lesson.title} complete.`
+      : `AGC ready. Step ${state.currentStepIndex + 1}: ${lesson.steps[state.currentStepIndex]?.title ?? ""}.`
+    : "AGC booting.";
+  void liveDecoded; // retained for tests that may probe decoded state via refs
 
   return (
-    <div className="space-y-3">
-      <ClientOnly fallback={<div className="text-xs text-neutral-500">Booting AGC worker…</div>}>
-        <Dsky
-          key={`learn-${lesson.id}`}
-          rope={rope}
-          onClient={handleClient}
-        />
-      </ClientOnly>
-      <div
-        aria-live="polite"
-        className="sr-only"
-        data-testid="lesson-host-status"
-      >
-        {readyPayload ? "AGC ready" : "AGC booting"} · step {stateRef.current.currentStepIndex + 1}
-        {stateRef.current.status === "completed" ? " · lesson complete" : ""}
-      </div>
-      {/* Expose latest decoded PROG/VERB/NOUN in an accessible summary so
-          screen readers get a stable, non-flashing textual mirror. */}
-      <div className="sr-only" aria-live="polite">
-        PROG {regText(liveDecoded.program)} VERB {regText(liveDecoded.verb)} NOUN {regText(liveDecoded.noun)}
-      </div>
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      className="sr-only"
+      data-testid="lesson-host-status"
+    >
+      {statusText}
     </div>
   );
 }
