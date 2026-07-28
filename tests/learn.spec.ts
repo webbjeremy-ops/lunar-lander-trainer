@@ -301,26 +301,18 @@ test.describe("/learn production acceptance", () => {
     expect(afterNav.snapshot!.channelEventCount).toBeGreaterThanOrEqual(baseline.channelEventCount);
 
     // -------------------------------------------------------------------
-    // 8. Enter Lesson 3 (interactive V35). Fresh attempt cursor/tick.
+    // 8. Enter Lesson 3 (interactive V35). Barrier-scoped attempt.
     // -------------------------------------------------------------------
     await selectLessonByIndex(page, 3);
-    // Lesson 3 opens on a reading step; ack to reach the interactive step.
-    for (let i = 0; i < 5; i++) {
-      const st = await readLearn(page);
-      if (st.state.attempt) break;
-      const ackBtn = page.getByRole("button", { name: /I['’]ve read this|continue/i }).first();
-      if (!(await ackBtn.isVisible().catch(() => false))) break;
-      await ackBtn.click();
-      await page.waitForTimeout(80);
-    }
-    await page.waitForFunction(() => {
-      const w = window as unknown as { __learnTest?: LearnTestState };
-      return !!w.__learnTest?.state.attempt;
-    }, { timeout: 5_000 });
-    const l3Start = await readLearn(page);
+    const l3Start = await advanceToInteractive(page, "lesson-03-v35-lamp-test");
     const l3Attempt = l3Start.state.attempt!;
     expect(l3Attempt.attemptId).toMatch(/^att-lesson-03/);
-    expect(l3Attempt.startedAtCursor).toBeGreaterThanOrEqual(baseline.channelEventCount);
+    // Boundary invariants: attempt.startedAtCursor MUST equal boundary+1
+    // and both MUST post-date any pre-existing event id in the shared
+    // eventId namespace (which strictly dominates channelEventCount).
+    const l3Boundary = l3Start.boundaryEventId!;
+    expect(l3Boundary, `diag=${await diagnostics(page)}`).toBeGreaterThan(0);
+    expect(l3Attempt.startedAtCursor).toBe(l3Boundary + 1);
     expect(l3Attempt.startedAtTick).toBeGreaterThanOrEqual(baseline.tickIndex);
 
 
@@ -343,10 +335,10 @@ test.describe("/learn production acceptance", () => {
     expect(ev3, `diag=${await diagnostics(page)}`).toBeTruthy();
     expect(ev3.attemptId).toBe(l3Attempt.attemptId);
     expect(ev3.classification).toBe("authentic-emulator");
-    // 11. Every input event id must be strictly after attempt cursor.
+    // 11. Every input event id must be STRICTLY greater than the boundary.
     expect(ev3.inputEventIds.length).toBeGreaterThanOrEqual(4);
     for (const id of ev3.inputEventIds) {
-      expect(id).toBeGreaterThanOrEqual(l3Attempt.startedAtCursor);
+      expect(id).toBeGreaterThan(l3Boundary);
     }
     // Channel events must post-date at least the last ENTR input.
     const maxInputId = Math.max(...ev3.inputEventIds);
