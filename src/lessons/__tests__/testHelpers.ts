@@ -44,6 +44,7 @@ export function makeObservation(opts: {
     avgTickMs: 20,
     schedulerOverruns: 0,
     tickIndex: opts.tickIndex,
+    latestEventId: 0,
     decodedDsky: decoded,
     ...(opts.snapshot ?? {}),
   };
