@@ -69,6 +69,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
   const [lamps, setLamps] = useState(0);
+  const [decoded, setDecoded] = useState<DecodedDsky>(() => makeEmptyDecodedDsky());
   const [ready, setReady] = useState<ReadyPayload | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +77,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
   const [selectedChannel, setSelectedChannel] = useState<number>(0o10);
   const [attempt, setAttempt] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [timeScale, setTimeScaleState] = useState<number>(1);
 
   useEffect(() => {
     setPhase("booting-worker");
@@ -100,8 +102,11 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
         onSnapshot?.(snap);
         setLamps(snap.lamps);
         setPaused(!snap.running);
+        setTimeScaleState(snap.timeScale);
+        if (snap.decodedDsky) setDecoded(snap.decodedDsky);
       },
       onDsky: (l) => setLamps(l),
+      onDskyDecoded: (d) => setDecoded(d),
       onFatalError: (code, message) => {
         setError(`${code}: ${message}`);
         setPhase("error");
