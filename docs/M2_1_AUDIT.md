@@ -174,3 +174,86 @@ completion, and production browser tests remain unstarted. Awaiting
 direction on how to source the authoritative selector/annunciator
 mapping (fetch virtualagc yaDSKY at the pinned commit vs. another
 approach) before proceeding.
+
+## M2.1 update — Channel 010 field-layout defect resolved
+
+The previous decoder shifted every Channel 010 payload field by one bit.
+It parsed the word as `WWWW AAAAA BBBBB S`, but the pinned yaDSKY2
+source (`michaelfranzl/virtualagc @ ddc65e7b`, matching `webAGC @
+0575ea7`) parses it as:
+
+```
+bits 14..11 | bit 10 | bits 9..5 | bits 4..0
+   WWWW         S       AAAAA       BBBBB
+```
+
+The pinned implementation tests the sign at `0x0400`, extracts the
+left field with `(word >>> 5) & 0x1f`, and the right field with
+`word & 0x1f`. Our earlier `parseCh010` used `>>> 6` / `>>> 1` / bit-0
+for sign, mis-splitting the lower 11 bits by one position.
+
+### Consequence
+
+The five bits reported as "code 14" were never sent by the AGC as a
+digit relay code. `01110_11110_1` decoded under the correct layout is
+`sign=0, left=0b11101=29, right=0b11101=29` — i.e. **digit 8 in both
+fields, sign relay clear.** Code 29 (0b11101) is the yaDSKY relay
+pattern for digit **8**. There is no valid yaDSKY relay code 14, and
+there was never a special V35 branch that converted 14 into a
+displayable glyph — the value was an extraction artifact of the
+off-by-one field split.
+
+### Fix
+
+`src/agc/dsky/DskyChannelMap.ts::parseCh010` now implements the
+pinned layout exactly. Selector 12 continues to be recognized by the
+row tag `(word & 0o74000) === 0o60000` and decoded with the raw
+annunciator bit masks (no shifted A/B/S interpretation). Selector 0 is
+now an explicit no-op — Luminary writes zero to Channel 010 between
+relay operations and when turning the display relays off, and those
+writes MUST NOT blank the latched display.
+
+### Regression tests
+
+`src/agc/dsky/__tests__/DskyDecoder.test.ts` adds:
+* A raw-word regression proving that the payload `01110_11110_1`
+  decodes as `sign=0, A=29, B=29` (digit 8 / digit 8), NOT
+  `A=14, B=30, S=1`.
+* A selector-0 test that latched digits, sign latches, and
+  annunciators are all preserved when selector-0 relay-off writes
+  arrive.
+
+### Corrected V35 lamp-test peak (authoritative, from the same raw trace)
+
+Replaying the committed `tests/fixtures/v35-lamp-test.json`
+`dskyEvents` through the corrected decoder:
+
+```
+PROG:88 | VERB:88 | NOUN:88
+R1: +88888 | R2: +88888 | R3: +88888
+Annunciators on: AGC WARN, ALT, COMP ACTY, GIMBAL LOCK, KEY REL,
+NO ATT, OPR ERR, PROG, RESTART, STANDBY, TEMP, TRACKER,
+UPLINK ACTY, VEL
+```
+
+This matches the expected V35 lamp test: all digits show **8**, all
+plus-sign relays are asserted, and the documented lamp-test
+annunciators illuminate. Fixture `peak.checksum` and `finalChecksum`
+have been regenerated from the (unchanged) raw event stream.
+
+### Corrected V16 N65 samples
+
+Two snapshots taken ~3 s apart both show VERB **16** NOUN **65** with
+R3 advancing (`__9_5` → `__5_5`, the last two centiseconds ticking).
+Sample checksums differ and mission time advances monotonically, as
+the golden-trace tests require.
+
+### Status
+
+* All 54 Vitest tests pass.
+* Fixtures were regenerated deterministically from the recorded raw
+  event streams — the AGC output was never in question, only how we
+  parsed it. Re-running the full production capture is optional and
+  will produce identical results modulo capture wall-clock timing.
+* Awaiting go-ahead to begin the LessonEngine on top of the now
+  authoritative decoder.
