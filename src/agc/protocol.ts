@@ -78,6 +78,12 @@ export interface StateSnapshot {
   avgTickMs: number;
   schedulerOverruns: number;
   tickIndex: number;
+  /**
+   * Highest eventId allocated so far (inputs + channels + boundaries share
+   * this counter). Snapshot readers use this to reason about the global
+   * ordering namespace; it is NOT the same as `channelEventCount`.
+   */
+  latestEventId: number;
   /** Full latched DSKY state; deterministic replay compares against this. */
   decodedDsky: DecodedDsky;
 }
