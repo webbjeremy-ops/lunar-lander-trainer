@@ -65,7 +65,11 @@ interface WorkerState {
   lastChannelEventCount: number;
   decodedDsky: DecodedDsky;
   nextEventId: number;
-}
+  /** Worker-owned bounded ring of ChannelEventLite that preserves each
+   *  event's ORIGINAL eventId / tickIndex / missionTimeUs. Snapshots read
+   *  from here instead of re-deriving context from the current clock. */
+  recentEventsRing: ChannelEventLite[];
+  recentEventsCap: number;
 
 const state: WorkerState = {
   adapter: null,
