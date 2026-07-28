@@ -28,6 +28,10 @@
 // 14 with an unrelated sign bit. Any regression that reintroduces that
 // off-by-one will fail the DskyDecoder unit tests and the golden traces.
 
+import type { DskyAnnunciators } from "./DskyTypes";
+
+export type RegKey = "program" | "verb" | "noun" | "r1" | "r2" | "r3";
+
 /** Parsed channel-010 word. */
 export interface ParsedCh010 {
   selector: number; // bits 14..11
