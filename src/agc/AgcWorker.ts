@@ -155,6 +155,8 @@ function buildSnapshot(): StateSnapshot {
   for (let i = 0; i < state.erasableLength; i++) window[i] = era[state.erasableBase + i] ?? 0;
   const recentRaw = adapter.recentEvents(24);
   const recentEvents: ChannelEventLite[] = recentRaw.map((e) => ({
+    eventId: e.seq,
+    tickIndex: currentTickIndex(),
     channel: e.channel,
     value: e.value,
     seq: e.seq,
@@ -176,6 +178,8 @@ function buildSnapshot(): StateSnapshot {
     erasableWindow: window,
     avgTickMs: clockStats.avgTickMs,
     schedulerOverruns: clockStats.overruns,
+    tickIndex: clockStats.ticksExecuted,
+    decodedDsky: state.decodedDsky,
   };
 }
 
