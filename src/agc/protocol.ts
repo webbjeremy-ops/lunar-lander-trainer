@@ -33,8 +33,23 @@ export type AgcCommand =
   | { type: "stepAgcDebug"; steps: number }
   | { type: "requestSnapshot" }
   | { type: "requestDiagnostics" }
+  | { type: "requestEventBoundary" }
   | { type: "configure"; erasableBase?: number; erasableLength?: number }
   | { type: "dispose" };
+
+/**
+ * Worker-allocated attempt boundary. The `boundaryEventId` is drawn from the
+ * SAME monotonic counter used by inputAccepted/channelUpdate events. Every
+ * accepted input and every channel event emitted after this reply will have
+ * eventId > boundaryEventId. Lesson attempts open on the boundary, so any
+ * stale evidence carrying an id <= boundaryEventId falls out of scope.
+ */
+export interface EventBoundaryPayload {
+  boundaryEventId: number;
+  tickIndex: number;
+  missionTimeUs: number;
+  totalAgcSteps: number;
+}
 
 export interface ChannelEventLite {
   /** Monotonic per-worker id assigned at the moment of AGC OUTPUT. */
