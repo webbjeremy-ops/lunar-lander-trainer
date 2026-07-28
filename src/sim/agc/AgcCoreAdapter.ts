@@ -11,7 +11,8 @@
 // output + erasable memory read. Worker isolation lands in Milestone 1.
 
 import type { AgcChannelDoc } from "./AgcChannelRegistry";
-export type { AgcChannelDoc };
+import { AgcIoState, type ChannelEvent } from "./AgcIoState";
+export type { AgcChannelDoc, ChannelEvent };
 
 export type RomName = "Luminary099" | "Comanche055";
 
