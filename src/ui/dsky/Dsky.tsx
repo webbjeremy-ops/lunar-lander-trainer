@@ -57,7 +57,12 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope }: { rope: RopeImage }) {
+export function Dsky({ rope, onClient, onSnapshot, onReady }: {
+  rope: RopeImage;
+  onClient?: (client: AgcWorkerClient | null) => void;
+  onSnapshot?: (snap: StateSnapshot) => void;
+  onReady?: (ready: ReadyPayload) => void;
+}) {
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
   const [lamps, setLamps] = useState(0);
@@ -80,13 +85,16 @@ export function Dsky({ rope }: { rope: RopeImage }) {
       return;
     }
     clientRef.current = client;
+    onClient?.(client);
     client.setListeners({
       onReady: (payload) => {
         setReady(payload);
+        onReady?.(payload);
         setPhase("ready");
       },
       onSnapshot: (snap) => {
         setSnapshot(snap);
+        onSnapshot?.(snap);
         setLamps(snap.lamps);
         setPaused(!snap.running);
       },
@@ -101,10 +109,11 @@ export function Dsky({ rope }: { rope: RopeImage }) {
     setPhase("loading-rom");
     client.loadRope(rope.id, rope.url, rope.manifestUrl);
     return () => {
+      onClient?.(null);
       client.dispose();
       clientRef.current = null;
     };
-  }, [rope.id, rope.url, rope.manifestUrl, attempt]);
+  }, [rope.id, rope.url, rope.manifestUrl, attempt, onClient, onSnapshot, onReady]);
 
   // Push erasable-base changes to the worker.
   useEffect(() => {
