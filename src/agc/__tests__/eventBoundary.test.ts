@@ -28,13 +28,13 @@ function makeFakeWorker(): FakeWorker {
     error: [] as Array<(ev: unknown) => void>,
   };
   const messages: C2WEnvelope[] = [];
-  return {
+  const fw: FakeWorker = {
     messages,
     handlers,
     postMessage(msg: unknown) { messages.push(msg as C2WEnvelope); },
-    addEventListener(type: string, handler: (ev: unknown) => void) {
+    addEventListener(type: "message" | "error", handler: ((ev: MessageEvent<W2CEnvelope>) => void) | ((ev: unknown) => void)) {
       if (type === "message") handlers.message.push(handler as (ev: MessageEvent<W2CEnvelope>) => void);
-      if (type === "error") handlers.error.push(handler);
+      if (type === "error") handlers.error.push(handler as (ev: unknown) => void);
     },
     removeEventListener() { /* noop */ },
     terminate() { /* noop */ },
@@ -42,6 +42,7 @@ function makeFakeWorker(): FakeWorker {
       for (const h of handlers.message) h({ data: env } as MessageEvent<W2CEnvelope>);
     },
   };
+  return fw;
 }
 
 describe("event-boundary handshake", () => {
