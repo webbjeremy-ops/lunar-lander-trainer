@@ -55,14 +55,32 @@ describe("relay table", () => {
   });
 });
 
-describe("channel 010 parsing", () => {
-  it("splits selector | A | B | S with selector in the top nibble", () => {
+describe("channel 010 parsing (pinned yaDSKY2 layout: WWWW S AAAAA BBBBB)", () => {
+  it("splits selector | S | A | B with selector in the top nibble", () => {
     const w = encodeCh010({ codeA: 0b11101, codeB: 0b10101, sign: 1, selector: 11 });
     const p = parseCh010(w);
     expect(p.selector).toBe(11);
     expect(p.codeA).toBe(0b11101);
     expect(p.codeB).toBe(0b10101);
     expect(p.sign).toBe(1);
+  });
+
+  it("regression: the raw lower 11 bits 01110_11110_1 decode as sign=0, A=29, B=29 — NOT A=14,B=30,S=1", () => {
+    // The pinned layout is WWWW S AAAAA BBBBB. Any decoder that shifts the
+    // payload by one bit (WWWW AAAAA BBBBB S) will (mis)report A=14 B=30 S=1.
+    // Selector 7 (R1 D2/D3 + PLUS latch) is chosen for a concrete example.
+    const raw = (7 << 11) | 0b01110_11110_1; // selector 7, low 11 bits fixed
+    const p = parseCh010(raw);
+    expect(p.selector).toBe(7);
+    expect(p.sign).toBe(0);
+    expect(p.codeA).toBe(29); // 0b11101 → digit 8
+    expect(p.codeB).toBe(29); // 0b11101 → digit 8
+    // And a variant with the plus-selector sign bit asserted:
+    const raw2 = (7 << 11) | (1 << 10) | (29 << 5) | 29;
+    const p2 = parseCh010(raw2);
+    expect(p2.sign).toBe(1);
+    expect(p2.codeA).toBe(29);
+    expect(p2.codeB).toBe(29);
   });
 });
 
