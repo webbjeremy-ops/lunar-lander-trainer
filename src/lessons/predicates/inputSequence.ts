@@ -7,7 +7,7 @@
 // start cursor. Key-up events are always ignored; PROCEED is stateful and
 // out-of-scope for these matchers.
 
-import type { LessonAttempt, LessonInputEvent } from "./types";
+import type { LessonAttempt, LessonInputEvent } from "../types";
 
 export interface SequenceMatch {
   matched: boolean;
