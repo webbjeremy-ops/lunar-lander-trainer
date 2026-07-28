@@ -7,71 +7,43 @@
 // captured traces "look right" — modify them only when the upstream source
 // says so.
 //
-// Channel 010 word layout (15 bits, MSB→LSB, 1-indexed):
-//   bit 15..12 | bit 11..7 | bit 6..2 | bit 1
-//     SSSS       AAAAA        BBBBB      S
-//   SSSS   (4 bits) — selector 1..11 for digit rows; 12 is the annunciator
+// Channel 010 word layout (15 bits, MSB→LSB, bit-14 down to bit-0):
+//   bit 14..11 | bit 10 | bit 9..5 | bit 4..0
+//     WWWW        S        AAAAA      BBBBB
+//   WWWW   (4 bits) — selector 1..11 for digit rows; 12 is the annunciator
 //                     row (also identified by tag (word & 0o74000) == 0o60000).
-//   AAAAA  (5 bits) — relay code A (left field of the row)
-//   BBBBB  (5 bits) — relay code B (right field of the row)
-//   S      (1 bit)  — sign relay drive (row-dependent semantics)
+//   S      (1 bit)  — sign relay drive (row-dependent semantics; test 0x0400)
+//   AAAAA  (5 bits) — relay code A (left digit field of the row)
+//   BBBBB  (5 bits) — relay code B (right digit field of the row)
 //
-// This layout is confirmed by the raw channel-010 histogram of an authentic
-// yaAGC + Luminary099 V35 capture: annunciator writes appear as 0o60xxx,
-// digit-row writes appear as 0o04000, 0o40000, 0o44000, 0o50000, 0o54000,
-// … i.e. selector encoded in the TOP nibble, not the bottom.
+// This is the exact layout implemented by the pinned yaDSKY2 source
+// (michaelfranzl/virtualagc @ ddc65e7b, matching webAGC @ 0575ea7):
+//   selector = (word >>> 11) & 0x0f
+//   signBit  = (word >>> 10) & 0x01
+//   left     = (word >>>  5) & 0x1f
+//   right    =  word         & 0x1f
 //
-// Selector → register/digit routing (yaDSKY2):
-//
-//   Sel  A field           B field           Sign relay driven by bit S
-//   ---  ----------------  ----------------  -------------------------------
-//    11  PROG D1           PROG D2           —
-//    10  VERB D1           VERB D2           —
-//     9  NOUN D1           NOUN D2           —
-//     8  —                 R1 D1             —
-//     7  R1 D2             R1 D3             R1 PLUS
-//     6  R1 D4             R1 D5             R1 MINUS
-//     5  R2 D1             R2 D2             R2 PLUS
-//     4  R2 D3             R2 D4             R2 MINUS
-//     3  R2 D5             R3 D1             —
-//     2  R3 D2             R3 D3             R3 PLUS
-//     1  R3 D4             R3 D5             R3 MINUS
-//
-// R1/R2/R3 digits are numbered 1..5 left→right (D1 = leftmost / most
-// significant). Our internal digits[] arrays are 0-indexed so D1 == [0].
-//
-// Sign relays are INDEPENDENT latches. The UI applies plus-priority when
-// both are set (matching yaDSKY2 display behavior); the underlying state
-// preserves both for diagnostics.
-
-import type { DskyAnnunciators } from "./DskyTypes";
-
-export type RegKey = "program" | "verb" | "noun" | "r1" | "r2" | "r3";
+// An earlier revision of this decoder shifted every payload field by one
+// bit (WWWW AAAAA BBBBB S), which mis-parsed digit code 29 ("8") as code
+// 14 with an unrelated sign bit. Any regression that reintroduces that
+// off-by-one will fail the DskyDecoder unit tests and the golden traces.
 
 /** Parsed channel-010 word. */
 export interface ParsedCh010 {
-  codeA: number;    // bits 15..11
-  codeB: number;    // bits 10..6
-  sign: number;     // bit 5, 0 or 1
-  selector: number; // bits 4..1
-  raw: number;
-}
-
-export interface ParsedCh010 {
-  codeA: number;    // bits 11..7  (left field)
-  codeB: number;    // bits 6..2   (right field)
-  sign: number;     // bit 1
-  selector: number; // bits 15..12 (top nibble)
+  selector: number; // bits 14..11
+  sign: number;     // bit 10  (0 or 1)
+  codeA: number;    // bits 9..5   (left field)
+  codeB: number;    // bits 4..0   (right field)
   raw: number;
 }
 
 export function parseCh010(word: number): ParsedCh010 {
   const w = word & 0o77777;
   return {
-    selector: (w >>> 11) & 0b1111,
-    codeA:    (w >>> 6)  & 0b11111,
-    codeB:    (w >>> 1)  & 0b11111,
-    sign:     w & 0b1,
+    selector: (w >>> 11) & 0x0f,
+    sign:     (w >>> 10) & 0x01,
+    codeA:    (w >>>  5) & 0x1f,
+    codeB:     w         & 0x1f,
     raw:      w,
   };
 }
