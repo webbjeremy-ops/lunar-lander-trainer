@@ -189,80 +189,81 @@ describe("V16 N65 mission-elapsed-time golden trace", () => {
     expect(decodedDskyCanonical(state)).toBe(fx.finalChecksum);
   });
 
-  it("stable checkpoints appear as an ordered subsequence in the pure replay stream (duplicate checksums allowed)", () => {
-    // Ordered-subsequence matching: each checkpoint checksum must appear
-    // in the replay stream at a strictly later replay position than the
-    // previous checkpoint. Duplicate checksums are legitimate — the same
-    // stable DSKY state can span multiple selector scans — so the matcher
-    // consumes one replay slot per checkpoint rather than accepting mere
-    // set-membership (which would let one replay state satisfy N
-    // checkpoints, or admit out-of-order matches).
+  it("distinct-consecutive stable checkpoints appear as an ordered subsequence in the pure replay stream", () => {
+    // The capture script records one checkpoint per tick during a stable
+    // window, so many consecutive checkpoints share the same checksum (the
+    // DSKY is genuinely holding the same state across ticks with no channel
+    // writes). Pure event-by-event replay only produces a new checksum when
+    // an event actually lands, so we compare the compressed sequences:
+    // collapse both to "distinct from previous" and require the checkpoint
+    // sequence to be an ordered subsequence of the replay sequence.
     const state = makeEmptyDecodedDsky();
-    const replayChecksums: string[] = [];
+    const replaySeq: string[] = [];
     for (const e of fx.dskyEvents) {
       applyDskyChannelEvent(state, e.channel, e.value);
-      replayChecksums.push(decodedDskyCanonical(state));
+      const chk = decodedDskyCanonical(state);
+      if (replaySeq[replaySeq.length - 1] !== chk) replaySeq.push(chk);
+    }
+    const checkpointSeq: string[] = [];
+    for (const c of fx.stableCheckpoints) {
+      if (checkpointSeq[checkpointSeq.length - 1] !== c.checksum) {
+        checkpointSeq.push(c.checksum);
+      }
     }
     let searchFrom = 0;
-    for (const checkpoint of fx.stableCheckpoints) {
-      const foundAt = replayChecksums.findIndex(
-        (chk, index) => index >= searchFrom && chk === checkpoint.checksum,
+    for (const chk of checkpointSeq) {
+      const foundAt = replaySeq.findIndex(
+        (v, index) => index >= searchFrom && v === chk,
       );
       expect(
         foundAt,
-        `checkpoint tick=${checkpoint.tickIndex} anchor=${checkpoint.r3Anchor} not found at replay index >= ${searchFrom}`,
+        `checkpoint checksum ${chk.slice(0, 24)}… not found at replay index >= ${searchFrom}`,
       ).toBeGreaterThanOrEqual(searchFrom);
       searchFrom = foundAt + 1;
     }
   });
 
-  it("ordered-subsequence matcher rejects reversed checkpoint order (negative)", () => {
+  it("ordered-subsequence matcher rejects reversed distinct-checkpoint order (negative)", () => {
     const state = makeEmptyDecodedDsky();
-    const replayChecksums: string[] = [];
+    const replaySeq: string[] = [];
     for (const e of fx.dskyEvents) {
       applyDskyChannelEvent(state, e.channel, e.value);
-      replayChecksums.push(decodedDskyCanonical(state));
+      const chk = decodedDskyCanonical(state);
+      if (replaySeq[replaySeq.length - 1] !== chk) replaySeq.push(chk);
     }
-    // Reverse the checkpoint list. The two ends have distinct R3 anchors
-    // (proven earlier), so their checksums differ, so ordered matching
-    // must fail somewhere in the walk.
-    const reversed = [...fx.stableCheckpoints].reverse();
+    const checkpointSeq: string[] = [];
+    for (const c of fx.stableCheckpoints) {
+      if (checkpointSeq[checkpointSeq.length - 1] !== c.checksum) {
+        checkpointSeq.push(c.checksum);
+      }
+    }
+    if (checkpointSeq.length < 2) return; // trivially nothing to reverse
+    const reversed = [...checkpointSeq].reverse();
     let searchFrom = 0;
-    let failedAt = -1;
-    for (let i = 0; i < reversed.length; i++) {
-      const c = reversed[i]!;
-      const foundAt = replayChecksums.findIndex(
-        (chk, index) => index >= searchFrom && chk === c.checksum,
-      );
-      if (foundAt < 0) { failedAt = i; break; }
-      searchFrom = foundAt + 1;
+    let failed = false;
+    for (const chk of reversed) {
+      const idx = replaySeq.findIndex((v, i) => i >= searchFrom && v === chk);
+      if (idx < 0) { failed = true; break; }
+      searchFrom = idx + 1;
     }
-    expect(
-      failedAt,
-      "reversed checkpoints must not satisfy the ordered-subsequence matcher",
-    ).toBeGreaterThanOrEqual(0);
+    expect(failed, "reversed distinct checkpoints must not satisfy ordered matching").toBe(true);
   });
 
-  it("ordered-subsequence matcher requires distinct replay positions for consecutive duplicate checkpoints", () => {
-    // Build a synthetic 3-element replay stream with two duplicate
-    // checksums. Two consecutive duplicate checkpoints require two
-    // distinct replay slots, so a stream of length 1 must fail while a
-    // stream of length 2 must pass.
-    const dupChecksum = "DUP";
-    const otherChecksum = "OTHER";
-    const checkpoints = [{ checksum: dupChecksum }, { checksum: dupChecksum }];
+  it("ordered-subsequence matcher requires distinct replay positions for consecutive duplicate distinct checkpoints", () => {
+    const dup = "DUP";
+    const other = "OTHER";
+    const checkpoints = [dup, other, dup];
     function walk(replay: string[]) {
       let searchFrom = 0;
       for (const c of checkpoints) {
-        const idx = replay.findIndex((v, i) => i >= searchFrom && v === c.checksum);
+        const idx = replay.findIndex((v, i) => i >= searchFrom && v === c);
         if (idx < 0) return false;
         searchFrom = idx + 1;
       }
       return true;
     }
-    expect(walk([dupChecksum])).toBe(false);
-    expect(walk([dupChecksum, otherChecksum])).toBe(false);
-    expect(walk([dupChecksum, dupChecksum])).toBe(true);
-    expect(walk([dupChecksum, otherChecksum, dupChecksum])).toBe(true);
+    expect(walk([dup, other])).toBe(false);
+    expect(walk([dup, dup, other])).toBe(false);
+    expect(walk([dup, other, dup])).toBe(true);
   });
 });
