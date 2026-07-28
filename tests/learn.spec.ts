@@ -365,28 +365,18 @@ test.describe("/learn production acceptance", () => {
     // -------------------------------------------------------------------
     const beforeL4Boots = (await readAgc(page)).workerBoots;
     await selectLessonByIndex(page, 4);
-    for (let i = 0; i < 5; i++) {
-      const st = await readLearn(page);
-      if (st.state.attempt && st.lessonId === "lesson-04-v16-n65-mission-time") break;
-      const ackBtn = page.getByRole("button", { name: /I['’]ve read this|continue/i }).first();
-      if (!(await ackBtn.isVisible().catch(() => false))) break;
-      await ackBtn.click();
-      await page.waitForTimeout(80);
-    }
-    await page.waitForFunction(() => {
-      const w = window as unknown as { __learnTest?: LearnTestState };
-      return w.__learnTest?.lessonId === "lesson-04-v16-n65-mission-time" &&
-        !!w.__learnTest?.state.attempt;
-    }, { timeout: 5_000 });
+    const l4Start = await advanceToInteractive(page, "lesson-04-v16-n65-mission-time");
     expect((await readAgc(page)).workerBoots).toBe(beforeL4Boots);
     expect(agcWorkers().length).toBe(1);
 
 
-    // 14. Fresh Lesson 4 attempt boundary (cursor >= L3 completion cursor).
-    const l4Start = await readLearn(page);
+    // 14. Fresh Lesson 4 attempt boundary — must strictly post-date L3
+    //     evidence in the shared eventId namespace.
     const l4Attempt = l4Start.state.attempt!;
+    const l4Boundary = l4Start.boundaryEventId!;
     expect(l4Attempt.attemptId).toMatch(/^att-lesson-04/);
-    expect(l4Attempt.startedAtCursor).toBeGreaterThanOrEqual(ev3.channelEventIds[ev3.channelEventIds.length - 1]);
+    expect(l4Attempt.startedAtCursor).toBe(l4Boundary + 1);
+    expect(l4Boundary).toBeGreaterThan(ev3.channelEventIds[ev3.channelEventIds.length - 1]);
 
     // -------------------------------------------------------------------
     // 15. Enter V16 N65 E through the rendered keypad.
