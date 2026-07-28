@@ -147,7 +147,7 @@
       "prioDisp": false,
       "noDap": false,
       "gimbalLock": false,
-      "prog": true,
+      "prog": false,
       "tracker": false,
       "alt": false,
       "vel": false,
@@ -157,14 +157,14 @@
       "temp": false,
       "keyRelease": false,
       "verbNounFlash": false,
-      "operError": true,
-      "restart": true,
+      "operError": false,
+      "restart": false,
       "standby": false,
       "elOff": false
     },
-    "eventCount": 17
+    "eventCount": 0
   },
-  "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:17",
+  "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:0",
   "commands": [
     {
       "tickIndex": 99,
@@ -1316,128 +1316,127 @@
     }
   ],
   "peak": {
-    "tickIndex": 116,
+    "tickIndex": 115,
     "missionTimeUs": 2320000,
-    "score": 138,
     "decoded": {
       "program": {
         "digits": [
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           }
         ]
       },
       "verb": {
         "digits": [
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           }
         ]
       },
       "noun": {
         "digits": [
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           }
         ]
       },
       "r1": {
         "digits": [
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           }
         ],
         "sign": {
           "plus": true,
-          "minus": true
+          "minus": false
         }
       },
       "r2": {
         "digits": [
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           }
         ],
         "sign": {
           "plus": true,
-          "minus": true
+          "minus": false
         }
       },
       "r3": {
         "digits": [
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 8,
+            "segments": 127
           },
           {
-            "value": 5,
-            "segments": 109
+            "value": 8,
+            "segments": 127
           }
         ],
         "sign": {
           "plus": true,
-          "minus": true
+          "minus": false
         }
       },
       "annunciators": {
@@ -1462,7 +1461,7 @@
       },
       "eventCount": 84
     },
-    "checksum": "PROG:_5|VERB:_5|NOUN:_5|R1:+-555_5|R2:+-55_5_|R3:+-555_5|ANN:agcWarning=1,alt=1,compActy=1,elOff=0,gimbalLock=1,keyRelease=1,noAtt=1,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=1,temp=1,tracker=1,uplinkActy=1,vel=1,verbNounFlash=0|EC:84"
+    "checksum": "PROG:88|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888|ANN:agcWarning=1,alt=1,compActy=1,elOff=0,gimbalLock=1,keyRelease=1,noAtt=1,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=1,temp=1,tracker=1,uplinkActy=1,vel=1,verbNounFlash=0|EC:84"
   },
   "finalDecoded": {
     "program": {
@@ -1480,109 +1479,109 @@
     "verb": {
       "digits": [
         {
-          "value": null,
-          "segments": 0
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         }
       ]
     },
     "noun": {
       "digits": [
         {
-          "value": null,
-          "segments": 0
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         }
       ]
     },
     "r1": {
       "digits": [
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": null,
-          "segments": 0
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         }
       ],
       "sign": {
         "plus": true,
-        "minus": true
+        "minus": false
       }
     },
     "r2": {
       "digits": [
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": null,
-          "segments": 0
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": null,
-          "segments": 0
+          "value": 8,
+          "segments": 127
         }
       ],
       "sign": {
         "plus": true,
-        "minus": true
+        "minus": false
       }
     },
     "r3": {
       "digits": [
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": null,
-          "segments": 0
+          "value": 8,
+          "segments": 127
         },
         {
-          "value": 5,
-          "segments": 109
+          "value": 8,
+          "segments": 127
         }
       ],
       "sign": {
         "plus": true,
-        "minus": true
+        "minus": false
       }
     },
     "annunciators": {
@@ -1607,7 +1606,7 @@
     },
     "eventCount": 110
   },
-  "finalChecksum": "PROG:__|VERB:_5|NOUN:_5|R1:+-555_5|R2:+-55_5_|R3:+-555_5|ANN:agcWarning=1,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:110",
+  "finalChecksum": "PROG:__|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888|ANN:agcWarning=1,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:110",
   "finalSnapshot": {
     "tickIndex": 486,
     "missionTimeUs": 9720000,

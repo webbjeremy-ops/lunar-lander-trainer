@@ -22,11 +22,12 @@ import {
 } from "../DskyChannelMap";
 
 function encodeCh010(opts: { codeA?: number; codeB?: number; sign?: number; selector: number }): number {
-  const a = (opts.codeA ?? 0) & 0b11111;
-  const b = (opts.codeB ?? 0) & 0b11111;
-  const s = (opts.sign ?? 0) & 0b1;
-  const sel = opts.selector & 0b1111;
-  return (sel << 11) | (a << 6) | (b << 1) | s;
+  const a = (opts.codeA ?? 0) & 0x1f;
+  const b = (opts.codeB ?? 0) & 0x1f;
+  const s = (opts.sign ?? 0) & 0x01;
+  const sel = opts.selector & 0x0f;
+  // WWWW S AAAAA BBBBB  (yaDSKY2 pinned layout)
+  return (sel << 11) | (s << 10) | (a << 5) | b;
 }
 
 describe("relay table", () => {
@@ -54,14 +55,32 @@ describe("relay table", () => {
   });
 });
 
-describe("channel 010 parsing", () => {
-  it("splits selector | A | B | S with selector in the top nibble", () => {
+describe("channel 010 parsing (pinned yaDSKY2 layout: WWWW S AAAAA BBBBB)", () => {
+  it("splits selector | S | A | B with selector in the top nibble", () => {
     const w = encodeCh010({ codeA: 0b11101, codeB: 0b10101, sign: 1, selector: 11 });
     const p = parseCh010(w);
     expect(p.selector).toBe(11);
     expect(p.codeA).toBe(0b11101);
     expect(p.codeB).toBe(0b10101);
     expect(p.sign).toBe(1);
+  });
+
+  it("regression: the raw lower 11 bits 01110_11110_1 decode as sign=0, A=29, B=29 — NOT A=14,B=30,S=1", () => {
+    // The pinned layout is WWWW S AAAAA BBBBB. Any decoder that shifts the
+    // payload by one bit (WWWW AAAAA BBBBB S) will (mis)report A=14 B=30 S=1.
+    // Selector 7 (R1 D2/D3 + PLUS latch) is chosen for a concrete example.
+    const raw = (7 << 11) | 0b01110_11110_1; // selector 7, low 11 bits fixed
+    const p = parseCh010(raw);
+    expect(p.selector).toBe(7);
+    expect(p.sign).toBe(0);
+    expect(p.codeA).toBe(29); // 0b11101 → digit 8
+    expect(p.codeB).toBe(29); // 0b11101 → digit 8
+    // And a variant with the plus-selector sign bit asserted:
+    const raw2 = (7 << 11) | (1 << 10) | (29 << 5) | 29;
+    const p2 = parseCh010(raw2);
+    expect(p2.sign).toBe(1);
+    expect(p2.codeA).toBe(29);
+    expect(p2.codeB).toBe(29);
   });
 });
 
@@ -176,6 +195,27 @@ describe("dsky decoder — selector-12 annunciator row (channel 010)", () => {
     applyDskyOutput(s, TAG | 0o10);
     expect(s.program.digits[0].value).toBe(6);
     expect(s.program.digits[1].value).toBe(3);
+  });
+});
+
+describe("dsky decoder — selector 0 is a no-op (relay-off writes)", () => {
+  it("selector 0 preserves latched digits and annunciators", () => {
+    const s = makeEmptyDecodedDsky();
+    // Set up a non-trivial latched state: PROG=63, R1 D1=8, R2 PLUS on, NO ATT on.
+    applyDskyOutput(s, encodeCh010({ codeA: 0b11100, codeB: 0b11011, selector: 11 }));
+    applyDskyOutput(s, encodeCh010({ codeB: 0b11101, selector: 8 }));
+    applyDskyOutput(s, encodeCh010({ sign: 1, selector: 5 }));
+    applyDskyOutput(s, ANNUNCIATOR_ROW_TAG_VALUE | 0o10);
+    const before = decodedDskyCanonical(s);
+
+    // Luminary writes plain zeros to Channel 010 between relay operations
+    // and when turning the display relays off. These are selector-0 words
+    // and MUST NOT blank the latched display or clear annunciators.
+    for (const w of [0, 0o00000, 0o00007, 0o00777]) applyDskyOutput(s, w);
+
+    // Canonical state unchanged except the eventCount counter.
+    const after = decodedDskyCanonical(s);
+    expect(after.replace(/EC:\d+/, "EC:X")).toBe(before.replace(/EC:\d+/, "EC:X"));
   });
 });
 
