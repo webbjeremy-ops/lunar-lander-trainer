@@ -7,7 +7,7 @@
 // This route intentionally has no visual chrome beyond a status readout so
 // the fixture capture is not visually flaky.
 
-import { createFileRoute, ClientOnly } from "@tanstack/react-router";
+import { createFileRoute, ClientOnly, notFound } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { AgcWorkerClient } from "@/agc/AgcWorkerClient";
 import { agcWasmUrl, ropeById, type RopeImage } from "@/sim/agc/roms";
@@ -15,6 +15,11 @@ import type { AgcEvent, ChannelEventLite, ReadyPayload, StateSnapshot } from "@/
 import { PROTOCOL_VERSION } from "@/agc/protocol";
 import type { DecodedDsky } from "@/agc/dsky/DskyTypes";
 import { decodedDskyCanonical, makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
+
+// Capture harness is opt-in via VITE_AGC_CAPTURE_MODE=true at build time.
+// In normal builds this route throws notFound() and window.__agcCapture is
+// never installed.
+const CAPTURE_MODE_ENABLED = import.meta.env.VITE_AGC_CAPTURE_MODE === "true";
 
 export const Route = createFileRoute("/capture")({
   head: () => ({
@@ -24,6 +29,9 @@ export const Route = createFileRoute("/capture")({
       { name: "robots", content: "noindex" },
     ],
   }),
+  beforeLoad: () => {
+    if (!CAPTURE_MODE_ENABLED) throw notFound();
+  },
   component: () => (
     <ClientOnly fallback={<div style={{ padding: 16, fontFamily: "monospace" }}>booting…</div>}>
       <CapturePage />

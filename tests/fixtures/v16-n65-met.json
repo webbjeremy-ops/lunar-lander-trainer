@@ -1,0 +1,563 @@
+{
+  "kind": "agc-golden-trace",
+  "label": "V16 N65 mission-elapsed-time monitor (Luminary099)",
+  "capturedAt": "2026-07-28T19:59:50.862Z",
+  "metadata": {
+    "protocolVersion": 2,
+    "decoderSchemaVersion": 1,
+    "appCommit": "uncommitted",
+    "emulator": {
+      "repo": "michaelfranzl/webAGC",
+      "commit": "0575ea7a1231e3948bae7d2c22a6ac146da0c38d",
+      "versionString": "2020-12-24 ddc65e7be"
+    },
+    "wasmSha256": "a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14",
+    "rope": {
+      "id": "Luminary099",
+      "sha256": "1f5326e038de5b741b2f27b01ec949dbd688cf1906994e997402587c8628f40e",
+      "sourceCommit": "911e5c0283c629c50cb97666f34065e8c07d71a5",
+      "byteLength": 73728
+    },
+    "captureRoute": "/capture",
+    "note": "Digits are authoritative decoder output at each sample. Only advance/monotonic assertions are meaningful across runs — real time content differs."
+  },
+  "preTestDecoded": {
+    "program": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "verb": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "noun": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "r1": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "r2": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "r3": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "annunciators": {
+      "verbNounFlash": false,
+      "operError": false,
+      "keyRelease": false,
+      "compActy": false,
+      "standby": false,
+      "noAtt": false,
+      "gimbalLock": false,
+      "progAlarm": false,
+      "tracker": false,
+      "temp": false,
+      "uplinkActy": false,
+      "restart": false
+    },
+    "eventCount": 6
+  },
+  "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:compActy=0,gimbalLock=0,keyRelease=0,noAtt=0,operError=0,progAlarm=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,verbNounFlash=0|EC:6",
+  "commands": [
+    {
+      "tickIndex": 99,
+      "missionTimeUs": 1980000,
+      "kind": "reset",
+      "payload": null
+    },
+    {
+      "tickIndex": 40,
+      "missionTimeUs": 800000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 17
+      }
+    },
+    {
+      "tickIndex": 52,
+      "missionTimeUs": 1040000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 1
+      }
+    },
+    {
+      "tickIndex": 62,
+      "missionTimeUs": 1240000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 6
+      }
+    },
+    {
+      "tickIndex": 73,
+      "missionTimeUs": 1460000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 31
+      }
+    },
+    {
+      "tickIndex": 85,
+      "missionTimeUs": 1700000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 6
+      }
+    },
+    {
+      "tickIndex": 95,
+      "missionTimeUs": 1900000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 5
+      }
+    },
+    {
+      "tickIndex": 107,
+      "missionTimeUs": 2140000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 28
+      }
+    }
+  ],
+  "ch010EventCount": 62,
+  "samples": [
+    {
+      "label": "A",
+      "decoded": {
+        "program": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": 1,
+              "segments": 6
+            }
+          ]
+        },
+        "verb": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": 0,
+              "segments": 63
+            }
+          ]
+        },
+        "noun": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ]
+        },
+        "r1": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ],
+          "sign": {
+            "plus": true,
+            "minus": true
+          }
+        },
+        "r2": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": 2,
+              "segments": 91
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ],
+          "sign": {
+            "plus": false,
+            "minus": false
+          }
+        },
+        "r3": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ],
+          "sign": {
+            "plus": false,
+            "minus": false
+          }
+        },
+        "annunciators": {
+          "verbNounFlash": true,
+          "operError": false,
+          "keyRelease": false,
+          "compActy": false,
+          "standby": true,
+          "noAtt": false,
+          "gimbalLock": true,
+          "progAlarm": true,
+          "tracker": false,
+          "temp": true,
+          "uplinkActy": false,
+          "restart": false
+        },
+        "eventCount": 56
+      },
+      "checksum": "PROG:_1|VERB:_0|NOUN:__|R1:+-_____|R2:..__2__|R3:.._____|ANN:compActy=0,gimbalLock=1,keyRelease=0,noAtt=0,operError=0,progAlarm=1,restart=0,standby=1,temp=1,tracker=0,uplinkActy=0,verbNounFlash=1|EC:56",
+      "snapshot": {
+        "tickIndex": 270,
+        "missionTimeUs": 5400000,
+        "lamps": 128,
+        "running": true,
+        "timeScale": 1,
+        "erasableBase": 16,
+        "erasableWindow": [
+          32759,
+          9,
+          32759,
+          0,
+          0,
+          540,
+          16304,
+          16381,
+          16379,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    {
+      "label": "B",
+      "decoded": {
+        "program": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": 0,
+              "segments": 63
+            }
+          ]
+        },
+        "verb": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": 0,
+              "segments": 63
+            }
+          ]
+        },
+        "noun": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ]
+        },
+        "r1": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ],
+          "sign": {
+            "plus": true,
+            "minus": true
+          }
+        },
+        "r2": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": 2,
+              "segments": 91
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ],
+          "sign": {
+            "plus": false,
+            "minus": false
+          }
+        },
+        "r3": {
+          "digits": [
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            },
+            {
+              "value": null,
+              "segments": 0
+            }
+          ],
+          "sign": {
+            "plus": true,
+            "minus": true
+          }
+        },
+        "annunciators": {
+          "verbNounFlash": true,
+          "operError": true,
+          "keyRelease": true,
+          "compActy": true,
+          "standby": true,
+          "noAtt": false,
+          "gimbalLock": false,
+          "progAlarm": false,
+          "tracker": false,
+          "temp": true,
+          "uplinkActy": false,
+          "restart": false
+        },
+        "eventCount": 62
+      },
+      "checksum": "PROG:_0|VERB:_0|NOUN:__|R1:+-_____|R2:..__2__|R3:+-_____|ANN:compActy=1,gimbalLock=0,keyRelease=1,noAtt=0,operError=1,progAlarm=0,restart=0,standby=1,temp=1,tracker=0,uplinkActy=0,verbNounFlash=1|EC:62",
+      "snapshot": {
+        "tickIndex": 431,
+        "missionTimeUs": 8620000,
+        "lamps": 192,
+        "running": true,
+        "timeScale": 1,
+        "erasableBase": 16,
+        "erasableWindow": [
+          32759,
+          9,
+          32759,
+          0,
+          0,
+          862,
+          16326,
+          16379,
+          16381,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,847 @@
+{
+  "kind": "agc-golden-trace",
+  "label": "V35 lamp test (Luminary099)",
+  "capturedAt": "2026-07-28T19:59:31.678Z",
+  "metadata": {
+    "protocolVersion": 2,
+    "decoderSchemaVersion": 1,
+    "appCommit": "uncommitted",
+    "emulator": {
+      "repo": "michaelfranzl/webAGC",
+      "commit": "0575ea7a1231e3948bae7d2c22a6ac146da0c38d",
+      "versionString": "2020-12-24 ddc65e7be"
+    },
+    "wasmSha256": "a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14",
+    "rope": {
+      "id": "Luminary099",
+      "sha256": "1f5326e038de5b741b2f27b01ec949dbd688cf1906994e997402587c8628f40e",
+      "sourceCommit": "911e5c0283c629c50cb97666f34065e8c07d71a5",
+      "byteLength": 73728
+    },
+    "captureRoute": "/capture",
+    "note": "Every digit/lamp value in this file was produced by yaAGC running Luminary099 through the pinned decoder. Do NOT hand-edit."
+  },
+  "preTestDecoded": {
+    "program": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "verb": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "noun": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "r1": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "r2": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "r3": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "annunciators": {
+      "verbNounFlash": false,
+      "operError": false,
+      "keyRelease": false,
+      "compActy": false,
+      "standby": false,
+      "noAtt": false,
+      "gimbalLock": false,
+      "progAlarm": false,
+      "tracker": false,
+      "temp": false,
+      "uplinkActy": false,
+      "restart": false
+    },
+    "eventCount": 6
+  },
+  "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:compActy=0,gimbalLock=0,keyRelease=0,noAtt=0,operError=0,progAlarm=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,verbNounFlash=0|EC:6",
+  "commands": [
+    {
+      "tickIndex": 102,
+      "missionTimeUs": 2040000,
+      "kind": "reset",
+      "payload": null
+    },
+    {
+      "tickIndex": 40,
+      "missionTimeUs": 800000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 17
+      }
+    },
+    {
+      "tickIndex": 50,
+      "missionTimeUs": 1000000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 3
+      }
+    },
+    {
+      "tickIndex": 65,
+      "missionTimeUs": 1300000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 5
+      }
+    },
+    {
+      "tickIndex": 74,
+      "missionTimeUs": 1480000,
+      "kind": "dskyKeyDown",
+      "payload": {
+        "keyCode": 28
+      }
+    }
+  ],
+  "ch010Events": [
+    {
+      "eventId": 80,
+      "tickIndex": 1,
+      "missionTimeUs": 40000,
+      "value": 24832
+    },
+    {
+      "eventId": 84,
+      "tickIndex": 2,
+      "missionTimeUs": 60000,
+      "value": 0
+    },
+    {
+      "eventId": 86,
+      "tickIndex": 3,
+      "missionTimeUs": 80000,
+      "value": 2048
+    },
+    {
+      "eventId": 88,
+      "tickIndex": 4,
+      "missionTimeUs": 100000,
+      "value": 0
+    },
+    {
+      "eventId": 89,
+      "tickIndex": 5,
+      "missionTimeUs": 120000,
+      "value": 22528
+    },
+    {
+      "eventId": 90,
+      "tickIndex": 6,
+      "missionTimeUs": 140000,
+      "value": 0
+    },
+    {
+      "eventId": 101,
+      "tickIndex": 43,
+      "missionTimeUs": 880000,
+      "value": 20480
+    },
+    {
+      "eventId": 104,
+      "tickIndex": 44,
+      "missionTimeUs": 900000,
+      "value": 0
+    },
+    {
+      "eventId": 107,
+      "tickIndex": 45,
+      "missionTimeUs": 920000,
+      "value": 18432
+    },
+    {
+      "eventId": 109,
+      "tickIndex": 46,
+      "missionTimeUs": 940000,
+      "value": 0
+    },
+    {
+      "eventId": 112,
+      "tickIndex": 47,
+      "missionTimeUs": 960000,
+      "value": 16384
+    },
+    {
+      "eventId": 114,
+      "tickIndex": 48,
+      "missionTimeUs": 980000,
+      "value": 0
+    },
+    {
+      "eventId": 115,
+      "tickIndex": 49,
+      "missionTimeUs": 1000000,
+      "value": 14336
+    },
+    {
+      "eventId": 118,
+      "tickIndex": 50,
+      "missionTimeUs": 1020000,
+      "value": 0
+    },
+    {
+      "eventId": 119,
+      "tickIndex": 51,
+      "missionTimeUs": 1040000,
+      "value": 12288
+    },
+    {
+      "eventId": 121,
+      "tickIndex": 52,
+      "missionTimeUs": 1060000,
+      "value": 0
+    },
+    {
+      "eventId": 127,
+      "tickIndex": 53,
+      "missionTimeUs": 1080000,
+      "value": 10240
+    },
+    {
+      "eventId": 130,
+      "tickIndex": 54,
+      "missionTimeUs": 1100000,
+      "value": 0
+    },
+    {
+      "eventId": 131,
+      "tickIndex": 55,
+      "missionTimeUs": 1120000,
+      "value": 8192
+    },
+    {
+      "eventId": 132,
+      "tickIndex": 56,
+      "missionTimeUs": 1140000,
+      "value": 0
+    },
+    {
+      "eventId": 133,
+      "tickIndex": 57,
+      "missionTimeUs": 1160000,
+      "value": 6144
+    },
+    {
+      "eventId": 134,
+      "tickIndex": 58,
+      "missionTimeUs": 1180000,
+      "value": 0
+    },
+    {
+      "eventId": 135,
+      "tickIndex": 59,
+      "missionTimeUs": 1200000,
+      "value": 4096
+    },
+    {
+      "eventId": 136,
+      "tickIndex": 60,
+      "missionTimeUs": 1220000,
+      "value": 0
+    },
+    {
+      "eventId": 137,
+      "tickIndex": 61,
+      "missionTimeUs": 1240000,
+      "value": 21344
+    },
+    {
+      "eventId": 138,
+      "tickIndex": 62,
+      "missionTimeUs": 1260000,
+      "value": 0
+    },
+    {
+      "eventId": 146,
+      "tickIndex": 67,
+      "missionTimeUs": 1360000,
+      "value": 21374
+    },
+    {
+      "eventId": 150,
+      "tickIndex": 68,
+      "missionTimeUs": 1380000,
+      "value": 0
+    },
+    {
+      "eventId": 158,
+      "tickIndex": 79,
+      "missionTimeUs": 1600000,
+      "value": 25020
+    },
+    {
+      "eventId": 160,
+      "tickIndex": 80,
+      "missionTimeUs": 1620000,
+      "value": 0
+    },
+    {
+      "eventId": 161,
+      "tickIndex": 81,
+      "missionTimeUs": 1640000,
+      "value": 21437
+    },
+    {
+      "eventId": 162,
+      "tickIndex": 82,
+      "missionTimeUs": 1660000,
+      "value": 0
+    },
+    {
+      "eventId": 163,
+      "tickIndex": 83,
+      "missionTimeUs": 1680000,
+      "value": 19389
+    },
+    {
+      "eventId": 165,
+      "tickIndex": 84,
+      "missionTimeUs": 1700000,
+      "value": 0
+    },
+    {
+      "eventId": 168,
+      "tickIndex": 85,
+      "missionTimeUs": 1720000,
+      "value": 17341
+    },
+    {
+      "eventId": 171,
+      "tickIndex": 86,
+      "missionTimeUs": 1740000,
+      "value": 0
+    },
+    {
+      "eventId": 172,
+      "tickIndex": 87,
+      "missionTimeUs": 1760000,
+      "value": 16317
+    },
+    {
+      "eventId": 173,
+      "tickIndex": 88,
+      "missionTimeUs": 1780000,
+      "value": 0
+    },
+    {
+      "eventId": 174,
+      "tickIndex": 89,
+      "missionTimeUs": 1800000,
+      "value": 13245
+    },
+    {
+      "eventId": 175,
+      "tickIndex": 90,
+      "missionTimeUs": 1820000,
+      "value": 0
+    },
+    {
+      "eventId": 176,
+      "tickIndex": 91,
+      "missionTimeUs": 1840000,
+      "value": 12221
+    },
+    {
+      "eventId": 179,
+      "tickIndex": 92,
+      "missionTimeUs": 1860000,
+      "value": 0
+    },
+    {
+      "eventId": 181,
+      "tickIndex": 93,
+      "missionTimeUs": 1880000,
+      "value": 9149
+    },
+    {
+      "eventId": 182,
+      "tickIndex": 94,
+      "missionTimeUs": 1900000,
+      "value": 0
+    },
+    {
+      "eventId": 184,
+      "tickIndex": 95,
+      "missionTimeUs": 1920000,
+      "value": 7101
+    },
+    {
+      "eventId": 186,
+      "tickIndex": 96,
+      "missionTimeUs": 1940000,
+      "value": 0
+    },
+    {
+      "eventId": 189,
+      "tickIndex": 97,
+      "missionTimeUs": 1960000,
+      "value": 6077
+    },
+    {
+      "eventId": 192,
+      "tickIndex": 98,
+      "missionTimeUs": 1980000,
+      "value": 0
+    },
+    {
+      "eventId": 195,
+      "tickIndex": 99,
+      "missionTimeUs": 2000000,
+      "value": 3005
+    },
+    {
+      "eventId": 198,
+      "tickIndex": 100,
+      "missionTimeUs": 2020000,
+      "value": 0
+    },
+    {
+      "eventId": 199,
+      "tickIndex": 101,
+      "missionTimeUs": 2040000,
+      "value": 23485
+    },
+    {
+      "eventId": 201,
+      "tickIndex": 102,
+      "missionTimeUs": 2060000,
+      "value": 0
+    },
+    {
+      "eventId": 329,
+      "tickIndex": 331,
+      "missionTimeUs": 6640000,
+      "value": 24576
+    },
+    {
+      "eventId": 330,
+      "tickIndex": 332,
+      "missionTimeUs": 6660000,
+      "value": 0
+    },
+    {
+      "eventId": 331,
+      "tickIndex": 333,
+      "missionTimeUs": 6680000,
+      "value": 22528
+    },
+    {
+      "eventId": 332,
+      "tickIndex": 334,
+      "missionTimeUs": 6700000,
+      "value": 0
+    }
+  ],
+  "peak": {
+    "tickIndex": 80,
+    "missionTimeUs": 1600000,
+    "score": 48,
+    "decoded": {
+      "program": {
+        "digits": [
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          }
+        ]
+      },
+      "verb": {
+        "digits": [
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          }
+        ]
+      },
+      "noun": {
+        "digits": [
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          }
+        ]
+      },
+      "r1": {
+        "digits": [
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          }
+        ],
+        "sign": {
+          "plus": false,
+          "minus": false
+        }
+      },
+      "r2": {
+        "digits": [
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          }
+        ],
+        "sign": {
+          "plus": false,
+          "minus": false
+        }
+      },
+      "r3": {
+        "digits": [
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          },
+          {
+            "value": null,
+            "segments": 0
+          }
+        ],
+        "sign": {
+          "plus": false,
+          "minus": false
+        }
+      },
+      "annunciators": {
+        "verbNounFlash": true,
+        "operError": false,
+        "keyRelease": true,
+        "compActy": false,
+        "standby": true,
+        "noAtt": true,
+        "gimbalLock": true,
+        "progAlarm": false,
+        "tracker": false,
+        "temp": false,
+        "uplinkActy": false,
+        "restart": true
+      },
+      "eventCount": 29
+    },
+    "checksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:compActy=0,gimbalLock=1,keyRelease=1,noAtt=1,operError=0,progAlarm=0,restart=1,standby=1,temp=0,tracker=0,uplinkActy=0,verbNounFlash=1|EC:29"
+  },
+  "finalDecoded": {
+    "program": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "verb": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "noun": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ]
+    },
+    "r1": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "r2": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "r3": {
+      "digits": [
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        },
+        {
+          "value": null,
+          "segments": 0
+        }
+      ],
+      "sign": {
+        "plus": false,
+        "minus": false
+      }
+    },
+    "annunciators": {
+      "verbNounFlash": true,
+      "operError": false,
+      "keyRelease": true,
+      "compActy": false,
+      "standby": true,
+      "noAtt": true,
+      "gimbalLock": true,
+      "progAlarm": false,
+      "tracker": false,
+      "temp": false,
+      "uplinkActy": false,
+      "restart": true
+    },
+    "eventCount": 56
+  },
+  "finalChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:compActy=0,gimbalLock=1,keyRelease=1,noAtt=1,operError=0,progAlarm=0,restart=1,standby=1,temp=0,tracker=0,uplinkActy=0,verbNounFlash=1|EC:56",
+  "finalSnapshot": {
+    "tickIndex": 485,
+    "missionTimeUs": 9700000,
+    "lamps": 129,
+    "running": true,
+    "timeScale": 1,
+    "erasableBase": 16,
+    "erasableWindow": [
+      0,
+      10,
+      0,
+      0,
+      0,
+      970,
+      9160,
+      16379,
+      16379,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}

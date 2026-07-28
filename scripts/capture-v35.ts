@@ -37,7 +37,7 @@ async function waitFor<T>(fn: () => Promise<T | null | undefined>, timeoutMs = 2
 }
 
 async function main() {
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined });
   const context = await browser.newContext();
   const page = await context.newPage();
   page.on("console", (m) => {

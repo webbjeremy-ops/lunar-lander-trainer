@@ -72,3 +72,105 @@ be verified in isolation from the emulator. The remaining PROVISIONAL
 items (#2, #3, #4) are resolved by the reproducible golden traces
 produced in Step 2 and Step 4; the audit is complete and Step 2 may
 proceed.
+
+## Step 2/4 Capture Report (2026 rerun)
+
+### Fixtures committed
+
+* `tests/fixtures/v35-lamp-test.json` — 56 channel-010 events, 156
+  decoded frames. Captured on `/capture` (gated by
+  `VITE_AGC_CAPTURE_MODE=true`) via `bunx wrangler dev` serving the
+  production build. Emulator `webAGC@0575ea7`, WASM sha256 pinned in
+  metadata, rope `Luminary099` sha256 pinned in metadata.
+* `tests/fixtures/v16-n65-met.json` — 2 samples 3 s apart. Mission-time
+  delta A→B = 3,220,000 µs (strictly monotonic).
+
+### Test posture
+
+`src/agc/dsky/__tests__/goldenTraceReplay.test.ts` now HARD-FAILS if
+either fixture is absent (no soft skip). Adds fixture-shape invariants
+(metadata completeness, no machine-specific paths, monotonic MET
+advance for V16 N65). All 45 vitest tests pass.
+
+### Provisional audit findings — resolution status
+
+Findings #2 (selector table), #3 (annunciator map), #4 (sign latch)
+were marked PROVISIONAL pending real-emulator traces. **The captured
+traces show they are NOT resolved — the current mappings are almost
+certainly wrong.** The pure-decoder replay is deterministic and the
+fixture invariants pass, but the *values* the decoder produces from
+real yaAGC/Luminary099 output do not match what a Block-II DSKY would
+authentically display.
+
+#### Evidence — V35 lamp test peak
+
+Expected (real Block-II): every digit segment lit, every annunciator
+latched ON, PROG/VERB/NOUN all showing `88`, R1/R2/R3 all `+88888` or
+`-88888`, verbNounFlash off.
+
+Captured peak checksum:
+
+```
+PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____
+ANN:compActy=0,gimbalLock=1,keyRelease=1,noAtt=1,operError=0,
+    progAlarm=0,restart=1,standby=1,temp=0,tracker=0,
+    uplinkActy=0,verbNounFlash=1|EC:29
+```
+
+Every digit is blank. Selector-12 annunciators show an implausible
+subset ON *before the test even runs* (see V16 N65 pre-test with the
+same annunciators lit at MET 5.4 s). This is characteristic of a
+selector or bit-mask off-by-one, not of the AGC.
+
+#### Evidence — V16 N65 (MET monitor)
+
+At `sample-A` (MET 5.4 s) and `sample-B` (MET 8.6 s) the only lit
+digit in either sample is `R2.digits[2] = "2"` (segments 91). R1 and
+R3 are entirely blank. A real MET monitor would populate R1 (hours),
+R2 (minutes), R3 (seconds/hundredths) and advance R3 every ~10 ms.
+
+The program register reads `01` at `sample-A` and `00` at `sample-B`.
+Luminary099 boot-idle is P00, so the transient `01` and lone `2` in
+R2 are more consistent with selector-12/10/11 A vs B fields being
+swapped or the register→selector routing being off by one selector
+index than with the AGC actually driving those values.
+
+#### Concrete suspected defects to investigate in M2.1 next step
+
+1. **`SELECTOR_TABLE` A/B → digit index mapping.** Current table pairs
+   digits (3,4), (1,2), (0,-) for R1/R2/R3 and (0,1) for
+   PROG/VERB/NOUN. The lone lit digit at R2[2] under V16 N65 is
+   inconsistent with any Luminary MET layout under this mapping and
+   suggests either (a) A/B are swapped within a selector, or (b) the
+   register→selector routing is shifted (e.g. our "selector 4" should
+   drive R2 D4/D5 in a different order, or should drive R1).
+2. **`SELECTOR_12_ANNUNCIATORS` bit plan.** The mapping of the five A
+   bits and five B bits to specific annunciators is *not* cited from
+   yaDSKY source — it was heuristic. The pre-test "half the panel is
+   on" pattern is the classic symptom of a wrong mask/bit-order. The
+   authoritative reference is virtualagc yaDSKY
+   `ParseIoPacket`/`UpdateDsky` selector-12 handling; this needs to
+   be transcribed exactly from the pinned yaAGC commit
+   (`0575ea7`) rather than reconstructed.
+3. **`applySignLatch` polarity.** With so few sign writes in the
+   traces we cannot yet disprove the current "plus = S bit, minus =
+   codeA bit 0" split, but the V16 N65 R2 has `..` (both off) and R1
+   has `+-` (both on) with no numeric digits between them — a
+   both-on with all digits blank is diagnostic noise, not a real AGC
+   pattern. Independent-latch semantics may still be correct; the
+   polarity assignment likely is not.
+
+The correct next action is to transcribe the selector table and
+annunciator plan from yaDSKY at `webAGC@0575ea7` (or its virtualagc
+upstream at the same source commit), then rerun the capture to
+confirm the traces produce authentic lamp-test and MET displays.
+**Not** to invent new mappings and hope the tests still pass.
+
+### Not started yet
+
+Per instruction "Complete the capture phase before starting the
+LessonEngine", the LessonEngine, Learn route, Free Exploration
+completion, and production browser tests remain unstarted. Awaiting
+direction on how to source the authoritative selector/annunciator
+mapping (fetch virtualagc yaDSKY at the pinned commit vs. another
+approach) before proceeding.
