@@ -60,11 +60,17 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope, onClient, onSnapshot, onReady }: {
+export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: {
   rope: RopeImage;
   onClient?: (client: AgcWorkerClient | null) => void;
   onSnapshot?: (snap: StateSnapshot) => void;
   onReady?: (ready: ReadyPayload) => void;
+  /** When true, ALL user input into this DSKY is suppressed — the pointer
+   *  keys are disabled and the global keyboard listener returns early.
+   *  Used by /learn to gate typing until the Worker has minted an attempt
+   *  boundary, preventing races where a keypress carries an eventId that
+   *  precedes the boundary the lesson attempt is scoped to. */
+  disabled?: boolean;
 }) {
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
@@ -158,8 +164,12 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
     }
   }, []);
 
+  const disabledRef = useRef(disabled);
+  useEffect(() => { disabledRef.current = disabled; }, [disabled]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (disabledRef.current) return;
       const k = e.key.toUpperCase();
       const map: Record<string, number | "PRO"> = {
         "0": DSKY_KEYS.ZERO, "1": DSKY_KEYS.ONE, "2": DSKY_KEYS.TWO, "3": DSKY_KEYS.THREE,
@@ -409,7 +419,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
                 if (code === "PRO") clientRef.current?.proceedKey(false);
               }}
               onPointerCancel={releaseAll}
-              disabled={phase !== "ready"}
+              disabled={phase !== "ready" || disabled}
               className="rounded border border-neutral-700 bg-neutral-800 px-2 py-3 font-mono text-xs text-neutral-100 hover:border-emerald-500 hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40"
             >
               {label}

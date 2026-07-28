@@ -17,6 +17,7 @@ import {
   type AgcEvent,
   type C2WEnvelope,
   type Diagnostics,
+  type EventBoundaryPayload,
   type ReadyPayload,
   type RopeId,
   type StateSnapshot,
@@ -146,6 +147,21 @@ export class AgcWorkerClient {
   requestDiagnostics(): Promise<Diagnostics> {
     return this.request({ type: "requestDiagnostics" }, (env) => {
       if (env.message.type !== "diagnostics") throw new Error("expected diagnostics reply");
+      return env.message.payload;
+    });
+  }
+
+  /**
+   * Ask the Worker to allocate a fresh boundary id from the shared eventId
+   * counter. Every input and channel event emitted after the Worker sends
+   * the reply is guaranteed to carry an eventId > boundaryEventId. Lesson
+   * attempts MUST open on this reply — never on a snapshot's
+   * channelEventCount, which is a different namespace.
+   */
+  requestEventBoundary(): Promise<EventBoundaryPayload> {
+    return this.request({ type: "requestEventBoundary" }, (env) => {
+      if (env.message.type !== "eventBoundary")
+        throw new Error("expected eventBoundary reply");
       return env.message.payload;
     });
   }

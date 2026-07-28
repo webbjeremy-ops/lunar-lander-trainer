@@ -33,8 +33,23 @@ export type AgcCommand =
   | { type: "stepAgcDebug"; steps: number }
   | { type: "requestSnapshot" }
   | { type: "requestDiagnostics" }
+  | { type: "requestEventBoundary" }
   | { type: "configure"; erasableBase?: number; erasableLength?: number }
   | { type: "dispose" };
+
+/**
+ * Worker-allocated attempt boundary. The `boundaryEventId` is drawn from the
+ * SAME monotonic counter used by inputAccepted/channelUpdate events. Every
+ * accepted input and every channel event emitted after this reply will have
+ * eventId > boundaryEventId. Lesson attempts open on the boundary, so any
+ * stale evidence carrying an id <= boundaryEventId falls out of scope.
+ */
+export interface EventBoundaryPayload {
+  boundaryEventId: number;
+  tickIndex: number;
+  missionTimeUs: number;
+  totalAgcSteps: number;
+}
 
 export interface ChannelEventLite {
   /** Monotonic per-worker id assigned at the moment of AGC OUTPUT. */
@@ -63,6 +78,12 @@ export interface StateSnapshot {
   avgTickMs: number;
   schedulerOverruns: number;
   tickIndex: number;
+  /**
+   * Highest eventId allocated so far (inputs + channels + boundaries share
+   * this counter). Snapshot readers use this to reason about the global
+   * ordering namespace; it is NOT the same as `channelEventCount`.
+   */
+  latestEventId: number;
   /** Full latched DSKY state; deterministic replay compares against this. */
   decodedDsky: DecodedDsky;
 }
@@ -97,6 +118,7 @@ export type AgcEvent =
   | { type: "dskyDecoded"; payload: { decoded: DecodedDsky; missionTimeUs: number; tickIndex: number } }
   | { type: "channelUpdate"; payload: ChannelEventLite }
   | { type: "inputAccepted"; payload: InputAcceptedEvent }
+  | { type: "eventBoundary"; payload: EventBoundaryPayload }
   | { type: "alarm"; payload: { code: number; missionTimeUs: number; eventId: number; tickIndex: number } }
   | { type: "paused"; payload: { missionTimeUs: number } }
   | { type: "resumed"; payload: { missionTimeUs: number; timeScale: number } }

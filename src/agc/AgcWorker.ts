@@ -146,6 +146,7 @@ function buildSnapshot(): StateSnapshot {
       avgTickMs: 0,
       schedulerOverruns: 0,
       tickIndex: 0,
+      latestEventId: state.nextEventId - 1,
       decodedDsky: state.decodedDsky,
     };
   }
@@ -189,6 +190,7 @@ function buildSnapshot(): StateSnapshot {
     avgTickMs: clockStats.avgTickMs,
     schedulerOverruns: clockStats.overruns,
     tickIndex: clockStats.ticksExecuted,
+    latestEventId: state.nextEventId - 1,
     decodedDsky: state.decodedDsky,
   };
 }
@@ -526,6 +528,27 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
     }
     case "requestDiagnostics": {
       send({ type: "diagnostics", payload: diagnostics() }, requestId);
+      return;
+    }
+    case "requestEventBoundary": {
+      // Allocate a boundary id from the SAME nextEventId counter used by
+      // inputAccepted and channelUpdate. Every subsequent event has id >
+      // boundaryEventId, so lesson attempts opened on this boundary
+      // strictly reject stale evidence without any main-thread timing.
+      const boundaryEventId = state.nextEventId++;
+      const stats = state.clock.stats();
+      send(
+        {
+          type: "eventBoundary",
+          payload: {
+            boundaryEventId,
+            tickIndex: stats.ticksExecuted,
+            missionTimeUs: Number(state.clock.getMissionTimeUs()),
+            totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          },
+        },
+        requestId,
+      );
       return;
     }
     case "dispose": {
