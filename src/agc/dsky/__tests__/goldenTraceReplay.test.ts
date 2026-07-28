@@ -50,13 +50,17 @@ interface V35Fixture {
 
 interface V16Fixture {
   kind: "agc-golden-trace";
-  metadata: V35Fixture["metadata"];
-  samples: Array<{
-    label: string;
-    decoded: DecodedDsky;
-    checksum: string;
-    snapshot: { missionTimeUs: number; tickIndex: number } | null;
-  }>;
+  metadata: V35Fixture["metadata"] & {
+    enterTick: number;
+    enterEventId: number | null;
+    firstStableCheckpoint: { tickIndex: number; r3Anchor: number; checksum: string };
+    lastStableCheckpoint: { tickIndex: number; r3Anchor: number; checksum: string };
+  };
+  dskyEvents: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; channel: number; value: number }>;
+  decodedTimeline: Array<{ tickIndex: number; missionTimeUs: number; decoded: DecodedDsky; checksum: string }>;
+  stableCheckpoints: Array<{ index: number; tickIndex: number; missionTimeUs: number; r3Digits: number[]; r3Anchor: number; checksum: string }>;
+  finalDecoded: DecodedDsky;
+  finalChecksum: string;
 }
 
 function loadJson<T>(rel: string): T {
@@ -160,21 +164,40 @@ describe("V16 N65 mission-elapsed-time golden trace", () => {
     expect(fx.metadata.protocolVersion).toBeGreaterThanOrEqual(2);
     expect(fx.metadata.wasmSha256).toMatch(/^[0-9a-f]{64}$/);
     expect(fx.metadata.rope.sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(fx.samples.length).toBeGreaterThanOrEqual(2);
+    expect(fx.dskyEvents.length).toBeGreaterThan(0);
+    expect(fx.decodedTimeline.length).toBeGreaterThan(0);
+    expect(fx.stableCheckpoints.length).toBeGreaterThanOrEqual(3);
+    expect(typeof fx.metadata.enterTick).toBe("number");
     assertNoMachineSpecificPaths(fx, "v16-n65");
   });
 
-  it("records at least two advancing decoded MET samples", () => {
-    // Each sample must carry a snapshot with monotonically increasing mission
-    // time. This is the "advance" invariant the audit requires.
-    const times = fx.samples.map((s) => s.snapshot?.missionTimeUs ?? -1);
-    for (const t of times) expect(t).toBeGreaterThan(0);
-    for (let i = 1; i < times.length; i++) {
-      expect(times[i]!).toBeGreaterThan(times[i - 1]!);
+  it("has at least two stable V16/N65 checkpoints with forward-progressing R3", () => {
+    const first = fx.stableCheckpoints[0]!;
+    const last = fx.stableCheckpoints[fx.stableCheckpoints.length - 1]!;
+    expect(last.r3Anchor).toBeGreaterThan(first.r3Anchor);
+    expect(last.tickIndex).toBeGreaterThan(first.tickIndex);
+    // Every stable checkpoint carries VERB=16, NOUN=65 with all r3 digits valid.
+    for (const c of fx.stableCheckpoints) {
+      expect(c.r3Digits.length).toBe(5);
+      expect(c.r3Digits.every((d) => d >= 0 && d <= 9)).toBe(true);
     }
-    // Sample checksums must differ (at minimum the eventCount / MET display
-    // digits advance between snapshots taken 3s apart).
-    const uniqueChecksums = new Set(fx.samples.map((s) => s.checksum));
-    expect(uniqueChecksums.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it("pure decoder replay of dskyEvents reproduces the fixture final checksum", () => {
+    const state = makeEmptyDecodedDsky();
+    for (const e of fx.dskyEvents) applyDskyChannelEvent(state, e.channel, e.value);
+    expect(decodedDskyCanonical(state)).toBe(fx.finalChecksum);
+  });
+
+  it("pure decoder replay produces every stable checkpoint checksum", () => {
+    const state = makeEmptyDecodedDsky();
+    const seen = new Set<string>();
+    for (const e of fx.dskyEvents) {
+      applyDskyChannelEvent(state, e.channel, e.value);
+      seen.add(decodedDskyCanonical(state));
+    }
+    for (const c of fx.stableCheckpoints) {
+      expect(seen.has(c.checksum), `pure replay never produced checkpoint checksum at tick ${c.tickIndex}`).toBe(true);
+    }
   });
 });
