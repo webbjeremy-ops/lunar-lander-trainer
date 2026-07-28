@@ -70,6 +70,8 @@ interface WorkerState {
    *  from here instead of re-deriving context from the current clock. */
   recentEventsRing: ChannelEventLite[];
   recentEventsCap: number;
+}
+
 
 const state: WorkerState = {
   adapter: null,
