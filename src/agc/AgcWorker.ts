@@ -285,16 +285,17 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       if (state.adapter) return;
       state.workerState = "initializing";
       const a = new AgcCoreAdapter({
-        onChannelUpdate: (ch, val) =>
+        onChannelUpdate: (ch, val) => {
+          const eventId = state.nextEventId++;
+          const tickIndex = currentTickIndex();
+          const missionTimeUs = Number(state.clock.getMissionTimeUs());
+          // Channel 010 → drive the authentic latched DSKY decoder in order.
+          if (ch === 0o10) applyDskyOutput(state.decodedDsky, val);
           send({
             type: "channelUpdate",
-            payload: {
-              channel: ch,
-              value: val,
-              seq: 0,
-              missionTimeUs: Number(state.clock.getMissionTimeUs()),
-            },
-          }),
+            payload: { eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs },
+          });
+        },
       });
       await a.init(cmd.wasmUrl);
       state.adapter = a;
