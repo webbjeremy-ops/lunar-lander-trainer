@@ -65,7 +65,13 @@ interface WorkerState {
   lastChannelEventCount: number;
   decodedDsky: DecodedDsky;
   nextEventId: number;
+  /** Worker-owned bounded ring of ChannelEventLite that preserves each
+   *  event's ORIGINAL eventId / tickIndex / missionTimeUs. Snapshots read
+   *  from here instead of re-deriving context from the current clock. */
+  recentEventsRing: ChannelEventLite[];
+  recentEventsCap: number;
 }
+
 
 const state: WorkerState = {
   adapter: null,
@@ -94,6 +100,8 @@ const state: WorkerState = {
   lastChannelEventCount: 0,
   decodedDsky: makeEmptyDecodedDsky(),
   nextEventId: 1,
+  recentEventsRing: [],
+  recentEventsCap: 64,
 };
 
 function currentTickIndex(): number {
@@ -153,15 +161,10 @@ function buildSnapshot(): StateSnapshot {
   const era = adapter.erasable();
   const window: number[] = new Array(state.erasableLength);
   for (let i = 0; i < state.erasableLength; i++) window[i] = era[state.erasableBase + i] ?? 0;
-  const recentRaw = adapter.recentEvents(24);
-  const recentEvents: ChannelEventLite[] = recentRaw.map((e) => ({
-    eventId: e.seq,
-    tickIndex: currentTickIndex(),
-    channel: e.channel,
-    value: e.value,
-    seq: e.seq,
-    missionTimeUs: Number(state.clock.getMissionTimeUs()),
-  }));
+  // Read from the Worker-owned ring so each ChannelEventLite retains the
+  // eventId, tickIndex, and missionTimeUs captured AT THE MOMENT the event
+  // was emitted. Do NOT re-derive tick/time from the current clock here.
+  const recentEvents: ChannelEventLite[] = state.recentEventsRing.slice(-24);
   const clockStats = state.clock.stats();
   return {
     version: SNAPSHOT_SCHEMA_VERSION,
@@ -299,10 +302,16 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           const missionTimeUs = Number(state.clock.getMissionTimeUs());
           // Channel 010 → drive the authentic latched DSKY decoder in order.
           if (ch === 0o10) applyDskyOutput(state.decodedDsky, val);
-          send({
-            type: "channelUpdate",
-            payload: { eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs },
-          });
+          const lite: ChannelEventLite = {
+            eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs,
+          };
+          // Preserve the per-event context in the Worker-owned ring so
+          // buildSnapshot cannot lose it. Bounded so it cannot grow.
+          state.recentEventsRing.push(lite);
+          if (state.recentEventsRing.length > state.recentEventsCap) {
+            state.recentEventsRing.splice(0, state.recentEventsRing.length - state.recentEventsCap);
+          }
+          send({ type: "channelUpdate", payload: lite });
         },
       });
       await a.init(cmd.wasmUrl);
@@ -402,6 +411,7 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
+      state.recentEventsRing.length = 0;
       state.lastLamps = 0;
       state.lastChannelEventCount = 0;
       state.coalescer.offer(buildSnapshot());
