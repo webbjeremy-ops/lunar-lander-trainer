@@ -164,8 +164,12 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
     }
   }, []);
 
+  const disabledRef = useRef(disabled);
+  useEffect(() => { disabledRef.current = disabled; }, [disabled]);
+
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
+      if (disabledRef.current) return;
       const k = e.key.toUpperCase();
       const map: Record<string, number | "PRO"> = {
         "0": DSKY_KEYS.ZERO, "1": DSKY_KEYS.ONE, "2": DSKY_KEYS.TWO, "3": DSKY_KEYS.THREE,
