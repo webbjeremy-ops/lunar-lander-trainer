@@ -1,15 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Pure, framework-independent DSKY decoder. Consumes ordered channel-010
-// events (one per AGC OUTPUT to channel 010, in original order and never
-// coalesced) and mutates a latched DecodedDsky.
+//
+// Pure, framework-independent DSKY decoder. Consumes ordered AGC channel
+// writes (channel 010 for digits/selector-12 annunciator row, channel 011
+// and channel 0163 for webAGC synthetic annunciators) and mutates a latched
+// DecodedDsky in place.
 //
 // Guarantees:
 //   * Deterministic: same event stream ⇒ identical DecodedDsky.
 //   * Never manufactures output: fields only change when a corresponding
-//     channel-010 write directs them to change.
+//     write directs them to change.
 //   * Order-preserving: the caller is responsible for delivering events in
-//     the exact order they left the AGC (see AgcCoreAdapter.drainIo which
-//     preserves per-tick output order).
+//     the exact order they left the AGC.
+//
+// All decoder tables in DskyChannelMap.ts are transcribed source-normative
+// from michaelfranzl/virtualagc @ ddc65e7bed41f... — the exact revision
+// that produced the pinned yaAGC.wasm.
 
 import {
   ANNUNCIATORS_OFF,
@@ -17,58 +22,92 @@ import {
   makeEmptyDecodedDsky,
   SIGN_OFF,
   type DecodedDsky,
+  type DskyAnnunciators,
   type DskyRegister,
 } from "./DskyTypes";
 import { decodeRelayCode } from "./DskyRelayTable";
 import {
-  applySignLatch,
+  CH010_ANNUNCIATOR_MASKS,
+  CH011_ANNUNCIATOR_MASKS,
+  CH0163_ANNUNCIATOR_MASKS,
+  isAnnunciatorRow,
   parseCh010,
-  SELECTOR_12_ANNUNCIATORS,
   SELECTOR_TABLE,
+  type FieldTarget,
 } from "./DskyChannelMap";
 
+function writeField(state: DecodedDsky, tgt: FieldTarget, code5: number): void {
+  const reg = state[tgt.register] as DskyRegister;
+  reg.digits[tgt.digit] = decodeRelayCode(code5);
+}
+
 /**
- * Apply one channel-010 write to `state`, mutating it in place, and return
- * the mutated state for convenience.
+ * Apply one channel-010 write to `state`, mutating it in place.
+ * Handles digit-row selectors 1..11 AND the selector-12 annunciator row.
  */
 export function applyDskyOutput(state: DecodedDsky, word: number): DecodedDsky {
   state.eventCount += 1;
-  const p = parseCh010(word);
+  const raw = word & 0o77777;
+
+  // Annunciator row is identified by tag bits, NOT by the selector field
+  // alone (though they coincide when the tag matches).
+  if (isAnnunciatorRow(raw)) {
+    for (const { key, mask } of CH010_ANNUNCIATOR_MASKS) {
+      state.annunciators[key] = (raw & mask) !== 0;
+    }
+    return state;
+  }
+
+  const p = parseCh010(raw);
   const target = SELECTOR_TABLE[p.selector];
-  if (!target) return state; // selector out of range 1..12 → ignored
+  if (!target) return state; // selector 0 / 12..15 with no matching row → ignore
 
-  const reg = state[target.register] as DskyRegister;
-
-  // Digit A
-  if (target.digitA !== null) {
-    reg.digits[target.digitA] = decodeRelayCode(p.codeA);
-  }
-  // Digit B
-  if (target.digitB !== null) {
-    reg.digits[target.digitB] = decodeRelayCode(p.codeB);
-  }
-  // Sign latch
-  if (target.hasSign && reg.sign) {
-    reg.sign = applySignLatch(reg.sign, p.sign, p.codeA);
-  }
-  // Selector 12 also carries annunciator + flag bits
-  if (p.selector === 12) {
-    const ann = state.annunciators;
-    const plan = SELECTOR_12_ANNUNCIATORS;
-    for (const [k, mask] of Object.entries(plan.fromA)) {
-      (ann as unknown as Record<string, boolean>)[k] = (p.codeA & (mask as number)) !== 0;
-    }
-    for (const [k, mask] of Object.entries(plan.fromB)) {
-      (ann as unknown as Record<string, boolean>)[k] = (p.codeB & (mask as number)) !== 0;
-    }
-    if (plan.fromSign) {
-      (ann as unknown as Record<string, boolean>)[plan.fromSign] = p.sign === 1;
+  if (target.fieldA) writeField(state, target.fieldA, p.codeA);
+  if (target.fieldB) writeField(state, target.fieldB, p.codeB);
+  if (target.signLatch) {
+    const reg = state[target.signLatch.register] as DskyRegister;
+    if (reg.sign) {
+      // Independent latch: S=1 sets the row's kind, S=0 clears it.
+      reg.sign[target.signLatch.kind] = p.sign === 1;
     }
   }
   return state;
 }
 
-/** Apply a batch of channel-010 words in order. */
+/** Apply a channel-011 write (webAGC synthetic annunciators). */
+export function applyDskyChannel011(state: DecodedDsky, word: number): DecodedDsky {
+  state.eventCount += 1;
+  applyAnnunciatorMasks(state.annunciators, word, CH011_ANNUNCIATOR_MASKS);
+  return state;
+}
+
+/** Apply a channel-0163 write (webAGC synthetic annunciators). */
+export function applyDskyChannel0163(state: DecodedDsky, word: number): DecodedDsky {
+  state.eventCount += 1;
+  applyAnnunciatorMasks(state.annunciators, word, CH0163_ANNUNCIATOR_MASKS);
+  return state;
+}
+
+function applyAnnunciatorMasks(
+  ann: DskyAnnunciators,
+  word: number,
+  masks: ReadonlyArray<{ key: keyof DskyAnnunciators; mask: number }>,
+): void {
+  for (const { key, mask } of masks) ann[key] = (word & mask) !== 0;
+}
+
+/** Route a raw AGC channel write to the appropriate decoder handler.
+ *  Returns true when the channel was consumed by the decoder. */
+export function applyDskyChannelEvent(state: DecodedDsky, channel: number, word: number): boolean {
+  switch (channel) {
+    case 0o10:  applyDskyOutput(state, word);       return true;
+    case 0o11:  applyDskyChannel011(state, word);   return true;
+    case 0o163: applyDskyChannel0163(state, word);  return true;
+    default:    return false;
+  }
+}
+
+/** Apply a batch of channel-010 words in order (back-compat helper). */
 export function applyDskyOutputBatch(state: DecodedDsky, words: readonly number[]): DecodedDsky {
   for (const w of words) applyDskyOutput(state, w);
   return state;
@@ -77,7 +116,6 @@ export function applyDskyOutputBatch(state: DecodedDsky, words: readonly number[
 /** Force the decoder to a completely blank starting state. */
 export function resetDecodedDsky(state: DecodedDsky): DecodedDsky {
   const fresh = makeEmptyDecodedDsky();
-  // in-place copy so external references stay valid
   state.program = fresh.program;
   state.verb = fresh.verb;
   state.noun = fresh.noun;
@@ -89,7 +127,6 @@ export function resetDecodedDsky(state: DecodedDsky): DecodedDsky {
   return state;
 }
 
-/** Small helper: does register have any lit segment? */
 export function registerIsBlank(reg: DskyRegister): boolean {
   return reg.digits.every((d) => d.segments === 0) &&
     (!reg.sign || (!reg.sign.plus && !reg.sign.minus));

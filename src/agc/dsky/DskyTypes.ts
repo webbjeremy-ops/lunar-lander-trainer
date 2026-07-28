@@ -1,32 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Authentic AGC/DSKY decoded state produced from ordered channel-010 events.
-// Framework-independent; safe to import from Worker, main thread, and tests.
+// Authentic AGC/DSKY decoded state. Framework-independent; safe to import
+// from Worker, main thread, and tests.
 //
 // The decoder is a *latched event stream*: it starts from a well-defined
-// initial state and each channel-010 write updates zero or more fields. It
+// initial state and each AGC channel write updates zero or more fields. It
 // never fabricates values that the AGC did not emit.
 //
-// References:
-//   - Virtual AGC Project, yaDSKY selector table
-//     https://github.com/virtualagc/virtualagc/blob/master/yaDSKY/src/main.c
-//   - webAGC pinned at michaelfranzl/webAGC @ 0575ea7 (vendored under
-//     src/third-party/webagc/) which itself wraps the same yaAGC/yaDSKY
-//     conventions.
+// Source-normative references (pinned to the exact revision that produced
+// the vendored yaAGC.wasm):
+//   * yaAGC/yaDSKY2 at michaelfranzl/virtualagc
+//     @ ddc65e7bed41f1301921b934fcbaaee93db99dda
+//     — selector table, sign-relay semantics, selector-12 annunciator row
+//   * michaelfranzl/webAGC @ 0575ea7 (vendored under src/third-party/webagc/)
+//     — synthetic channel 011 / 0163 annunciator masks
 
 /** A single 7-segment DSKY digit position. Value 0..9 or null (blank). */
 export interface DskyDigit {
-  /** 0..9 or null when the digit is blank. */
   value: number | null;
-  /** 7-segment bit mask (bit 0 = seg A .. bit 6 = seg G). */
   segments: number;
 }
 
 export const BLANK_DIGIT: DskyDigit = { value: null, segments: 0 };
 
 /**
- * Independent +/- relays. The AGC drives PLUS and MINUS as *separate* latches:
- * both off = blank, one on = signed digit, both on = illegal (surfaced for
- * diagnostics rather than silently masked).
+ * Independent +/- relays. The AGC drives PLUS and MINUS as *separate* latches.
+ * yaDSKY2 gives PLUS display priority when both are set; we store both raw
+ * so diagnostics can surface the both-on state.
  */
 export interface SignRelays {
   plus: boolean;
@@ -36,64 +35,54 @@ export interface SignRelays {
 export const SIGN_OFF: SignRelays = { plus: false, minus: false };
 
 export interface DskyRegister {
-  /** Digits in display order (leftmost = index 0). Program = 2, R1/R2/R3 = 5. */
   digits: DskyDigit[];
-  /** Sign relays for signed registers (R1, R2, R3). undefined for unsigned. */
   sign?: SignRelays;
 }
 
 /**
- * Selector-12 annunciator + flag bits latched from channel 010. Every field is
- * independently latched — no field is inferred from another.
- * The set here corresponds to authentic block-II DSKY annunciator lines that
- * yaDSKY drives from selector-12 writes.
+ * DSKY annunciator lamps. This set is the union of:
+ *   * yaDSKY2 selector-12 row annunciators (NO ATT, PRIO DISP, NO DAP,
+ *     GIMBAL LOCK, PROG, TRACKER, ALT, VEL)
+ *   * webAGC synthetic annunciators driven from channel 011 (COMP ACTY,
+ *     UPLINK ACTY) and channel 0163 (AGC warning, TEMP, KEY REL,
+ *     VERB/NOUN flash, OPR ERR, RESTART, STBY, EL OFF).
+ * Each field is independently latched — no field is inferred from another.
  */
 export interface DskyAnnunciators {
-  /** VERB/NOUN 2Hz flash flag. */
-  verbNounFlash: boolean;
-  /** OPR ERR indicator. */
-  operError: boolean;
-  /** KEY REL indicator. */
-  keyRelease: boolean;
-  /** COMP ACTY indicator (computer activity). */
-  compActy: boolean;
-  /** STBY indicator. */
-  standby: boolean;
-  /** NO ATT indicator. */
+  // — selector-12 row (channel 010, tag 060000) —
   noAtt: boolean;
-  /** GIMBAL LOCK indicator. */
+  prioDisp: boolean;
+  noDap: boolean;
   gimbalLock: boolean;
-  /** PROG indicator (program alarm). */
-  progAlarm: boolean;
-  /** TRACKER indicator. */
+  prog: boolean;        // "PROG" lamp — program alarm
   tracker: boolean;
-  /** TEMP indicator. */
-  temp: boolean;
-  /** UPLINK ACTY indicator. */
+  alt: boolean;
+  vel: boolean;
+  // — channel 011 (webAGC synthetic) —
+  compActy: boolean;
   uplinkActy: boolean;
-  /** RESTART indicator. */
+  // — channel 0163 (webAGC synthetic) —
+  agcWarning: boolean;
+  temp: boolean;
+  keyRelease: boolean;
+  verbNounFlash: boolean;
+  operError: boolean;
   restart: boolean;
+  standby: boolean;
+  elOff: boolean;
 }
 
 export const ANNUNCIATORS_OFF: DskyAnnunciators = {
-  verbNounFlash: false,
-  operError: false,
-  keyRelease: false,
-  compActy: false,
-  standby: false,
-  noAtt: false,
-  gimbalLock: false,
-  progAlarm: false,
-  tracker: false,
-  temp: false,
-  uplinkActy: false,
-  restart: false,
+  noAtt: false, prioDisp: false, noDap: false, gimbalLock: false,
+  prog: false, tracker: false, alt: false, vel: false,
+  compActy: false, uplinkActy: false,
+  agcWarning: false, temp: false, keyRelease: false, verbNounFlash: false,
+  operError: false, restart: false, standby: false, elOff: false,
 };
 
 /**
- * The complete latched DSKY output as decoded from channel-010 traffic.
- * Determinism note: two runs that receive the same ordered event stream MUST
- * produce identical DecodedDsky values. This is enforced in tests.
+ * The complete latched DSKY output. Determinism note: two runs that receive
+ * the same ordered event stream MUST produce identical DecodedDsky values.
  */
 export interface DecodedDsky {
   program: DskyRegister; // 2 digits, no sign
@@ -103,7 +92,7 @@ export interface DecodedDsky {
   r2: DskyRegister;      // 5 digits + sign
   r3: DskyRegister;      // 5 digits + sign
   annunciators: DskyAnnunciators;
-  /** Monotonic count of channel-010 events applied. Included in determinism checksum. */
+  /** Monotonic count of DSKY-relevant channel events applied. */
   eventCount: number;
 }
 
