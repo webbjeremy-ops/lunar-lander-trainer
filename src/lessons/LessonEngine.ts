@@ -81,16 +81,23 @@ export function stepLesson(
 
   // Handle attempt lifecycle actions first (they never inspect predicates).
   if (action.kind === "beginAttempt") {
+    // Open a new attempt scoped to the CURRENT interactive step. Reading
+    // progress is preserved; only per-step internal scratch for the
+    // current step is cleared so a fresh predicate evaluation begins.
+    const nextInternal = { ...prev.internal };
+    const step = currentStep(def, prev);
+    if (step) delete (nextInternal as Record<string, unknown>)[step.id];
     return {
-      ...initialLessonState(def),
+      ...prev,
       status: "in-progress",
       attempt: makeAttempt(action.attemptId, action.observation),
+      internal: nextInternal,
       lastObservationTick: action.observation.tickIndex,
     };
   }
 
   if (action.kind === "restart") {
-    // Clears evidence and per-step scratch, but does NOT reset AGC.
+    // Clears ALL evidence and per-step scratch, but does NOT reset the AGC.
     return {
       ...initialLessonState(def),
       status: "in-progress",
