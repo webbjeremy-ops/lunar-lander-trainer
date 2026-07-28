@@ -22,7 +22,7 @@
 // complete: the register progress check runs INSIDE the stable-VNP window.
 
 import { decodedDskyCanonical } from "@/agc/dsky/DskyDecoder";
-import { readNoun65, noun65Advanced } from "./normalizeNoun65";
+import { readNoun65 } from "./normalizeNoun65";
 import { matchAttemptScopedSequence } from "./inputSequence";
 import {
   FIXTURE_PROVENANCE,
