@@ -41,6 +41,7 @@ export interface AgcWorkerClientListeners {
   onReady?: (payload: ReadyPayload) => void;
   onSnapshot?: (snapshot: StateSnapshot) => void;
   onDsky?: (lamps: number, missionTimeUs: number) => void;
+  onDskyDecoded?: (decoded: import("./dsky/DskyTypes").DecodedDsky, missionTimeUs: number, tickIndex: number) => void;
   onEvent?: (ev: AgcEvent) => void;
   onDiagnostics?: (d: Diagnostics) => void;
   onFatalError?: (code: string, message: string) => void;
@@ -182,6 +183,9 @@ export class AgcWorkerClient {
         break;
       case "dskyUpdate":
         this.listeners.onDsky?.(msg.payload.lamps, msg.payload.missionTimeUs);
+        break;
+      case "dskyDecoded":
+        this.listeners.onDskyDecoded?.(msg.payload.decoded, msg.payload.missionTimeUs, msg.payload.tickIndex);
         break;
       case "diagnostics":
         this.listeners.onDiagnostics?.(msg.payload);
