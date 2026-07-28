@@ -189,15 +189,81 @@ describe("V16 N65 mission-elapsed-time golden trace", () => {
     expect(decodedDskyCanonical(state)).toBe(fx.finalChecksum);
   });
 
-  it("pure decoder replay produces every stable checkpoint checksum", () => {
+  it("distinct-consecutive stable checkpoints appear as an ordered subsequence in the pure replay stream", () => {
+    // The capture script records one checkpoint per tick during a stable
+    // window, so many consecutive checkpoints share the same checksum (the
+    // DSKY is genuinely holding the same state across ticks with no channel
+    // writes). Pure event-by-event replay only produces a new checksum when
+    // an event actually lands, so we compare the compressed sequences:
+    // collapse both to "distinct from previous" and require the checkpoint
+    // sequence to be an ordered subsequence of the replay sequence.
     const state = makeEmptyDecodedDsky();
-    const seen = new Set<string>();
+    const replaySeq: string[] = [];
     for (const e of fx.dskyEvents) {
       applyDskyChannelEvent(state, e.channel, e.value);
-      seen.add(decodedDskyCanonical(state));
+      const chk = decodedDskyCanonical(state);
+      if (replaySeq[replaySeq.length - 1] !== chk) replaySeq.push(chk);
     }
+    const checkpointSeq: string[] = [];
     for (const c of fx.stableCheckpoints) {
-      expect(seen.has(c.checksum), `pure replay never produced checkpoint checksum at tick ${c.tickIndex}`).toBe(true);
+      if (checkpointSeq[checkpointSeq.length - 1] !== c.checksum) {
+        checkpointSeq.push(c.checksum);
+      }
     }
+    let searchFrom = 0;
+    for (const chk of checkpointSeq) {
+      const foundAt = replaySeq.findIndex(
+        (v, index) => index >= searchFrom && v === chk,
+      );
+      expect(
+        foundAt,
+        `checkpoint checksum ${chk.slice(0, 24)}… not found at replay index >= ${searchFrom}`,
+      ).toBeGreaterThanOrEqual(searchFrom);
+      searchFrom = foundAt + 1;
+    }
+  });
+
+  it("ordered-subsequence matcher rejects reversed distinct-checkpoint order (negative)", () => {
+    const state = makeEmptyDecodedDsky();
+    const replaySeq: string[] = [];
+    for (const e of fx.dskyEvents) {
+      applyDskyChannelEvent(state, e.channel, e.value);
+      const chk = decodedDskyCanonical(state);
+      if (replaySeq[replaySeq.length - 1] !== chk) replaySeq.push(chk);
+    }
+    const checkpointSeq: string[] = [];
+    for (const c of fx.stableCheckpoints) {
+      if (checkpointSeq[checkpointSeq.length - 1] !== c.checksum) {
+        checkpointSeq.push(c.checksum);
+      }
+    }
+    if (checkpointSeq.length < 2) return; // trivially nothing to reverse
+    const reversed = [...checkpointSeq].reverse();
+    let searchFrom = 0;
+    let failed = false;
+    for (const chk of reversed) {
+      const idx = replaySeq.findIndex((v, i) => i >= searchFrom && v === chk);
+      if (idx < 0) { failed = true; break; }
+      searchFrom = idx + 1;
+    }
+    expect(failed, "reversed distinct checkpoints must not satisfy ordered matching").toBe(true);
+  });
+
+  it("ordered-subsequence matcher requires distinct replay positions for consecutive duplicate distinct checkpoints", () => {
+    const dup = "DUP";
+    const other = "OTHER";
+    const checkpoints = [dup, other, dup];
+    function walk(replay: string[]) {
+      let searchFrom = 0;
+      for (const c of checkpoints) {
+        const idx = replay.findIndex((v, i) => i >= searchFrom && v === c);
+        if (idx < 0) return false;
+        searchFrom = idx + 1;
+      }
+      return true;
+    }
+    expect(walk([dup, other])).toBe(false);
+    expect(walk([dup, dup, other])).toBe(false);
+    expect(walk([dup, other, dup])).toBe(true);
   });
 });
