@@ -122,15 +122,41 @@ async function currentEvidence(page: Page, lessonId: string) {
 }
 
 async function waitUntilLessonComplete(page: Page, lessonId: string, timeoutMs = 30_000) {
-  await page.waitForFunction(
-    (lid) => {
-      const w = window as unknown as { __learnTest?: LearnTestState };
-      const s = w.__learnTest;
-      return !!(s && s.lessonId === lid && s.state.status === "completed");
-    },
-    lessonId,
-    { timeout: timeoutMs },
-  );
+  try {
+    await page.waitForFunction(
+      (lid) => {
+        const w = window as unknown as { __learnTest?: LearnTestState };
+        const s = w.__learnTest;
+        return !!(s && s.lessonId === lid && s.state.status === "completed");
+      },
+      lessonId,
+      { timeout: timeoutMs },
+    );
+  } catch (err) {
+    const diag = await page.evaluate(() => {
+      const t = (window as unknown as { __learnDiag?: Record<string, unknown> }).__learnDiag ?? {};
+      const l = (window as unknown as { __learnTest?: LearnTestState }).__learnTest;
+      const transitions = ((t.transitions as Array<{ checksum: string }>) || []);
+      const peakPrefix = "PROG:88|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888";
+      return {
+        boundaryEventId: t.boundaryEventId,
+        attemptId: t.attemptId,
+        shadowChecksum: t.shadowChecksum,
+        rawChannels: ((t.rawChannels as unknown[]) || []).length,
+        transitionsCount: transitions.length,
+        peakSeen: transitions.some((x) => x.checksum && x.checksum.startsWith(peakPrefix)),
+        firstFiveTransitions: transitions.slice(0, 5),
+        lastFiveTransitions: transitions.slice(-5),
+        snapshotsPublished: ((t.publishedSnapshots as unknown[]) || []).length,
+        learnStatus: l?.state?.status,
+        learnEvidence: l?.state?.evidence?.length,
+        learnAttempt: l?.state?.attempt,
+      };
+    });
+    // eslint-disable-next-line no-console
+    console.error("[lesson-timeout]", JSON.stringify(diag, null, 2));
+    throw err;
+  }
 }
 
 async function selectLessonByIndex(page: Page, oneBasedIndex: number) {
