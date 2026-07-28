@@ -49,7 +49,13 @@ interface AgcTestSnapshot {
 
 interface LearnTestState {
   lessonId: string;
+  stepId?: string | null;
   agcEpoch: number;
+  attemptPhase?: "idle" | "opening" | "ready" | "error";
+  attemptError?: string | null;
+  boundaryEventId?: number | null;
+  boundaryTick?: number | null;
+  latestEventId?: number | null;
   state: {
     lessonId: string;
     status: string;
