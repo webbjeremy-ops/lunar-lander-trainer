@@ -49,7 +49,10 @@ interface DecodedRecord {
 interface CaptureLog {
   protocolVersion: number;
   ready: ReadyPayload | null;
+  /** Legacy: channel-010 events only. Retained for older fixture consumers. */
   ch010Events: Array<Pick<ChannelEventLite, "eventId" | "tickIndex" | "missionTimeUs" | "value">>;
+  /** All DSKY-relevant channel events (010, 011, 0163) in emission order. */
+  dskyEvents: Array<Pick<ChannelEventLite, "eventId" | "tickIndex" | "missionTimeUs" | "channel" | "value">>;
   allChannelEvents: ChannelEventLite[];
   commands: Array<{ tickIndex: number; missionTimeUs: number; kind: string; payload: unknown }>;
   decodedTimeline: DecodedRecord[];
@@ -66,6 +69,7 @@ function CapturePage() {
     protocolVersion: PROTOCOL_VERSION,
     ready: null,
     ch010Events: [],
+    dskyEvents: [],
     allChannelEvents: [],
     commands: [],
     decodedTimeline: [],
@@ -88,13 +92,21 @@ function CapturePage() {
         if (ev.type === "channelUpdate") {
           const lite = ev.payload;
           log.allChannelEvents.push(lite);
-          if (lite.channel === 0o10) {
-            log.ch010Events.push({
+          if (lite.channel === 0o10 || lite.channel === 0o11 || lite.channel === 0o163) {
+            const rec = {
               eventId: lite.eventId,
               tickIndex: lite.tickIndex,
               missionTimeUs: lite.missionTimeUs,
+              channel: lite.channel,
               value: lite.value,
-            });
+            };
+            log.dskyEvents.push(rec);
+            if (lite.channel === 0o10) {
+              log.ch010Events.push({
+                eventId: rec.eventId, tickIndex: rec.tickIndex,
+                missionTimeUs: rec.missionTimeUs, value: rec.value,
+              });
+            }
           }
         }
       },
