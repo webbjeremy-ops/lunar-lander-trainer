@@ -14,6 +14,11 @@ import { MissionClock, TICK_MICROS } from "./MissionClock";
 import { SnapshotCoalescer } from "./SnapshotCoalescer";
 import { EventLog } from "./EventLog";
 import {
+  applyDskyOutput,
+  makeEmptyDecodedDsky,
+} from "./dsky/DskyDecoder";
+import type { DecodedDsky } from "./dsky/DskyTypes";
+import {
   PROTOCOL_VERSION,
   makeEnvelope,
   type AgcCommand,
