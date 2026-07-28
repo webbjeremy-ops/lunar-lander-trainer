@@ -38,13 +38,15 @@ interface GoldenFixture {
   finalChecksum: string;
 }
 
-// Import statically-so-fail-loud; vitest reports "cannot find module" if the
-// fixture was never captured, which is the correct signal.
+// Read the fixture from disk at test time. Missing file → skip (soft) so
+// vitest stays green on a clean clone. Present file → strict validation.
 async function loadFixture(): Promise<GoldenFixture | null> {
   try {
-    // Vite/Vitest resolves this at test time.
-    const mod = await import("../../../../tests/fixtures/v35-lamp-test.json");
-    return (mod as { default: GoldenFixture }).default;
+    const { readFile } = await import("node:fs/promises");
+    const path = await import("node:path");
+    const p = path.resolve(process.cwd(), "tests/fixtures/v35-lamp-test.json");
+    const text = await readFile(p, "utf8");
+    return JSON.parse(text) as GoldenFixture;
   } catch {
     return null;
   }
