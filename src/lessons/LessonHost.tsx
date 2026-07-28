@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import * as React from "react";
 //
 // LessonHost — bridges the live Worker-hosted AGC (via <Dsky/>) into the
 // pure LessonEngine reducer. Owns per-lesson state, an attempt cursor, and
