@@ -201,6 +201,19 @@ function LearnPage() {
     latestSnapshotRef.current = null;
   }
 
+  // Test hook: expose current lesson/state/epoch for E2E introspection.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    (window as unknown as { __learnTest?: unknown }).__learnTest = {
+      lessonId: lesson.id,
+      state,
+      states,
+      agcEpoch,
+    };
+  }, [lesson, state, states, agcEpoch]);
+
+
+
   return (
     <main className="min-h-dvh bg-neutral-950 text-neutral-100">
       <header className="border-b border-neutral-800 px-6 py-4">

@@ -91,11 +91,21 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
     }
     clientRef.current = client;
     onClient?.(client);
+    if (typeof window !== "undefined") {
+      const w = window as unknown as { __agcTest?: Record<string, unknown> };
+      const t = (w.__agcTest ??= { snapshots: 0, workerBoots: 0 });
+      t.workerBoots = ((t.workerBoots as number) ?? 0) + 1;
+      t.client = client;
+    }
     client.setListeners({
       onReady: (payload) => {
         setReady(payload);
         onReady?.(payload);
         setPhase("ready");
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.ready = payload;
+        }
       },
       onSnapshot: (snap) => {
         setSnapshot(snap);
@@ -104,6 +114,14 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
         setPaused(!snap.running);
         setTimeScaleState(snap.timeScale);
         if (snap.decodedDsky) setDecoded(snap.decodedDsky);
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          const t = w.__agcTest;
+          if (t) {
+            t.snapshot = snap;
+            t.snapshots = ((t.snapshots as number) ?? 0) + 1;
+          }
+        }
       },
       onDsky: (l) => setLamps(l),
       onDskyDecoded: (d) => setDecoded(d),
@@ -122,6 +140,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
       clientRef.current = null;
     };
   }, [rope.id, rope.url, rope.manifestUrl, attempt, onClient, onSnapshot, onReady]);
+
 
   // Push erasable-base changes to the worker.
   useEffect(() => {
