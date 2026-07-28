@@ -17,6 +17,7 @@ import {
   type AgcEvent,
   type C2WEnvelope,
   type Diagnostics,
+  type EventBoundaryPayload,
   type ReadyPayload,
   type RopeId,
   type StateSnapshot,
