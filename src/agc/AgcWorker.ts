@@ -63,6 +63,8 @@ interface WorkerState {
   disposed: boolean;
   lastLamps: number;
   lastChannelEventCount: number;
+  decodedDsky: DecodedDsky;
+  nextEventId: number;
 }
 
 const state: WorkerState = {
@@ -90,7 +92,13 @@ const state: WorkerState = {
   disposed: false,
   lastLamps: 0,
   lastChannelEventCount: 0,
+  decodedDsky: makeEmptyDecodedDsky(),
+  nextEventId: 1,
 };
+
+function currentTickIndex(): number {
+  return state.clock.stats().ticksExecuted;
+}
 
 async function sha256Hex(input: ArrayBuffer | Uint8Array): Promise<string> {
   const src = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -122,6 +130,8 @@ function buildSnapshot(): StateSnapshot {
       erasableWindow: [],
       avgTickMs: 0,
       schedulerOverruns: 0,
+      tickIndex: 0,
+      decodedDsky: state.decodedDsky,
     };
   }
   const channels: Record<number, number> = {};
