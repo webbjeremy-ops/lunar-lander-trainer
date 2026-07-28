@@ -49,6 +49,17 @@ export interface EventBoundaryPayload {
   tickIndex: number;
   missionTimeUs: number;
   totalAgcSteps: number;
+  /**
+   * Full latched DSKY state as of the boundary allocation. Structurally
+   * cloned across the postMessage boundary, so the client owns the value.
+   * Lesson observers seed their shadow decoders from this baseline so the
+   * shadow reflects EXACTLY what the AGC had emitted through boundaryEventId
+   * — any subsequent channel event with id > boundaryEventId can be applied
+   * to it losslessly without a snapshot round-trip.
+   */
+  decodedDsky: DecodedDsky;
+  /** Canonical checksum of decodedDsky at the boundary. */
+  decodedDskyChecksum: string;
 }
 
 export interface ChannelEventLite {
