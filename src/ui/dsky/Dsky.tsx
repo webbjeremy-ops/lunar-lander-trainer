@@ -419,7 +419,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
                 if (code === "PRO") clientRef.current?.proceedKey(false);
               }}
               onPointerCancel={releaseAll}
-              disabled={phase !== "ready"}
+              disabled={phase !== "ready" || disabled}
               className="rounded border border-neutral-700 bg-neutral-800 px-2 py-3 font-mono text-xs text-neutral-100 hover:border-emerald-500 hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40"
             >
               {label}
