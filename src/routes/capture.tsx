@@ -160,9 +160,9 @@ function CapturePage() {
           kind: "reset",
           payload: null,
         });
-        // Delimit fixture segments: clear the recorded ch010 trace/timeline
-        // for the NEXT segment.
+        // Delimit fixture segments: clear the recorded traces for the next.
         log.ch010Events = [];
+        log.dskyEvents = [];
         log.decodedTimeline = [];
         client.reset();
       },
@@ -187,6 +187,7 @@ function CapturePage() {
         },
         commands: log.commands,
         ch010Events: log.ch010Events,
+        dskyEvents: log.dskyEvents,
         decodedTimeline: log.decodedTimeline,
         finalDecoded: log.latestDecoded,
         finalChecksum: decodedDskyCanonical(log.latestDecoded),
