@@ -270,16 +270,36 @@ function LearnPage() {
                   </button>
                 )}
                 {isInteractive && (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex w-full flex-col gap-3">
                     <p className="text-xs text-amber-300">
-                      This step waits for authentic AGC output. Open the DSKY and follow the instructions above — the lesson engine will only advance when Luminary099 produces the required channel events.
+                      This step waits for authentic AGC output from the live
+                      Worker below. The lesson engine only advances when
+                      Luminary099 produces the required channel events.
                     </p>
-                    <Link
-                      to="/sim"
-                      className="inline-flex w-fit rounded border border-amber-500 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
-                    >
-                      Open the DSKY →
-                    </Link>
+                    <div className="rounded border border-neutral-800 bg-neutral-950/60 p-3">
+                      <LessonHost
+                        lesson={lesson}
+                        state={state}
+                        onStateChange={(next) =>
+                          setStates((s) => ({ ...s, [lesson.id]: next }))
+                        }
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={restartInteractive}
+                        className="rounded border border-amber-600 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
+                      >
+                        Restart attempt
+                      </button>
+                      <Link
+                        to="/sim"
+                        className="rounded border border-neutral-700 px-3 py-2 font-mono text-xs uppercase tracking-widest text-neutral-300 hover:bg-neutral-900"
+                      >
+                        Open full DSKY workspace →
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
