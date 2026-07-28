@@ -15,6 +15,7 @@ import {
   type C2WEnvelope,
   type W2CEnvelope,
 } from "../protocol";
+import { makeEmptyDecodedDsky, decodedDskyCanonical } from "../dsky/DskyDecoder";
 
 interface FakeWorker extends AgcWorkerLike {
   messages: C2WEnvelope[];
