@@ -127,9 +127,9 @@ export class AgcCoreAdapter {
 
   reset(): void {
     this.exports.cpu_reset();
-    this.channels = {};
-    this.lamps = 0;
+    this.io.reset();
     this.erasableView = null;
+    this.totalSteps = 0;
     // After reset, prime the PROCEED input to its "not pressed" state and the
     // key channel to idle, mirroring webAGC's configure().
     this.writeIo(PROCEED_CHANNEL, PROCEED_BIT); // PROCEED is active-low; high = not pressed.
@@ -140,6 +140,12 @@ export class AgcCoreAdapter {
     if (steps <= 0) return;
     this.exports.cpu_step(steps);
     this.totalSteps += steps;
+  }
+
+  /** Advance the CPU by a small fixed number of instructions and drain I/O. */
+  singleStep(steps = 1): void {
+    this.stepCpu(steps);
+    this.drainIo();
   }
 
   writeIo(channel: number, data: number): void {
@@ -171,29 +177,16 @@ export class AgcCoreAdapter {
 
   /** Drain all pending channel updates and fold them into DSKY lamp state. */
   drainIo(): void {
-    // Bits 2 & 3 of channel 011 (COMP ACTY / UPLINK ACTY).
-    const CH011_LAMP_MASK = 0b110;
-    // Bits 1,4..10 of channel 0163 (blinking lamps, see AgcChannelRegistry).
-    const CH0163_LAMP_MASK = 0b111111001;
-
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const packet = this.readOnePacket();
       if (!packet) break;
       const [channel, value] = packet;
-
-      if (this.channels[channel] !== value) {
-        this.channels[channel] = value;
-        this.events.onChannelUpdate?.(channel, value);
-      }
-
-      if (channel === 0o11) {
-        this.lamps = (this.lamps & ~CH011_LAMP_MASK) | (value & CH011_LAMP_MASK);
-        this.events.onDskyLampsUpdate?.(this.lamps);
-      } else if (channel === 0o163) {
-        this.lamps = (this.lamps & ~CH0163_LAMP_MASK) | (value & CH0163_LAMP_MASK);
-        this.events.onDskyLampsUpdate?.(this.lamps);
-      }
+      const prevLamps = this.io.lampBits();
+      const changed = this.io.ingest(channel, value);
+      if (changed) this.events.onChannelUpdate?.(channel, value);
+      const newLamps = this.io.lampBits();
+      if (newLamps !== prevLamps) this.events.onDskyLampsUpdate?.(newLamps);
     }
   }
 
@@ -208,13 +201,24 @@ export class AgcCoreAdapter {
 
   /** Latest observed value on a channel (0 if never seen). */
   channel(channel: number): number {
-    return this.channels[channel] ?? 0;
+    return this.io.channel(channel);
   }
 
   /** Current combined DSKY lamp word. */
   lampBits(): DskyLampBits {
-    return this.lamps;
+    return this.io.lampBits();
   }
+
+  /** Most-recent-first snapshot of recent channel events. */
+  recentEvents(limit?: number): ChannelEvent[] {
+    return this.io.recentEvents(limit);
+  }
+
+  /** Total number of ingested channel-change events (monotonic). */
+  totalChannelEvents(): number {
+    return this.io.totalEvents();
+  }
+
 
   /**
    * Start free-running the CPU on a JS timer. Prefer the mission clock in
