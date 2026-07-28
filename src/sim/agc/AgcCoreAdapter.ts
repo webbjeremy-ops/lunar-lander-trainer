@@ -48,14 +48,22 @@ export class AgcCoreAdapter {
   private exports!: YaAgcExports;
   private erasableView: Uint16Array | null = null;
 
-  private channels: Record<number, number> = {};
-  private lamps: DskyLampBits = 0;
+  private readonly io: AgcIoState;
 
   private totalSteps = 0;
   private intervalHandle: ReturnType<typeof setInterval> | null = null;
   private clockDivisor = 1;
 
-  constructor(private readonly events: AgcCoreEvents = {}) {}
+  constructor(private readonly events: AgcCoreEvents = {}) {
+    this.io = new AgcIoState({ ringSize: 512 });
+  }
+
+  /** Test seam: install fake memory + exports without instantiating WebAssembly. */
+  __testInstall(mem: WebAssembly.Memory, exports: YaAgcExports): void {
+    this.mem = mem;
+    this.memArray = new Uint8Array(mem.buffer);
+    this.exports = exports;
+  }
 
   /** Load and instantiate the yaAGC WASM binary from `wasmUrl`. */
   async init(wasmUrl: string): Promise<void> {
