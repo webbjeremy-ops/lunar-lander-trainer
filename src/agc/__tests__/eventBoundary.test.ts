@@ -58,10 +58,21 @@ describe("event-boundary handshake", () => {
     expect(sent.requestId).toBeTruthy();
 
     // Simulate the worker reply with the SAME requestId.
+    const decoded0 = makeEmptyDecodedDsky();
     const reply: W2CEnvelope = makeEnvelope(
       "w2c",
       1,
-      { type: "eventBoundary", payload: { boundaryEventId: 42, tickIndex: 7, missionTimeUs: 140000, totalAgcSteps: 11942 } },
+      {
+        type: "eventBoundary",
+        payload: {
+          boundaryEventId: 42,
+          tickIndex: 7,
+          missionTimeUs: 140000,
+          totalAgcSteps: 11942,
+          decodedDsky: decoded0,
+          decodedDskyChecksum: decodedDskyCanonical(decoded0),
+        },
+      },
       { requestId: sent.requestId },
     );
     reply.protocol = PROTOCOL_VERSION;
@@ -70,6 +81,8 @@ describe("event-boundary handshake", () => {
     const payload = await pending;
     expect(payload.boundaryEventId).toBe(42);
     expect(payload.tickIndex).toBe(7);
+    expect(payload.decodedDsky).toBeDefined();
+    expect(payload.decodedDskyChecksum).toBe(decodedDskyCanonical(decoded0));
     client.dispose();
   });
 
@@ -86,10 +99,21 @@ describe("event-boundary handshake", () => {
       const env = msg as C2WEnvelope;
       if (env.message.type === "requestEventBoundary") {
         const id = nextId++;
+        const decoded0 = makeEmptyDecodedDsky();
         const reply: W2CEnvelope = makeEnvelope(
           "w2c",
           id,
-          { type: "eventBoundary", payload: { boundaryEventId: id, tickIndex: id, missionTimeUs: id * 20000, totalAgcSteps: id * 1706 } },
+          {
+            type: "eventBoundary",
+            payload: {
+              boundaryEventId: id,
+              tickIndex: id,
+              missionTimeUs: id * 20000,
+              totalAgcSteps: id * 1706,
+              decodedDsky: decoded0,
+              decodedDskyChecksum: decodedDskyCanonical(decoded0),
+            },
+          },
           { requestId: env.requestId },
         );
         // Fire on microtask so the pending map has the entry.
