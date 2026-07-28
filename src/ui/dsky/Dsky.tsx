@@ -60,11 +60,17 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope, onClient, onSnapshot, onReady }: {
+export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: {
   rope: RopeImage;
   onClient?: (client: AgcWorkerClient | null) => void;
   onSnapshot?: (snap: StateSnapshot) => void;
   onReady?: (ready: ReadyPayload) => void;
+  /** When true, ALL user input into this DSKY is suppressed — the pointer
+   *  keys are disabled and the global keyboard listener returns early.
+   *  Used by /learn to gate typing until the Worker has minted an attempt
+   *  boundary, preventing races where a keypress carries an eventId that
+   *  precedes the boundary the lesson attempt is scoped to. */
+  disabled?: boolean;
 }) {
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
