@@ -42,9 +42,9 @@ import type {
 
 const MAX_INPUTS = 128;
 
-function regText(reg: { digits: { char: string; blank?: boolean }[]; sign?: { plus: boolean; minus: boolean } }): string {
+function regText(reg: { digits: { value: number | null }[]; sign?: { plus: boolean; minus: boolean } }): string {
   const sign = reg.sign ? (reg.sign.plus ? "+" : reg.sign.minus ? "-" : " ") : "";
-  const body = reg.digits.map((d) => (d.blank ? "_" : (d.char || "_"))).join("");
+  const body = reg.digits.map((d) => (d.value == null ? "_" : String(d.value))).join("");
   return `${sign}${body}`;
 }
 
