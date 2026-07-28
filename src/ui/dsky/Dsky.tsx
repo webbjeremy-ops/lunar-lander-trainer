@@ -248,7 +248,9 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
           })}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1">
+        <RegistersPanel decoded={decoded} />
+
+        <div className="mt-3 flex flex-wrap items-center gap-1">
           {[
             { label: "Run", onClick: controls.run, testid: "ctl-run" },
             { label: "Pause", onClick: controls.pause, testid: "ctl-pause" },
@@ -268,7 +270,25 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
               {b.label}
             </button>
           ))}
+          <label htmlFor="tscale" className="ml-2 text-[10px] uppercase tracking-widest text-neutral-500">Time scale</label>
+          <select
+            id="tscale"
+            data-testid="ctl-timescale"
+            value={timeScale}
+            disabled={phase !== "ready"}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setTimeScaleState(v);
+              clientRef.current?.setTimeScale(v);
+            }}
+            className="rounded border border-neutral-700 bg-neutral-950 px-1 py-0.5 font-mono text-[11px] text-neutral-200"
+          >
+            {TIME_SCALES.map((s) => (
+              <option key={s} value={s}>{s === 0 ? "PAUSE" : `${s}×`}</option>
+            ))}
+          </select>
         </div>
+
 
         <div className="mt-3 grid gap-1 font-mono text-xs text-neutral-400">
           {WATCH_CHANNELS.map((c) => {
