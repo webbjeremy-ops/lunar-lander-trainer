@@ -401,6 +401,7 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       adapter.reset();
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
+      state.decodedDsky = makeEmptyDecodedDsky();
       state.lastLamps = 0;
       state.lastChannelEventCount = 0;
       state.coalescer.offer(buildSnapshot());
