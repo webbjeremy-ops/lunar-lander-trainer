@@ -198,6 +198,27 @@ describe("dsky decoder — selector-12 annunciator row (channel 010)", () => {
   });
 });
 
+describe("dsky decoder — selector 0 is a no-op (relay-off writes)", () => {
+  it("selector 0 preserves latched digits and annunciators", () => {
+    const s = makeEmptyDecodedDsky();
+    // Set up a non-trivial latched state: PROG=63, R1 D1=8, R2 PLUS on, NO ATT on.
+    applyDskyOutput(s, encodeCh010({ codeA: 0b11100, codeB: 0b11011, selector: 11 }));
+    applyDskyOutput(s, encodeCh010({ codeB: 0b11101, selector: 8 }));
+    applyDskyOutput(s, encodeCh010({ sign: 1, selector: 5 }));
+    applyDskyOutput(s, ANNUNCIATOR_ROW_TAG_VALUE | 0o10);
+    const before = decodedDskyCanonical(s);
+
+    // Luminary writes plain zeros to Channel 010 between relay operations
+    // and when turning the display relays off. These are selector-0 words
+    // and MUST NOT blank the latched display or clear annunciators.
+    for (const w of [0, 0o00000, 0o00007, 0o00777]) applyDskyOutput(s, w);
+
+    // Canonical state unchanged except the eventCount counter.
+    const after = decodedDskyCanonical(s);
+    expect(after.replace(/EC:\d+/, "EC:X")).toBe(before.replace(/EC:\d+/, "EC:X"));
+  });
+});
+
 describe("dsky decoder — channel 011 (webAGC synthetic)", () => {
   it("bit 2 → COMP ACTY, bit 3 → UPLINK ACTY", () => {
     const s = makeEmptyDecodedDsky();
