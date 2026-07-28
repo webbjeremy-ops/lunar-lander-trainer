@@ -87,9 +87,13 @@ const state: WorkerState = {
   lastChannelEventCount: 0,
 };
 
-async function sha256Hex(bytes: ArrayBuffer | Uint8Array): Promise<string> {
-  const buf = bytes instanceof Uint8Array ? bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) : bytes;
-  const digest = await crypto.subtle.digest("SHA-256", buf);
+async function sha256Hex(input: ArrayBuffer | Uint8Array): Promise<string> {
+  const src = input instanceof Uint8Array ? input : new Uint8Array(input);
+  // Copy into a fresh ArrayBuffer so the WebCrypto types are unambiguous
+  // (crypto.subtle.digest rejects SharedArrayBuffer-backed views).
+  const copy = new Uint8Array(src.byteLength);
+  copy.set(src);
+  const digest = await crypto.subtle.digest("SHA-256", copy.buffer);
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
