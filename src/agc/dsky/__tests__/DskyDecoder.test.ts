@@ -22,11 +22,12 @@ import {
 } from "../DskyChannelMap";
 
 function encodeCh010(opts: { codeA?: number; codeB?: number; sign?: number; selector: number }): number {
-  const a = (opts.codeA ?? 0) & 0b11111;
-  const b = (opts.codeB ?? 0) & 0b11111;
-  const s = (opts.sign ?? 0) & 0b1;
-  const sel = opts.selector & 0b1111;
-  return (sel << 11) | (a << 6) | (b << 1) | s;
+  const a = (opts.codeA ?? 0) & 0x1f;
+  const b = (opts.codeB ?? 0) & 0x1f;
+  const s = (opts.sign ?? 0) & 0x01;
+  const sel = opts.selector & 0x0f;
+  // WWWW S AAAAA BBBBB  (yaDSKY2 pinned layout)
+  return (sel << 11) | (s << 10) | (a << 5) | b;
 }
 
 describe("relay table", () => {
