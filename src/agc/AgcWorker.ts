@@ -15,6 +15,7 @@ import { SnapshotCoalescer } from "./SnapshotCoalescer";
 import { EventLog } from "./EventLog";
 import {
   applyDskyChannelEvent,
+  decodedDskyCanonical,
   makeEmptyDecodedDsky,
 } from "./dsky/DskyDecoder";
 import type { DecodedDsky } from "./dsky/DskyTypes";
@@ -545,6 +546,12 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
             tickIndex: stats.ticksExecuted,
             missionTimeUs: Number(state.clock.getMissionTimeUs()),
             totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+            // Structured-clone-safe deep copy so the worker can keep
+            // mutating its own decoded state without perturbing the
+            // client's baseline. postMessage clones again, but cloning
+            // here up-front documents the ownership hand-off.
+            decodedDsky: JSON.parse(JSON.stringify(state.decodedDsky)) as DecodedDsky,
+            decodedDskyChecksum: decodedDskyCanonical(state.decodedDsky),
           },
         },
         requestId,
