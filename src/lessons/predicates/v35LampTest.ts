@@ -90,7 +90,9 @@ export const v35LampTestPredicate: StepPredicate = (ctx): StepPredicateResult =>
     return { completed: false, internal };
   }
 
-  // 3. Peak checksum match.
+  // 3. Peak checksum match — captured latch. Once seen, stays seen for
+  //    this attempt, so we can complete at the observation where the peak
+  //    first appeared even if later events perturb the display.
   const chk = decodedDskyCanonical(ctx.observation.decoded);
   const peakNow = chk === V35_PEAK_CHECKSUM;
   if (!internal.peakSeen && peakNow) {
@@ -99,28 +101,20 @@ export const v35LampTestPredicate: StepPredicate = (ctx): StepPredicateResult =>
     internal.peakChecksum = chk;
   }
   if (!internal.peakSeen) {
-    // Also check the individual annunciators being lit — allows a partial
-    // pattern check for the "partial pattern does NOT complete" test.
     return { completed: false, internal };
   }
 
-  // Check bounded proximity to ENTR.
+  // 4. Peak was reached within the fixture-derived ticks-since-ENTR bound.
   const ticksSincePress =
     (internal.peakAtTick ?? 0) - (internal.enterTick ?? 0);
   if (ticksSincePress < 0 || ticksSincePress > V35_MAX_TICKS_TO_PEAK) {
     return { completed: false, internal };
   }
 
-  // 4. Every fixture-lit annunciator must currently be lit.
-  const ann = ctx.observation.decoded.annunciators as unknown as Record<
-    string,
-    boolean
-  >;
-  for (const name of V35_PEAK_LIT_ANNUNCIATORS) {
-    if (!ann[name]) {
-      return { completed: false, internal };
-    }
-  }
+  // Peak checksum already encodes the annunciator set — no separate check
+  // needed. (V35_PEAK_LIT_ANNUNCIATORS is retained for developer
+  // diagnostics and lesson-side hint rendering.)
+
 
   return {
     completed: true,
