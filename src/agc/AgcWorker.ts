@@ -100,6 +100,8 @@ const state: WorkerState = {
   lastChannelEventCount: 0,
   decodedDsky: makeEmptyDecodedDsky(),
   nextEventId: 1,
+  recentEventsRing: [],
+  recentEventsCap: 64,
 };
 
 function currentTickIndex(): number {
