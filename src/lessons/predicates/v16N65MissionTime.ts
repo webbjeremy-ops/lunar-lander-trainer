@@ -22,7 +22,7 @@
 // complete: the register progress check runs INSIDE the stable-VNP window.
 
 import { decodedDskyCanonical } from "@/agc/dsky/DskyDecoder";
-import { readNoun65, noun65Advanced } from "./normalizeNoun65";
+import { readNoun65 } from "./normalizeNoun65";
 import { matchAttemptScopedSequence } from "./inputSequence";
 import {
   FIXTURE_PROVENANCE,
@@ -144,6 +144,12 @@ export const v16N65Predicate: StepPredicate = (ctx): StepPredicateResult => {
     n65Anchor: n65AnchorScalar(n65),
     checksum: decodedDskyCanonical(ctx.observation.decoded),
   };
+  // Only snapshots with a usable Noun 65 progress anchor participate in the
+  // stable-window monotone-advance check. Frames where R1/R2/R3 are entirely
+  // blank produce anchor=null and cannot serve as evidence of forward time.
+  if (snap.n65Anchor === null) {
+    return { completed: false, internal };
+  }
   internal.postEnterSnaps.push(snap);
 
   if (internal.postEnterSnaps.length < V16_MIN_POST_ENTER_OBSERVATIONS) {
@@ -165,20 +171,7 @@ export const v16N65Predicate: StepPredicate = (ctx): StepPredicateResult => {
       return { completed: false, internal };
     if (!(b.n65Anchor > a.n65Anchor)) return { completed: false, internal };
   }
-  // Belt-and-braces: use the noun65Advanced formalism between the outermost
-  // snapshots to reject 'value happened to increase but registers went blank'.
-  const first = internal.postEnterSnaps.slice(0, 1)[0]!;
-  const last = window[window.length - 1]!;
-  // We synthesise minimal Noun65Readings from the anchor to reuse the fn.
-  if (last.n65Anchor === null || first.n65Anchor === null)
-    return { completed: false, internal };
-  const _advanced = noun65Advanced(
-    { r1: {} as never, r2: {} as never, r3: {} as never, allValid: true,
-      hasProgressAnchor: true, signsClean: true },
-    { r1: {} as never, r2: {} as never, r3: {} as never, allValid: true,
-      hasProgressAnchor: true, signsClean: true },
-  );
-  void _advanced; // formal check unused when we already validated per-step.
+
 
   return {
     completed: true,
