@@ -42,6 +42,8 @@ export interface AgcWorkerClientListeners {
   onSnapshot?: (snapshot: StateSnapshot) => void;
   onDsky?: (lamps: number, missionTimeUs: number) => void;
   onDskyDecoded?: (decoded: import("./dsky/DskyTypes").DecodedDsky, missionTimeUs: number, tickIndex: number) => void;
+  onInputAccepted?: (ev: import("./protocol").InputAcceptedEvent) => void;
+  onChannelUpdate?: (ev: import("./protocol").ChannelEventLite) => void;
   onEvent?: (ev: AgcEvent) => void;
   onDiagnostics?: (d: Diagnostics) => void;
   onFatalError?: (code: string, message: string) => void;
