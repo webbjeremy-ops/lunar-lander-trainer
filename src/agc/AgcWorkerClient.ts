@@ -64,6 +64,7 @@ export class AgcWorkerClient {
   private requestCounter = 0;
   private pending = new Map<string, PendingRequest>();
   private listeners: AgcWorkerClientListeners = {};
+  private supplementaryListeners = new Set<AgcWorkerClientListeners>();
   private disposed = false;
   private visibilityHandler: ((ev?: unknown) => void) | null = null;
   private readonly pauseOnHidden: boolean;
@@ -85,7 +86,6 @@ export class AgcWorkerClient {
     if (this.pauseOnHidden && typeof document !== "undefined") {
       this.visibilityHandler = () => {
         if (document.visibilityState === "hidden") this.pause();
-        // Explicitly do NOT auto-resume on becoming visible again.
       };
       document.addEventListener("visibilitychange", this.visibilityHandler);
     }
@@ -93,6 +93,14 @@ export class AgcWorkerClient {
 
   setListeners(l: AgcWorkerClientListeners): void {
     this.listeners = l;
+  }
+
+  /** Attach a supplementary listener without displacing the primary. Returns
+   *  an unsubscribe function. Multiple call sites (e.g. Dsky component and a
+   *  LessonHost) may each register their own listener bag on the same client. */
+  addListener(l: AgcWorkerClientListeners): () => void {
+    this.supplementaryListeners.add(l);
+    return () => { this.supplementaryListeners.delete(l); };
   }
 
   crossOriginIsolated(): boolean {
