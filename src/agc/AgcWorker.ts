@@ -218,9 +218,17 @@ function onPostTick(): void {
   }
   if (evCount !== state.lastChannelEventCount) {
     state.lastChannelEventCount = evCount;
+    // Also emit an authoritative decoded-DSKY snapshot (bypasses coalescer).
+    send({
+      type: "dskyDecoded",
+      payload: {
+        decoded: state.decodedDsky,
+        missionTimeUs: Number(state.clock.getMissionTimeUs()),
+        tickIndex: currentTickIndex(),
+      },
+    });
     state.coalescer.offer(buildSnapshot());
   } else {
-    // Ensure mission-time monotonic updates still reach the UI at ~25 Hz.
     state.coalescer.offer(buildSnapshot());
   }
 }
