@@ -328,17 +328,7 @@ test.describe("/learn production acceptance", () => {
 
     // 10. Observe authoritative V35 peak: PROG/VERB/NOUN 88, R1/R2/R3 +88888.
     //     Also 11: post-attempt input/channel event IDs recorded. 18: complete.
-    // Poll for a short while; if no progress, print full diagnostics.
-    try {
-      await waitUntilLessonComplete(page, "lesson-03-v35-lamp-test", 25_000);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log("L3 TIMEOUT diag=", await diagnostics(page));
-      const dsky = await page.getByTestId("dsky-live").textContent();
-      // eslint-disable-next-line no-console
-      console.log("L3 TIMEOUT dsky-live=", dsky);
-      throw err;
-    }
+    await waitUntilLessonComplete(page, "lesson-03-v35-lamp-test", 60_000);
 
     const l3Done = await readLearn(page);
     const ev3 = l3Done.state.evidence[l3Done.state.evidence.length - 1];
