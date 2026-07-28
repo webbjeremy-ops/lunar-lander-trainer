@@ -151,6 +151,21 @@ export class AgcWorkerClient {
     });
   }
 
+  /**
+   * Ask the Worker to allocate a fresh boundary id from the shared eventId
+   * counter. Every input and channel event emitted after the Worker sends
+   * the reply is guaranteed to carry an eventId > boundaryEventId. Lesson
+   * attempts MUST open on this reply — never on a snapshot's
+   * channelEventCount, which is a different namespace.
+   */
+  requestEventBoundary(): Promise<EventBoundaryPayload> {
+    return this.request({ type: "requestEventBoundary" }, (env) => {
+      if (env.message.type !== "eventBoundary")
+        throw new Error("expected eventBoundary reply");
+      return env.message.payload;
+    });
+  }
+
   private request<T>(cmd: AgcCommand, extract: (env: W2CEnvelope) => T): Promise<T> {
     if (this.disposed) return Promise.reject(new Error("AgcWorkerClient disposed"));
     const requestId = `${this.instanceId}-r${++this.requestCounter}`;
