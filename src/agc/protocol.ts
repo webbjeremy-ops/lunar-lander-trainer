@@ -96,12 +96,28 @@ export type AgcEvent =
   | { type: "dskyUpdate"; payload: { lamps: number; missionTimeUs: number } }
   | { type: "dskyDecoded"; payload: { decoded: DecodedDsky; missionTimeUs: number; tickIndex: number } }
   | { type: "channelUpdate"; payload: ChannelEventLite }
+  | { type: "inputAccepted"; payload: InputAcceptedEvent }
   | { type: "alarm"; payload: { code: number; missionTimeUs: number; eventId: number; tickIndex: number } }
   | { type: "paused"; payload: { missionTimeUs: number } }
   | { type: "resumed"; payload: { missionTimeUs: number; timeScale: number } }
   | { type: "diagnostics"; payload: Diagnostics }
   | { type: "fatalError"; payload: { code: string; message: string; detail?: unknown } }
   | { type: "performanceWarning"; payload: { message: string; overrunMs: number } };
+
+/**
+ * Worker-echoed acknowledgement of an accepted user input. The eventId is
+ * drawn from the SAME monotonic counter as channel events, so predicates can
+ * compare `input.eventId` against subsequent `channelEvent.eventId` in a
+ * single ordered namespace. Emitted exactly once per accepted press.
+ */
+export interface InputAcceptedEvent {
+  eventId: number;
+  tickIndex: number;
+  missionTimeUs: number;
+  kind: "dskyKeyDown" | "dskyKeyUp" | "proceedKey";
+  keyCode?: number;
+  pressed?: boolean;
+}
 
 export interface Envelope<TPayload> {
   protocol: typeof PROTOCOL_VERSION;
