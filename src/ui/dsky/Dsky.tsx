@@ -9,6 +9,9 @@ import { AgcWorkerClient } from "@/agc/AgcWorkerClient";
 import { agcWasmUrl, type RopeImage, ropeById } from "@/sim/agc/roms";
 import { AGC_CHANNELS, DSKY_KEYS, DSKY_LAMPS } from "@/sim/agc/AgcChannelRegistry";
 import type { ReadyPayload, StateSnapshot } from "@/agc/protocol";
+import { TIME_SCALES } from "@/agc/protocol";
+import type { DecodedDsky, DskyRegister } from "@/agc/dsky/DskyTypes";
+import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
 
 type LampName = keyof typeof DSKY_LAMPS;
 
