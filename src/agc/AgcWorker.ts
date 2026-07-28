@@ -14,10 +14,17 @@ import { MissionClock, TICK_MICROS } from "./MissionClock";
 import { SnapshotCoalescer } from "./SnapshotCoalescer";
 import { EventLog } from "./EventLog";
 import {
-  applyDskyOutput,
+  applyDskyChannelEvent,
   makeEmptyDecodedDsky,
 } from "./dsky/DskyDecoder";
 import type { DecodedDsky } from "./dsky/DskyTypes";
+
+/** The exact source revision of michaelfranzl/virtualagc that produced the
+ *  vendored yaAGC.wasm shipped by michaelfranzl/webAGC @ 0575ea7. The
+ *  emulator's version() export embeds a short prefix of this hash. */
+export const EXPECTED_YAAGC_SOURCE_COMMIT =
+  "ddc65e7bed41f1301921b934fcbaaee93db99dda";
+export const EXPECTED_YAAGC_VERSION_SUBSTRING = "ddc65e7b";
 import {
   PROTOCOL_VERSION,
   makeEnvelope,
@@ -300,8 +307,11 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           const eventId = state.nextEventId++;
           const tickIndex = currentTickIndex();
           const missionTimeUs = Number(state.clock.getMissionTimeUs());
-          // Channel 010 → drive the authentic latched DSKY decoder in order.
-          if (ch === 0o10) applyDskyOutput(state.decodedDsky, val);
+          // Route DSKY-relevant channels through the source-normative decoder:
+          //   * 0o10  — digit rows + selector-12 annunciator row (yaDSKY2)
+          //   * 0o11  — COMP ACTY / UPLINK ACTY (webAGC synthetic)
+          //   * 0o163 — TEMP / KEY REL / VN FLASH / OPR ERR / RESTART / STBY / etc.
+          applyDskyChannelEvent(state.decodedDsky, ch, val);
           const lite: ChannelEventLite = {
             eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs,
           };
@@ -317,6 +327,20 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       await a.init(cmd.wasmUrl);
       state.adapter = a;
       state.emulatorVersion = a.version() || "unknown";
+      // Source-normative assertion: the WASM version() must embed the pinned
+      // yaAGC/virtualagc source commit that produced our decoder tables. If
+      // this ever fails, the decoder mapping and the running emulator have
+      // desynchronized and every subsequent decoded value is unsound.
+      if (!state.emulatorVersion.includes(EXPECTED_YAAGC_VERSION_SUBSTRING)) {
+        const msg =
+          `yaAGC WASM version mismatch: expected version string to contain ` +
+          `"${EXPECTED_YAAGC_VERSION_SUBSTRING}" (from ${EXPECTED_YAAGC_SOURCE_COMMIT}), ` +
+          `got ${JSON.stringify(state.emulatorVersion)}`;
+        state.lastError = msg;
+        state.workerState = "error";
+        send({ type: "fatalError", payload: { code: "yaagc-version-mismatch", message: msg } });
+        throw new Error(msg);
+      }
       // Compute WASM SHA-256 for diagnostics (best-effort; skip on failure).
       try {
         const resp = await fetch(cmd.wasmUrl);

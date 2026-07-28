@@ -88,6 +88,7 @@ async function main() {
     rope: { id: string; sha256: string; sourceCommit: string; byteLength: number };
     commands: unknown[];
     ch010Events: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; value: number }>;
+    dskyEvents: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; channel: number; value: number }>;
     decodedTimeline: Array<{ tickIndex: number; missionTimeUs: number; decoded: unknown; checksum: string }>;
     finalDecoded: unknown;
     finalChecksum: string;
@@ -151,6 +152,7 @@ async function main() {
     preTestChecksum: (preTestSegment as { finalChecksum: string }).finalChecksum,
     commands: fixture.commands,
     ch010Events: fixture.ch010Events,
+    dskyEvents: fixture.dskyEvents,
     peak: {
       tickIndex: peak.tickIndex,
       missionTimeUs: peak.missionTimeUs,

@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  applyDskyChannelEvent,
   applyDskyOutput,
   decodedDskyCanonical,
   makeEmptyDecodedDsky,
@@ -41,6 +42,7 @@ interface V35Fixture {
   preTestDecoded: DecodedDsky;
   preTestChecksum: string;
   ch010Events: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; value: number }>;
+  dskyEvents?: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; channel: number; value: number }>;
   peak: { tickIndex: number; missionTimeUs: number; decoded: DecodedDsky; checksum: string };
   finalDecoded: DecodedDsky;
   finalChecksum: string;
@@ -121,11 +123,14 @@ describe("V35 lamp test golden trace", () => {
   });
 
   it("replays deterministically through the pure decoder", () => {
+    // Prefer the full multi-channel dskyEvents stream when the fixture
+    // includes it; fall back to legacy ch010-only streams.
+    const events = fx.dskyEvents ?? fx.ch010Events.map((e) => ({ ...e, channel: 0o10 }));
     const state = makeEmptyDecodedDsky();
     let sawPeak = false;
     let peakSeenAtIndex = -1;
-    for (let i = 0; i < fx.ch010Events.length; i++) {
-      applyDskyOutput(state, fx.ch010Events[i]!.value);
+    for (let i = 0; i < events.length; i++) {
+      applyDskyChannelEvent(state, events[i]!.channel, events[i]!.value);
       const chk = decodedDskyCanonical(state);
       if (!sawPeak && chk === fx.peak.checksum) {
         sawPeak = true;
@@ -138,10 +143,11 @@ describe("V35 lamp test golden trace", () => {
   });
 
   it("is idempotent under repeated replay", () => {
+    const events = fx.dskyEvents ?? fx.ch010Events.map((e) => ({ ...e, channel: 0o10 }));
     const s1 = makeEmptyDecodedDsky();
     const s2 = makeEmptyDecodedDsky();
-    for (const e of fx.ch010Events) applyDskyOutput(s1, e.value);
-    for (const e of fx.ch010Events) applyDskyOutput(s2, e.value);
+    for (const e of events) applyDskyChannelEvent(s1, e.channel, e.value);
+    for (const e of events) applyDskyChannelEvent(s2, e.channel, e.value);
     expect(decodedDskyCanonical(s1)).toBe(decodedDskyCanonical(s2));
   });
 });
