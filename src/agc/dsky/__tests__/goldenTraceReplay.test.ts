@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  applyDskyChannelEvent,
   applyDskyOutput,
   decodedDskyCanonical,
   makeEmptyDecodedDsky,
@@ -41,6 +42,7 @@ interface V35Fixture {
   preTestDecoded: DecodedDsky;
   preTestChecksum: string;
   ch010Events: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; value: number }>;
+  dskyEvents?: Array<{ eventId: number; tickIndex: number; missionTimeUs: number; channel: number; value: number }>;
   peak: { tickIndex: number; missionTimeUs: number; decoded: DecodedDsky; checksum: string };
   finalDecoded: DecodedDsky;
   finalChecksum: string;
