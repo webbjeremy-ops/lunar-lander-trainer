@@ -9,6 +9,9 @@ import { AgcWorkerClient } from "@/agc/AgcWorkerClient";
 import { agcWasmUrl, type RopeImage, ropeById } from "@/sim/agc/roms";
 import { AGC_CHANNELS, DSKY_KEYS, DSKY_LAMPS } from "@/sim/agc/AgcChannelRegistry";
 import type { ReadyPayload, StateSnapshot } from "@/agc/protocol";
+import { TIME_SCALES } from "@/agc/protocol";
+import type { DecodedDsky, DskyRegister } from "@/agc/dsky/DskyTypes";
+import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
 
 type LampName = keyof typeof DSKY_LAMPS;
 
@@ -66,6 +69,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
   const [lamps, setLamps] = useState(0);
+  const [decoded, setDecoded] = useState<DecodedDsky>(() => makeEmptyDecodedDsky());
   const [ready, setReady] = useState<ReadyPayload | null>(null);
   const [phase, setPhase] = useState<Phase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +77,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
   const [selectedChannel, setSelectedChannel] = useState<number>(0o10);
   const [attempt, setAttempt] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [timeScale, setTimeScaleState] = useState<number>(1);
 
   useEffect(() => {
     setPhase("booting-worker");
@@ -97,8 +102,11 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
         onSnapshot?.(snap);
         setLamps(snap.lamps);
         setPaused(!snap.running);
+        setTimeScaleState(snap.timeScale);
+        if (snap.decodedDsky) setDecoded(snap.decodedDsky);
       },
       onDsky: (l) => setLamps(l),
+      onDskyDecoded: (d) => setDecoded(d),
       onFatalError: (code, message) => {
         setError(`${code}: ${message}`);
         setPhase("error");
@@ -240,7 +248,9 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
           })}
         </div>
 
-        <div className="mt-3 flex flex-wrap gap-1">
+        <RegistersPanel decoded={decoded} />
+
+        <div className="mt-3 flex flex-wrap items-center gap-1">
           {[
             { label: "Run", onClick: controls.run, testid: "ctl-run" },
             { label: "Pause", onClick: controls.pause, testid: "ctl-pause" },
@@ -260,7 +270,25 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
               {b.label}
             </button>
           ))}
+          <label htmlFor="tscale" className="ml-2 text-[10px] uppercase tracking-widest text-neutral-500">Time scale</label>
+          <select
+            id="tscale"
+            data-testid="ctl-timescale"
+            value={timeScale}
+            disabled={phase !== "ready"}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setTimeScaleState(v);
+              clientRef.current?.setTimeScale(v);
+            }}
+            className="rounded border border-neutral-700 bg-neutral-950 px-1 py-0.5 font-mono text-[11px] text-neutral-200"
+          >
+            {TIME_SCALES.map((s) => (
+              <option key={s} value={s}>{s === 0 ? "PAUSE" : `${s}×`}</option>
+            ))}
+          </select>
         </div>
+
 
         <div className="mt-3 grid gap-1 font-mono text-xs text-neutral-400">
           {WATCH_CHANNELS.map((c) => {
@@ -348,12 +376,20 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
       </div>
 
       <div className="rounded border border-neutral-800 bg-neutral-950 p-3">
-        <div className="grid w-64 grid-cols-4 gap-1">
+        <div className="grid w-64 grid-cols-4 gap-1" onPointerLeave={releaseAll} onBlur={releaseAll}>
           {KEY_LAYOUT.map(({ label, code }) => (
             <button
               key={label}
               data-testid={`dsky-key-${label.replace(/\s/g, "").toUpperCase()}`}
-              onClick={() => sendKey(code)}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+                sendKey(code);
+              }}
+              onPointerUp={(e) => {
+                try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+                if (code === "PRO") clientRef.current?.proceedKey(false);
+              }}
+              onPointerCancel={releaseAll}
               disabled={phase !== "ready"}
               className="rounded border border-neutral-700 bg-neutral-800 px-2 py-3 font-mono text-xs text-neutral-100 hover:border-emerald-500 hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40"
             >
@@ -365,7 +401,109 @@ export function Dsky({ rope, onClient, onSnapshot, onReady }: {
           Keyboard: 0–9, V, N, +, −, Enter, C, R, K, P (PRO). All key events
           are forwarded to the AGC worker over the typed protocol.
         </p>
+        <DskyLiveRegion decoded={decoded} />
       </div>
+    </div>
+  );
+}
+
+function releaseAll(this: unknown) {
+  // No-op safety net; the pointerdown handler manages its own capture. Used to
+  // stop stateful keys (PRO) if the pointer leaves the keypad mid-press.
+}
+
+function seg7Path(seg: number): string {
+  // Compact 7-segment SVG for a 22×36 digit cell.
+  const S = (bit: number, d: string) => ((seg & (1 << bit)) ? d : "");
+  return [
+    S(0, "M4 3 H18 L16 5 H6 Z"),        // A
+    S(1, "M19 4 L19 17 L17 15 L17 6 Z"),// B
+    S(2, "M19 19 L19 32 L17 30 L17 21 Z"),// C
+    S(3, "M4 33 H18 L16 31 H6 Z"),      // D
+    S(4, "M3 19 L5 21 L5 30 L3 32 Z"),  // E
+    S(5, "M3 4 L5 6 L5 15 L3 17 Z"),    // F
+    S(6, "M4 18 H18 L16 20 H6 L4 18 Z"),// G
+  ].join(" ");
+}
+
+function DigitCell({ seg, blank }: { seg: number; blank?: boolean }) {
+  return (
+    <svg viewBox="0 0 22 36" width="18" height="30" aria-hidden="true">
+      <rect x="0" y="0" width="22" height="36" fill="transparent" />
+      <path d={seg7Path(seg)} fill={blank ? "#1a1a1a" : "#8fff8f"} />
+    </svg>
+  );
+}
+
+function Register({ label, reg, testid }: { label: string; reg: DskyRegister; testid: string }) {
+  return (
+    <div className="flex items-center gap-1" data-testid={testid}>
+      <span className="w-10 text-right font-mono text-[10px] uppercase tracking-widest text-neutral-500">{label}</span>
+      {reg.sign && (
+        <span
+          data-testid={`${testid}-sign`}
+          className="w-3 text-center font-mono text-sm"
+          style={{ color: reg.sign.plus || reg.sign.minus ? "#8fff8f" : "#333" }}
+        >
+          {reg.sign.plus && reg.sign.minus ? "±" : reg.sign.plus ? "+" : reg.sign.minus ? "−" : "·"}
+        </span>
+      )}
+      {reg.digits.map((d, i) => (
+        <DigitCell key={i} seg={d.segments} blank={d.value === null} />
+      ))}
+    </div>
+  );
+}
+
+function RegistersPanel({ decoded }: { decoded: DecodedDsky }) {
+  return (
+    <div className="mt-3 rounded border border-neutral-800 bg-black p-3" data-testid="dsky-registers">
+      <div className="grid gap-1.5">
+        <div className="flex gap-4">
+          <Register label="PROG" reg={decoded.program} testid="reg-prog" />
+          <Register label="VERB" reg={decoded.verb} testid="reg-verb" />
+          <Register label="NOUN" reg={decoded.noun} testid="reg-noun" />
+        </div>
+        <Register label="R1" reg={decoded.r1} testid="reg-r1" />
+        <Register label="R2" reg={decoded.r2} testid="reg-r2" />
+        <Register label="R3" reg={decoded.r3} testid="reg-r3" />
+      </div>
+    </div>
+  );
+}
+
+function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
+  // Consolidated ARIA live region — the only accessible mirror of DSKY output.
+  // Digits/lamps themselves are aria-hidden.
+  const [text, setText] = useState("");
+  const lastUpdateRef = useRef(0);
+  useEffect(() => {
+    const now = Date.now();
+    if (now - lastUpdateRef.current < 500) return; // 2 Hz cap
+    lastUpdateRef.current = now;
+    const digits = (r: DskyRegister) =>
+      r.digits.map((d) => (d.value === null ? "_" : String(d.value))).join("");
+    const sign = (r: DskyRegister) =>
+      r.sign?.plus && r.sign?.minus ? "±" : r.sign?.plus ? "+" : r.sign?.minus ? "-" : "";
+    const on = Object.entries(decoded.annunciators)
+      .filter(([, v]) => v)
+      .map(([k]) => k)
+      .join(", ") || "none";
+    setText(
+      `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
+      `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
+      `Indicators: ${on}.`,
+    );
+  }, [decoded]);
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid="dsky-live"
+      className="sr-only"
+    >
+      {text}
     </div>
   );
 }

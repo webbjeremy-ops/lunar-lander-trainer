@@ -14,6 +14,11 @@ import { MissionClock, TICK_MICROS } from "./MissionClock";
 import { SnapshotCoalescer } from "./SnapshotCoalescer";
 import { EventLog } from "./EventLog";
 import {
+  applyDskyOutput,
+  makeEmptyDecodedDsky,
+} from "./dsky/DskyDecoder";
+import type { DecodedDsky } from "./dsky/DskyTypes";
+import {
   PROTOCOL_VERSION,
   makeEnvelope,
   type AgcCommand,
@@ -58,6 +63,8 @@ interface WorkerState {
   disposed: boolean;
   lastLamps: number;
   lastChannelEventCount: number;
+  decodedDsky: DecodedDsky;
+  nextEventId: number;
 }
 
 const state: WorkerState = {
@@ -85,7 +92,13 @@ const state: WorkerState = {
   disposed: false,
   lastLamps: 0,
   lastChannelEventCount: 0,
+  decodedDsky: makeEmptyDecodedDsky(),
+  nextEventId: 1,
 };
+
+function currentTickIndex(): number {
+  return state.clock.stats().ticksExecuted;
+}
 
 async function sha256Hex(input: ArrayBuffer | Uint8Array): Promise<string> {
   const src = input instanceof Uint8Array ? input : new Uint8Array(input);
@@ -117,6 +130,8 @@ function buildSnapshot(): StateSnapshot {
       erasableWindow: [],
       avgTickMs: 0,
       schedulerOverruns: 0,
+      tickIndex: 0,
+      decodedDsky: state.decodedDsky,
     };
   }
   const channels: Record<number, number> = {};
@@ -140,6 +155,8 @@ function buildSnapshot(): StateSnapshot {
   for (let i = 0; i < state.erasableLength; i++) window[i] = era[state.erasableBase + i] ?? 0;
   const recentRaw = adapter.recentEvents(24);
   const recentEvents: ChannelEventLite[] = recentRaw.map((e) => ({
+    eventId: e.seq,
+    tickIndex: currentTickIndex(),
     channel: e.channel,
     value: e.value,
     seq: e.seq,
@@ -161,6 +178,8 @@ function buildSnapshot(): StateSnapshot {
     erasableWindow: window,
     avgTickMs: clockStats.avgTickMs,
     schedulerOverruns: clockStats.overruns,
+    tickIndex: clockStats.ticksExecuted,
+    decodedDsky: state.decodedDsky,
   };
 }
 
@@ -199,9 +218,17 @@ function onPostTick(): void {
   }
   if (evCount !== state.lastChannelEventCount) {
     state.lastChannelEventCount = evCount;
+    // Also emit an authoritative decoded-DSKY snapshot (bypasses coalescer).
+    send({
+      type: "dskyDecoded",
+      payload: {
+        decoded: state.decodedDsky,
+        missionTimeUs: Number(state.clock.getMissionTimeUs()),
+        tickIndex: currentTickIndex(),
+      },
+    });
     state.coalescer.offer(buildSnapshot());
   } else {
-    // Ensure mission-time monotonic updates still reach the UI at ~25 Hz.
     state.coalescer.offer(buildSnapshot());
   }
 }
@@ -266,16 +293,17 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       if (state.adapter) return;
       state.workerState = "initializing";
       const a = new AgcCoreAdapter({
-        onChannelUpdate: (ch, val) =>
+        onChannelUpdate: (ch, val) => {
+          const eventId = state.nextEventId++;
+          const tickIndex = currentTickIndex();
+          const missionTimeUs = Number(state.clock.getMissionTimeUs());
+          // Channel 010 → drive the authentic latched DSKY decoder in order.
+          if (ch === 0o10) applyDskyOutput(state.decodedDsky, val);
           send({
             type: "channelUpdate",
-            payload: {
-              channel: ch,
-              value: val,
-              seq: 0,
-              missionTimeUs: Number(state.clock.getMissionTimeUs()),
-            },
-          }),
+            payload: { eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs },
+          });
+        },
       });
       await a.init(cmd.wasmUrl);
       state.adapter = a;
@@ -373,6 +401,7 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       adapter.reset();
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
+      state.decodedDsky = makeEmptyDecodedDsky();
       state.lastLamps = 0;
       state.lastChannelEventCount = 0;
       state.coalescer.offer(buildSnapshot());

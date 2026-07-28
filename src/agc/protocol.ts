@@ -4,7 +4,14 @@
 // sequence number; the client and worker each keep their own counter. Never
 // share a global counter — the two threads run independently.
 
-export const PROTOCOL_VERSION = 1 as const;
+export const PROTOCOL_VERSION = 2 as const;
+
+/** Time-scale presets exposed to the UI. Zero pauses the mission clock. */
+export const TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4, 8] as const;
+export type TimeScale = (typeof TIME_SCALES)[number] | number;
+
+import type { DecodedDsky } from "./dsky/DskyTypes";
+export type { DecodedDsky };
 
 export type RopeId = "Luminary099" | "Comanche055";
 
@@ -30,6 +37,10 @@ export type AgcCommand =
   | { type: "dispose" };
 
 export interface ChannelEventLite {
+  /** Monotonic per-worker id assigned at the moment of AGC OUTPUT. */
+  eventId: number;
+  /** Completed mission ticks at the moment the event was emitted. */
+  tickIndex: number;
   channel: number;
   value: number;
   seq: number;
@@ -51,7 +62,11 @@ export interface StateSnapshot {
   erasableWindow: number[];
   avgTickMs: number;
   schedulerOverruns: number;
+  tickIndex: number;
+  /** Full latched DSKY state; deterministic replay compares against this. */
+  decodedDsky: DecodedDsky;
 }
+
 
 export interface ReadyPayload {
   emulatorRepo: string;
@@ -79,8 +94,9 @@ export type AgcEvent =
   | { type: "ready"; payload: ReadyPayload }
   | { type: "stateSnapshot"; payload: StateSnapshot }
   | { type: "dskyUpdate"; payload: { lamps: number; missionTimeUs: number } }
+  | { type: "dskyDecoded"; payload: { decoded: DecodedDsky; missionTimeUs: number; tickIndex: number } }
   | { type: "channelUpdate"; payload: ChannelEventLite }
-  | { type: "alarm"; payload: { code: number; missionTimeUs: number } }
+  | { type: "alarm"; payload: { code: number; missionTimeUs: number; eventId: number; tickIndex: number } }
   | { type: "paused"; payload: { missionTimeUs: number } }
   | { type: "resumed"; payload: { missionTimeUs: number; timeScale: number } }
   | { type: "diagnostics"; payload: Diagnostics }
