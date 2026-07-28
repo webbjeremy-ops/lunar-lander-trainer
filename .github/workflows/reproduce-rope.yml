@@ -1,0 +1,31 @@
+name: Reproduce Luminary099 rope
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/build-luminary099.sh"
+      - "public/ropes/**"
+      - ".github/workflows/reproduce-rope.yml"
+
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build deps
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+      - name: Run reproducible-build script
+        id: build
+        continue-on-error: true
+        run: bash scripts/build-luminary099.sh | tee /tmp/rope-report.txt
+      - name: Show report
+        run: cat /tmp/rope-report.txt || true
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: luminary099-reproduction
+          path: |
+            /tmp/rope-report.txt
+            /tmp/agc-rope-build/Luminary099.bin
