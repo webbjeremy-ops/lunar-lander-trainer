@@ -161,15 +161,10 @@ function buildSnapshot(): StateSnapshot {
   const era = adapter.erasable();
   const window: number[] = new Array(state.erasableLength);
   for (let i = 0; i < state.erasableLength; i++) window[i] = era[state.erasableBase + i] ?? 0;
-  const recentRaw = adapter.recentEvents(24);
-  const recentEvents: ChannelEventLite[] = recentRaw.map((e) => ({
-    eventId: e.seq,
-    tickIndex: currentTickIndex(),
-    channel: e.channel,
-    value: e.value,
-    seq: e.seq,
-    missionTimeUs: Number(state.clock.getMissionTimeUs()),
-  }));
+  // Read from the Worker-owned ring so each ChannelEventLite retains the
+  // eventId, tickIndex, and missionTimeUs captured AT THE MOMENT the event
+  // was emitted. Do NOT re-derive tick/time from the current clock here.
+  const recentEvents: ChannelEventLite[] = state.recentEventsRing.slice(-24);
   const clockStats = state.clock.stats();
   return {
     version: SNAPSHOT_SCHEMA_VERSION,
