@@ -118,6 +118,7 @@ export type AgcEvent =
   | { type: "dskyDecoded"; payload: { decoded: DecodedDsky; missionTimeUs: number; tickIndex: number } }
   | { type: "channelUpdate"; payload: ChannelEventLite }
   | { type: "inputAccepted"; payload: InputAcceptedEvent }
+  | { type: "eventBoundary"; payload: EventBoundaryPayload }
   | { type: "alarm"; payload: { code: number; missionTimeUs: number; eventId: number; tickIndex: number } }
   | { type: "paused"; payload: { missionTimeUs: number } }
   | { type: "resumed"; payload: { missionTimeUs: number; timeScale: number } }
