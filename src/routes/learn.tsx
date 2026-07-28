@@ -410,17 +410,31 @@ function LearnPage() {
                 )}
                 {isInteractive && (
                   <div className="flex w-full flex-col gap-3">
-                    <p className="text-xs text-amber-300">
-                      This step waits for authentic AGC output from the live
-                      Worker below. The lesson engine only advances when
-                      Luminary099 produces the required channel events.
+                    <p
+                      data-testid="lesson-attempt-phase"
+                      data-phase={attemptPhase}
+                      className={
+                        "text-xs " +
+                        (attemptPhase === "ready"
+                          ? "text-amber-300"
+                          : attemptPhase === "error"
+                            ? "text-red-300"
+                            : "text-sky-300")
+                      }
+                    >
+                      {attemptPhase === "opening"
+                        ? "Preparing authentic AGC observation…"
+                        : attemptPhase === "error"
+                          ? `Could not open attempt: ${attemptError ?? "unknown error"}`
+                          : "This step waits for authentic AGC output from the live Worker below. The lesson engine only advances when Luminary099 produces the required channel events."}
                     </p>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         data-testid="ctl-restart-attempt"
                         onClick={restartInteractive}
-                        className="rounded border border-amber-600 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
+                        disabled={attemptPhase === "opening"}
+                        className="rounded border border-amber-600 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40 disabled:opacity-40"
                       >
                         Restart attempt
                       </button>
