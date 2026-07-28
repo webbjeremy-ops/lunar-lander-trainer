@@ -1,7 +1,7 @@
 {
   "kind": "agc-golden-trace",
   "label": "V35 lamp test (Luminary099)",
-  "capturedAt": "2026-07-28T20:12:06.668Z",
+  "capturedAt": "2026-07-28T20:14:14.621Z",
   "metadata": {
     "protocolVersion": 2,
     "decoderSchemaVersion": 1,
@@ -167,8 +167,8 @@
   "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:17",
   "commands": [
     {
-      "tickIndex": 97,
-      "missionTimeUs": 1940000,
+      "tickIndex": 98,
+      "missionTimeUs": 1960000,
       "kind": "reset",
       "payload": null
     },
@@ -189,16 +189,16 @@
       }
     },
     {
-      "tickIndex": 63,
-      "missionTimeUs": 1260000,
+      "tickIndex": 64,
+      "missionTimeUs": 1280000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 5
       }
     },
     {
-      "tickIndex": 74,
-      "missionTimeUs": 1480000,
+      "tickIndex": 76,
+      "missionTimeUs": 1520000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 28
@@ -207,199 +207,199 @@
   ],
   "ch010Events": [
     {
-      "eventId": 79,
+      "eventId": 80,
       "tickIndex": 1,
       "missionTimeUs": 40000,
       "value": 24832
     },
     {
-      "eventId": 83,
+      "eventId": 84,
       "tickIndex": 2,
       "missionTimeUs": 60000,
       "value": 0
     },
     {
-      "eventId": 85,
+      "eventId": 86,
       "tickIndex": 3,
       "missionTimeUs": 80000,
       "value": 2048
     },
     {
-      "eventId": 87,
+      "eventId": 88,
       "tickIndex": 4,
       "missionTimeUs": 100000,
       "value": 0
     },
     {
-      "eventId": 88,
+      "eventId": 89,
       "tickIndex": 5,
       "missionTimeUs": 120000,
       "value": 22528
     },
     {
-      "eventId": 89,
+      "eventId": 90,
       "tickIndex": 6,
       "missionTimeUs": 140000,
       "value": 0
     },
     {
-      "eventId": 100,
+      "eventId": 101,
       "tickIndex": 43,
       "missionTimeUs": 880000,
       "value": 20480
     },
     {
-      "eventId": 103,
+      "eventId": 104,
       "tickIndex": 44,
       "missionTimeUs": 900000,
       "value": 0
     },
     {
-      "eventId": 106,
+      "eventId": 107,
       "tickIndex": 45,
       "missionTimeUs": 920000,
       "value": 18432
     },
     {
-      "eventId": 108,
+      "eventId": 109,
       "tickIndex": 46,
       "missionTimeUs": 940000,
       "value": 0
     },
     {
-      "eventId": 111,
+      "eventId": 112,
       "tickIndex": 47,
       "missionTimeUs": 960000,
       "value": 16384
     },
     {
-      "eventId": 113,
+      "eventId": 114,
       "tickIndex": 48,
       "missionTimeUs": 980000,
       "value": 0
     },
     {
-      "eventId": 114,
+      "eventId": 115,
       "tickIndex": 49,
       "missionTimeUs": 1000000,
       "value": 14336
     },
     {
-      "eventId": 117,
+      "eventId": 118,
       "tickIndex": 50,
       "missionTimeUs": 1020000,
       "value": 0
     },
     {
-      "eventId": 118,
+      "eventId": 119,
       "tickIndex": 51,
       "missionTimeUs": 1040000,
       "value": 12288
     },
     {
-      "eventId": 120,
+      "eventId": 121,
       "tickIndex": 52,
       "missionTimeUs": 1060000,
       "value": 0
     },
     {
-      "eventId": 126,
+      "eventId": 127,
       "tickIndex": 53,
       "missionTimeUs": 1080000,
       "value": 10240
     },
     {
-      "eventId": 129,
+      "eventId": 130,
       "tickIndex": 54,
       "missionTimeUs": 1100000,
       "value": 0
     },
     {
-      "eventId": 130,
+      "eventId": 131,
       "tickIndex": 55,
       "missionTimeUs": 1120000,
       "value": 8192
     },
     {
-      "eventId": 131,
+      "eventId": 132,
       "tickIndex": 56,
       "missionTimeUs": 1140000,
       "value": 0
     },
     {
-      "eventId": 132,
+      "eventId": 133,
       "tickIndex": 57,
       "missionTimeUs": 1160000,
       "value": 6144
     },
     {
-      "eventId": 133,
+      "eventId": 134,
       "tickIndex": 58,
       "missionTimeUs": 1180000,
       "value": 0
     },
     {
-      "eventId": 134,
+      "eventId": 135,
       "tickIndex": 59,
       "missionTimeUs": 1200000,
       "value": 4096
     },
     {
-      "eventId": 135,
+      "eventId": 136,
       "tickIndex": 60,
       "missionTimeUs": 1220000,
       "value": 0
     },
     {
-      "eventId": 136,
+      "eventId": 137,
       "tickIndex": 61,
       "missionTimeUs": 1240000,
       "value": 21344
     },
     {
-      "eventId": 137,
+      "eventId": 138,
       "tickIndex": 62,
       "missionTimeUs": 1260000,
       "value": 0
     },
     {
-      "eventId": 145,
+      "eventId": 146,
       "tickIndex": 67,
       "missionTimeUs": 1360000,
       "value": 21374
     },
     {
-      "eventId": 149,
+      "eventId": 150,
       "tickIndex": 68,
       "missionTimeUs": 1380000,
       "value": 0
     },
     {
-      "eventId": 157,
+      "eventId": 158,
       "tickIndex": 79,
       "missionTimeUs": 1600000,
       "value": 25020
     },
     {
-      "eventId": 159,
+      "eventId": 160,
       "tickIndex": 80,
       "missionTimeUs": 1620000,
       "value": 0
     },
     {
-      "eventId": 160,
+      "eventId": 161,
       "tickIndex": 81,
       "missionTimeUs": 1640000,
       "value": 21437
     },
     {
-      "eventId": 161,
+      "eventId": 162,
       "tickIndex": 82,
       "missionTimeUs": 1660000,
       "value": 0
     },
     {
-      "eventId": 162,
+      "eventId": 163,
       "tickIndex": 83,
       "missionTimeUs": 1680000,
       "value": 19389
@@ -453,100 +453,100 @@
       "value": 12221
     },
     {
-      "eventId": 178,
+      "eventId": 179,
       "tickIndex": 92,
       "missionTimeUs": 1860000,
       "value": 0
     },
     {
-      "eventId": 180,
+      "eventId": 181,
       "tickIndex": 93,
       "missionTimeUs": 1880000,
       "value": 9149
     },
     {
-      "eventId": 181,
+      "eventId": 182,
       "tickIndex": 94,
       "missionTimeUs": 1900000,
       "value": 0
     },
     {
-      "eventId": 183,
+      "eventId": 184,
       "tickIndex": 95,
       "missionTimeUs": 1920000,
       "value": 7101
     },
     {
-      "eventId": 185,
+      "eventId": 186,
       "tickIndex": 96,
       "missionTimeUs": 1940000,
       "value": 0
     },
     {
-      "eventId": 188,
+      "eventId": 189,
       "tickIndex": 97,
       "missionTimeUs": 1960000,
       "value": 6077
     },
     {
-      "eventId": 191,
+      "eventId": 192,
       "tickIndex": 98,
       "missionTimeUs": 1980000,
       "value": 0
     },
     {
-      "eventId": 194,
+      "eventId": 195,
       "tickIndex": 99,
       "missionTimeUs": 2000000,
       "value": 3005
     },
     {
-      "eventId": 197,
+      "eventId": 198,
       "tickIndex": 100,
       "missionTimeUs": 2020000,
       "value": 0
     },
     {
-      "eventId": 198,
+      "eventId": 199,
       "tickIndex": 101,
       "missionTimeUs": 2040000,
       "value": 23485
     },
     {
-      "eventId": 200,
+      "eventId": 201,
       "tickIndex": 102,
       "missionTimeUs": 2060000,
       "value": 0
     },
     {
-      "eventId": 328,
-      "tickIndex": 325,
-      "missionTimeUs": 6520000,
+      "eventId": 329,
+      "tickIndex": 331,
+      "missionTimeUs": 6640000,
       "value": 24576
     },
     {
-      "eventId": 329,
-      "tickIndex": 326,
-      "missionTimeUs": 6540000,
+      "eventId": 330,
+      "tickIndex": 332,
+      "missionTimeUs": 6660000,
       "value": 0
     },
     {
-      "eventId": 330,
-      "tickIndex": 327,
-      "missionTimeUs": 6560000,
+      "eventId": 331,
+      "tickIndex": 333,
+      "missionTimeUs": 6680000,
       "value": 22528
     },
     {
-      "eventId": 331,
-      "tickIndex": 328,
-      "missionTimeUs": 6580000,
+      "eventId": 332,
+      "tickIndex": 334,
+      "missionTimeUs": 6700000,
       "value": 0
     }
   ],
   "peak": {
-    "tickIndex": 92,
-    "missionTimeUs": 1840000,
-    "score": 112,
+    "tickIndex": 116,
+    "missionTimeUs": 2320000,
+    "score": 138,
     "decoded": {
       "program": {
         "digits": [
@@ -555,8 +555,8 @@
             "segments": 0
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
           }
         ]
       },
@@ -567,8 +567,8 @@
             "segments": 0
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
           }
         ]
       },
@@ -579,56 +579,56 @@
             "segments": 0
           },
           {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
           }
         ]
       },
       "r1": {
         "digits": [
           {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
+          },
+          {
+            "value": 5,
+            "segments": 109
+          },
+          {
+            "value": 5,
+            "segments": 109
           },
           {
             "value": null,
             "segments": 0
           },
           {
-            "value": null,
-            "segments": 0
-          },
-          {
-            "value": null,
-            "segments": 0
-          },
-          {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
           }
         ],
         "sign": {
-          "plus": false,
-          "minus": false
+          "plus": true,
+          "minus": true
         }
       },
       "r2": {
         "digits": [
           {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
+          },
+          {
+            "value": 5,
+            "segments": 109
           },
           {
             "value": null,
             "segments": 0
           },
           {
-            "value": null,
-            "segments": 0
-          },
-          {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
           },
           {
             "value": null,
@@ -636,36 +636,36 @@
           }
         ],
         "sign": {
-          "plus": false,
-          "minus": false
+          "plus": true,
+          "minus": true
         }
       },
       "r3": {
         "digits": [
           {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
+          },
+          {
+            "value": 5,
+            "segments": 109
+          },
+          {
+            "value": 5,
+            "segments": 109
           },
           {
             "value": null,
             "segments": 0
           },
           {
-            "value": null,
-            "segments": 0
-          },
-          {
-            "value": null,
-            "segments": 0
-          },
-          {
-            "value": null,
-            "segments": 0
+            "value": 5,
+            "segments": 109
           }
         ],
         "sign": {
-          "plus": false,
-          "minus": false
+          "plus": true,
+          "minus": true
         }
       },
       "annunciators": {
@@ -688,9 +688,9 @@
         "standby": true,
         "elOff": false
       },
-      "eventCount": 71
+      "eventCount": 84
     },
-    "checksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=1,alt=1,compActy=1,elOff=0,gimbalLock=1,keyRelease=1,noAtt=1,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=1,temp=1,tracker=1,uplinkActy=1,vel=1,verbNounFlash=0|EC:71"
+    "checksum": "PROG:_5|VERB:_5|NOUN:_5|R1:+-555_5|R2:+-55_5_|R3:+-555_5|ANN:agcWarning=1,alt=1,compActy=1,elOff=0,gimbalLock=1,keyRelease=1,noAtt=1,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=1,temp=1,tracker=1,uplinkActy=1,vel=1,verbNounFlash=0|EC:84"
   },
   "finalDecoded": {
     "program": {
@@ -712,8 +712,8 @@
           "segments": 0
         },
         {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
         }
       ]
     },
@@ -724,56 +724,56 @@
           "segments": 0
         },
         {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
         }
       ]
     },
     "r1": {
       "digits": [
         {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
+        },
+        {
+          "value": 5,
+          "segments": 109
+        },
+        {
+          "value": 5,
+          "segments": 109
         },
         {
           "value": null,
           "segments": 0
         },
         {
-          "value": null,
-          "segments": 0
-        },
-        {
-          "value": null,
-          "segments": 0
-        },
-        {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
         }
       ],
       "sign": {
-        "plus": false,
-        "minus": false
+        "plus": true,
+        "minus": true
       }
     },
     "r2": {
       "digits": [
         {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
+        },
+        {
+          "value": 5,
+          "segments": 109
         },
         {
           "value": null,
           "segments": 0
         },
         {
-          "value": null,
-          "segments": 0
-        },
-        {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
         },
         {
           "value": null,
@@ -781,36 +781,36 @@
         }
       ],
       "sign": {
-        "plus": false,
-        "minus": false
+        "plus": true,
+        "minus": true
       }
     },
     "r3": {
       "digits": [
         {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
+        },
+        {
+          "value": 5,
+          "segments": 109
+        },
+        {
+          "value": 5,
+          "segments": 109
         },
         {
           "value": null,
           "segments": 0
         },
         {
-          "value": null,
-          "segments": 0
-        },
-        {
-          "value": null,
-          "segments": 0
-        },
-        {
-          "value": null,
-          "segments": 0
+          "value": 5,
+          "segments": 109
         }
       ],
       "sign": {
-        "plus": false,
-        "minus": false
+        "plus": true,
+        "minus": true
       }
     },
     "annunciators": {
@@ -835,7 +835,7 @@
     },
     "eventCount": 110
   },
-  "finalChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=1,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:110",
+  "finalChecksum": "PROG:__|VERB:_5|NOUN:_5|R1:+-555_5|R2:+-55_5_|R3:+-555_5|ANN:agcWarning=1,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:110",
   "finalSnapshot": {
     "tickIndex": 485,
     "missionTimeUs": 9700000,

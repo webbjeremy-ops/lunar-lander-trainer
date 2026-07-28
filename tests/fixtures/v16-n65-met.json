@@ -1,7 +1,7 @@
 {
   "kind": "agc-golden-trace",
   "label": "V16 N65 mission-elapsed-time monitor (Luminary099)",
-  "capturedAt": "2026-07-28T20:12:19.104Z",
+  "capturedAt": "2026-07-28T20:14:27.059Z",
   "metadata": {
     "protocolVersion": 2,
     "decoderSchemaVersion": 1,
@@ -167,14 +167,14 @@
   "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:17",
   "commands": [
     {
-      "tickIndex": 98,
-      "missionTimeUs": 1960000,
+      "tickIndex": 97,
+      "missionTimeUs": 1940000,
       "kind": "reset",
       "payload": null
     },
     {
-      "tickIndex": 39,
-      "missionTimeUs": 780000,
+      "tickIndex": 40,
+      "missionTimeUs": 800000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 17
@@ -189,32 +189,32 @@
       }
     },
     {
-      "tickIndex": 62,
-      "missionTimeUs": 1240000,
+      "tickIndex": 63,
+      "missionTimeUs": 1260000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 6
       }
     },
     {
-      "tickIndex": 74,
-      "missionTimeUs": 1480000,
+      "tickIndex": 73,
+      "missionTimeUs": 1460000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 31
       }
     },
     {
-      "tickIndex": 86,
-      "missionTimeUs": 1720000,
+      "tickIndex": 85,
+      "missionTimeUs": 1700000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 6
       }
     },
     {
-      "tickIndex": 98,
-      "missionTimeUs": 1960000,
+      "tickIndex": 96,
+      "missionTimeUs": 1920000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 5
@@ -241,8 +241,8 @@
               "segments": 0
             },
             {
-              "value": 0,
-              "segments": 63
+              "value": null,
+              "segments": 0
             }
           ]
         },
@@ -253,8 +253,8 @@
               "segments": 0
             },
             {
-              "value": null,
-              "segments": 0
+              "value": 5,
+              "segments": 109
             }
           ]
         },
@@ -265,8 +265,8 @@
               "segments": 0
             },
             {
-              "value": 0,
-              "segments": 63
+              "value": 4,
+              "segments": 102
             }
           ]
         },
@@ -294,8 +294,8 @@
             }
           ],
           "sign": {
-            "plus": false,
-            "minus": false
+            "plus": true,
+            "minus": true
           }
         },
         "r2": {
@@ -305,8 +305,8 @@
               "segments": 0
             },
             {
-              "value": 0,
-              "segments": 63
+              "value": null,
+              "segments": 0
             },
             {
               "value": null,
@@ -323,7 +323,7 @@
           ],
           "sign": {
             "plus": true,
-            "minus": false
+            "minus": true
           }
         },
         "r3": {
@@ -337,21 +337,21 @@
               "segments": 0
             },
             {
-              "value": null,
-              "segments": 0
+              "value": 9,
+              "segments": 111
             },
             {
               "value": null,
               "segments": 0
             },
             {
-              "value": null,
-              "segments": 0
+              "value": 5,
+              "segments": 109
             }
           ],
           "sign": {
             "plus": false,
-            "minus": false
+            "minus": true
           }
         },
         "annunciators": {
@@ -376,10 +376,10 @@
         },
         "eventCount": 110
       },
-      "checksum": "PROG:_0|VERB:__|NOUN:_0|R1:.._____|R2:+._0___|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:110",
+      "checksum": "PROG:__|VERB:_5|NOUN:_4|R1:+-_____|R2:+-_____|R3:.-__9_5|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:110",
       "snapshot": {
-        "tickIndex": 270,
-        "missionTimeUs": 5400000,
+        "tickIndex": 269,
+        "missionTimeUs": 5380000,
         "lamps": 128,
         "running": true,
         "timeScale": 1,
@@ -390,10 +390,10 @@
           32759,
           0,
           0,
-          540,
-          16306,
-          16381,
+          538,
+          16304,
           16379,
+          16377,
           0,
           0,
           0,
@@ -414,8 +414,8 @@
               "segments": 0
             },
             {
-              "value": 0,
-              "segments": 63
+              "value": null,
+              "segments": 0
             }
           ]
         },
@@ -426,8 +426,8 @@
               "segments": 0
             },
             {
-              "value": null,
-              "segments": 0
+              "value": 5,
+              "segments": 109
             }
           ]
         },
@@ -438,8 +438,8 @@
               "segments": 0
             },
             {
-              "value": 0,
-              "segments": 63
+              "value": 4,
+              "segments": 102
             }
           ]
         },
@@ -467,8 +467,8 @@
             }
           ],
           "sign": {
-            "plus": false,
-            "minus": false
+            "plus": true,
+            "minus": true
           }
         },
         "r2": {
@@ -478,8 +478,8 @@
               "segments": 0
             },
             {
-              "value": 0,
-              "segments": 63
+              "value": null,
+              "segments": 0
             },
             {
               "value": null,
@@ -496,16 +496,12 @@
           ],
           "sign": {
             "plus": true,
-            "minus": false
+            "minus": true
           }
         },
         "r3": {
           "digits": [
             {
-              "value": 0,
-              "segments": 63
-            },
-            {
               "value": null,
               "segments": 0
             },
@@ -514,17 +510,21 @@
               "segments": 0
             },
             {
-              "value": null,
-              "segments": 0
+              "value": 5,
+              "segments": 109
             },
             {
               "value": null,
               "segments": 0
+            },
+            {
+              "value": 5,
+              "segments": 109
             }
           ],
           "sign": {
-            "plus": false,
-            "minus": false
+            "plus": true,
+            "minus": true
           }
         },
         "annunciators": {
@@ -549,7 +549,7 @@
         },
         "eventCount": 127
       },
-      "checksum": "PROG:_0|VERB:__|NOUN:_0|R1:.._____|R2:+._0___|R3:..0____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:127",
+      "checksum": "PROG:__|VERB:_5|NOUN:_4|R1:+-_____|R2:+-_____|R3:+-__5_5|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:127",
       "snapshot": {
         "tickIndex": 431,
         "missionTimeUs": 8620000,
