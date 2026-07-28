@@ -452,21 +452,30 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
   }
 }
 
+// FIFO serialization: a later command (e.g. loadRope) MUST NOT start until
+// the previous command's async handler has fully resolved. Without this, the
+// initialize handler's `await a.init(wasmUrl)` yields the event loop and the
+// next queued message runs concurrently — loadRope then sees adapter === null
+// and throws "loadRope before initialize".
+let commandQueue: Promise<void> = Promise.resolve();
+
 ctx.addEventListener("message", (ev: MessageEvent<C2WEnvelope>) => {
   const env = ev.data;
   if (!env || env.protocol !== PROTOCOL_VERSION || env.dir !== "c2w") return;
-  handle(env.message, env.requestId).catch((err) => {
-    const message = err instanceof Error ? err.message : String(err);
-    state.lastError = message;
-    state.workerState = "error";
-    send({
-      type: "fatalError",
-      payload: {
-        code: err instanceof Error && err.message.startsWith("rope-integrity") ? "rope-integrity" : "worker",
-        message,
-      },
-    }, env.requestId);
-  });
+  commandQueue = commandQueue.then(() =>
+    handle(env.message, env.requestId).catch((err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      state.lastError = message;
+      state.workerState = "error";
+      send({
+        type: "fatalError",
+        payload: {
+          code: err instanceof Error && err.message.startsWith("rope-integrity") ? "rope-integrity" : "worker",
+          message,
+        },
+      }, env.requestId);
+    }),
+  );
 });
 
 // Signal readiness so the client knows the module Worker booted.
