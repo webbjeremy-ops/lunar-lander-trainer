@@ -190,6 +190,7 @@ function buildSnapshot(): StateSnapshot {
     avgTickMs: clockStats.avgTickMs,
     schedulerOverruns: clockStats.overruns,
     tickIndex: clockStats.ticksExecuted,
+    latestEventId: state.nextEventId - 1,
     decodedDsky: state.decodedDsky,
   };
 }
