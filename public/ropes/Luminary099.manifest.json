@@ -1,0 +1,34 @@
+{
+  "displayName": "Luminary 099",
+  "agcProgram": "Luminary099",
+  "sourceProvenance": {
+    "repository": "https://github.com/chrislgarry/Apollo-11",
+    "commit": "911e5c0283c629c50cb97666f34065e8c07d71a5",
+    "path": "Luminary099",
+    "publicDomain": true,
+    "notes": "NASA-authored source, dedicated to the public domain via the referenced GitHub mirror."
+  },
+  "buildToolProvenance": {
+    "repository": "https://github.com/virtualagc/virtualagc",
+    "commit": "b6d27dc645fdc1ac75a3f825fea1d81e06729cc3",
+    "tool": "yaYUL",
+    "license": "GPL-2.0-or-later"
+  },
+  "artifactProvenance": {
+    "file": "public/ropes/Luminary099.bin",
+    "byteLength": 73728,
+    "sha256": "1f5326e038de5b741b2f27b01ec949dbd688cf1906994e997402587c8628f40e",
+    "origin": "inherited-from-milestone-0",
+    "buildCommand": null,
+    "generatedAt": null,
+    "notes": "This exact binary was carried forward from Milestone 0. Its build command and timestamp are unknown; the reproducible-build script below will populate the reproduction block once a byte-identical rebuild is confirmed."
+  },
+  "reproduction": {
+    "status": "not-yet-reproduced",
+    "reproducedSha256": null,
+    "reproducedByteLength": null,
+    "byteIdentical": null,
+    "reportUrl": null,
+    "notes": "Run scripts/build-luminary099.sh or the reproduce-rope.yml workflow. Update this block in-place once CI reports a byte-identical build; never fabricate values."
+  }
+}

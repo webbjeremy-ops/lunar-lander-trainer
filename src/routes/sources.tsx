@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { ROPE_IMAGES } from "@/sim/agc/roms";
+import { useQuery } from "@tanstack/react-query";
+import { ROPE_IMAGES, ropeById } from "@/sim/agc/roms";
 
 export const Route = createFileRoute("/sources")({
   head: () => ({
@@ -8,19 +9,90 @@ export const Route = createFileRoute("/sources")({
       {
         name: "description",
         content:
-          "Attribution, licenses, rope-image provenance, and known limitations for the AGC — Tranquility Apollo 11 simulator.",
+          "Attribution, licenses, live rope-image manifest with source/artifact/build-tool/reproduction provenance, and known limitations.",
       },
       { property: "og:title", content: "Sources & Methodology · AGC — Tranquility" },
-      {
-        property: "og:description",
-        content: "Attribution and provenance for the AGC — Tranquility simulator.",
-      },
+      { property: "og:description", content: "Attribution and provenance for AGC — Tranquility." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SourcesPage,
 });
 
+interface RopeManifest {
+  displayName?: string;
+  agcProgram?: string;
+  sourceProvenance?: { repository?: string; commit?: string; path?: string; notes?: string };
+  buildToolProvenance?: { repository?: string; commit?: string; tool?: string; license?: string };
+  artifactProvenance?: {
+    file?: string;
+    byteLength?: number;
+    sha256?: string;
+    origin?: string;
+    buildCommand?: string | null;
+    generatedAt?: string | null;
+    notes?: string;
+  };
+  reproduction?: {
+    status?: string;
+    reproducedSha256?: string | null;
+    reproducedByteLength?: number | null;
+    byteIdentical?: boolean | null;
+    reportUrl?: string | null;
+    notes?: string;
+  };
+}
+
+function ManifestBlock({ url }: { url: string }) {
+  const q = useQuery<RopeManifest>({
+    queryKey: ["rope-manifest", url],
+    queryFn: async () => {
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    },
+    retry: false,
+  });
+  if (q.isLoading) return <div className="text-neutral-500">Loading manifest…</div>;
+  if (q.error) return <div className="text-red-400">Manifest unavailable: {String(q.error)}</div>;
+  const m = q.data ?? {};
+  const kv = (k: string, v: React.ReactNode) => (
+    <div className="grid grid-cols-[10rem_1fr] gap-2 py-0.5">
+      <span className="text-neutral-500">{k}</span>
+      <span className="text-neutral-200 break-all">{v ?? "—"}</span>
+    </div>
+  );
+  return (
+    <div className="rounded border border-neutral-800 bg-black/40 p-3 font-mono text-[11px]">
+      <div className="mb-1 text-neutral-400 uppercase tracking-widest">Source provenance</div>
+      {kv("repository", m.sourceProvenance?.repository)}
+      {kv("commit", m.sourceProvenance?.commit)}
+      {kv("path", m.sourceProvenance?.path)}
+      <div className="mt-2 mb-1 text-neutral-400 uppercase tracking-widest">Build-tool provenance</div>
+      {kv("repository", m.buildToolProvenance?.repository)}
+      {kv("commit", m.buildToolProvenance?.commit)}
+      {kv("tool", m.buildToolProvenance?.tool)}
+      {kv("license", m.buildToolProvenance?.license)}
+      <div className="mt-2 mb-1 text-neutral-400 uppercase tracking-widest">Artifact provenance</div>
+      {kv("file", m.artifactProvenance?.file)}
+      {kv("byte length", m.artifactProvenance?.byteLength?.toLocaleString())}
+      {kv("sha-256", m.artifactProvenance?.sha256)}
+      {kv("origin", m.artifactProvenance?.origin)}
+      {kv("build command", m.artifactProvenance?.buildCommand ?? "null")}
+      {kv("generated at", m.artifactProvenance?.generatedAt ?? "null")}
+      <div className="mt-2 mb-1 text-neutral-400 uppercase tracking-widest">Reproduction</div>
+      {kv("status", m.reproduction?.status)}
+      {kv("reproduced sha-256", m.reproduction?.reproducedSha256 ?? "null")}
+      {kv("byte identical", String(m.reproduction?.byteIdentical ?? "null"))}
+      {kv("report", m.reproduction?.reportUrl ?? "null")}
+      {m.reproduction?.notes && <div className="mt-2 text-neutral-500">{m.reproduction.notes}</div>}
+    </div>
+  );
+}
+
 function SourcesPage() {
+  const luminary = ropeById("Luminary099");
   return (
     <main className="min-h-screen bg-neutral-900 px-6 py-10 text-neutral-100">
       <div className="mx-auto max-w-3xl space-y-8 text-sm leading-relaxed">
@@ -29,6 +101,10 @@ function SourcesPage() {
             Sources & Methodology
           </p>
           <h1 className="mt-2 text-2xl font-semibold">Where every historical bit comes from</h1>
+          <p className="mt-2 text-neutral-400">
+            Independent educational project. Not sponsored, approved, or endorsed by
+            NASA, MIT, the Virtual AGC project, or any original Apollo contributor.
+          </p>
         </header>
 
         <section>
@@ -36,62 +112,58 @@ function SourcesPage() {
           <p className="text-neutral-400">
             The Apollo Guidance Computer is emulated by a WebAssembly build of{" "}
             <a className="text-emerald-400" href="https://github.com/michaelfranzl/webAGC">webAGC</a>{" "}
-            (© Michael Karl Franzl), which is itself a port of{" "}
-            <a className="text-emerald-400" href="https://github.com/rburkey2005/virtualagc">Virtual AGC</a>{" "}
+            (© Michael Karl Franzl), which ports{" "}
+            <a className="text-emerald-400" href="https://github.com/virtualagc/virtualagc">Virtual AGC</a>{" "}
             (yaAGC, © Ron Burkey and contributors). Both are licensed under{" "}
-            <strong>GPL-2.0-or-later</strong>. The <code>src/sim/agc/</code>{" "}
-            subsystem in this project is distributed under the same license so
-            the combined work is compliant.
+            <strong>GPL-2.0-or-later</strong>. The exact vendored source and the
+            <code> yaAGC.wasm</code> committed at{" "}
+            <code>src/third-party/webagc/</code> are what the runtime loads. Their
+            SHA-256 values are recorded in{" "}
+            <a className="text-emerald-400" href="https://github.com/">src/third-party/webagc/UPSTREAM.md</a>.
           </p>
         </section>
 
         <section>
-          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Rope memory images</h2>
-          <p className="mb-3 text-neutral-400">
-            Assembled from NASA-authored Apollo 11 source at{" "}
-            <a className="text-emerald-400" href="https://github.com/chrislgarry/Apollo-11">chrislgarry/Apollo-11</a>{" "}
-            (public domain). Prebuilt binaries were taken from the webAGC demo
-            directory. Locked by SHA-256:
+          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Rope memory · Luminary099</h2>
+          <p className="mb-2 text-neutral-400">
+            The rope binary is served same-origin from <code>{luminary.url}</code>.
+            The Worker fetches the manifest below at runtime, validates the byte
+            length and SHA-256, and only then hands the bytes to the emulator.
           </p>
-          <ul className="space-y-2 font-mono text-xs">
+          <ManifestBlock url={luminary.manifestUrl} />
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Licensing</h2>
+          <p className="text-neutral-400">
+            Files vendored from webAGC/yaAGC retain their upstream{" "}
+            <strong>GPL-2.0-or-later</strong> notices and attribution. New M1 project
+            files (worker, worker client, mission clock, event log, checksum, UI
+            components, routes) are <strong>GPL-3.0-or-later</strong>. The
+            distributed combined application is GPL-3.0-or-later while every
+            component notice is preserved.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Cross-origin isolation</h2>
+          <p className="text-neutral-400">
+            The M1 runtime does not depend on <code>SharedArrayBuffer</code> or
+            <code>Atomics</code>. The app functions fully when{" "}
+            <code>crossOriginIsolated === false</code>. If your host does provide
+            COOP/COEP headers, the runtime notices but does not require them.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-lg font-semibold text-neutral-200">All rope images</h2>
+          <ul className="space-y-1 text-neutral-400">
             {ROPE_IMAGES.map((r) => (
-              <li key={r.id} className="rounded border border-neutral-800 bg-black/40 p-2">
-                <div className="text-emerald-400">{r.id}</div>
-                <div className="text-neutral-500">{r.description}</div>
-                <div className="mt-1 break-all text-neutral-400">SHA-256: {r.sha256}</div>
+              <li key={r.id}>
+                <code className="text-neutral-200">{r.id}</code> — <span className="text-neutral-500">{r.url}</span>
               </li>
             ))}
           </ul>
-        </section>
-
-        <section>
-          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Subsystem authenticity labels</h2>
-          <ul className="list-disc space-y-1 pl-5 text-neutral-400">
-            <li><span className="text-emerald-400">Authentic AGC execution</span> — yaAGC + Luminary099/Comanche055 rope images.</li>
-            <li><span className="text-amber-300">Historically reconstructed spacecraft interface</span> — planned; not yet implemented.</li>
-            <li><span className="text-amber-300">Physics approximation</span> — planned; not yet implemented.</li>
-            <li><span className="text-amber-300">Educational visualization</span> — planned; not yet implemented.</li>
-            <li><span className="text-neutral-500">Planned but not yet implemented</span> — everything else in the roadmap.</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Known limitations (Milestone 0)</h2>
-          <ul className="list-disc space-y-1 pl-5 text-neutral-400">
-            <li>Register 7-segment decoding of channel 010 is not implemented yet — raw binary channel words are shown instead.</li>
-            <li>No spacecraft physics, no scenarios, no 3D viewport.</li>
-            <li>AGC runs on a JS interval, not the deterministic mission clock. Not replay-safe yet.</li>
-            <li>AGC runs on the main thread; Worker isolation lands in Milestone 1.</li>
-          </ul>
-        </section>
-
-        <section>
-          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Disclaimer</h2>
-          <p className="text-neutral-400">
-            This project is not affiliated with, endorsed by, or certified by
-            NASA. All NASA-authored source material is public domain; all other
-            historical references are cited with their upstream repositories.
-          </p>
         </section>
       </div>
     </main>

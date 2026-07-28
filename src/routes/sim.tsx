@@ -1,20 +1,25 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { ClientOnly } from "@tanstack/react-router";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Dsky, LampTestButton } from "@/ui/dsky/Dsky";
+import { DiagnosticsPanel } from "@/ui/diagnostics/DiagnosticsPanel";
 import { ROPE_IMAGES, ropeById, type RopeImage } from "@/sim/agc/roms";
+import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
+import type { ReadyPayload, StateSnapshot } from "@/agc/protocol";
 
 export const Route = createFileRoute("/sim")({
   head: () => ({
     meta: [
-      { title: "AGC — Tranquility · Milestone 0 spike" },
+      { title: "AGC — Tranquility · Worker-hosted AGC (M1)" },
       {
         name: "description",
         content:
-          "Real Apollo Guidance Computer (yaAGC/webAGC) running Luminary099 in the browser. DSKY input and lamps driven by the actual emulator.",
+          "Real Apollo Guidance Computer (yaAGC/webAGC) running Luminary099 in a dedicated Worker with deterministic mission time. Snapshots throttled to 25 real-time Hz.",
       },
-      { property: "og:title", content: "AGC — Tranquility · Milestone 0 spike" },
-      { property: "og:description", content: "Real AGC flight software in the browser." },
+      { property: "og:title", content: "AGC — Tranquility · Milestone 1" },
+      { property: "og:description", content: "Worker-hosted AGC with deterministic mission clock." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: SimPage,
@@ -23,17 +28,26 @@ export const Route = createFileRoute("/sim")({
 function SimPage() {
   const [ropeId, setRopeId] = useState<RopeImage["id"]>("Luminary099");
   const rope = ropeById(ropeId);
+  const [client, setClient] = useState<AgcWorkerClient | null>(null);
+  const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
+  const [ready, setReady] = useState<ReadyPayload | null>(null);
+
+  const onClient = useCallback((c: AgcWorkerClient | null) => setClient(c), []);
+  const onSnapshot = useCallback((s: StateSnapshot) => setSnapshot(s), []);
+  const onReady = useCallback((r: ReadyPayload) => setReady(r), []);
 
   return (
     <main className="min-h-screen bg-neutral-900 text-neutral-100">
       <header className="border-b border-neutral-800 px-4 py-3">
         <h1 className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
-          AGC — Tranquility · Milestone 0 spike
+          AGC — Tranquility · Milestone 1 · Worker-hosted AGC
         </h1>
         <p className="mt-1 text-xs text-neutral-400">
-          Authentic AGC execution. DSKY lamps + registers reflect real emulator output.
-          Everything below is <em>authentic AGC execution</em>; no spacecraft physics is
-          running in this build.
+          AGC now runs inside a dedicated Web Worker behind a typed protocol.
+          Mission time advances in fixed 20&nbsp;ms ticks; state snapshots are
+          throttled to ~25&nbsp;Hz real time regardless of acceleration.{" "}
+          <Link className="text-emerald-400" to="/about">About &amp; credits</Link> ·{" "}
+          <Link className="text-emerald-400" to="/sources">Sources & methodology</Link>.
         </p>
       </header>
 
@@ -55,41 +69,22 @@ function SimPage() {
           <LampTestButton rope={rope} />
         </div>
 
-        <ClientOnly fallback={<div className="text-xs text-neutral-500">Booting AGC…</div>}>
-          <Dsky key={rope.id} rope={rope} />
+        <ClientOnly fallback={<div className="text-xs text-neutral-500">Booting AGC worker…</div>}>
+          <Dsky
+            key={rope.id}
+            rope={rope}
+            onClient={onClient}
+            onSnapshot={onSnapshot}
+            onReady={onReady}
+          />
+          <DiagnosticsPanel client={client} ready={ready} snapshot={snapshot} />
         </ClientOnly>
-
-        <details className="rounded border border-neutral-800 bg-neutral-950 p-3 text-xs text-neutral-400">
-          <summary className="cursor-pointer text-neutral-300">What am I looking at?</summary>
-          <div className="mt-2 space-y-2">
-            <p>
-              The WebAssembly build of <code>yaAGC</code> (from
-              <a className="text-emerald-400" href="https://github.com/michaelfranzl/webAGC" target="_blank" rel="noreferrer"> michaelfranzl/webAGC</a>)
-              is executing the real Apollo 11 rope-memory image you selected
-              above. All lamps and channel words on the left are driven by the
-              emulator's I/O channels — nothing is animated by the UI.
-            </p>
-            <p>
-              Try the lamp test button (Verb 35, Enter). If the emulator is
-              running Luminary099 correctly, the lamps turn on and register
-              digits scroll — you can watch channel 010 (the DSKY relay word)
-              change in real time.
-            </p>
-            <p>
-              Register-segment decoding (turning channel 010 into a legible
-              7-segment display) is deliberately deferred to Milestone 2 per
-              the approved plan. This spike proves the emulator is live in the
-              browser and in the published build.
-            </p>
-          </div>
-        </details>
 
         <p className="text-[10px] text-neutral-600">
           yaAGC © Ron Burkey and contributors — GPL-2.0-or-later. Rope images from{" "}
-          <a className="text-emerald-400" href="https://github.com/chrislgarry/Apollo-11" target="_blank" rel="noreferrer">
-            chrislgarry/Apollo-11
-          </a>{" "}
-          (NASA-authored, public domain). Not endorsed by NASA.
+          <a className="text-emerald-400" href="https://github.com/chrislgarry/Apollo-11" target="_blank" rel="noreferrer">chrislgarry/Apollo-11</a>{" "}
+          (NASA-authored, public domain). Distributed application is GPL-3.0-or-later.
+          Not endorsed by NASA.
         </p>
       </section>
     </main>

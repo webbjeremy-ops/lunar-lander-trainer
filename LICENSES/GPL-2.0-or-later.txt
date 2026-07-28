@@ -1,0 +1,21 @@
+GNU General Public License, version 2 or later
+================================================
+
+The full text of the GNU General Public License version 2 is available at:
+https://www.gnu.org/licenses/old-licenses/gpl-2.0.txt
+
+The Apollo Guidance Computer emulator (webAGC, yaAGC / Virtual AGC) that this
+project vendors is distributed under "GPL-2.0-or-later". Upstream projects:
+
+- webAGC: https://github.com/michaelfranzl/webAGC
+- Virtual AGC / yaAGC: https://github.com/virtualagc/virtualagc
+
+Some yaAGC source files contain a linking exception that permits combination
+with certain other software; the exact wording (where present) is preserved in
+the vendored source files under src/third-party/webagc/ — do not remove or
+alter those headers when modifying vendored files.
+
+This project's newly-written code is licensed under GPL-3.0-or-later, which is
+compatible with the vendored GPL-2.0-or-later components under the "or later"
+clause. The combined distributed application is therefore GPL-3.0-or-later
+while individual component notices are preserved.
