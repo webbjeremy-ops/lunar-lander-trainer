@@ -88,7 +88,11 @@ function boundarySeedObservation(
   snap: StateSnapshot | null,
 ): LessonObservation {
   return {
-    decoded: snap?.decodedDsky ?? makeEmptyDecodedDsky(),
+    // Prefer the worker-authoritative decoded baseline that corresponds to
+    // the SAME id as boundaryEventId. Snapshots are wall-clock coalesced
+    // and can be stale relative to the boundary allocation, so their
+    // decodedDsky may not match. The boundary payload never lies.
+    decoded: boundary.decodedDsky ?? snap?.decodedDsky ?? makeEmptyDecodedDsky(),
     previousDecoded: null,
     snapshot: snap,
     recentInputs: [],
@@ -483,6 +487,7 @@ function LearnPage() {
               client={agcClient}
               lesson={lesson}
               state={state}
+              boundary={lastBoundary}
               onStateChange={(next) => setStates((s) => ({ ...s, [lesson.id]: next }))}
             />
           </div>
