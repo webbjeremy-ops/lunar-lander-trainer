@@ -194,7 +194,7 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
       {/* Expose latest decoded PROG/VERB/NOUN in an accessible summary so
           screen readers get a stable, non-flashing textual mirror. */}
       <div className="sr-only" aria-live="polite">
-        PROG {liveDecoded.prog.raw} VERB {liveDecoded.verb.raw} NOUN {liveDecoded.noun.raw}
+        PROG {regText(liveDecoded.program)} VERB {regText(liveDecoded.verb)} NOUN {regText(liveDecoded.noun)}
       </div>
     </div>
   );
