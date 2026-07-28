@@ -146,6 +146,7 @@ function buildSnapshot(): StateSnapshot {
       avgTickMs: 0,
       schedulerOverruns: 0,
       tickIndex: 0,
+      latestEventId: state.nextEventId - 1,
       decodedDsky: state.decodedDsky,
     };
   }
