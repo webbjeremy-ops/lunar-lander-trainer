@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ALL_LESSONS } from "@/lessons/content";
 import { SOURCE_REGISTRY } from "@/lessons/SourceRegistry";
 import { initialLessonState, stepLesson } from "@/lessons/LessonEngine";
 import type { LessonDefinition, LessonState } from "@/lessons/types";
 import { FIXTURE_PROVENANCE } from "@/lessons/fixtureExpectations";
 import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
+import { LessonHost } from "@/lessons/LessonHost";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
