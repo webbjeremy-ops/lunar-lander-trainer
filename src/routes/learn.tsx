@@ -72,6 +72,11 @@ function makeInertObservation(tick: number) {
   };
 }
 
+let ATTEMPT_SEQ = 0;
+function nextAttemptId(lessonId: string): string {
+  return `att-${lessonId}-${Date.now().toString(36)}-${++ATTEMPT_SEQ}`;
+}
+
 function LearnPage() {
   const [selectedId, setSelectedId] = useState<string>(ALL_LESSONS[0]!.id);
   const [states, setStates] = useState<Record<string, LessonState>>(() => {
@@ -89,6 +94,23 @@ function LearnPage() {
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
 
+  // Open a fresh attempt whenever the selected lesson has an interactive
+  // step in progress but no live attempt (freshly-entered or restarted).
+  const attemptOpenedForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isInteractive || isComplete) return;
+    const key = `${lesson.id}#${state.currentStepIndex}#${state.attempt?.attemptId ?? ""}`;
+    if (state.attempt) { attemptOpenedForRef.current = key; return; }
+    if (attemptOpenedForRef.current === key) return;
+    attemptOpenedForRef.current = key;
+    const next = stepLesson(lesson, state, {
+      kind: "beginAttempt",
+      attemptId: nextAttemptId(lesson.id),
+      observation: makeInertObservation(state.lastObservationTick + 1),
+    });
+    setStates((s) => ({ ...s, [lesson.id]: next }));
+  }, [lesson, state, isInteractive, isComplete]);
+
   function ackCurrent() {
     if (!step || step.kind !== "reading") return;
     const next = stepLesson(lesson, state, {
@@ -99,7 +121,19 @@ function LearnPage() {
   }
 
   function resetLesson() {
+    attemptOpenedForRef.current = null;
     setStates((s) => ({ ...s, [lesson.id]: initialLessonState(lesson) }));
+  }
+
+  function restartInteractive() {
+    if (!isInteractive) return;
+    // Clears evidence via LessonEngine.restart and opens a new attempt.
+    const next = stepLesson(lesson, state, {
+      kind: "restart",
+      attemptId: nextAttemptId(lesson.id),
+      observation: makeInertObservation(state.lastObservationTick + 1),
+    });
+    setStates((s) => ({ ...s, [lesson.id]: next }));
   }
 
   return (
