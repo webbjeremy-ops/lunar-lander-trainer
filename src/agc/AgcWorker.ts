@@ -302,10 +302,16 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           const missionTimeUs = Number(state.clock.getMissionTimeUs());
           // Channel 010 → drive the authentic latched DSKY decoder in order.
           if (ch === 0o10) applyDskyOutput(state.decodedDsky, val);
-          send({
-            type: "channelUpdate",
-            payload: { eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs },
-          });
+          const lite: ChannelEventLite = {
+            eventId, tickIndex, channel: ch, value: val, seq: eventId, missionTimeUs,
+          };
+          // Preserve the per-event context in the Worker-owned ring so
+          // buildSnapshot cannot lose it. Bounded so it cannot grow.
+          state.recentEventsRing.push(lite);
+          if (state.recentEventsRing.length > state.recentEventsCap) {
+            state.recentEventsRing.splice(0, state.recentEventsRing.length - state.recentEventsCap);
+          }
+          send({ type: "channelUpdate", payload: lite });
         },
       });
       await a.init(cmd.wasmUrl);
