@@ -12,7 +12,7 @@ import { LessonHost } from "@/lessons/LessonHost";
 import { Dsky } from "@/ui/dsky/Dsky";
 import { ropeById } from "@/sim/agc/roms";
 import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
-import type { StateSnapshot } from "@/agc/protocol";
+import type { EventBoundaryPayload, StateSnapshot } from "@/agc/protocol";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
