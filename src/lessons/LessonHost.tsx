@@ -71,7 +71,7 @@ export function buildObservation(args: {
   };
 }
 
-export function LessonHost(props: LessonHostProps): JSX.Element {
+export function LessonHost(props: LessonHostProps): React.ReactElement {
   const { lesson, state, onStateChange } = props;
   const rope = useMemo(() => ropeById("Luminary099"), []);
   const clientRef = useRef<AgcWorkerClient | null>(null);
