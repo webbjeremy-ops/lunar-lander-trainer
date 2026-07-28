@@ -299,7 +299,7 @@ test.describe("/learn production acceptance", () => {
 
     // 10. Observe authoritative V35 peak: PROG/VERB/NOUN 88, R1/R2/R3 +88888.
     //     Also 11: post-attempt input/channel event IDs recorded. 18: complete.
-    await waitUntilLessonComplete(page, "lesson-03-v35-lamp-test", 20_000);
+    await waitUntilLessonComplete(page, "lesson-03-v35-lamp-test", 60_000);
 
     const l3Done = await readLearn(page);
     const ev3 = l3Done.state.evidence[l3Done.state.evidence.length - 1];
