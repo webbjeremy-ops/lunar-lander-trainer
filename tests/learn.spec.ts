@@ -145,6 +145,37 @@ async function ackReadingByKeyboard(page: Page) {
   await btn.click();
 }
 
+/** Wait for the async barrier handshake to complete for the selected lesson.
+ *  Returns the boundary-scoped attempt state so tests can assert eventId
+ *  ordering against boundaryEventId directly. */
+async function waitForAttemptReady(page: Page, lessonId: string, timeoutMs = 15_000): Promise<LearnTestState> {
+  await page.waitForFunction(
+    (lid) => {
+      const w = window as unknown as { __learnTest?: LearnTestState };
+      const s = w.__learnTest;
+      return !!(s && s.lessonId === lid && s.attemptPhase === "ready" && s.state.attempt);
+    },
+    lessonId,
+    { timeout: timeoutMs },
+  );
+  return await readLearn(page);
+}
+
+/** Advance through any leading reading steps until the current step is
+ *  interactive; then wait for the async barrier handshake. */
+async function advanceToInteractive(page: Page, lessonId: string): Promise<LearnTestState> {
+  for (let i = 0; i < 8; i++) {
+    const st = await readLearn(page);
+    if (st.lessonId !== lessonId) break;
+    if (st.attemptPhase === "opening" || st.attemptPhase === "ready") break;
+    const ackBtn = page.getByRole("button", { name: /I['’]ve read this|continue/i }).first();
+    if (!(await ackBtn.isVisible().catch(() => false))) break;
+    await ackBtn.click();
+    await page.waitForTimeout(80);
+  }
+  return await waitForAttemptReady(page, lessonId);
+}
+
 // ---------------------------------------------------------------------------
 // Diagnostics reporter — attached to every test so failure output includes
 // the last-known lesson attempt/tick/MET/steps/recent event IDs/decoded DSKY.
