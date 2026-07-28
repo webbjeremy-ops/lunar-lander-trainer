@@ -26,7 +26,7 @@ function encodeCh010(opts: { codeA?: number; codeB?: number; sign?: number; sele
   const b = (opts.codeB ?? 0) & 0b11111;
   const s = (opts.sign ?? 0) & 0b1;
   const sel = opts.selector & 0b1111;
-  return (a << 10) | (b << 5) | (s << 4) | sel;
+  return (sel << 11) | (a << 6) | (b << 1) | s;
 }
 
 describe("relay table", () => {
@@ -55,13 +55,13 @@ describe("relay table", () => {
 });
 
 describe("channel 010 parsing", () => {
-  it("splits AAAAA BBBBB S CCCC correctly", () => {
+  it("splits selector | A | B | S with selector in the top nibble", () => {
     const w = encodeCh010({ codeA: 0b11101, codeB: 0b10101, sign: 1, selector: 11 });
     const p = parseCh010(w);
+    expect(p.selector).toBe(11);
     expect(p.codeA).toBe(0b11101);
     expect(p.codeB).toBe(0b10101);
     expect(p.sign).toBe(1);
-    expect(p.selector).toBe(11);
   });
 });
 

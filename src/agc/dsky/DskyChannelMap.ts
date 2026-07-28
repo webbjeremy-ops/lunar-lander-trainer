@@ -8,14 +8,18 @@
 // says so.
 //
 // Channel 010 word layout (15 bits, MSB→LSB, 1-indexed):
-//   bit 15 . . 11 | bit 10 . . 6 | bit 5 | bit 4 . . 1
-//        AAAAA        BBBBB         S       CCCC
-//   AAAAA (5 bits) — relay code A (left / high field)
-//   BBBBB (5 bits) — relay code B (right / low field)
-//   S     (1 bit)  — sign relay drive (row-dependent semantics)
-//   CCCC  (4 bits) — selector 1..11 for digit rows; row 12 is the
-//                    annunciator row identified by tag (word & 0o74000) ==
-//                    0o60000, which happens to coincide with selector==12.
+//   bit 15..12 | bit 11..7 | bit 6..2 | bit 1
+//     SSSS       AAAAA        BBBBB      S
+//   SSSS   (4 bits) — selector 1..11 for digit rows; 12 is the annunciator
+//                     row (also identified by tag (word & 0o74000) == 0o60000).
+//   AAAAA  (5 bits) — relay code A (left field of the row)
+//   BBBBB  (5 bits) — relay code B (right field of the row)
+//   S      (1 bit)  — sign relay drive (row-dependent semantics)
+//
+// This layout is confirmed by the raw channel-010 histogram of an authentic
+// yaAGC + Luminary099 V35 capture: annunciator writes appear as 0o60xxx,
+// digit-row writes appear as 0o04000, 0o40000, 0o44000, 0o50000, 0o54000,
+// … i.e. selector encoded in the TOP nibble, not the bottom.
 //
 // Selector → register/digit routing (yaDSKY2):
 //
@@ -53,14 +57,22 @@ export interface ParsedCh010 {
   raw: number;
 }
 
+export interface ParsedCh010 {
+  codeA: number;    // bits 11..7  (left field)
+  codeB: number;    // bits 6..2   (right field)
+  sign: number;     // bit 1
+  selector: number; // bits 15..12 (top nibble)
+  raw: number;
+}
+
 export function parseCh010(word: number): ParsedCh010 {
   const w = word & 0o77777;
   return {
-    codeA: (w >>> 10) & 0b11111,
-    codeB: (w >>> 5) & 0b11111,
-    sign: (w >>> 4) & 0b1,
-    selector: w & 0b1111,
-    raw: w,
+    selector: (w >>> 11) & 0b1111,
+    codeA:    (w >>> 6)  & 0b11111,
+    codeB:    (w >>> 1)  & 0b11111,
+    sign:     w & 0b1,
+    raw:      w,
   };
 }
 
