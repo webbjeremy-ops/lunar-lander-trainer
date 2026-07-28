@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ClientOnly } from "@tanstack/react-router";
 import { ALL_LESSONS } from "@/lessons/content";
 import { SOURCE_REGISTRY } from "@/lessons/SourceRegistry";
 import { initialLessonState, stepLesson } from "@/lessons/LessonEngine";
-import type { LessonDefinition, LessonState } from "@/lessons/types";
+import type { LessonDefinition, LessonObservation, LessonState } from "@/lessons/types";
 import { FIXTURE_PROVENANCE } from "@/lessons/fixtureExpectations";
 import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
 import { LessonHost } from "@/lessons/LessonHost";
+import { Dsky } from "@/ui/dsky/Dsky";
+import { ropeById } from "@/sim/agc/roms";
+import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
+import type { StateSnapshot } from "@/agc/protocol";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -58,7 +63,7 @@ function classificationTone(c: string): string {
   }
 }
 
-function makeInertObservation(tick: number) {
+function inertObservation(tick: number): LessonObservation {
   return {
     decoded: makeEmptyDecodedDsky(),
     previousDecoded: null,
@@ -72,18 +77,52 @@ function makeInertObservation(tick: number) {
   };
 }
 
+/** Seed observation from the LIVE snapshot so attempt.startedAtCursor and
+ *  startedAtTick reflect the current worker event-log position — this is
+ *  what makes stale evidence from a prior attempt fall out of scope. */
+function liveSeedObservation(snap: StateSnapshot | null, fallbackTick: number): LessonObservation {
+  if (!snap) return inertObservation(fallbackTick);
+  return {
+    decoded: snap.decodedDsky ?? makeEmptyDecodedDsky(),
+    previousDecoded: null,
+    snapshot: snap,
+    recentInputs: [],
+    recentChannelEvents: [],
+    eventLogCursor: snap.channelEventCount,
+    tickIndex: snap.tickIndex,
+    missionTimeUs: snap.missionTimeUs,
+    provenance: FIXTURE_PROVENANCE,
+  };
+}
+
 let ATTEMPT_SEQ = 0;
 function nextAttemptId(lessonId: string): string {
   return `att-${lessonId}-${Date.now().toString(36)}-${++ATTEMPT_SEQ}`;
 }
 
 function LearnPage() {
+  const rope = useMemo(() => ropeById("Luminary099"), []);
   const [selectedId, setSelectedId] = useState<string>(ALL_LESSONS[0]!.id);
   const [states, setStates] = useState<Record<string, LessonState>>(() => {
     const init: Record<string, LessonState> = {};
     for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
     return init;
   });
+
+  // ---- Shared AGC session for the whole /learn route (stable ownership).
+  // The Dsky component owns exactly ONE AgcWorkerClient here; lesson
+  // navigation must NOT recreate it. We only remount on explicit user
+  // "Reset AGC" (agcEpoch bump) or on route unmount.
+  const [agcEpoch, setAgcEpoch] = useState(0);
+  const [agcClient, setAgcClient] = useState<AgcWorkerClient | null>(null);
+  const latestSnapshotRef = useRef<StateSnapshot | null>(null);
+
+  const handleClient = useCallback((c: AgcWorkerClient | null) => {
+    setAgcClient(c);
+  }, []);
+  const handleSnapshot = useCallback((s: StateSnapshot) => {
+    latestSnapshotRef.current = s;
+  }, []);
 
   const lesson = useMemo<LessonDefinition>(
     () => ALL_LESSONS.find((l) => l.id === selectedId) ?? ALL_LESSONS[0]!,
@@ -94,46 +133,72 @@ function LearnPage() {
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
 
-  // Open a fresh attempt whenever the selected lesson has an interactive
-  // step in progress but no live attempt (freshly-entered or restarted).
-  const attemptOpenedForRef = useRef<string | null>(null);
+  // Open a fresh attempt every time an interactive lesson is (re)selected.
+  // We track the "last lesson we opened an attempt for" so switching away
+  // and back always creates a brand-new attempt boundary — that boundary
+  // is seeded from the LIVE snapshot cursor so any evidence produced
+  // before now is out of scope.
+  const openedForRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isInteractive || isComplete) return;
-    const key = `${lesson.id}#${state.currentStepIndex}#${state.attempt?.attemptId ?? ""}`;
-    if (state.attempt) { attemptOpenedForRef.current = key; return; }
-    if (attemptOpenedForRef.current === key) return;
-    attemptOpenedForRef.current = key;
+    // Key by selected lesson + step so re-entering re-opens.
+    const key = `${lesson.id}#${state.currentStepIndex}`;
+    if (openedForRef.current === key && state.attempt) return;
+    openedForRef.current = key;
+    const seed = liveSeedObservation(latestSnapshotRef.current, state.lastObservationTick + 1);
     const next = stepLesson(lesson, state, {
       kind: "beginAttempt",
       attemptId: nextAttemptId(lesson.id),
-      observation: makeInertObservation(state.lastObservationTick + 1),
+      observation: seed,
     });
     setStates((s) => ({ ...s, [lesson.id]: next }));
   }, [lesson, state, isInteractive, isComplete]);
+
+  // Reset the "opened for" tracker when the selected lesson changes, so
+  // returning to a previously-visited interactive lesson re-opens a fresh
+  // attempt on the next effect pass.
+  useEffect(() => {
+    openedForRef.current = null;
+  }, [selectedId]);
 
   function ackCurrent() {
     if (!step || step.kind !== "reading") return;
     const next = stepLesson(lesson, state, {
       kind: "acknowledgeStep",
-      observation: makeInertObservation(state.lastObservationTick + 1),
+      observation: inertObservation(state.lastObservationTick + 1),
     });
     setStates((s) => ({ ...s, [lesson.id]: next }));
   }
 
   function resetLesson() {
-    attemptOpenedForRef.current = null;
+    openedForRef.current = null;
     setStates((s) => ({ ...s, [lesson.id]: initialLessonState(lesson) }));
   }
 
   function restartInteractive() {
     if (!isInteractive) return;
-    // Clears evidence via LessonEngine.restart and opens a new attempt.
+    const seed = liveSeedObservation(latestSnapshotRef.current, state.lastObservationTick + 1);
     const next = stepLesson(lesson, state, {
       kind: "restart",
       attemptId: nextAttemptId(lesson.id),
-      observation: makeInertObservation(state.lastObservationTick + 1),
+      observation: seed,
     });
     setStates((s) => ({ ...s, [lesson.id]: next }));
+  }
+
+  function resetAgc() {
+    // Explicit AGC session boundary — this is the ONLY control that tears
+    // down the Worker and starts a new event-log epoch.
+    setAgcEpoch((n) => n + 1);
+    openedForRef.current = null;
+    // Also invalidate any open attempt cursors: they refer to the old
+    // event-log epoch. Simplest: reset all lesson states.
+    setStates(() => {
+      const init: Record<string, LessonState> = {};
+      for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
+      return init;
+    });
+    latestSnapshotRef.current = null;
   }
 
   return (
@@ -204,13 +269,24 @@ function LearnPage() {
             <span className="font-mono">
               Step {Math.min(state.currentStepIndex + 1, lesson.steps.length)} of {lesson.steps.length}
             </span>
-            <button
-              type="button"
-              onClick={resetLesson}
-              className="rounded border border-neutral-700 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400 hover:bg-neutral-900"
-            >
-              Reset
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={resetLesson}
+                className="rounded border border-neutral-700 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400 hover:bg-neutral-900"
+              >
+                Reset lesson
+              </button>
+              <button
+                type="button"
+                data-testid="ctl-reset-agc"
+                onClick={resetAgc}
+                className="rounded border border-red-700 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-red-300 hover:bg-red-950/40"
+                title="Tears down the Worker and starts a fresh AGC session"
+              >
+                Reset AGC
+              </button>
+            </div>
           </div>
 
           {isComplete && (
@@ -276,18 +352,10 @@ function LearnPage() {
                       Worker below. The lesson engine only advances when
                       Luminary099 produces the required channel events.
                     </p>
-                    <div className="rounded border border-neutral-800 bg-neutral-950/60 p-3">
-                      <LessonHost
-                        lesson={lesson}
-                        state={state}
-                        onStateChange={(next) =>
-                          setStates((s) => ({ ...s, [lesson.id]: next }))
-                        }
-                      />
-                    </div>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
+                        data-testid="ctl-restart-attempt"
                         onClick={restartInteractive}
                         className="rounded border border-amber-600 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
                       >
@@ -307,6 +375,39 @@ function LearnPage() {
           ) : (
             <p className="text-sm text-neutral-500">No step selected.</p>
           )}
+
+          {/* Persistent AGC session — mounted for the full /learn lifetime.
+              Stable key: ONLY changes on explicit "Reset AGC" (agcEpoch) or
+              rope swap. Lesson navigation does NOT remount this. */}
+          <div className="mt-6 rounded border border-neutral-800 bg-neutral-950/60 p-3" data-testid="learn-dsky-panel">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                AGC Session (persistent)
+              </h3>
+              <span
+                data-testid="learn-agc-epoch"
+                className="rounded border border-neutral-700 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-400"
+              >
+                epoch {agcEpoch}
+              </span>
+            </div>
+            <ClientOnly fallback={<div className="text-xs text-neutral-500">Booting AGC worker…</div>}>
+              <Dsky
+                key={`learn-session-${agcEpoch}`}
+                rope={rope}
+                onClient={handleClient}
+                onSnapshot={handleSnapshot}
+              />
+            </ClientOnly>
+            {/* Non-visual lesson observer — subscribes to shared client.
+                Renders one lesson-status live region only. */}
+            <LessonHost
+              client={agcClient}
+              lesson={lesson}
+              state={state}
+              onStateChange={(next) => setStates((s) => ({ ...s, [lesson.id]: next }))}
+            />
+          </div>
 
           {state.evidence.length > 0 && (
             <details className="mt-6 rounded border border-neutral-800 bg-neutral-900/40 p-4 text-xs">
