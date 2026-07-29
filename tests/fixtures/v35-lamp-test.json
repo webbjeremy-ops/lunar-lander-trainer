@@ -1,7 +1,7 @@
 {
   "kind": "agc-golden-trace",
   "label": "V35 lamp test (Luminary099)",
-  "capturedAt": "2026-07-29T05:56:16.435Z",
+  "capturedAt": "2026-07-29T05:59:50.051Z",
   "metadata": {
     "protocolVersion": 2,
     "decoderSchemaVersion": 1,
@@ -162,37 +162,37 @@
       "standby": false,
       "elOff": false
     },
-    "eventCount": 33
+    "eventCount": 0
   },
-  "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:33",
+  "preTestChecksum": "PROG:__|VERB:__|NOUN:__|R1:.._____|R2:.._____|R3:.._____|ANN:agcWarning=0,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:0",
   "commands": [
     {
-      "tickIndex": 83,
-      "missionTimeUs": 1660000,
+      "tickIndex": 82,
+      "missionTimeUs": 1640000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 17
       }
     },
     {
-      "tickIndex": 95,
-      "missionTimeUs": 1900000,
+      "tickIndex": 93,
+      "missionTimeUs": 1860000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 3
       }
     },
     {
-      "tickIndex": 106,
-      "missionTimeUs": 2120000,
+      "tickIndex": 103,
+      "missionTimeUs": 2060000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 5
       }
     },
     {
-      "tickIndex": 118,
-      "missionTimeUs": 2360000,
+      "tickIndex": 115,
+      "missionTimeUs": 2300000,
       "kind": "dskyKeyDown",
       "payload": {
         "keyCode": 28
@@ -201,7 +201,7 @@
   ],
   "ch010Events": [
     {
-      "eventId": 26,
+      "eventId": 27,
       "tickIndex": 85,
       "missionTimeUs": 1720000,
       "value": 20480
@@ -381,51 +381,51 @@
       "value": 0
     },
     {
-      "eventId": 214,
-      "tickIndex": 373,
-      "missionTimeUs": 7480000,
+      "eventId": 212,
+      "tickIndex": 367,
+      "missionTimeUs": 7360000,
       "value": 24576
     },
     {
       "eventId": 215,
-      "tickIndex": 374,
-      "missionTimeUs": 7500000,
+      "tickIndex": 368,
+      "missionTimeUs": 7380000,
       "value": 0
     },
     {
       "eventId": 216,
-      "tickIndex": 375,
-      "missionTimeUs": 7520000,
+      "tickIndex": 369,
+      "missionTimeUs": 7400000,
       "value": 22528
     },
     {
       "eventId": 217,
-      "tickIndex": 376,
-      "missionTimeUs": 7540000,
+      "tickIndex": 370,
+      "missionTimeUs": 7420000,
       "value": 0
     }
   ],
   "dskyEvents": [
     {
-      "eventId": 25,
-      "tickIndex": 85,
-      "missionTimeUs": 1720000,
+      "eventId": 22,
+      "tickIndex": 82,
+      "missionTimeUs": 1660000,
       "channel": 9,
       "value": 8706
     },
     {
-      "eventId": 26,
+      "eventId": 23,
+      "tickIndex": 82,
+      "missionTimeUs": 1660000,
+      "channel": 9,
+      "value": 8704
+    },
+    {
+      "eventId": 27,
       "tickIndex": 85,
       "missionTimeUs": 1720000,
       "channel": 8,
       "value": 20480
-    },
-    {
-      "eventId": 29,
-      "tickIndex": 85,
-      "missionTimeUs": 1720000,
-      "channel": 9,
-      "value": 8704
     },
     {
       "eventId": 30,
@@ -435,16 +435,16 @@
       "value": 0
     },
     {
-      "eventId": 34,
-      "tickIndex": 96,
-      "missionTimeUs": 1940000,
+      "eventId": 32,
+      "tickIndex": 93,
+      "missionTimeUs": 1880000,
       "channel": 9,
       "value": 8706
     },
     {
-      "eventId": 35,
-      "tickIndex": 96,
-      "missionTimeUs": 1940000,
+      "eventId": 33,
+      "tickIndex": 93,
+      "missionTimeUs": 1880000,
       "channel": 9,
       "value": 8704
     },
@@ -463,16 +463,16 @@
       "value": 0
     },
     {
-      "eventId": 52,
-      "tickIndex": 107,
-      "missionTimeUs": 2160000,
+      "eventId": 46,
+      "tickIndex": 105,
+      "missionTimeUs": 2120000,
       "channel": 9,
       "value": 8706
     },
     {
-      "eventId": 53,
-      "tickIndex": 107,
-      "missionTimeUs": 2160000,
+      "eventId": 47,
+      "tickIndex": 105,
+      "missionTimeUs": 2120000,
       "channel": 9,
       "value": 8704
     },
@@ -492,36 +492,36 @@
     },
     {
       "eventId": 57,
-      "tickIndex": 119,
-      "missionTimeUs": 2400000,
+      "tickIndex": 116,
+      "missionTimeUs": 2340000,
       "channel": 9,
       "value": 8706
     },
     {
       "eventId": 58,
-      "tickIndex": 119,
-      "missionTimeUs": 2400000,
+      "tickIndex": 116,
+      "missionTimeUs": 2340000,
       "channel": 9,
       "value": 8831
     },
     {
       "eventId": 59,
-      "tickIndex": 119,
-      "missionTimeUs": 2400000,
+      "tickIndex": 116,
+      "missionTimeUs": 2340000,
       "channel": 115,
       "value": 88
     },
     {
       "eventId": 61,
-      "tickIndex": 119,
-      "missionTimeUs": 2400000,
+      "tickIndex": 116,
+      "missionTimeUs": 2340000,
       "channel": 115,
       "value": 472
     },
     {
       "eventId": 62,
-      "tickIndex": 119,
-      "missionTimeUs": 2400000,
+      "tickIndex": 116,
+      "missionTimeUs": 2340000,
       "channel": 9,
       "value": 8829
     },
@@ -757,86 +757,86 @@
       "value": 473
     },
     {
-      "eventId": 205,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 200,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 9,
       "value": 8831
     },
     {
-      "eventId": 206,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 201,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 9,
       "value": 8754
     },
     {
-      "eventId": 207,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 202,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 115,
       "value": 401
     },
     {
-      "eventId": 209,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 204,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 115,
       "value": 17
     },
     {
-      "eventId": 210,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 205,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 9,
       "value": 8722
     },
     {
-      "eventId": 211,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 206,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 9,
       "value": 8706
     },
     {
-      "eventId": 212,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 207,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 115,
       "value": 1
     },
     {
-      "eventId": 213,
-      "tickIndex": 369,
-      "missionTimeUs": 7400000,
+      "eventId": 211,
+      "tickIndex": 366,
+      "missionTimeUs": 7340000,
       "channel": 9,
       "value": 8704
     },
     {
-      "eventId": 214,
-      "tickIndex": 373,
-      "missionTimeUs": 7480000,
+      "eventId": 212,
+      "tickIndex": 367,
+      "missionTimeUs": 7360000,
       "channel": 8,
       "value": 24576
     },
     {
       "eventId": 215,
-      "tickIndex": 374,
-      "missionTimeUs": 7500000,
+      "tickIndex": 368,
+      "missionTimeUs": 7380000,
       "channel": 8,
       "value": 0
     },
     {
       "eventId": 216,
-      "tickIndex": 375,
-      "missionTimeUs": 7520000,
+      "tickIndex": 369,
+      "missionTimeUs": 7400000,
       "channel": 8,
       "value": 22528
     },
     {
       "eventId": 217,
-      "tickIndex": 376,
-      "missionTimeUs": 7540000,
+      "tickIndex": 370,
+      "missionTimeUs": 7420000,
       "channel": 8,
       "value": 0
     }
@@ -986,9 +986,9 @@
         "standby": true,
         "elOff": false
       },
-      "eventCount": 77
+      "eventCount": 44
     },
-    "checksum": "PROG:88|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888|ANN:agcWarning=1,alt=1,compActy=0,elOff=0,gimbalLock=1,keyRelease=1,noAtt=1,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=1,temp=1,tracker=1,uplinkActy=1,vel=1,verbNounFlash=0|EC:77"
+    "checksum": "PROG:88|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888|ANN:agcWarning=1,alt=1,compActy=0,elOff=0,gimbalLock=1,keyRelease=1,noAtt=1,noDap=0,operError=1,prioDisp=0,prog=1,restart=1,standby=1,temp=1,tracker=1,uplinkActy=1,vel=1,verbNounFlash=0|EC:44"
   },
   "finalDecoded": {
     "program": {
@@ -1131,12 +1131,12 @@
       "standby": false,
       "elOff": false
     },
-    "eventCount": 95
+    "eventCount": 62
   },
-  "finalChecksum": "PROG:__|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888|ANN:agcWarning=1,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:95",
+  "finalChecksum": "PROG:__|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888|ANN:agcWarning=1,alt=0,compActy=0,elOff=0,gimbalLock=0,keyRelease=0,noAtt=0,noDap=0,operError=0,prioDisp=0,prog=0,restart=0,standby=0,temp=0,tracker=0,uplinkActy=0,vel=0,verbNounFlash=0|EC:62",
   "finalSnapshot": {
-    "tickIndex": 529,
-    "missionTimeUs": 10580000,
+    "tickIndex": 527,
+    "missionTimeUs": 10540000,
     "lamps": 1,
     "running": true,
     "timeScale": 1,
@@ -1147,10 +1147,10 @@
       0,
       0,
       0,
-      1058,
-      9248,
+      1054,
+      9244,
+      16379,
       16383,
-      16377,
       0,
       0,
       0,
