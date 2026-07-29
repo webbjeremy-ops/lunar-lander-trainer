@@ -28,8 +28,8 @@ import type {
   SimulationCommand,
   SimulationEvent,
   SimReadyPayload,
-  type MonitorBlockedEvent,
-  type MonitorTraceEvent,
+  MonitorBlockedEvent,
+  MonitorTraceEvent,
 } from "./simulationProtocol";
 import type { AgcMonitorProfile } from "@/simulation/agcio/types";
 import type { LmDiscreteSensorState } from "@/simulation/agcio/discreteEncoder";
