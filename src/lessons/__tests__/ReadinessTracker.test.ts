@@ -10,9 +10,9 @@ function ch010Word(sel: number, a = 0, b = 0): number {
   return ((sel & 0x0f) << 11) | ((a & 0x1f) << 5) | (b & 0x1f);
 }
 
-/** Channel 0163 word that sets/clears the RESTART annunciator (bit 0x20). */
+/** Channel 0163 word that sets/clears the RESTART annunciator (bit 0o200). */
 function ch0163Restart(on: boolean): number {
-  return on ? 0x20 : 0x00;
+  return on ? 0o200 : 0o000;
 }
 
 let eid = 1000;
