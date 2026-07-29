@@ -115,11 +115,15 @@ function SourcesPage() {
             (© Michael Karl Franzl), which ports{" "}
             <a className="text-emerald-400" href="https://github.com/virtualagc/virtualagc">Virtual AGC</a>{" "}
             (yaAGC, © Ron Burkey and contributors). Both are licensed under{" "}
-            <strong>GPL-2.0-or-later</strong>. The exact vendored source and the
-            <code> yaAGC.wasm</code> committed at{" "}
-            <code>src/third-party/webagc/</code> are what the runtime loads. Their
-            SHA-256 values are recorded in{" "}
-            <a className="text-emerald-400" href="https://github.com/">src/third-party/webagc/UPSTREAM.md</a>.
+            <strong>GPL-2.0-or-later</strong>. Production loads the canonical
+            extended runtime <code>yaAGC-ext.wasm</code> (HW-I/O v2 —
+            <code> apollo-browser-hwio-v2</code>), a byte-parity-verified build
+            of the pinned upstream <code>virtualagc @ ddc65e7be</code> source
+            with the browser hardware-interface patch applied. It is
+            behaviourally bit-identical to the frozen <code>yaAGC.wasm</code>{" "}
+            across the P3 parity suite; the frozen artifact remains vendored
+            solely as a parity reference. Full provenance and SHA-256 values
+            live in <code>src/third-party/webagc/UPSTREAM.md</code>.
           </p>
         </section>
 
