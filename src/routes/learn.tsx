@@ -121,6 +121,26 @@ function LearnPage() {
     return init;
   });
 
+  // Stable, lesson-agnostic state committer. Routes writes by the state's own
+  // lessonId (NOT by a captured `lesson.id` closure), so a listener wired up
+  // on a prior render cannot stomp a completed state into the wrong bucket.
+  // This is the fix for Branch B (completion propagated from LessonHost's
+  // stateRef but never landed in the parent because the callback closed over
+  // the initial lesson's id).
+  const handleLessonState = useCallback((next: LessonState) => {
+    setStates((s) => {
+      const prev = s[next.lessonId];
+      // Monotonic completion at the parent boundary too: never downgrade a
+      // completed attempt back to in-progress via a delayed callback.
+      if (prev && prev.status === "completed" && next.status !== "completed"
+          && prev.attempt?.attemptId === next.attempt?.attemptId) {
+        return s;
+      }
+      return { ...s, [next.lessonId]: next };
+    });
+  }, []);
+
+
   // ---- Shared AGC session for the whole /learn route (stable ownership).
   const [agcEpoch, setAgcEpoch] = useState(0);
   const [agcClient, setAgcClient] = useState<AgcWorkerClient | null>(null);
@@ -627,7 +647,7 @@ function LearnPage() {
               lesson={lesson}
               state={state}
               boundary={lastBoundary}
-              onStateChange={(next) => setStates((s) => ({ ...s, [lesson.id]: next }))}
+              onStateChange={handleLessonState}
             />
           </div>
 
