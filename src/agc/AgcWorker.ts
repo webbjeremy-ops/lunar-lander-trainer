@@ -707,9 +707,24 @@ function publishReady(): void {
       resetCount: state.resetCount,
       sessionEpoch: state.sessionEpoch,
       canonicalInit: canonicalInitInfo(state.canonicalInit),
-      extensionIdentity: state.extensionIdentity,
     },
   });
+  // M3.3A2-P4: publish extension identity as its own additive message so
+  // the frozen M2 ReadyPayload shape is untouched. Emitted AFTER ready so
+  // legacy listeners never see it and any consumer that awaits both can
+  // rely on ordering.
+  if (state.extensionIdentity) {
+    const ext = state.extensionIdentity;
+    send({
+      type: "agc:extension-ready",
+      hwioVersion: 2,
+      extVersion: ext.extVersion,
+      extensionTag: ext.extensionTag,
+      wasmSha256: state.wasmSha256,
+      traceEnabled: false,
+      traceDropped: 0,
+    });
+  }
   // Publish the M3.2 sim:ready AFTER the AGC ready so consumers see AGC
   // provenance first, then the sim namespace open in a separate frame.
   sendSimReady();
