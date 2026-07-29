@@ -152,7 +152,7 @@ export function MonitorPanel() {
         <span className="text-neutral-500">Engine command (CHAN 011)</span>
         <span data-testid="mon-engine">{control?.engineCommand ?? "none"}</span>
         <span className="text-neutral-500">Thrust drive activity (CHAN 014)</span>
-        <span data-testid="mon-thrust-drive">{String(control?.thrustDriveActive ?? false)}</span>
+        <span data-testid="mon-thrust-drive">{String(control?.thrustDriveActivity ?? false)}</span>
         <span className="text-neutral-500">Throttle magnitude</span>
         <span data-testid="mon-throttle">
           {control?.throttleFraction ?? "null — PHYSICAL THROTTLE SCALE NOT YET RESOLVED"}
