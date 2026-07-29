@@ -50,6 +50,32 @@ export const V35_PEAK_LIT_ANNUNCIATORS: readonly string[] = Object.entries(
   .filter(([, v]) => v === true)
   .map(([k]) => k);
 
+/**
+ * Annunciators that are inherently periodic or activity-driven and MUST NOT
+ * count as "display changes" for readiness quiet-window purposes. Excluding
+ * them prevents a settled DSKY from being labelled unstable simply because
+ * Luminary blinks COMP ACTY or toggles the Verb/Noun flash phase between
+ * scans. The peak-checksum evidence rule is unaffected — this only relaxes
+ * the pre-command settled-state gate.
+ */
+export const READINESS_PROJECTION_IGNORED_ANNUNCIATORS: readonly string[] = [
+  "compActy",
+  "uplinkActy",
+  "verbNounFlash",
+];
+
+/**
+ * Mission-tick length of the settled quiet window required before an
+ * interactive V35 attempt may open. Derived from the committed capture: in
+ * v35-lamp-test.json the AGC emits its last pre-command Channel 010 event
+ * at tickIndex 6 and the first VERB press lands at tickIndex 41 — a
+ * pre-command quiet interval of ~35 mission ticks (~700ms) during which the
+ * decoder-relevant projection did not change. We require 20 ticks (400ms)
+ * of unchanged projection with the AGC still advancing — well inside the
+ * fixture-observed quiet interval, well outside snapshot cadence jitter.
+ */
+export const V35_READINESS_QUIET_TICKS: number = 20;
+
 // V16 N65 mission-elapsed-time —————————————————————————————————————————
 export const V16_FIXTURE_ID = "v16-n65-met";
 export const V16_EXPECTED_KEY_SEQUENCE = [
