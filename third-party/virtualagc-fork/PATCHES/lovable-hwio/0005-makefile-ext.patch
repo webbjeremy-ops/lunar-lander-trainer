@@ -9,7 +9,7 @@
  	-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi \
  	-lc \
  	--export=malloc \
-@@ -217,6 +217,21 @@
+@@ -217,6 +217,23 @@
  	wasm-opt $@ -Oz -o $@
  	wasm-strip $@
  
