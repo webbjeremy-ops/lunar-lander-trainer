@@ -279,6 +279,20 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     previousDecodedRef.current = decoded;
 
     const next = stepLesson(def, cur, { kind: "observe", observation: obs });
+    // Track predicate observation cadence for post-mortem diagnostics.
+    const d = diagRef.current;
+    d.predicateCalls = (d.predicateCalls ?? 0) + 1;
+    if (next !== cur) {
+      d.predicateStateChanges = (d.predicateStateChanges ?? 0) + 1;
+      d.lastPredicateChange = {
+        eventId: singleChannel?.eventId ?? null,
+        tickIndex,
+        fromStatus: cur.status,
+        toStatus: next.status,
+        fromStep: cur.currentStepIndex,
+        toStep: next.currentStepIndex,
+      };
+    }
     if (next !== cur) onStateChange(next);
   }, [onStateChange]);
 
