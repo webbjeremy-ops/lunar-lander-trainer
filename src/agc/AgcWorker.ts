@@ -570,6 +570,15 @@ function runMissionTickPipeline(steps: number): void {
   for (const rej of rejections) {
     sendSimEvent({ type: "sim:commandAck", payload: rej });
   }
+  // A scenario reset bumps the simulation epoch: monitoring disarms and
+  // must be re-entered explicitly against the new epoch.
+  const epochNow = state.missionRuntime.getSimulationEpoch();
+  if (state.monitor && state.monitor.facts().simulationEpoch !== epochNow &&
+      state.monitor.isActive()) {
+    state.monitor.onSimulationEpochChanged(epochNow);
+    state.avionics = null;
+    state.monitorCommandQueue.length = 0;
+  }
   // ---- Phase 1 (cont.): monitor-profile commands, same boundary rule ----
   applyDueMonitorCommands(tickStartUs);
 
@@ -1141,6 +1150,7 @@ async function handle(
         throw new Error("canonical-init: loadRope invoked twice on one session");
       }
       adapter.reset();
+      state.monitor?.inputShadow().seedAfterCpuReset();
       state.resetCount++;
       state.initialResetPerformed = true;
       state.clock.reset();
