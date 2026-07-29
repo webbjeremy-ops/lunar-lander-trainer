@@ -357,7 +357,7 @@ describe("LessonHost — terminal completion latching", () => {
 
     // Single channel event completes the fake lesson.
     await act(async () => {
-      harness!.push(envChannel(makeChannel(801, 200, 0o13, 0o1)));
+      harness!.push(envChannel(makeChannel(801, 200, 0o11, 0o1)));
     });
 
     // The predicate should have fired completion in a single onStateChange.
@@ -370,9 +370,9 @@ describe("LessonHost — terminal completion latching", () => {
 
     // Burst of further events post-completion — must NOT enter dispatch.
     await act(async () => {
-      harness!.push(envChannel(makeChannel(802, 201, 0o13, 0o2)));
-      harness!.push(envChannel(makeChannel(803, 202, 0o13, 0o4)));
-      harness!.push(envChannel(makeChannel(804, 203, 0o13, 0o10)));
+      harness!.push(envChannel(makeChannel(802, 201, 0o11, 0o2)));
+      harness!.push(envChannel(makeChannel(803, 202, 0o11, 0o4)));
+      harness!.push(envChannel(makeChannel(804, 203, 0o11, 0o10)));
     });
 
     // No new state emissions.
@@ -391,7 +391,7 @@ describe("LessonHost — terminal completion latching", () => {
 
     // Complete synchronously.
     await act(async () => {
-      harness!.push(envChannel(makeChannel(901, 300, 0o13, 0o1)));
+      harness!.push(envChannel(makeChannel(901, 300, 0o11, 0o1)));
     });
     expect(harness.states.at(-1)?.status).toBe("completed");
 
@@ -405,8 +405,8 @@ describe("LessonHost — terminal completion latching", () => {
     // Another burst — still no downgrade, no new onStateChange.
     const before = harness.states.length;
     await act(async () => {
-      harness!.push(envChannel(makeChannel(902, 301, 0o13, 0o2)));
-      harness!.push(envChannel(makeChannel(903, 302, 0o13, 0o4)));
+      harness!.push(envChannel(makeChannel(902, 301, 0o11, 0o2)));
+      harness!.push(envChannel(makeChannel(903, 302, 0o11, 0o4)));
     });
     d = harness.diag();
     expect(harness.states.length).toBe(before);
@@ -424,9 +424,9 @@ describe("LessonHost — React-microtask batching", () => {
     // Predicate completes on ANY channel event. Push three in one tick to
     // verify per-event dispatch, not per-render batching, drives completion.
     await act(async () => {
-      harness!.push(envChannel(makeChannel(1001, 400, 0o13, 0o1)));
-      harness!.push(envChannel(makeChannel(1002, 400, 0o13, 0o2)));
-      harness!.push(envChannel(makeChannel(1003, 400, 0o13, 0o4)));
+      harness!.push(envChannel(makeChannel(1001, 400, 0o11, 0o1)));
+      harness!.push(envChannel(makeChannel(1002, 400, 0o11, 0o2)));
+      harness!.push(envChannel(makeChannel(1003, 400, 0o11, 0o4)));
     });
 
     // Exactly one completion state must be present; subsequent events must
