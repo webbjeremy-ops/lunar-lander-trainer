@@ -653,9 +653,12 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.ropeSha256 = sha256;
       state.ropeSourceCommit = sourceCommit;
       state.ropeByteLength = bytes.byteLength;
-      // Canonical initialization: exactly one cpu_reset() after rope load,
-      // before the public session becomes usable. Every route (/learn, /sim,
-      // /capture) reaches this same post-reset starting state.
+      // Canonical initialization: exactly one cpu_reset() after rope load.
+      // We do NOT emit `ready` here — the Worker holds the public session
+      // closed until pumpCanonicalInit() completes the RSET-and-settle
+      // sequence, and only then publishes `ready` with the resulting
+      // canonicalInit block. Every route (/learn, /sim, /capture) reaches
+      // the SAME post-canonical-init starting state.
       if (state.initialResetPerformed) {
         throw new Error("canonical-init: loadRope invoked twice on one session");
       }
@@ -663,25 +666,16 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.resetCount++;
       state.initialResetPerformed = true;
       state.clock.reset();
-      state.workerState = "ready";
+      // Pre-ready gate is already closed by construction; belt-and-braces:
+      state.publicPhaseStarted = false;
+      state.canonicalInit = makeCanonicalInitState(
+        state.resetCount,
+        Number(state.clock.getTotalAgcSteps()),
+        currentTickIndex(),
+        Number(state.clock.getMissionTimeUs()),
+      );
+      state.workerState = "canonical-init";
       startScheduler();
-      send({
-        type: "ready",
-        payload: {
-          emulatorRepo: "michaelfranzl/webAGC",
-          emulatorCommit: "0575ea7a1231e3948bae7d2c22a6ac146da0c38d",
-          emulatorVersionString: state.emulatorVersion,
-          ropeId: cmd.ropeId,
-          ropeSha256: sha256,
-          ropeSourceCommit: sourceCommit,
-          ropeByteLength: bytes.byteLength,
-          wasmSha256: state.wasmSha256,
-          protocolVersion: PROTOCOL_VERSION,
-          initialResetPerformed: true,
-          resetCount: state.resetCount,
-          sessionEpoch: state.sessionEpoch,
-        },
-      });
       return;
     }
     case "start":
