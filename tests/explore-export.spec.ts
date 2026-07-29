@@ -68,7 +68,10 @@ test.describe("/explore export — Step 2 acceptance", () => {
     const preLearn = await readAgc(page);
     expect(preLearn.ready?.ropeId).toBe("Luminary099");
     expect(preLearn.ready?.protocolVersion).toBe(2);
-    expect(preLearn.workerBoots).toBe(1);
+    // workerBoots is bumped only in Dsky standalone mode; in shared-session
+    // mode it stays 0. We assert non-mutation across export, not a fixed value.
+    expect(typeof preLearn.workerBoots).toBe("number");
+    expect(preLearn.sessionEpoch).toBe(0);
     const initialEpoch = preLearn.sessionEpoch;
     const initialWorkerBoots = preLearn.workerBoots;
     const initialTimeScale = preLearn.snapshot?.timeScale ?? 1;
