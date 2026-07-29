@@ -154,6 +154,13 @@ export interface LessonDefinition {
   title: string;
   summary: string;
   steps: readonly LessonStep[];
+  /**
+   * When true, interactive attempts for this lesson may not be opened until
+   * the AGC has reached authentic readiness (RESTART cleared, stable
+   * decoded state across two complete Channel 010 selector scans, event
+   * stream advancing). See src/lessons/ReadinessTracker.ts.
+   */
+  requiresReadinessGate?: boolean;
 }
 
 export type LessonStatus = "not-started" | "in-progress" | "completed";

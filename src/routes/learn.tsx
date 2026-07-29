@@ -13,6 +13,7 @@ import { Dsky } from "@/ui/dsky/Dsky";
 import { ropeById } from "@/sim/agc/roms";
 import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
 import type { EventBoundaryPayload, StateSnapshot } from "@/agc/protocol";
+import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -109,7 +110,7 @@ function nextAttemptId(lessonId: string): string {
   return `att-${lessonId}-${Date.now().toString(36)}-${++ATTEMPT_SEQ}`;
 }
 
-type AttemptPhase = "idle" | "opening" | "ready" | "error";
+type AttemptPhase = "idle" | "gating" | "opening" | "ready" | "error";
 
 function LearnPage() {
   const rope = useMemo(() => ropeById("Luminary099"), []);
@@ -129,7 +130,9 @@ function LearnPage() {
   const [attemptPhase, setAttemptPhase] = useState<AttemptPhase>("idle");
   const [attemptError, setAttemptError] = useState<string | null>(null);
   const [lastBoundary, setLastBoundary] = useState<EventBoundaryPayload | null>(null);
+  const [readinessSnap, setReadinessSnap] = useState<ReadinessSnapshot | null>(null);
   const openingTokenRef = useRef(0);
+  const readinessTrackerRef = useRef<ReadinessTracker | null>(null);
 
   const handleClient = useCallback((c: AgcWorkerClient | null) => {
     setAgcClient(c);
@@ -149,7 +152,10 @@ function LearnPage() {
 
   /** Perform the barrier handshake and open a fresh lesson attempt.
    *  MUST be called only when there is a live client and an interactive
-   *  step. The keypad remains locked until phase transitions to "ready". */
+   *  step. The keypad remains locked until phase transitions to "ready".
+   *  When `forLesson.requiresReadinessGate` is true, the AGC must first
+   *  satisfy authentic post-restart preconditions before the attempt
+   *  boundary is requested — no fast-forward, no injection. */
   const openAttempt = useCallback(async (
     forLesson: LessonDefinition,
     action: "beginAttempt" | "restart",
@@ -157,21 +163,54 @@ function LearnPage() {
     const client = agcClient;
     if (!client) return;
     const token = ++openingTokenRef.current;
-    setAttemptPhase("opening");
     setAttemptError(null);
+
     try {
+      if (forLesson.requiresReadinessGate) {
+        setAttemptPhase("gating");
+        const tracker = new ReadinessTracker();
+        readinessTrackerRef.current = tracker;
+        // Seed shadow from a Worker-authoritative baseline.
+        const seed = await client.requestEventBoundary();
+        if (openingTokenRef.current !== token) return;
+        tracker.noteBaseline(seed);
+        setReadinessSnap(tracker.snapshot());
+        // If we happen to already be ready (rare — restart cleared and
+        // fixture-stable), skip subscription and proceed.
+        if (!tracker.isReady()) {
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => {
+              unsub();
+              reject(new Error("Timed out waiting for AGC readiness (RESTART clear + stable scans)."));
+            }, 45_000);
+            const unsub = client.addListener({
+              onChannelUpdate: (ev) => {
+                if (openingTokenRef.current !== token) {
+                  clearTimeout(timer); unsub(); resolve(); return;
+                }
+                tracker.applyChannelEvent(ev);
+                setReadinessSnap(tracker.snapshot());
+                if (tracker.isReady()) {
+                  clearTimeout(timer); unsub(); resolve();
+                }
+              },
+            });
+          });
+          if (openingTokenRef.current !== token) return;
+        }
+      }
+
+      setAttemptPhase("opening");
       const boundary = await client.requestEventBoundary();
-      // If a newer open-request has started (e.g. user switched lesson),
-      // discard this stale reply — its boundary is scoped to nothing.
       if (openingTokenRef.current !== token) return;
       setLastBoundary(boundary);
-      const seed = boundarySeedObservation(boundary, latestSnapshotRef.current);
+      const seedObs = boundarySeedObservation(boundary, latestSnapshotRef.current);
       setStates((prev) => {
         const cur = prev[forLesson.id] ?? initialLessonState(forLesson);
         const next = stepLesson(forLesson, cur, {
           kind: action,
           attemptId: nextAttemptId(forLesson.id),
-          observation: seed,
+          observation: seedObs,
         });
         return { ...prev, [forLesson.id]: next };
       });
@@ -190,7 +229,7 @@ function LearnPage() {
     if (!agcClient || !isInteractive || isComplete) return;
     const key = `${lesson.id}#${state.currentStepIndex}#${agcEpoch}`;
     if (state.attempt && openedKeyRef.current === key && attemptPhase === "ready") return;
-    if (openedKeyRef.current === key && attemptPhase === "opening") return;
+    if (openedKeyRef.current === key && (attemptPhase === "opening" || attemptPhase === "gating")) return;
     openedKeyRef.current = key;
     void openAttempt(lesson, "beginAttempt");
   }, [agcClient, lesson, state.currentStepIndex, state.attempt, isInteractive, isComplete, attemptPhase, agcEpoch, openAttempt]);
@@ -199,9 +238,12 @@ function LearnPage() {
   // effect above will re-open a fresh attempt on the next pass.
   useEffect(() => {
     openedKeyRef.current = null;
+    ++openingTokenRef.current; // cancel any in-flight open/gate
     setAttemptPhase("idle");
     setLastBoundary(null);
     setAttemptError(null);
+    setReadinessSnap(null);
+    readinessTrackerRef.current = null;
   }, [selectedId, state.currentStepIndex, agcEpoch]);
 
   function ackCurrent() {
@@ -215,15 +257,16 @@ function LearnPage() {
 
   function resetLesson() {
     openedKeyRef.current = null;
+    ++openingTokenRef.current;
     setAttemptPhase("idle");
     setLastBoundary(null);
+    setReadinessSnap(null);
+    readinessTrackerRef.current = null;
     setStates((s) => ({ ...s, [lesson.id]: initialLessonState(lesson) }));
   }
 
   function restartInteractive() {
     if (!isInteractive || !agcClient) return;
-    // Force the effect to re-run by clearing the key, then fire a restart
-    // through the barrier handshake.
     openedKeyRef.current = null;
     void openAttempt(lesson, "restart");
   }
@@ -231,8 +274,11 @@ function LearnPage() {
   function resetAgc() {
     setAgcEpoch((n) => n + 1);
     openedKeyRef.current = null;
+    ++openingTokenRef.current;
     setAttemptPhase("idle");
     setLastBoundary(null);
+    setReadinessSnap(null);
+    readinessTrackerRef.current = null;
     setStates(() => {
       const init: Record<string, LessonState> = {};
       for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
@@ -258,8 +304,10 @@ function LearnPage() {
       boundaryTick: lastBoundary?.tickIndex ?? null,
       latestEventId: latestSnapshotRef.current?.latestEventId ?? null,
       snapshot: latestSnapshotRef.current,
+      readiness: readinessSnap,
+      readinessRequired: lesson.requiresReadinessGate === true,
     };
-  }, [lesson, step, state, states, agcEpoch, attemptPhase, attemptError, lastBoundary]);
+  }, [lesson, step, state, states, agcEpoch, attemptPhase, attemptError, lastBoundary, readinessSnap]);
 
   // Interaction lock: DSKY input is suppressed while an interactive attempt
   // is being opened. This prevents a keystroke from carrying an eventId
@@ -426,18 +474,20 @@ function LearnPage() {
                             : "text-sky-300")
                       }
                     >
-                      {attemptPhase === "opening"
-                        ? "Preparing authentic AGC observation…"
-                        : attemptPhase === "error"
-                          ? `Could not open attempt: ${attemptError ?? "unknown error"}`
-                          : "This step waits for authentic AGC output from the live Worker below. The lesson engine only advances when Luminary099 produces the required channel events."}
+                      {attemptPhase === "gating"
+                        ? `Waiting for the AGC to complete startup before beginning the lamp test… (RESTART ${readinessSnap?.restartCleared ? "cleared" : "active"}, stable scans ${readinessSnap?.stableConsecutiveScans ?? 0}/1, scans after restart ${readinessSnap?.scansAfterRestart ?? 0}/2)`
+                        : attemptPhase === "opening"
+                          ? "Preparing authentic AGC observation…"
+                          : attemptPhase === "error"
+                            ? `Could not open attempt: ${attemptError ?? "unknown error"}`
+                            : "This step waits for authentic AGC output from the live Worker below. The lesson engine only advances when Luminary099 produces the required channel events."}
                     </p>
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         data-testid="ctl-restart-attempt"
                         onClick={restartInteractive}
-                        disabled={attemptPhase === "opening"}
+                        disabled={attemptPhase === "opening" || attemptPhase === "gating"}
                         className="rounded border border-amber-600 bg-amber-950/30 px-3 py-2 font-mono text-xs uppercase tracking-widest text-amber-200 hover:bg-amber-900/40 disabled:opacity-40"
                       >
                         Restart attempt

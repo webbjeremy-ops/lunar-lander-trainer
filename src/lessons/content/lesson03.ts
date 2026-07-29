@@ -6,8 +6,9 @@ import type { LessonDefinition } from "../types";
 export const LESSON_03_V35_LAMP_TEST: LessonDefinition = {
   id: "lesson-03-v35-lamp-test",
   title: "Run V35 — the DSKY lamp test",
+  requiresReadinessGate: true,
   summary:
-    "Type VERB 3 5 ENTR on the DSKY. Luminary099 will drive every digit position to '8' and light the fixture-defined annunciator set. The lesson only completes when the AGC actually reports that state — not when the UI looks right.",
+    "Type VERB 3 5 ENTR on the DSKY. Luminary099 will drive every digit position to '8' and light the fixture-defined annunciator set. The lesson only completes when the AGC actually reports that state — not when the UI looks right. The keypad is held disabled until Luminary099 finishes its restart-bootstrap so the lamp test runs from a settled DSKY, exactly as captured.",
   steps: [
     {
       id: "explain-v35",
