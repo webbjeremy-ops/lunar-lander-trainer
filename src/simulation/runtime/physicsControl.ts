@@ -25,8 +25,10 @@ import {
 
 // The brand symbol is *not* exported. Any attempt to add `[physicsControlBrand]:
 // true` to an object outside this module fails to typecheck because the
-// symbol identity is unreachable.
-declare const physicsControlBrand: unique symbol;
+// symbol identity is unreachable. The runtime `Symbol` value backs the
+// property lookup used inside the resolvers so tests actually construct a
+// legal branded object.
+const physicsControlBrand: unique symbol = Symbol("ResolvedPhysicsControl");
 
 /** Physics-control source, tagged so diagnostics can attribute a physics
  *  step to the scenario stream vs. an operator-issued manual override. */
