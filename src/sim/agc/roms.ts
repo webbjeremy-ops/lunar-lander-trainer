@@ -5,18 +5,25 @@
 // from GitHub — the manifest for each rope lives beside the binary in
 // public/ropes/ and is validated (byte length + SHA-256) inside the Worker
 // before the emulator ever sees the bytes.
+//
+// M3.3A2-P4: `agcWasmUrl()` returns the canonical extended artifact
+// (`yaAGC-ext.wasm`). The frozen `yaAGC.wasm` is preserved as a byte-
+// identity parity reference only — see `AgcRuntimeManifest.ts`.
 
 function base(): string {
   const b = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? "/";
   return b.endsWith("/") ? b : b + "/";
 }
 
-/** Canonical, same-origin WASM URL used by the Worker. */
+import { CANONICAL_AGC_RUNTIME } from "@/agc/AgcRuntimeManifest";
+
+/** Canonical, same-origin WASM URL used by the Worker. Delegates to the
+ *  canonical runtime descriptor. */
 export function agcWasmUrl(): string {
-  return `${base()}agc/yaAGC.wasm`;
+  return CANONICAL_AGC_RUNTIME.wasmPath();
 }
 // Back-compat for M0 code paths that still import a constant.
-export const AGC_WASM_URL = "/agc/yaAGC.wasm";
+export const AGC_WASM_URL = "/agc/yaAGC-ext.wasm";
 
 export interface RopeImage {
   readonly id: "Luminary099" | "Comanche055";

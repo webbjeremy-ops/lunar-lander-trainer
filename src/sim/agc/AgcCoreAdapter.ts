@@ -32,6 +32,23 @@ interface YaAgcExports {
   set_fixed: (ptr: number) => void;
   malloc: (n: number) => number;
   free: (ptr: number) => void;
+  // ---- Optional M3.3A2 extension exports (present on yaAGC-ext.wasm).
+  // Legacy code paths never call these; they exist only so the Worker's
+  // startup ABI-validation step can observe extension identity + confirm
+  // trace collection is disabled at boot. Absence means the frozen artifact
+  // was loaded (production loader forbids this at runtime).
+  agc_hwio_version?: () => number;
+  agc_ext_version?: () => number;
+  agc_out_trace_enabled?: () => number;
+  agc_out_trace_dropped?: () => number;
+}
+
+/** Extension identity reported by the running WASM instance. */
+export interface AgcExtensionIdentity {
+  hwioVersion: number;
+  extVersion: string;
+  traceEnabled: number;
+  traceDropped: number;
 }
 
 const PROCEED_CHANNEL = 0o32;
@@ -101,6 +118,31 @@ export class AgcCoreAdapter {
     } catch {
       return "unknown";
     }
+  }
+
+  /** Read the extension-identity trio (hwio version, ext version string,
+   *  and initial trace-armed / trace-dropped counters). Returns null when
+   *  the loaded artifact lacks the extension exports — in production this
+   *  indicates the frozen artifact was fetched and is a hard failure. */
+  extensionIdentity(): AgcExtensionIdentity | null {
+    const ex = this.exports;
+    if (!ex.agc_hwio_version || !ex.agc_ext_version ||
+        !ex.agc_out_trace_enabled || !ex.agc_out_trace_dropped) {
+      return null;
+    }
+    let extVersion = "";
+    try {
+      const ptr = ex.agc_ext_version();
+      const bytes = this.memArray.subarray(ptr);
+      const nul = bytes.indexOf(0);
+      extVersion = new TextDecoder().decode(bytes.subarray(0, nul >= 0 ? nul : 0));
+    } catch { /* keep empty */ }
+    return {
+      hwioVersion: ex.agc_hwio_version(),
+      extVersion,
+      traceEnabled: ex.agc_out_trace_enabled(),
+      traceDropped: ex.agc_out_trace_dropped(),
+    };
   }
 
   /** Fetch a rope image and load it as fixed (rope) memory. */
