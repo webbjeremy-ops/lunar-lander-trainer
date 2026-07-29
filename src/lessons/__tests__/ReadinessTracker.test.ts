@@ -124,11 +124,8 @@ describe("ReadinessTracker", () => {
     const dec = makeEmptyDecodedDsky();
     t.noteBaseline(baseline(dec, { tickIndex: 100, totalAgcSteps: 5_000 }));
     advanceQuietTicks(t, 100, V35_READINESS_QUIET_TICKS - 1, 5_000);
-    // Digit change — projection changes → quiet resets.
-    // Ch010 selector 1 code that maps to a non-blank digit: word=0x0800 puts sel=1, codes=(0,0) => blanks.
-    // Use a raw word with sel=1 codeA=1 codeB=2.
-    const word = (1 << 11) | (1 << 5) | 2;
-    t.applyChannelEvent(ev(0o10, word, 100 + V35_READINESS_QUIET_TICKS));
+    // Assert RESTART via ch0163 — a decoder-material annunciator change.
+    t.applyChannelEvent(ev(0o163, ch0163Restart(true), 100 + V35_READINESS_QUIET_TICKS));
     expect(t.snapshot().quietTicks).toBe(0);
     expect(t.isReady()).toBe(false);
   });
