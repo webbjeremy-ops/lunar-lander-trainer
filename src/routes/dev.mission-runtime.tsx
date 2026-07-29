@@ -42,6 +42,23 @@ function DevMissionRuntimePage() {
     client.forceMissionSnapshot();
   }, [client]);
 
+  // Acceptance hook (dev harness only): record every published mission
+  // snapshot keyed by deterministic scenario elapsed time so the P5.e
+  // parity spec can compare monitor-off vs monitor-on physics EXACTLY,
+  // without rounding through the DOM.
+  useEffect(() => {
+    if (!missionSnapshot?.lm) return;
+    const w = window as unknown as {
+      __missionSamples?: Record<string, [number, number, number]>;
+    };
+    w.__missionSamples ??= {};
+    w.__missionSamples[String(missionSnapshot.scenarioElapsedUs)] = [
+      missionSnapshot.lm.altitudeM,
+      missionSnapshot.lm.verticalVelocityMps,
+      missionSnapshot.lm.propellantMassKg,
+    ];
+  }, [missionSnapshot]);
+
   const cursorUs = missionSnapshot?.missionTimeUs ?? 0;
   // Safety margin for applyAtMissionTimeUs. Snapshots are coalesced on the
   // Worker side (typically <100 ms stale) but the runtime cursor advances
