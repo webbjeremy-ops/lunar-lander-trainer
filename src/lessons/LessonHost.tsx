@@ -520,19 +520,41 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
           selector,
         });
         // Only apply channel events that belong to the active attempt window.
-        // Events with eventId <= boundaryEventId happened before the attempt
-        // handshake and MUST NOT touch the shadow (they would corrupt the
-        // baseline). Between attempts (no attempt active) we simply skip
-        // application; the next attempt reseeds from a fresh boundary.
         const cur = stateRef.current;
-        if (!cur.attempt) {
+        const activeAttemptId = cur.attempt?.attemptId ?? null;
+        const d0 = diagRef.current;
+        if (d0.listenerAttachedEventId === null || d0.listenerAttachedEventId === undefined) {
+          d0.listenerAttachedEventId = ev.eventId;
+        }
+        if (!activeAttemptId) {
           publishDiag();
           return;
         }
+        // If parent opened an attempt but the boundary/seed hasn't landed
+        // yet, buffer the event losslessly. Drain happens in the seed effect
+        // in strict eventId order.
+        if (shadowSeededAttemptIdRef.current !== activeAttemptId) {
+          pendingPreSeedRef.current.push(ev);
+          publishDiag();
+          return;
+        }
+        // Events at/before the seeded boundary are the baseline; discard.
         if (ev.eventId <= boundaryEventIdRef.current) {
           publishDiag();
           return;
         }
+        // Strictly-monotone processing. Reject duplicates / out-of-order.
+        if (ev.eventId <= lastProcessedEventIdRef.current) {
+          if (ev.eventId === lastProcessedEventIdRef.current) {
+            d0.duplicateEventCount = (d0.duplicateEventCount ?? 0) + 1;
+          } else {
+            d0.outOfOrderEventCount = (d0.outOfOrderEventCount ?? 0) + 1;
+          }
+          publishDiag();
+          return;
+        }
+        lastProcessedEventIdRef.current = ev.eventId;
+        d0.lastProcessedEventId = ev.eventId;
         const consumed = applyDskyChannelEvent(shadowRef.current, ev.channel, ev.value);
         if (!consumed) {
           channelBufRef.current.push(ev);
