@@ -10,6 +10,8 @@
 import v35 from "../../tests/fixtures/v35-lamp-test.json";
 import v16 from "../../tests/fixtures/v16-n65-met.json";
 import { AGC_KEY } from "./keyCodes";
+import { decodedDskyStructural } from "@/agc/dsky/DskyDecoder";
+import type { DecodedDsky } from "@/agc/dsky/DskyTypes";
 import type { LessonProvenance } from "./types";
 
 export const FIXTURE_PROVENANCE: LessonProvenance = {
