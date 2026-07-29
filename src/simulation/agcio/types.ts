@@ -218,7 +218,7 @@ export interface SensorEncoderResult {
 }
 
 // ---------------------------------------------------------------------------
-// Actuator decoder output (types only; reducer lands in P5.c)
+// Actuator observation (M3.3A2-P5.c) — pure decoding of AGC output events
 // ---------------------------------------------------------------------------
 
 export interface RawTraceSummary {
@@ -229,26 +229,109 @@ export interface RawTraceSummary {
   readonly lastMissionTick: number;
 }
 
+/** 64-bit sequence / cycle counters are carried as high/low 32-bit words.
+ *  They are NEVER converted to a JS `number` — comparison helpers in
+ *  `actuatorDecoder.ts` operate on the word pair directly. */
+export interface AgcWideCounter {
+  readonly hi: number;
+  readonly lo: number;
+}
+
+/** One losslessly observed AGC output-channel write. */
+export interface AgcOutputChannelEvent {
+  readonly stream: "channel";
+  readonly sequence: AgcWideCounter;
+  readonly cycle: AgcWideCounter;
+  /** AGC channel number (decimal storage of the octal source constant). */
+  readonly channel: number;
+  /** 15-bit channel word after the write. */
+  readonly value: number;
+  /** 15-bit channel word before the write, when the observer supplies it. */
+  readonly valueBefore: number | null;
+}
+
+/** One losslessly observed output-counter operation from the HW-I/O v2
+ *  trace ring (`AgcOutputTraceEntry`). `operation` is the NATIVE identifier
+ *  (0 = AGC store/WRITE, otherwise the yaAGC IncType id) — it is preserved
+ *  verbatim and never relabelled. */
+export interface AgcOutputCounterEvent {
+  readonly stream: "counter";
+  readonly sequence: AgcWideCounter;
+  readonly cycle: AgcWideCounter;
+  readonly address: number;
+  readonly operation: number;
+  readonly delta: number;
+  readonly valueBefore: number;
+  readonly valueAfter: number;
+}
+
+export type RawChannelEvent = AgcOutputChannelEvent;
+export type RawOutputCounterEvent = AgcOutputCounterEvent;
+
+/** The two output streams have no proven shared sub-cycle ordering, so they
+ *  are kept distinct. Order WITHIN each array is authentic and preserved. */
+export interface AgcActuatorTickEvents {
+  readonly missionTick: number;
+  readonly channelEvents: readonly AgcOutputChannelEvent[];
+  readonly counterEvents: readonly AgcOutputCounterEvent[];
+  readonly traceDropped: number;
+}
+
+export type AgcActuatorInvalidReason =
+  | "no-engine-command"
+  | "contradictory-engine-command"
+  | "throttle-scale-unresolved"
+  | "unexpected-channel"
+  | "unexpected-counter-address"
+  | "unsupported-counter-operation"
+  | "trace-data-dropped"
+  | "malformed-event"
+  | "nonmonotonic-event-sequence";
+
+export type AgcEngineCommandState = "on" | "off" | "none" | "conflict";
+
+/** NON-PHYSICAL diagnostic view of raw THRUST (0o55) counter activity.
+ *  Display header (verbatim):
+ *    RAW AGC THRUST COUNTER ACTIVITY
+ *    PHYSICAL THROTTLE SCALE NOT YET RESOLVED
+ *  `signedDeltaTotal` MUST NOT be presented as thrust, percent, newtons or
+ *  pounds-force. */
+export interface ThrustCounterDiagnostic {
+  readonly eventCount: number;
+  readonly signedDeltaTotal: number;
+  readonly firstValue: number | null;
+  readonly lastValue: number | null;
+  readonly operations: readonly number[];
+  readonly scaleStatus: "unresolved";
+}
+
 /** Decoded AGC-commanded control. DIAGNOSTIC ONLY. This value is intended
  *  to be displayed and logged; it MUST NOT reach `stepLmPhysics()`. The
  *  compile-time boundary lives in `src/simulation/runtime/physicsControl`.
  *
- *  Absent or invalid commands MUST NOT be coerced to `{throttleFraction: 0,
- *  engineEnabled: false, valid: true}` — set `valid: false` and populate
+ *  Absent, contradictory or unresolved state is NEVER coerced into a
+ *  flight-plausible default: unknown engine state is `null`, unresolved
+ *  throttle magnitude is `null`, and `valid` stays false with typed
  *  `invalidReasons`.
  */
 export interface AgcCommandedControl {
-  readonly engineEnabled: boolean;
+  readonly engineCommand: AgcEngineCommandState;
+  readonly engineEnabled: boolean | null;
   readonly throttleFraction: number | null;
   readonly valid: boolean;
-  readonly invalidReasons: readonly string[];
+  readonly invalidReasons: readonly AgcActuatorInvalidReason[];
   readonly sampledAtMissionTick: number;
+  readonly thrustDriveActivity: {
+    readonly observedThisTick: boolean;
+    readonly eventCount: number;
+  };
   readonly raw: {
-    readonly thrustCounterEvents: readonly RawTraceSummary[];
-    readonly channel11: number | null;
-    readonly channel14: number | null;
+    readonly channel11: readonly RawChannelEvent[];
+    readonly channel14: readonly RawChannelEvent[];
+    readonly thrustCounter: readonly RawOutputCounterEvent[];
   };
 }
+
 
 // ---------------------------------------------------------------------------
 // Monitor snapshot (compact — trace ring is retrieved separately in P5.d)
