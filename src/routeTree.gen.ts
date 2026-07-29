@@ -16,6 +16,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DevMissionRuntimeRouteImport } from './routes/dev.mission-runtime'
 import { Route as DevLmPhysicsRouteImport } from './routes/dev.lm-physics'
 
 const SourcesRoute = SourcesRouteImport.update({
@@ -53,6 +54,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevMissionRuntimeRoute = DevMissionRuntimeRouteImport.update({
+  id: '/dev/mission-runtime',
+  path: '/dev/mission-runtime',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevLmPhysicsRoute = DevLmPhysicsRouteImport.update({
   id: '/dev/lm-physics',
   path: '/dev/lm-physics',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
+  '/dev/mission-runtime': typeof DevMissionRuntimeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
+  '/dev/mission-runtime': typeof DevMissionRuntimeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
+  '/dev/mission-runtime': typeof DevMissionRuntimeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
+    | '/dev/mission-runtime'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
+    | '/dev/mission-runtime'
   id:
     | '__root__'
     | '/'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
+    | '/dev/mission-runtime'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +144,7 @@ export interface RootRouteChildren {
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
+  DevMissionRuntimeRoute: typeof DevMissionRuntimeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/mission-runtime': {
+      id: '/dev/mission-runtime'
+      path: '/dev/mission-runtime'
+      fullPath: '/dev/mission-runtime'
+      preLoaderRoute: typeof DevMissionRuntimeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dev/lm-physics': {
       id: '/dev/lm-physics'
       path: '/dev/lm-physics'
@@ -204,17 +224,8 @@ const rootRouteChildren: RootRouteChildren = {
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
   DevLmPhysicsRoute: DevLmPhysicsRoute,
+  DevMissionRuntimeRoute: DevMissionRuntimeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

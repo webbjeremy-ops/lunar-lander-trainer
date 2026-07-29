@@ -32,6 +32,12 @@ import type { ReadyPayload, StateSnapshot } from "./protocol";
 import type { DecodedDsky } from "./dsky/DskyTypes";
 import { makeEmptyDecodedDsky } from "./dsky/DskyDecoder";
 import { agcWasmUrl, ropeById, type RopeImage } from "@/sim/agc/roms";
+import type { SimReadyPayload } from "./simulationProtocol";
+import type {
+  CommandAck,
+  MissionSnapshot,
+  TerminalTouchdownEvent,
+} from "@/simulation/runtime/types";
 
 export interface AgcSessionValue {
   /** Live client, or `null` while the Worker is being (re)created. */
@@ -51,6 +57,12 @@ export interface AgcSessionValue {
   /** Bootstrap error (worker construction failed). Consumers may show a
    *  retry affordance; a `resetSession()` reruns the boot. */
   bootError: string | null;
+  // ---- M3.2 mission-runtime state (read-only view) -----------------
+  simReady: SimReadyPayload | null;
+  missionSnapshot: MissionSnapshot | null;
+  /** Last N command acks (bounded) so UIs can surface rejections. */
+  missionAcks: readonly CommandAck[];
+  terminalTouchdown: TerminalTouchdownEvent | null;
 }
 
 const AgcSessionContext = createContext<AgcSessionValue | null>(null);
@@ -65,6 +77,10 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
   const [lamps, setLamps] = useState(0);
   const [bootAttempted, setBootAttempted] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
+  const [simReady, setSimReady] = useState<SimReadyPayload | null>(null);
+  const [missionSnapshot, setMissionSnapshot] = useState<MissionSnapshot | null>(null);
+  const [missionAcks, setMissionAcks] = useState<readonly CommandAck[]>([]);
+  const [terminalTouchdown, setTerminalTouchdown] = useState<TerminalTouchdownEvent | null>(null);
   const disposedRef = useRef(false);
 
   useEffect(() => {
@@ -76,6 +92,10 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
     setSnapshot(null);
     setDecoded(makeEmptyDecodedDsky());
     setLamps(0);
+    setSimReady(null);
+    setMissionSnapshot(null);
+    setMissionAcks([]);
+    setTerminalTouchdown(null);
 
     let c: AgcWorkerClient;
     try {
@@ -106,6 +126,28 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
       onFatalError: (code, message) => {
         if (disposedRef.current) return;
         setBootError(`${code}: ${message}`);
+      },
+      onSimReady: (p) => {
+        if (disposedRef.current) return;
+        setSimReady(p);
+      },
+      onSimSnapshot: (s) => {
+        if (disposedRef.current) return;
+        setMissionSnapshot(s);
+      },
+      onSimCommandAck: (ack) => {
+        if (disposedRef.current) return;
+        // Bounded ring — keep the last 32 acks so a rejection-heavy dev
+        // session cannot balloon React state indefinitely.
+        setMissionAcks((prev) => {
+          const next = prev.length >= 32 ? prev.slice(prev.length - 31) : prev.slice();
+          next.push(ack);
+          return next;
+        });
+      },
+      onSimTerminalTouchdown: (ev) => {
+        if (disposedRef.current) return;
+        setTerminalTouchdown(ev);
       },
     });
     c.initialize(agcWasmUrl());
@@ -144,8 +186,16 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
       resetSession,
       bootAttempted,
       bootError,
+      simReady,
+      missionSnapshot,
+      missionAcks,
+      terminalTouchdown,
     }),
-    [client, ready, snapshot, decoded, lamps, epoch, rope, resetSession, bootAttempted, bootError],
+    [
+      client, ready, snapshot, decoded, lamps, epoch, rope, resetSession,
+      bootAttempted, bootError, simReady, missionSnapshot, missionAcks,
+      terminalTouchdown,
+    ],
   );
 
   return <AgcSessionContext.Provider value={value}>{children}</AgcSessionContext.Provider>;

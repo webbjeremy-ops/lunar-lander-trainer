@@ -24,6 +24,17 @@ import {
   type StateSnapshot,
   type W2CEnvelope,
 } from "./protocol";
+import type {
+  SimulationCommand,
+  SimulationEvent,
+  SimReadyPayload,
+} from "./simulationProtocol";
+import type {
+  CommandAck,
+  MissionCommand,
+  MissionSnapshot,
+  TerminalTouchdownEvent,
+} from "@/simulation/runtime/types";
 
 export interface AgcWorkerClientOptions {
   pauseOnHidden?: boolean;
@@ -46,9 +57,17 @@ export interface AgcWorkerClientListeners {
   onDskyDecoded?: (decoded: import("./dsky/DskyTypes").DecodedDsky, missionTimeUs: number, tickIndex: number) => void;
   onInputAccepted?: (ev: import("./protocol").InputAcceptedEvent) => void;
   onChannelUpdate?: (ev: import("./protocol").ChannelEventLite) => void;
+  /** Fires for every AGC-namespace event. Existing consumers stay
+   *  narrowly typed to AgcEvent; sim events flow through `onSimEvent`. */
   onEvent?: (ev: AgcEvent) => void;
   onDiagnostics?: (d: Diagnostics) => void;
   onFatalError?: (code: string, message: string) => void;
+  // ---- M3.2 simulation-namespace listeners --------------------------
+  onSimEvent?: (ev: SimulationEvent) => void;
+  onSimReady?: (payload: SimReadyPayload) => void;
+  onSimSnapshot?: (snapshot: MissionSnapshot) => void;
+  onSimCommandAck?: (ack: CommandAck) => void;
+  onSimTerminalTouchdown?: (ev: TerminalTouchdownEvent) => void;
 }
 
 interface PendingRequest {
@@ -123,6 +142,21 @@ export class AgcWorkerClient {
     const env: C2WEnvelope = makeEnvelope("c2w", ++this.seq, cmd, { requestId });
     this.worker.postMessage(env);
   }
+
+  /** M3.2: post a sim-namespace command through the same envelope so the
+   *  Worker's FIFO command queue serializes AGC and sim commands together. */
+  private postSim(cmd: SimulationCommand, requestId?: string): void {
+    if (this.disposed) return;
+    const env: C2WEnvelope = makeEnvelope("c2w", ++this.seq, cmd, { requestId });
+    this.worker.postMessage(env);
+  }
+
+  // ---- M3.2 simulation namespace API -------------------------------
+  queryMissionReady(): void { this.postSim({ type: "sim:queryReady" }); }
+  enqueueMissionCommand(command: MissionCommand): void {
+    this.postSim({ type: "sim:enqueue", command });
+  }
+  forceMissionSnapshot(): void { this.postSim({ type: "sim:forceSnapshot" }); }
 
   initialize(wasmUrl: string): void { this.post({ type: "initialize", wasmUrl }); }
   loadRope(ropeId: RopeId, ropeUrl: string, manifestUrl: string): void {
@@ -252,11 +286,35 @@ export class AgcWorkerClient {
       case "fatalError":
         this.handleFatal(msg.payload.code, msg.payload.message);
         break;
+      // ---- M3.2 simulation-namespace fanout ------------------------
+      case "sim:ready":
+        fanout("onSimReady", (l) => l.onSimReady?.(msg.payload));
+        break;
+      case "sim:snapshot":
+        fanout("onSimSnapshot", (l) => l.onSimSnapshot?.(msg.payload));
+        break;
+      case "sim:commandAck":
+        fanout("onSimCommandAck", (l) => l.onSimCommandAck?.(msg.payload));
+        break;
+      case "sim:terminalTouchdown":
+        fanout("onSimTerminalTouchdown", (l) => l.onSimTerminalTouchdown?.(msg.payload));
+        break;
     }
-    // onEvent fires for every message on both primary and supplementary.
-    this.listeners.onEvent?.(msg);
-    for (const sup of this.supplementaryListeners) {
-      try { sup.onEvent?.(msg); } catch { /* isolate */ }
+    // Route to onEvent (AGC) vs onSimEvent (sim). Discriminate on the
+    // `sim:` prefix so existing consumers stay narrowly typed and
+    // cannot accidentally receive sim payloads they don't handle.
+    if (msg.type.startsWith("sim:")) {
+      const simMsg = msg as SimulationEvent;
+      this.listeners.onSimEvent?.(simMsg);
+      for (const sup of this.supplementaryListeners) {
+        try { sup.onSimEvent?.(simMsg); } catch { /* isolate */ }
+      }
+    } else {
+      const agcMsg = msg as AgcEvent;
+      this.listeners.onEvent?.(agcMsg);
+      for (const sup of this.supplementaryListeners) {
+        try { sup.onEvent?.(agcMsg); } catch { /* isolate */ }
+      }
     }
   }
 
