@@ -206,10 +206,12 @@ export function decideMonitorEntry(
 export { MONITOR_SIGNAL_REGISTRY };
 
 /**
- * The exact list of unresolved LR/PIPA mappings currently blocking
- * `descent-monitor-v1`. Removing an entry from this list is the sole
- * mechanism by which the profile becomes enterable; there is no bypass.
- * Sourced verbatim from `docs/M3_3_IO_MAP.md`.
+ * Policy-level unresolved-mapping block for `descent-monitor-v1`. This is
+ * ONE of several gates; the profile also requires an empty
+ * `unresolvedSignalsForProfile("descent-monitor-v1")` set AND a clean
+ * `validateRegistry()` result AND every runtime prerequisite
+ * (`agcReady`, epochs, active scenario, provenance, trace disabled).
+ * Removing an entry here alone is NOT sufficient to enable the profile.
  */
 export const DESCENT_MONITOR_V1_UNRESOLVED_MAPPINGS: readonly MonitorBlockReason[] = [
   {
