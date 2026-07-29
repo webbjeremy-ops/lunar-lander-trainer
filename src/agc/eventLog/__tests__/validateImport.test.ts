@@ -143,7 +143,7 @@ describe("validateImport — integrity", () => {
 
   it("rejects when the payload contents are tampered but hash left alone", async () => {
     const doc = JSON.parse(await makeValidDocJson());
-    doc.payload.events[0].keyCode = 0o27 === 0o27 ? 0o10 : 0o27; // flip a legal value
+    doc.payload.events[0].keyCode = 0o37; // NOUN, legal but different
     const r = await validateImport(JSON.stringify(doc));
     expect(r.status).toBe("invalid");
     if (r.status !== "invalid") return;
