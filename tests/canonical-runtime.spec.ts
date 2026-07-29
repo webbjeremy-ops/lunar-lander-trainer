@@ -88,11 +88,18 @@ test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
     // 3. Exactly one Worker boot.
     expect(snap1.workerBoots).toBe(1);
 
-    // 4. Cross-route persistence — /explore, /sim, /dev/mission-runtime
-    //    must not re-boot the Worker or fetch a second WASM.
+    // 4. Cross-route persistence — use in-app client-side navigation
+    //    (Links in __root nav) so the AgcSession provider is not torn down.
+    //    A page.goto() would be a hard reload and would (correctly) refetch.
     const wasmBefore = wasmRequests.length;
-    for (const route of ["/explore", "/sim", "/dev/mission-runtime", "/learn"]) {
-      await page.goto(route, { waitUntil: "domcontentloaded" });
+    const navSelectors: Record<string, string> = {
+      "/explore": '[data-testid="nav-explore"]',
+      "/dev/mission-runtime": '[data-testid="nav-mission-runtime"]',
+      "/learn": '[data-testid="nav-learn"]',
+    };
+    for (const [route, sel] of Object.entries(navSelectors)) {
+      await page.locator(sel).first().click();
+      await page.waitForURL(`**${route}`);
       await page.waitForFunction(
         () => {
           const w = window as unknown as { __agcTest?: AgcTestSnapshot };
