@@ -9,7 +9,7 @@
  	-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi \
  	-lc \
  	--export=malloc \
-@@ -217,6 +217,21 @@
+@@ -217,6 +217,23 @@
  	wasm-opt $@ -Oz -o $@
  	wasm-strip $@
  
@@ -23,6 +23,8 @@
 +	  --export=agc_out_trace_drain \
 +	  --export=agc_out_trace_dropped \
 +	  --export=agc_out_trace_reset \
++	  --export=agc_out_trace_set_enabled \
++	  --export=agc_out_trace_enabled \
 +	  --export=agc_ext_version \
 +	  --export=agc_hwio_version
 +	wasm-opt $@ -Oz -o $@

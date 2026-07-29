@@ -130,6 +130,12 @@ static uint64_t CycleCounter = 0;  /* incremented by cpu_step wrapper */
 static uint16_t OutLast[CAPS_COUNT];
 static int OutInit = 0;
 
+/* Trace arming. MUST default to 0 (disabled) so that merely swapping the WASM
+ * binary in place of yaAGC.wasm produces no observable side effect and no
+ * accumulating state. The monitor adapter enables tracing explicitly after
+ * instantiation and after cpu_reset. See docs/M3_3A2_P3.md (dormancy audit). */
+static uint32_t TraceEnabled = 0;
+
 static int find_cap_index(uint16_t address, int role_filter) {
   for (uint32_t i = 0; i < CAPS_COUNT; i++) {
     if (CAPS[i].address == address) {
@@ -225,6 +231,23 @@ export void
 agc_out_trace_reset(void) {
   TraceHead = 0; TraceCount = 0; TraceDropped = 0; TraceSequence = 0;
   OutInit = 0;
+}
+
+/* Arm/disarm the output trace. Returns previous value.
+ * Disabling clears any latched sampler baseline so that re-enabling starts
+ * from a fresh cache and never emits a spurious "first delta" against a
+ * stale before-value. */
+export uint32_t
+agc_out_trace_set_enabled(uint32_t enabled) {
+  uint32_t prev = TraceEnabled;
+  TraceEnabled = enabled ? 1u : 0u;
+  if (!TraceEnabled) OutInit = 0;
+  return prev;
+}
+
+export uint32_t
+agc_out_trace_enabled(void) {
+  return TraceEnabled;
 }
 
 /* Drain up to max_entries oldest entries into destination in FIFO order. */
@@ -369,13 +392,21 @@ agc_hw_input_apply(const AgcHwInputRecord *records, uint32_t record_count) {
 }
 
 /* --- Hook invoked by wasm.c per cpu_step iteration --- */
+/* Dormancy contract (M3.3A2-P3): with TraceEnabled == 0, this hook must be a
+ * true nonmutating no-op. No cycle counter increment, no sampler baseline
+ * initialization, no ring writes. Verified by dormancy audit test. */
 void hwio_after_agc_engine(void) {
+  if (!TraceEnabled) return;
   CycleCounter++;
   trace_sample_all();
 }
 
 /* --- Reset trace on cpu_reset (invoked from wasm.c). --- */
+/* cpu_reset always disarms the trace. The monitor adapter re-arms it
+ * explicitly after each reset. This prevents any accidental carry-over of
+ * arm state across a canonical startup RSET. */
 void hwio_on_cpu_reset(void) {
   agc_out_trace_reset();
   CycleCounter = 0;
+  TraceEnabled = 0;
 }
