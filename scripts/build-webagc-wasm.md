@@ -39,28 +39,58 @@ the SHA-256 of the produced WASM.
 binary but will not reproduce the recorded SHA and would defeat the M3.3A2
 Phase 3 parity gate.
 
-## Steps
+## Steps (validated by M3.3A2 Phase 1)
 
-1. Install WASI SDK to `/opt/wasi-sdk` (or set `WASI_SDK_PATH`). In this
-   sandbox, `nix shell nixpkgs#wasi-sdk` provides one.
-2. Clone virtualagc and reset to the pinned commit:
+1. Install WASI SDK 15 to `/opt/wasi-sdk-15.0` (or set `WASI_SDK_PATH`). Any
+   later WASI SDK also works but produces a different SHA-256. Do NOT use
+   WASI SDK 14 or earlier — their `wasm-ld` rejects the linker flag used
+   below.
    ```bash
-   git clone https://github.com/michaelfranzl/virtualagc
-   cd virtualagc
-   git reset --hard ddc65e7bed41f1301921b934fcbaaee93db99dda
+   curl -sSL -o /tmp/wasi-sdk-15.tar.gz \
+     https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-15/wasi-sdk-15.0-linux.tar.gz
+   tar -C /opt -xzf /tmp/wasi-sdk-15.tar.gz
+   export WASI_SDK_PATH=/opt/wasi-sdk-15.0
+   export PATH=$WASI_SDK_PATH/bin:$PATH
    ```
-3. Build the WASM target:
+2. Fetch the pinned virtualagc source as an immutable tarball (the sandbox
+   blocks `git reset --hard`, and the tarball digest is stable):
    ```bash
-   cd yaAGC
-   make WASI=yes yaAGC.wasm
+   curl -sSL -o va.tar.gz \
+     https://codeload.github.com/michaelfranzl/virtualagc/tar.gz/ddc65e7bed41f1301921b934fcbaaee93db99dda
+   tar xzf va.tar.gz
+   cd virtualagc-ddc65e7bed41f1301921b934fcbaaee93db99dda/yaAGC
    ```
-4. Compute `sha256sum yaAGC/yaAGC.wasm`.
-   - If it matches `a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14`,
-     update `UPSTREAM.md` origin field to `reproduced-locally`.
-   - If it does not match, record the exact WASI SDK version, host OS, and
-     resulting SHA in `UPSTREAM.md` under a `reproduction-attempts:` block.
-     Do NOT replace the committed binary — behavioral parity, not byte
-     identity, is the M3.3A2 gate (amendment 5).
+3. Substitute the ONE unbuildable linker flag. The pinned Makefile passes
+   `--unresolved-symbols=import-functions`, which is not a legal wasm-ld
+   value in any released WASI SDK (12 through 20). `--allow-undefined` is
+   the documented equivalent (`--import-undefined
+   --unresolved-symbols=ignore-all`):
+   ```bash
+   sed -i 's|--unresolved-symbols=import-functions|--allow-undefined|' Makefile
+   ```
+4. Build under a nix shell that provides `wasm-opt` (binaryen) and
+   `wasm-strip` (wabt):
+   ```bash
+   nix shell nixpkgs#binaryen nixpkgs#wabt --command \
+     make WASI=yes yaAGC.wasm
+   sha256sum yaAGC.wasm
+   ```
+5. Compare against the frozen artifact.
+    - Frozen SHA:
+      `a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14`
+      (132 617 bytes).
+    - Expected P1 rebuild SHA under WASI SDK 15:
+      `7592c740e1009715b602949ed81a27d458700c16f7fed2330b3a8359c3f955d5`
+      (131 002 bytes).
+    - Any other SHA means one of `WASI_SDK_PATH`, binaryen version, wabt
+      version, or `NVER` differs from the P1 baseline. Record the drift in
+      `src/third-party/webagc/UPSTREAM.md` under the "Reproduction attempts"
+      table and cite it in `docs/M3_3A2_P1.md`. Do NOT replace the committed
+      binary — behavioral parity, not byte identity, is the M3.3A2 gate
+      (amendment 5).
+
+Never edit the WASM binary. Never invent a build command or timestamp in
+`UPSTREAM.md`.
 
 Never edit the WASM binary. Never invent a build command or timestamp in
 `UPSTREAM.md`.
