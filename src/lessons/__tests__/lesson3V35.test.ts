@@ -25,8 +25,9 @@ import type { LessonState, LessonInputEvent } from "@/lessons/types";
 import type { ChannelEventLite } from "@/agc/protocol";
 import {
   FIXTURE_PROVENANCE,
-  V35_PEAK_CHECKSUM,
+  V35_PEAK_EVIDENCE_CHECKSUM,
 } from "@/lessons/fixtureExpectations";
+
 import { AGC_KEY } from "@/lessons/keyCodes";
 import { channelEv, keyInput, makeObservation, resetEventIds } from "./testHelpers";
 
