@@ -35,9 +35,12 @@ import {
   type CanonicalInitInfo,
   type ChannelEventLite,
   type Diagnostics,
+  type EventLogExportPayload,
+  type PublicEventRecord,
   type StateSnapshot,
   type W2CEnvelope,
 } from "./protocol";
+import { TICK_MICROS as SCHEDULER_TICK_MICROS } from "./MissionClock";
 import {
   readinessProjectionCanonical,
 } from "@/lessons/ReadinessTracker";
