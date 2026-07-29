@@ -150,7 +150,7 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
     await page.getByTestId("mon-enter-discrete").click();
     await expect(page.getByTestId("mon-status")).toHaveText("active", { timeout: 30_000 });
 
-    await page.getByTestId("cmd-reset").click();
+    await page.getByTestId("cmd-reset-scenario").click();
     await expect(page.getByTestId("mon-status")).toHaveText("interlocked", { timeout: 30_000 });
     await expect(page.getByTestId("mon-trace-enabled")).toHaveText("false");
   });
@@ -168,7 +168,7 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
     expect(Object.keys(runOff).length).toBeGreaterThan(3);
 
     // Reset to the identical initial condition, then run B — monitor ON.
-    await page.getByTestId("cmd-reset").click();
+    await page.getByTestId("cmd-reset-scenario").click();
     await expect(page.getByTestId("ms-status")).not.toHaveText("running", { timeout: 30_000 });
     await clearSamples(page);
     await page.getByTestId("av-engineArmed").click();
