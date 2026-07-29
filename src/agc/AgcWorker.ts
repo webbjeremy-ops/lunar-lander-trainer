@@ -309,6 +309,18 @@ async function sha256Hex(input: ArrayBuffer | Uint8Array): Promise<string> {
     .join("");
 }
 
+/** Append a public event to the export ring, evicting the oldest entry
+ *  when the ring is at capacity. `publicEventsAppendedTotal` counts every
+ *  append (including dropped ones), so the current head's eventId
+ *  reveals the drop boundary. */
+function appendPublicEvent(rec: PublicEventRecord): void {
+  state.publicEventsRing.push(rec);
+  state.publicEventsAppendedTotal++;
+  if (state.publicEventsRing.length > state.publicEventsCap) {
+    state.publicEventsRing.splice(0, state.publicEventsRing.length - state.publicEventsCap);
+  }
+
+
 /** Deterministic snapshot of every AGC channel the adapter has observed.
  *  Keys are decimal-encoded channel numbers as strings; values are
  *  canonical numbers. Uses `io.allChannels()` when the private accessor
