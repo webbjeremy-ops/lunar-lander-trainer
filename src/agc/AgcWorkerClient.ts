@@ -28,7 +28,11 @@ import type {
   SimulationCommand,
   SimulationEvent,
   SimReadyPayload,
+  type MonitorBlockedEvent,
+  type MonitorTraceEvent,
 } from "./simulationProtocol";
+import type { AgcMonitorProfile } from "@/simulation/agcio/types";
+import type { LmDiscreteSensorState } from "@/simulation/agcio/discreteEncoder";
 import type {
   CommandAck,
   MissionCommand,
@@ -72,6 +76,8 @@ export interface AgcWorkerClientListeners {
   onSimSnapshot?: (snapshot: MissionSnapshot) => void;
   onSimCommandAck?: (ack: CommandAck) => void;
   onSimTerminalTouchdown?: (ev: TerminalTouchdownEvent) => void;
+  onSimMonitorBlocked?: (ev: MonitorBlockedEvent) => void;
+  onSimMonitorTrace?: (ev: MonitorTraceEvent) => void;
 }
 
 interface PendingRequest {
