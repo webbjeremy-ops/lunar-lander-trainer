@@ -112,6 +112,90 @@ interface WorkerState {
    *  The initialization reset itself does NOT bump the epoch — it happens
    *  before the public session becomes usable. */
   sessionEpoch: number;
+  /** Canonical-initialization gate. While false, no channel/input/dsky/
+   *  snapshot events reach the client; the Worker is running its post-
+   *  reset RSET-and-settle sequence privately. `ready` publish flips it
+   *  to true, at which point public event IDs restart from 1. */
+  publicPhaseStarted: boolean;
+  canonicalInit: CanonicalInitState;
+}
+
+type CanonicalInitPhase =
+  | "await-agc-active"
+  | "await-rset-send"
+  | "await-restart-clear"
+  | "quiet-window"
+  | "settled";
+
+interface CanonicalInitTraceEntry {
+  kind:
+    | "cpuReset"
+    | "restartObserved"
+    | "startupRsetSent"
+    | "restartCleared"
+    | "settled";
+  tickIndex: number;
+  missionTimeUs: number;
+  note?: string;
+}
+
+interface CanonicalInitState {
+  phase: CanonicalInitPhase;
+  cpuResetPerformed: boolean;
+  cpuResetCount: number;
+  startupRsetSent: boolean;
+  startupRsetCode: number;
+  startupRsetAccepted: boolean;
+  startupRsetCount: number;
+  restartObservedBeforeRset: boolean;
+  restartClearedAfterRset: boolean;
+  settledAtTick: number | null;
+  stepsAtReset: number;
+  ticksAtReset: number;
+  quietWindowSeedTick: number;
+  quietWindowSeedSteps: number;
+  quietWindowSeedProjection: string;
+  trace: CanonicalInitTraceEntry[];
+}
+
+function makeCanonicalInitState(
+  cpuResetCount: number,
+  stepsAtReset: number,
+  ticksAtReset: number,
+  missionTimeUs: number,
+): CanonicalInitState {
+  return {
+    phase: "await-agc-active",
+    cpuResetPerformed: true,
+    cpuResetCount,
+    startupRsetSent: false,
+    startupRsetCode: AGC_KEY.RSET,
+    startupRsetAccepted: false,
+    startupRsetCount: 0,
+    restartObservedBeforeRset: false,
+    restartClearedAfterRset: false,
+    settledAtTick: null,
+    stepsAtReset,
+    ticksAtReset,
+    quietWindowSeedTick: -1,
+    quietWindowSeedSteps: -1,
+    quietWindowSeedProjection: "",
+    trace: [{ kind: "cpuReset", tickIndex: ticksAtReset, missionTimeUs }],
+  };
+}
+
+function canonicalInitInfo(ci: CanonicalInitState): CanonicalInitInfo {
+  return {
+    cpuResetPerformed: ci.cpuResetPerformed,
+    cpuResetCount: ci.cpuResetCount,
+    startupRsetSent: ci.startupRsetSent,
+    startupRsetCode: ci.startupRsetCode,
+    startupRsetAccepted: ci.startupRsetAccepted,
+    startupRsetCount: ci.startupRsetCount,
+    restartObservedBeforeRset: ci.restartObservedBeforeRset,
+    restartClearedAfterRset: ci.restartClearedAfterRset,
+    settledAtTick: ci.settledAtTick ?? -1,
+  };
 }
 
 
@@ -147,7 +231,17 @@ const state: WorkerState = {
   initialResetPerformed: false,
   resetCount: 0,
   sessionEpoch: 0,
+  publicPhaseStarted: false,
+  canonicalInit: makeCanonicalInitState(0, 0, 0, 0),
 };
+
+/** Trace of pre-ready initialization traces retained across sessions for
+ *  diagnostics. Never emitted publicly; exposed via `requestDiagnostics`
+ *  in a follow-up if needed. Kept bounded. */
+const initTraceHistory: Array<{
+  sessionEpoch: number;
+  entries: CanonicalInitTraceEntry[];
+}> = [];
 
 function currentTickIndex(): number {
   return state.clock.stats().ticksExecuted;
