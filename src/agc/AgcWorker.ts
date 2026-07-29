@@ -933,6 +933,10 @@ async function handle(
       });
       await a.init(cmd.wasmUrl);
       state.adapter = a;
+      // Worker-owned monitor state machine. Constructed dormant: no trace
+      // arming, no counter input, no injection until an accepted
+      // `sim:set-monitor-profile` command reaches its tick boundary.
+      state.monitor = new MonitorController(makeMonitorPort());
       state.emulatorVersion = a.version() || "unknown";
       // Source-normative assertion: the WASM version() must embed the pinned
       // yaAGC/virtualagc source commit that produced our decoder tables. If
