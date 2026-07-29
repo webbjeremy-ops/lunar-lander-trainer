@@ -11,7 +11,7 @@ import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
 import { LessonHost } from "@/lessons/LessonHost";
 import { Dsky } from "@/ui/dsky/Dsky";
 import { ropeById } from "@/sim/agc/roms";
-import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
+import { useAgcSession } from "@/agc/AgcSession";
 import type { EventBoundaryPayload, StateSnapshot } from "@/agc/protocol";
 import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
 
@@ -163,9 +163,12 @@ function LearnPage() {
 
 
 
-  // ---- Shared AGC session for the whole /learn route (stable ownership).
-  const [agcEpoch, setAgcEpoch] = useState(0);
-  const [agcClient, setAgcClient] = useState<AgcWorkerClient | null>(null);
+  // ---- Shared AGC session (owned by AgcSessionProvider in __root). The
+  //      client, epoch, and reset behavior all come from the provider so that
+  //      navigating away to /explore and back preserves the same emulator.
+  const session = useAgcSession();
+  const agcClient = session.client;
+  const agcEpoch = session.sessionEpoch;
   const latestSnapshotRef = useRef<StateSnapshot | null>(null);
 
   // ---- Attempt handshake state.
@@ -192,9 +195,6 @@ function LearnPage() {
     }
   }, []);
 
-  const handleClient = useCallback((c: AgcWorkerClient | null) => {
-    setAgcClient(c);
-  }, []);
   const handleSnapshot = useCallback((s: StateSnapshot) => {
     latestSnapshotRef.current = s;
   }, []);
@@ -403,7 +403,6 @@ function LearnPage() {
   }
 
   function resetAgc() {
-    setAgcEpoch((n) => n + 1);
     openedKeyRef.current = null;
     ++openingTokenRef.current;
     setAttemptPhase("idle");
@@ -416,6 +415,7 @@ function LearnPage() {
       return init;
     });
     latestSnapshotRef.current = null;
+    session.resetSession();
   }
 
   // Test hook: expose current lesson/state/epoch/handshake diagnostics
@@ -657,7 +657,8 @@ function LearnPage() {
               <Dsky
                 key={`learn-session-${agcEpoch}`}
                 rope={rope}
-                onClient={handleClient}
+                sharedClient={agcClient}
+                sharedReady={session.ready}
                 onSnapshot={handleSnapshot}
                 disabled={dskyDisabled}
               />
