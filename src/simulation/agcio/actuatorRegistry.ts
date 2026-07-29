@@ -52,9 +52,9 @@ export const OBSERVABLE_OUTPUT_COUNTER_ADDRESSES: readonly number[] = [0o55];
  *  values mirror the yaAGC `UnprogrammedIncrement` switch as reproduced in
  *  third-party/virtualagc-fork/PATCHES/lovable-hwio/hwio.c:28-36. */
 export const NATIVE_COUNTER_OPERATION_CODES: readonly number[] = [
-  0, // WRITE (AGC store, e.g. `TS THRUST`)
-  0, // placeholder removed below
-].slice(0, 1).concat([1, 2, 3, 4, 5, 6, 0o21, 0o23]);
+  0, 1, 2, 3, 4, 5, 6, 0o21, 0o23,
+];
+
 
 export const COUNTER_OPERATION_LABELS: { readonly [code: number]: string } = {
   0: "WRITE",
