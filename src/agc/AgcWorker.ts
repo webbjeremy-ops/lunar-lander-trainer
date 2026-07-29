@@ -389,7 +389,15 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.ropeSha256 = sha256;
       state.ropeSourceCommit = sourceCommit;
       state.ropeByteLength = bytes.byteLength;
+      // Canonical initialization: exactly one cpu_reset() after rope load,
+      // before the public session becomes usable. Every route (/learn, /sim,
+      // /capture) reaches this same post-reset starting state.
+      if (state.initialResetPerformed) {
+        throw new Error("canonical-init: loadRope invoked twice on one session");
+      }
       adapter.reset();
+      state.resetCount++;
+      state.initialResetPerformed = true;
       state.clock.reset();
       state.workerState = "ready";
       startScheduler();
@@ -405,6 +413,9 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           ropeByteLength: bytes.byteLength,
           wasmSha256: state.wasmSha256,
           protocolVersion: PROTOCOL_VERSION,
+          initialResetPerformed: true,
+          resetCount: state.resetCount,
+          sessionEpoch: state.sessionEpoch,
         },
       });
       return;
