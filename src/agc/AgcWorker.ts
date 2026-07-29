@@ -707,6 +707,7 @@ function publishReady(): void {
       resetCount: state.resetCount,
       sessionEpoch: state.sessionEpoch,
       canonicalInit: canonicalInitInfo(state.canonicalInit),
+      extensionIdentity: state.extensionIdentity,
     },
   });
   // Publish the M3.2 sim:ready AFTER the AGC ready so consumers see AGC
