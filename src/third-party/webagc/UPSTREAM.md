@@ -23,14 +23,20 @@ this directory at the time of vendoring:
 
 | File | Bytes | SHA-256 | Origin |
 | --- | --- | --- | --- |
-| `yaAGC.wasm` | 132617 | `a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14` | inherited-from-milestone-0 |
+| `yaAGC.wasm` | 132617 | `a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14` | verified-byte-identical-to-webAGC@0575ea7 |
 
-**`origin: inherited-from-milestone-0`** means the byte-identical WASM was
-carried forward from Milestone 0 rather than rebuilt from the pinned upstream
-commit in this repository. Rebuilding it requires the Emscripten toolchain the
-upstream project uses; see `scripts/build-webagc-wasm.md` for exact
-instructions. Until a reproducible build is confirmed the runtime does NOT
-claim provenance beyond "vendored copy, matches this SHA-256".
+**`origin: verified-byte-identical-to-webAGC@0575ea7`** was established during
+M3.3A2 Phase 0 by cloning `michaelfranzl/webAGC @ 0575ea7a1231e3948bae7d2c22a6ac146da0c38d`
+and computing `sha256sum src/yaAGC.wasm` on the shipped file. It matches this
+repository's copy exactly. `webAGC@0575ea7/README.md` further attests that its
+`yaAGC.wasm` was built from `michaelfranzl/virtualagc @ ddc65e7bed41f1301921b934fcbaaee93db99dda`,
+and the running WASM's `version()` export returns that exact commit ID. Source
+ancestry is therefore established even without a byte-identical local rebuild.
+
+A local rebuild has NOT yet been attempted. `virtualagc @ ddc65e7b/yaAGC/Makefile`
+targets the WASI SDK (not Emscripten); the reproduction recipe is documented in
+`scripts/build-webagc-wasm.md`. See `docs/M3_3A2_PHASE0.md` for the full Phase 0
+findings and toolchain investigation.
 
 ## License notices
 
