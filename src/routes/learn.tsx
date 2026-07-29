@@ -231,14 +231,28 @@ function LearnPage() {
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => {
               unsub();
-              reject(new Error("Timed out waiting for AGC readiness (RESTART clear + stable scans)."));
+              reject(new Error(`Timed out waiting for AGC readiness (${tracker.snapshot().blockingReason ?? "unknown"}).`));
             }, 45_000);
             const unsub = client.addListener({
-              onChannelUpdate: (ev) => {
+              onChannelUpdate: (chEv) => {
                 if (openingTokenRef.current !== token) {
                   clearTimeout(timer); unsub(); resolve(); return;
                 }
-                tracker.applyChannelEvent(ev);
+                tracker.applyChannelEvent(chEv);
+                setReadinessSnap(tracker.snapshot());
+                if (tracker.isReady()) {
+                  clearTimeout(timer); unsub(); resolve();
+                }
+              },
+              onSnapshot: (snap) => {
+                if (openingTokenRef.current !== token) {
+                  clearTimeout(timer); unsub(); resolve(); return;
+                }
+                tracker.noteTickAdvance({
+                  tickIndex: snap.tickIndex,
+                  missionTimeUs: snap.missionTimeUs,
+                  totalAgcSteps: snap.totalAgcSteps,
+                });
                 setReadinessSnap(tracker.snapshot());
                 if (tracker.isReady()) {
                   clearTimeout(timer); unsub(); resolve();
