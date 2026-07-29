@@ -991,6 +991,70 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       );
       return;
     }
+    case "requestEventLogExport": {
+      if (!state.publicPhaseStarted || !state.epochStartBaseline) {
+        // Reply with an empty-epoch export so the client can still show a
+        // well-formed "no data yet" state. `sessionEpoch` still identifies
+        // which epoch this is (pre-ready → the epoch currently spinning up).
+        send(
+          {
+            type: "eventLogExport",
+            payload: {
+              sessionEpoch: state.sessionEpoch,
+              timing: { nominalStepNs: 11720, schedulerTickUs: SCHEDULER_TICK_MICROS },
+              baseline: {
+                tickIndex: 0,
+                missionTimeUs: 0,
+                totalAgcSteps: 0,
+                decodedDsky: makeEmptyDecodedDsky(),
+                decodedDskyChecksum: decodedDskyCanonical(makeEmptyDecodedDsky()),
+                channelValues: {},
+              },
+              events: [],
+              retention: {
+                completeEpoch: true,
+                droppedBeforeEventId: null,
+                retainedEventLimit: state.publicEventsCap,
+              },
+            },
+          },
+          requestId,
+        );
+        return;
+      }
+      // Deep-copy ring records so the caller receives its own snapshot; a
+      // subsequent tick could otherwise append into the same array before
+      // postMessage's structured clone runs.
+      const eventsCopy: PublicEventRecord[] = state.publicEventsRing.map((e) =>
+        e.type === "channelUpdate" ? { ...e } : { ...e },
+      );
+      const dropped =
+        state.publicEventsAppendedTotal - state.publicEventsRing.length;
+      const firstRetainedId =
+        eventsCopy.length > 0 ? eventsCopy[0].eventId : null;
+      const payload: EventLogExportPayload = {
+        sessionEpoch: state.sessionEpoch,
+        timing: { nominalStepNs: 11720, schedulerTickUs: SCHEDULER_TICK_MICROS },
+        baseline: {
+          tickIndex: state.epochStartBaseline.tickIndex,
+          missionTimeUs: state.epochStartBaseline.missionTimeUs,
+          totalAgcSteps: state.epochStartBaseline.totalAgcSteps,
+          decodedDsky: JSON.parse(
+            JSON.stringify(state.epochStartBaseline.decodedDsky),
+          ) as DecodedDsky,
+          decodedDskyChecksum: state.epochStartBaseline.decodedDskyChecksum,
+          channelValues: { ...state.epochStartBaseline.channelValues },
+        },
+        events: eventsCopy,
+        retention: {
+          completeEpoch: dropped === 0,
+          droppedBeforeEventId: dropped === 0 ? null : firstRetainedId,
+          retainedEventLimit: state.publicEventsCap,
+        },
+      };
+      send({ type: "eventLogExport", payload }, requestId);
+      return;
+    }
     case "dispose": {
       state.disposed = true;
       stopScheduler();
