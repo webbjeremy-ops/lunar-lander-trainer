@@ -128,17 +128,9 @@ function LearnPage() {
   // stateRef but never landed in the parent because the callback closed over
   // the initial lesson's id).
   const handleLessonState = useCallback((next: LessonState) => {
-    setStates((s) => {
-      const prev = s[next.lessonId];
-      // Monotonic completion at the parent boundary too: never downgrade a
-      // completed attempt back to in-progress via a delayed callback.
-      if (prev && prev.status === "completed" && next.status !== "completed"
-          && prev.attempt?.attemptId === next.attempt?.attemptId) {
-        return s;
-      }
-      return { ...s, [next.lessonId]: next };
-    });
+    setStates((s) => applyLessonStateUpdate(s, next));
   }, []);
+
 
 
   // ---- Shared AGC session for the whole /learn route (stable ownership).
