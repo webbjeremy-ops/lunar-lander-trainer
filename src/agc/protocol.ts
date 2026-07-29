@@ -208,19 +208,42 @@ export interface ReadyPayload {
   /** Canonical startup RSET sequence outcome. Public input is only enabled
    *  after this sequence completes. */
   canonicalInit: CanonicalInitInfo;
-  /** M3.3A2-P4: identity of the extended runtime the Worker loaded.
-   *  Absent only in test contexts that instantiate the frozen artifact. */
-  extensionIdentity?: {
-    hwioVersion: number;
-    extVersion: string;
-    extensionTag: string;
-    /** 0 in production — canonical runtime is dormant by default. */
-    traceEnabled: number;
-    /** 0 in production — no whitelisted deltas are ever observed while
-     *  tracing remains disabled. */
-    traceDropped: number;
-  };
 }
+
+/**
+ * M3.3A2-P4: additive readiness message describing the extended AGC
+ * runtime's identity. Emitted immediately AFTER `ready`, on a distinct
+ * message type so the frozen M2 `ReadyPayload` shape stays byte- and
+ * schema-compatible with pre-P4 consumers. Legacy listeners never see
+ * this message. UI (Diagnostics, provider) may merge it internally.
+ */
+export interface AgcExtensionReadyMessage {
+  type: "agc:extension-ready";
+  hwioVersion: 2;
+  extVersion: string;
+  extensionTag: string;
+  wasmSha256: string;
+  traceEnabled: false;
+  traceDropped: 0;
+}
+
+/** The exact frozen set of keys in the M2 ReadyPayload. Anything outside
+ *  this list must NEVER appear on a `ready` payload. */
+export const READY_PAYLOAD_KEYS: readonly (keyof ReadyPayload)[] = [
+  "emulatorRepo",
+  "emulatorCommit",
+  "emulatorVersionString",
+  "ropeId",
+  "ropeSha256",
+  "ropeSourceCommit",
+  "ropeByteLength",
+  "wasmSha256",
+  "protocolVersion",
+  "initialResetPerformed",
+  "resetCount",
+  "sessionEpoch",
+  "canonicalInit",
+] as const;
 
 export interface Diagnostics {
   crossOriginIsolated: boolean;
@@ -242,11 +265,18 @@ export interface Diagnostics {
   sessionEpoch: number;
   canonicalInit: CanonicalInitInfo | null;
   /** M3.3A2-P4: extension identity reported by the loaded WASM. */
-  extensionIdentity?: ReadyPayload["extensionIdentity"];
+  extensionIdentity?: {
+    hwioVersion: number;
+    extVersion: string;
+    extensionTag: string;
+    traceEnabled: number;
+    traceDropped: number;
+  };
 }
 
 export type AgcEvent =
   | { type: "ready"; payload: ReadyPayload }
+  | AgcExtensionReadyMessage
   | { type: "stateSnapshot"; payload: StateSnapshot }
   | { type: "dskyUpdate"; payload: { lamps: number; missionTimeUs: number } }
   | { type: "dskyDecoded"; payload: { decoded: DecodedDsky; missionTimeUs: number; tickIndex: number } }

@@ -38,11 +38,11 @@ export function DiagnosticsPanel({
         {row("emulator commit", ready?.emulatorCommit ?? "—")}
         {row("emulator version string", ready?.emulatorVersionString || "—")}
         {row("wasm sha256", ready?.wasmSha256?.slice(0, 24) ?? "—")}
-        {row("hw-i/o version", ready?.extensionIdentity?.hwioVersion ?? diag?.extensionIdentity?.hwioVersion ?? "—")}
-        {row("ext version", ready?.extensionIdentity?.extVersion || diag?.extensionIdentity?.extVersion || "—")}
-        {row("ext tag", ready?.extensionIdentity?.extensionTag || diag?.extensionIdentity?.extensionTag || "—")}
-        {row("trace enabled", String(ready?.extensionIdentity?.traceEnabled ?? diag?.extensionIdentity?.traceEnabled ?? "—"))}
-        {row("trace dropped", String(ready?.extensionIdentity?.traceDropped ?? diag?.extensionIdentity?.traceDropped ?? "—"))}
+        {row("hw-i/o version", diag?.extensionIdentity?.hwioVersion ?? "—")}
+        {row("ext version", diag?.extensionIdentity?.extVersion || "—")}
+        {row("ext tag", diag?.extensionIdentity?.extensionTag || "—")}
+        {row("trace enabled", String(diag?.extensionIdentity?.traceEnabled ?? "—"))}
+        {row("trace dropped", String(diag?.extensionIdentity?.traceDropped ?? "—"))}
         {row("rope", ready?.ropeId ?? "—")}
         {row("rope source commit", ready?.ropeSourceCommit?.slice(0, 12) ?? "—")}
         {row("rope sha256", ready?.ropeSha256?.slice(0, 24) ?? "—")}

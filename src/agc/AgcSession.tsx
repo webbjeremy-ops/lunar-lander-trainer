@@ -108,6 +108,22 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
       onReady: (p) => {
         if (disposedRef.current) return;
         setReady(p);
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.ready = p;
+        }
+      },
+      onExtensionReady: (m) => {
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.extensionReady = m;
+        }
+      },
+      onDiagnostics: (d) => {
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.diagnostics = d;
+        }
       },
       onSnapshot: (s) => {
         if (disposedRef.current) return;
