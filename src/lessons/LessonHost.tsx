@@ -45,7 +45,14 @@ import {
   makeEmptyDecodedDsky,
 } from "@/agc/dsky/DskyDecoder";
 import { stepLesson } from "./LessonEngine";
-import { FIXTURE_PROVENANCE } from "./fixtureExpectations";
+import {
+  FIXTURE_PROVENANCE,
+  V35_PEAK_EVIDENCE_CHECKSUM,
+  V35_PEAK_EVIDENCE_PROJECTION,
+  diffV35Evidence,
+  projectV35PeakEvidence,
+  v35EvidenceCanonical,
+} from "./fixtureExpectations";
 import type {
   LessonDefinition,
   LessonInputEvent,
@@ -99,13 +106,52 @@ export function buildObservation(args: {
 }
 
 interface DiagState {
-  rawChannels: Array<{ eventId: number; tickIndex: number; channel: number; value: number }>;
-  transitions: Array<{ eventId: number; tickIndex: number; channel: number; checksum: string }>;
+  rawChannels: Array<{ eventId: number; tickIndex: number; channel: number; value: number; selector?: number }>;
+  transitions: Array<{
+    eventId: number;
+    tickIndex: number;
+    channel: number;
+    value: number;
+    selector?: number;
+    checksum: string;            // full structural
+    evidenceChecksum: string;    // authoritative projection
+    postEnter: boolean;
+    postBoundary: boolean;
+    provenanceMatch: boolean;
+    withinCompletionWindow: boolean;
+    diff: unknown;               // field-level diff vs. expected evidence
+    digitsMatch: boolean;
+    annunciatorsMatch: boolean;
+    fullMatch: boolean;
+  }>;
   publishedSnapshots: Array<{ tickIndex: number; checksum: string; latestEventId: number }>;
+  enterEventId: number | null;
+  enterTick: number | null;
+  firstDigitMatchEventId: number | null;
+  firstAnnMatchEventId: number | null;
+  firstFullMatchEventId: number | null;
+  closestTransition: { eventId: number; diffFieldCount: number; diff: unknown } | null;
+  keyEventIds: Record<string, number>;
+  predicateCalls?: number;
+  predicateStateChanges?: number;
+  lastPredicateChange?: {
+    eventId: number | null;
+    tickIndex: number;
+    fromStatus: string;
+    toStatus: string;
+    fromStep: number;
+    toStep: number;
+  } | null;
 }
 
 function makeEmptyDiag(): DiagState {
-  return { rawChannels: [], transitions: [], publishedSnapshots: [] };
+  return {
+    rawChannels: [], transitions: [], publishedSnapshots: [],
+    enterEventId: null, enterTick: null,
+    firstDigitMatchEventId: null, firstAnnMatchEventId: null, firstFullMatchEventId: null,
+    closestTransition: null,
+    keyEventIds: {},
+  };
 }
 
 function pushBounded<T>(arr: T[], item: T): void {
@@ -153,13 +199,31 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
   const diagRef = useRef<DiagState>(makeEmptyDiag());
   const publishDiag = useCallback(() => {
     if (typeof window === "undefined") return;
+    const d = diagRef.current;
     (window as unknown as { __learnDiag?: unknown }).__learnDiag = {
-      rawChannels: diagRef.current.rawChannels,
-      transitions: diagRef.current.transitions,
-      publishedSnapshots: diagRef.current.publishedSnapshots,
+      rawChannels: d.rawChannels,
+      transitions: d.transitions,
+      publishedSnapshots: d.publishedSnapshots,
       shadowChecksum: decodedDskyCanonical(shadowRef.current),
+      shadowStructural: v35EvidenceCanonical(projectV35PeakEvidence(shadowRef.current)),
+      expectedEvidenceChecksum: V35_PEAK_EVIDENCE_CHECKSUM,
+      expectedEvidenceProjection: V35_PEAK_EVIDENCE_PROJECTION,
+      currentEvidenceDiff: diffV35Evidence(
+        V35_PEAK_EVIDENCE_PROJECTION,
+        projectV35PeakEvidence(shadowRef.current),
+      ),
       boundaryEventId: boundaryEventIdRef.current,
       attemptId: stateRef.current.attempt?.attemptId ?? null,
+      enterEventId: d.enterEventId,
+      enterTick: d.enterTick,
+      keyEventIds: d.keyEventIds,
+      firstDigitMatchEventId: d.firstDigitMatchEventId,
+      firstAnnMatchEventId: d.firstAnnMatchEventId,
+      firstFullMatchEventId: d.firstFullMatchEventId,
+      closestTransition: d.closestTransition,
+      predicateCalls: d.predicateCalls ?? 0,
+      predicateStateChanges: d.predicateStateChanges ?? 0,
+      lastPredicateChange: d.lastPredicateChange ?? null,
     };
   }, []);
 
@@ -228,6 +292,20 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     previousDecodedRef.current = decoded;
 
     const next = stepLesson(def, cur, { kind: "observe", observation: obs });
+    // Track predicate observation cadence for post-mortem diagnostics.
+    const d = diagRef.current;
+    d.predicateCalls = (d.predicateCalls ?? 0) + 1;
+    if (next !== cur) {
+      d.predicateStateChanges = (d.predicateStateChanges ?? 0) + 1;
+      d.lastPredicateChange = {
+        eventId: singleChannel?.eventId ?? null,
+        tickIndex,
+        fromStatus: cur.status,
+        toStatus: next.status,
+        fromStep: cur.currentStepIndex,
+        toStep: next.currentStepIndex,
+      };
+    }
     if (next !== cur) onStateChange(next);
   }, [onStateChange]);
 
@@ -249,11 +327,14 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
         publishDiag();
       },
       onChannelUpdate: (ev) => {
+        const selector =
+          ev.channel === 0o10 ? ((ev.value >> 11) & 0o17) : undefined;
         pushBounded(diagRef.current.rawChannels, {
           eventId: ev.eventId,
           tickIndex: ev.tickIndex,
           channel: ev.channel,
           value: ev.value,
+          selector,
         });
         // Only apply channel events that belong to the active attempt window.
         // Events with eventId <= boundaryEventId happened before the attempt
@@ -262,8 +343,6 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
         // application; the next attempt reseeds from a fresh boundary.
         const cur = stateRef.current;
         if (!cur.attempt) {
-          // Still buffer for the next observation cycle within a future attempt? No —
-          // we drop, because those events pre-date any attempt handshake.
           publishDiag();
           return;
         }
@@ -273,19 +352,61 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
         }
         const consumed = applyDskyChannelEvent(shadowRef.current, ev.channel, ev.value);
         if (!consumed) {
-          // Non-DSKY channel — record the raw event but skip observation
-          // (predicate would just see the same decoded state).
           channelBufRef.current.push(ev);
           publishDiag();
           return;
         }
         const cloned = cloneDecoded(shadowRef.current);
-        pushBounded(diagRef.current.transitions, {
+        // Field-level V35 evidence diagnostics (safe for other lessons: the
+        // projection is cheap and unused unless caller inspects it).
+        const projection = projectV35PeakEvidence(cloned);
+        const evidenceChecksum = v35EvidenceCanonical(projection);
+        const diff = diffV35Evidence(V35_PEAK_EVIDENCE_PROJECTION, projection);
+        const d = diagRef.current;
+        const enterId = d.enterEventId;
+        const postEnter = enterId !== null && ev.eventId > enterId;
+        const postBoundary = ev.eventId > boundaryEventIdRef.current;
+        const provenanceMatch =
+          provenanceRef.current.ropeSha256 === FIXTURE_PROVENANCE.ropeSha256 &&
+          provenanceRef.current.decoderSchemaVersion === FIXTURE_PROVENANCE.decoderSchemaVersion &&
+          provenanceRef.current.emulatorCommit === FIXTURE_PROVENANCE.emulatorCommit;
+        const enterTick = d.enterTick ?? 0;
+        const withinCompletionWindow =
+          postEnter && (ev.tickIndex - enterTick) <= 400;
+        const digitsMatch = !diff.program && !diff.verb && !diff.noun && !diff.registers;
+        const annunciatorsMatch = !diff.annunciators;
+        const fullMatch = digitsMatch && annunciatorsMatch;
+        pushBounded(d.transitions, {
           eventId: ev.eventId,
           tickIndex: ev.tickIndex,
           channel: ev.channel,
+          value: ev.value,
+          selector,
           checksum: decodedDskyCanonical(cloned),
+          evidenceChecksum,
+          postEnter,
+          postBoundary,
+          provenanceMatch,
+          withinCompletionWindow,
+          diff,
+          digitsMatch,
+          annunciatorsMatch,
+          fullMatch,
         });
+        if (postEnter) {
+          if (digitsMatch && d.firstDigitMatchEventId === null) d.firstDigitMatchEventId = ev.eventId;
+          if (annunciatorsMatch && d.firstAnnMatchEventId === null) d.firstAnnMatchEventId = ev.eventId;
+          if (fullMatch && d.firstFullMatchEventId === null) d.firstFullMatchEventId = ev.eventId;
+        }
+        const fieldCount =
+          (diff.program ? 1 : 0) +
+          (diff.verb ? 1 : 0) +
+          (diff.noun ? 1 : 0) +
+          (diff.registers ? Object.keys(diff.registers).length : 0) +
+          (diff.annunciators ? Object.keys(diff.annunciators).length : 0);
+        if (!d.closestTransition || fieldCount < d.closestTransition.diffFieldCount) {
+          d.closestTransition = { eventId: ev.eventId, diffFieldCount: fieldCount, diff };
+        }
         dispatchObservation(cloned, ev, ev.tickIndex, ev.missionTimeUs);
         publishDiag();
       },
@@ -301,7 +422,26 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
         if (inputsRef.current.length > MAX_INPUTS) {
           inputsRef.current.splice(0, inputsRef.current.length - MAX_INPUTS);
         }
+        // Record V35 keypad milestones (only meaningful for lesson 3, but
+        // cheap otherwise): V=0o21, 3=0o03, 5=0o05, ENTR=0o34.
+        const d = diagRef.current;
+        if (ev.pressed !== false && typeof ev.keyCode === "number") {
+          const label =
+            ev.keyCode === 0o21 ? "VERB" :
+            ev.keyCode === 0o03 ? "3" :
+            ev.keyCode === 0o05 ? "5" :
+            ev.keyCode === 0o34 ? "ENTR" :
+            null;
+          if (label && d.keyEventIds[label] === undefined) {
+            d.keyEventIds[label] = ev.eventId;
+          }
+          if (ev.keyCode === 0o34 && d.enterEventId === null) {
+            d.enterEventId = ev.eventId;
+            d.enterTick = ev.tickIndex;
+          }
+        }
         // Dispatch an observation on input too, so attempt-scoped sequence
+
         // matching progresses even when the rope has not yet emitted any
         // channel output for the current attempt.
         const cur = stateRef.current;
