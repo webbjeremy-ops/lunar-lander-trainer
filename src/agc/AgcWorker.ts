@@ -32,11 +32,17 @@ import {
   type AgcCommand,
   type AgcEvent,
   type C2WEnvelope,
+  type CanonicalInitInfo,
   type ChannelEventLite,
   type Diagnostics,
   type StateSnapshot,
   type W2CEnvelope,
 } from "./protocol";
+import {
+  readinessProjectionCanonical,
+} from "@/lessons/ReadinessTracker";
+import { V35_READINESS_QUIET_TICKS } from "@/lessons/fixtureExpectations";
+import { AGC_KEY } from "@/lessons/keyCodes";
 
 const SNAPSHOT_SCHEMA_VERSION = 1;
 
@@ -44,7 +50,24 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope;
 
 let outSeq = 0;
 
+/**
+ * Events that MUST NOT leak to the client during the canonical
+ * initialization window. The client only sees the AGC session AFTER the
+ * Worker publishes `ready`; pre-ready boot activity and the system-generated
+ * startup RSET must not appear in the public event log.
+ */
+const PRE_READY_SUPPRESSED_EVENTS: ReadonlySet<AgcEvent["type"]> = new Set([
+  "channelUpdate",
+  "inputAccepted",
+  "dskyUpdate",
+  "dskyDecoded",
+  "stateSnapshot",
+]);
+
 function send(message: AgcEvent, requestId?: string, missionTimeUs?: number): void {
+  if (!state.publicPhaseStarted && PRE_READY_SUPPRESSED_EVENTS.has(message.type)) {
+    return;
+  }
   const env: W2CEnvelope = makeEnvelope("w2c", ++outSeq, message, {
     requestId,
     missionTimeUs,
