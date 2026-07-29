@@ -13,6 +13,12 @@ import type {
   MonitorBlockReason,
   ReservedSetMonitorProfileCommand,
 } from "./types";
+import {
+  MONITOR_SIGNAL_REGISTRY,
+  mappedSignalsForProfile,
+  unresolvedSignalsForProfile,
+  validateRegistry,
+} from "./sensorRegistry";
 
 /** Static snapshot of runtime facts the validator needs to decide whether
  *  a monitor profile can be entered atomically. Every field is derived from
