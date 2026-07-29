@@ -524,6 +524,14 @@ function publishReady(): void {
   state.recentEventsRing.length = 0;
   state.lastLamps = adapter.lampBits();
   state.lastChannelEventCount = adapter.totalChannelEvents();
+  // Align the Worker-owned decoder's EC counter with the client-side pure
+  // replay boundary. The decoder was fed every pre-ready DSKY channel write
+  // (needed so the live lamp state is correct at hand-off), but its
+  // `eventCount` accumulator would otherwise diverge from any consumer that
+  // replays only the post-ready `channelUpdate` stream (e.g. the golden-trace
+  // capture fixtures). We reset ONLY `eventCount`, preserving digits, signs,
+  // and annunciators so the UI keeps showing the actual settled DSKY state.
+  state.decodedDsky.eventCount = 0;
   state.publicPhaseStarted = true;
   state.workerState = "ready";
   send({
