@@ -61,11 +61,10 @@ type ExtendedExports = LegacyExports & ExtensionExports;
 async function loadCore<T extends LegacyExports>(path: string): Promise<{ ex: T; memory: WebAssembly.Memory }> {
   const bytes = readFileSync(path);
   const memory = new WebAssembly.Memory({ initial: 5 });
-  const wasi = {
-    fd_fdstat_get: () => 0,
-    fd_seek: () => 0,
-    fd_write: () => 0,
-  };
+  const stub = () => 0;
+  const wasi = new Proxy({} as Record<string, () => number>, {
+    get: () => stub,
+  });
   const { instance } = await WebAssembly.instantiate(bytes, {
     env: { memory },
     wasi_snapshot_preview1: wasi,
