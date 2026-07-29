@@ -720,6 +720,10 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
     }
     case "reset": {
       if (!adapter) return;
+      // Explicit user Reset AGC: perform ONE cpu_reset(), bump the public
+      // session epoch, then re-enter canonical initialization so the same
+      // authentic startup RSET-and-settle sequence runs before the next
+      // public `ready`. Ordinary navigation must never invoke this path.
       adapter.reset();
       state.resetCount++;
       state.sessionEpoch++;
@@ -729,7 +733,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.recentEventsRing.length = 0;
       state.lastLamps = 0;
       state.lastChannelEventCount = 0;
-      state.coalescer.offer(buildSnapshot());
+      state.publicPhaseStarted = false;
+      state.workerState = "canonical-init";
+      state.canonicalInit = makeCanonicalInitState(
+        state.resetCount,
+        Number(state.clock.getTotalAgcSteps()),
+        currentTickIndex(),
+        Number(state.clock.getMissionTimeUs()),
+      );
       return;
     }
     case "dskyKeyDown": {
