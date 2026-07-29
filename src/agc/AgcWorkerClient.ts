@@ -162,6 +162,30 @@ export class AgcWorkerClient {
   }
   forceMissionSnapshot(): void { this.postSim({ type: "sim:forceSnapshot" }); }
 
+  // ---- Simulation protocol v2: monitor mode -------------------------
+  /** Declare the operator-supplied avionics discrete state. Required before
+   *  any non-off monitor profile can be entered. */
+  setAvionicsState(commandId: number, simulationEpoch: number, avionics: LmDiscreteSensorState): void {
+    this.postSim({ type: "sim:set-avionics", commandId, simulationEpoch, avionics });
+  }
+  /** Epoch-bound, tick-aligned monitor profile change. */
+  setMonitorProfile(
+    commandId: number,
+    simulationEpoch: number,
+    applyAtMissionTimeUs: number,
+    profile: AgcMonitorProfile,
+  ): void {
+    this.postSim({
+      type: "sim:set-monitor-profile",
+      commandId, simulationEpoch, applyAtMissionTimeUs, profile,
+    });
+  }
+  /** Retrieve the Worker-retained monitor diagnostic window. Never rides on
+   *  ordinary mission snapshots. */
+  requestMonitorTrace(requestId: number, simulationEpoch: number): void {
+    this.postSim({ type: "sim:request-monitor-trace", requestId, simulationEpoch });
+  }
+
   initialize(wasmUrl: string): void { this.post({ type: "initialize", wasmUrl }); }
   loadRope(ropeId: RopeId, ropeUrl: string, manifestUrl: string): void {
     this.post({ type: "loadRope", ropeId, ropeUrl, manifestUrl });
@@ -305,6 +329,12 @@ export class AgcWorkerClient {
         break;
       case "sim:terminalTouchdown":
         fanout("onSimTerminalTouchdown", (l) => l.onSimTerminalTouchdown?.(msg.payload));
+        break;
+      case "sim:monitor-blocked":
+        fanout("onSimMonitorBlocked", (l) => l.onSimMonitorBlocked?.(msg));
+        break;
+      case "sim:monitor-trace":
+        fanout("onSimMonitorTrace", (l) => l.onSimMonitorTrace?.(msg));
         break;
     }
     // Route to onEvent (AGC) vs onSimEvent (sim). Discriminate on the
