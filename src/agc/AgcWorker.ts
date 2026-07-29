@@ -685,6 +685,18 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           if (state.recentEventsRing.length > state.recentEventsCap) {
             state.recentEventsRing.splice(0, state.recentEventsRing.length - state.recentEventsCap);
           }
+          // Record on the public event ring for event-log export. The
+          // `send()` gate below drops this event before it reaches the
+          // client during pre-ready canonical init; mirror that here so
+          // the export ring cannot contain pre-public events either.
+          if (state.publicPhaseStarted) {
+            appendPublicEvent({
+              type: "channelUpdate",
+              eventId, tickIndex, missionTimeUs,
+              totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+              channel: ch, value: val,
+            });
+          }
           send({ type: "channelUpdate", payload: lite });
         },
       });
