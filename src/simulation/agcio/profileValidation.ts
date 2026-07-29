@@ -161,8 +161,38 @@ export function decideMonitorEntry(
   }
 
   if (profile === "descent-monitor-v1") {
+    // Registry structural integrity is a HARD gate — a malformed registry
+    // must never permit entry regardless of the unresolved list.
+    for (const err of validateRegistry()) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `registry: ${err.message}`,
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+    // Every required signal must be marked `mapped` in the registry —
+    // removing a string from the block list alone is NOT sufficient.
+    const stillUnresolved = unresolvedSignalsForProfile(profile);
+    for (const u of stillUnresolved) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `${u.id}: ${u.physicalMeaning}`,
+        reference: u.sourceCitation,
+      });
+    }
+    // Fallback: hand-maintained block list is applied in addition, so a
+    // policy-level block (e.g. CDU drain budget) can persist even after
+    // registry rows are marked mapped.
     for (const reason of DESCENT_MONITOR_V1_UNRESOLVED_MAPPINGS) {
       reasons.push(reason);
+    }
+    // Sanity: ensure at least one mapped row exists for the profile.
+    if (mappedSignalsForProfile(profile).length === 0) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: "descent-monitor-v1 has no mapped signals in registry",
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
     }
   }
 
@@ -171,6 +201,9 @@ export function decideMonitorEntry(
   }
   return { outcome: "blocked", profile, reasons };
 }
+
+// Re-export for convenience so callers don't need to import from two places.
+export { MONITOR_SIGNAL_REGISTRY };
 
 /**
  * The exact list of unresolved LR/PIPA mappings currently blocking
