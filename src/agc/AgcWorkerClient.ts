@@ -18,6 +18,7 @@ import {
   type C2WEnvelope,
   type Diagnostics,
   type EventBoundaryPayload,
+  type EventLogExportPayload,
   type ReadyPayload,
   type RopeId,
   type StateSnapshot,
