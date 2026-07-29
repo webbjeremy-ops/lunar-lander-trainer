@@ -627,7 +627,7 @@ function LearnPage() {
               lesson={lesson}
               state={state}
               boundary={lastBoundary}
-              onStateChange={(next) => setStates((s) => ({ ...s, [lesson.id]: next }))}
+              onStateChange={handleLessonState}
             />
           </div>
 
