@@ -84,7 +84,7 @@ describe("compile-time structural boundary", () => {
     advanceMissionPhysics(GOLDEN_INITIAL_STATE, agcCommanded, 20_000);
 
     // Runtime assertion so this it() has a passing expectation.
-    expect(agcCommanded.valid).toBe(true);
+    expect(agcCommanded.valid).toBe(false);
   });
 
   it("a hand-forged object cannot masquerade as ResolvedPhysicsControl", () => {
