@@ -233,6 +233,23 @@ agc_out_trace_reset(void) {
   OutInit = 0;
 }
 
+/* Arm/disarm the output trace. Returns previous value.
+ * Disabling clears any latched sampler baseline so that re-enabling starts
+ * from a fresh cache and never emits a spurious "first delta" against a
+ * stale before-value. */
+export uint32_t
+agc_out_trace_set_enabled(uint32_t enabled) {
+  uint32_t prev = TraceEnabled;
+  TraceEnabled = enabled ? 1u : 0u;
+  if (!TraceEnabled) OutInit = 0;
+  return prev;
+}
+
+export uint32_t
+agc_out_trace_enabled(void) {
+  return TraceEnabled;
+}
+
 /* Drain up to max_entries oldest entries into destination in FIFO order. */
 export uint32_t
 agc_out_trace_drain(void *destination, uint32_t max_entries) {
