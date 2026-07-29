@@ -85,7 +85,10 @@ test.describe("/explore export — Step 2 acceptance", () => {
     await tap(page, "dsky-key-ENTR");
 
     // 3. Navigate to /explore. Same persistent Worker.
-    await page.goto("/explore", { waitUntil: "domcontentloaded" });
+    // 3. SPA-navigate to /explore via the app nav — the shared AGC session
+    //    (AgcSessionProvider) survives client-side navigation. A full
+    //    page.goto would recreate the Worker.
+    await page.getByTestId("nav-explore").click();
     await expect(page.getByTestId("export-panel")).toBeVisible();
     await page.waitForFunction(() => {
       const w = window as unknown as { __agcTest?: AgcTestSnapshot };
