@@ -10,6 +10,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAgcSession } from "@/agc/AgcSession";
+import { MonitorPanel } from "@/ui/dev/MonitorPanel";
 import { GOLDEN_MISSION_SCENARIO } from "@/simulation/runtime/scenarios";
 import type { MissionCommand } from "@/simulation/runtime/types";
 
@@ -167,6 +168,8 @@ function DevMissionRuntimePage() {
           </p>
         )}
       </section>
+
+      <MonitorPanel />
 
       <section aria-labelledby="mr-acks" className="mt-4 rounded border border-neutral-800 p-4">
         <h2 id="mr-acks" className="text-xs uppercase tracking-widest text-neutral-500">Recent command acks</h2>

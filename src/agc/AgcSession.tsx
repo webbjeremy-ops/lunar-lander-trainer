@@ -32,7 +32,12 @@ import type { ReadyPayload, StateSnapshot } from "./protocol";
 import type { DecodedDsky } from "./dsky/DskyTypes";
 import { makeEmptyDecodedDsky } from "./dsky/DskyDecoder";
 import { agcWasmUrl, ropeById, type RopeImage } from "@/sim/agc/roms";
-import type { SimReadyPayload } from "./simulationProtocol";
+import {
+  SIMULATION_PROTOCOL_VERSION,
+  type MonitorBlockedEvent,
+  type MonitorTraceEvent,
+  type SimReadyPayload,
+} from "./simulationProtocol";
 import type {
   CommandAck,
   MissionSnapshot,
@@ -63,6 +68,11 @@ export interface AgcSessionValue {
   /** Last N command acks (bounded) so UIs can surface rejections. */
   missionAcks: readonly CommandAck[];
   terminalTouchdown: TerminalTouchdownEvent | null;
+  // ---- Simulation protocol v2 monitor mode (read-only view) --------
+  /** Most recent authentic block report for a requested profile. */
+  monitorBlocked: MonitorBlockedEvent | null;
+  /** Most recent retained-trace response (requested explicitly). */
+  monitorTrace: MonitorTraceEvent | null;
 }
 
 const AgcSessionContext = createContext<AgcSessionValue | null>(null);
@@ -81,6 +91,8 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
   const [missionSnapshot, setMissionSnapshot] = useState<MissionSnapshot | null>(null);
   const [missionAcks, setMissionAcks] = useState<readonly CommandAck[]>([]);
   const [terminalTouchdown, setTerminalTouchdown] = useState<TerminalTouchdownEvent | null>(null);
+  const [monitorBlocked, setMonitorBlocked] = useState<MonitorBlockedEvent | null>(null);
+  const [monitorTrace, setMonitorTrace] = useState<MonitorTraceEvent | null>(null);
   const disposedRef = useRef(false);
 
   useEffect(() => {
@@ -96,6 +108,8 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
     setMissionSnapshot(null);
     setMissionAcks([]);
     setTerminalTouchdown(null);
+    setMonitorBlocked(null);
+    setMonitorTrace(null);
 
     let c: AgcWorkerClient;
     try {
@@ -145,11 +159,36 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
       },
       onSimReady: (p) => {
         if (disposedRef.current) return;
+        // Hard failure on a simulation-protocol mismatch: a client built
+        // against a different sim protocol cannot interpret monitor state.
+        if (p.simulationProtocolVersion !== SIMULATION_PROTOCOL_VERSION) {
+          setBootError(
+            `simulation-protocol-mismatch: worker advertises v${p.simulationProtocolVersion}, ` +
+            `client expects v${SIMULATION_PROTOCOL_VERSION}`,
+          );
+          return;
+        }
         setSimReady(p);
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.simReady = p;
+        }
+      },
+      onSimMonitorBlocked: (ev) => {
+        if (disposedRef.current) return;
+        setMonitorBlocked(ev);
+      },
+      onSimMonitorTrace: (ev) => {
+        if (disposedRef.current) return;
+        setMonitorTrace(ev);
       },
       onSimSnapshot: (s) => {
         if (disposedRef.current) return;
         setMissionSnapshot(s);
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.missionSnapshot = s;
+        }
       },
       onSimCommandAck: (ack) => {
         if (disposedRef.current) return;
@@ -206,11 +245,13 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
       missionSnapshot,
       missionAcks,
       terminalTouchdown,
+      monitorBlocked,
+      monitorTrace,
     }),
     [
       client, ready, snapshot, decoded, lamps, epoch, rope, resetSession,
       bootAttempted, bootError, simReady, missionSnapshot, missionAcks,
-      terminalTouchdown,
+      terminalTouchdown, monitorBlocked, monitorTrace,
     ],
   );
 

@@ -17,10 +17,16 @@
 
 import {
   DEFAULT_LM_PHYSICS_PARAMETERS,
-  stepLmPhysics,
   type LmPhysicsParameters,
   type LmPhysicsState,
 } from "@/simulation/lm";
+// P5 physics firewall: the runtime advances physics ONLY through the
+// branded wrapper. `AgcCommandedControl` has no brand and cannot be passed.
+import {
+  advanceMissionPhysics,
+  resolveScenarioPhysicsControl,
+} from "./physicsControl";
+import type { AgcMonitorSnapshot } from "@/simulation/agcio/types";
 import type {
   CommandAck,
   CommandRejectionReason,
@@ -125,7 +131,12 @@ export class MissionRuntime {
 
     if (this.state.status === "running" && this.state.lm !== null) {
       const before = this.state.lm;
-      const next = stepLmPhysics(before, this.state.control, MISSION_TICK_US, this.params);
+      const next = advanceMissionPhysics(
+        before,
+        resolveScenarioPhysicsControl(this.state.control),
+        MISSION_TICK_US,
+        this.params,
+      );
       this.state.lm = next;
       this.state.scenarioElapsedUs = next.simulationTimeUs;
       if (next.landed && !before.landed) {
@@ -157,7 +168,12 @@ export class MissionRuntime {
     }
   }
 
-  snapshot(missionTick: number, missionTimeUs: number, clockPaused: boolean): MissionSnapshot {
+  snapshot(
+    missionTick: number,
+    missionTimeUs: number,
+    clockPaused: boolean,
+    monitor: AgcMonitorSnapshot | null = null,
+  ): MissionSnapshot {
     return {
       sequence: ++this.snapshotSeq,
       missionTick,
@@ -170,6 +186,7 @@ export class MissionRuntime {
       lm: this.state.lm === null ? null : { ...this.state.lm },
       control: { ...this.state.control },
       touchdown: this.state.touchdown === null ? null : { ...this.state.touchdown },
+      monitor,
     };
   }
 
