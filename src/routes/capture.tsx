@@ -213,6 +213,13 @@ function CapturePage() {
         label,
         capturedAt: new Date().toISOString(),
         protocolVersion: PROTOCOL_VERSION,
+        initializationPath: "canonical",
+        captureOnlyReset: false,
+        canonicalInit: {
+          initialResetPerformed: log.ready?.initialResetPerformed ?? false,
+          resetCount: log.ready?.resetCount ?? null,
+          sessionEpoch: log.ready?.sessionEpoch ?? null,
+        },
         emulator: {
           repo: log.ready?.emulatorRepo,
           commit: log.ready?.emulatorCommit,
