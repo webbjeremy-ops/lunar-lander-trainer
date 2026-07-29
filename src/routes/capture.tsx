@@ -84,6 +84,14 @@ function CapturePage() {
     clientRef.current = client;
     const log = logRef.current;
 
+    // Readiness tracker uses the SAME criteria as /learn's gate. The
+    // capture harness has no capture-only initialization path — it relies
+    // exclusively on the Worker's one canonical loadRope reset and then
+    // waits for the AGC to reach the same settled state that /learn does.
+    const readiness = new ReadinessTracker();
+    let readinessSnap: ReadinessSnapshot = readiness.snapshot();
+    const readyWaiters: Array<() => void> = [];
+
     client.setListeners({
       onReady: (payload) => {
         log.ready = payload;
@@ -93,6 +101,7 @@ function CapturePage() {
         if (ev.type === "channelUpdate") {
           const lite = ev.payload;
           log.allChannelEvents.push(lite);
+          readiness.applyChannelEvent(lite);
           if (lite.channel === 0o10 || lite.channel === 0o11 || lite.channel === 0o163) {
             const rec = {
               eventId: lite.eventId,
@@ -114,6 +123,16 @@ function CapturePage() {
       onSnapshot: (snap) => {
         log.latestSnapshot = snap;
         log.latestTickIndex = snap.tickIndex;
+        readiness.noteTickAdvance({
+          tickIndex: snap.tickIndex,
+          missionTimeUs: snap.missionTimeUs,
+          totalAgcSteps: snap.totalAgcSteps,
+        });
+        readinessSnap = readiness.snapshot();
+        if (readinessSnap.ready) {
+          const w = readyWaiters.splice(0, readyWaiters.length);
+          for (const r of w) r();
+        }
       },
       onDskyDecoded: (decoded, missionTimeUs, tickIndex) => {
         // Deep-clone so the timeline is not mutated by later decoder updates.
