@@ -38,6 +38,7 @@ import {
   type Diagnostics,
   type EventLogExportPayload,
   type PublicEventRecord,
+  type ReadyPayload,
   type StateSnapshot,
   type W2CEnvelope,
 } from "./protocol";
