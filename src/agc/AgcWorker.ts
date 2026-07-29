@@ -332,22 +332,9 @@ function buildSnapshot(): StateSnapshot {
       decodedDsky: state.decodedDsky,
     };
   }
+  const snap = snapshotAllChannels(adapter);
   const channels: Record<number, number> = {};
-  for (const [c, v] of ((): Iterable<[number, number]> => {
-    const anyAdapter = adapter as unknown as {
-      io?: { allChannels(): ReadonlyMap<number, number> };
-    };
-    // AgcCoreAdapter keeps the io state private; walk known channels instead
-    // when the private accessor is not available.
-    if (anyAdapter.io && typeof anyAdapter.io.allChannels === "function") {
-      return anyAdapter.io.allChannels().entries();
-    }
-    // Fallback: iterate the small set of channels the DSKY cares about.
-    const KNOWN = [0o10, 0o11, 0o13, 0o15, 0o30, 0o31, 0o32, 0o33, 0o163];
-    return KNOWN.map((c) => [c, adapter.channel(c)] as [number, number])[Symbol.iterator]();
-  })()) {
-    channels[c] = v;
-  }
+  for (const key of Object.keys(snap)) channels[Number(key)] = snap[key];
   const era = adapter.erasable();
   const window: number[] = new Array(state.erasableLength);
   for (let i = 0; i < state.erasableLength; i++) window[i] = era[state.erasableBase + i] ?? 0;
