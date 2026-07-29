@@ -224,6 +224,9 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
       predicateCalls: d.predicateCalls ?? 0,
       predicateStateChanges: d.predicateStateChanges ?? 0,
       lastPredicateChange: d.lastPredicateChange ?? null,
+      peakDispatch: (d as unknown as Record<string, unknown>).peakDispatch ?? null,
+      firstCompletionEventId: (d as unknown as Record<string, unknown>).firstCompletionEventId ?? null,
+      firstCompletionEvidenceCount: (d as unknown as Record<string, unknown>).firstCompletionEvidenceCount ?? null,
     };
   }, []);
 
@@ -295,7 +298,9 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     // Track predicate observation cadence for post-mortem diagnostics.
     const d = diagRef.current;
     d.predicateCalls = (d.predicateCalls ?? 0) + 1;
-    if (next !== cur) {
+    const statusChanged = next.status !== cur.status;
+    const evidenceGrew = next.evidence.length > cur.evidence.length;
+    if (statusChanged || evidenceGrew) {
       d.predicateStateChanges = (d.predicateStateChanges ?? 0) + 1;
       d.lastPredicateChange = {
         eventId: singleChannel?.eventId ?? null,
@@ -305,8 +310,54 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
         fromStep: cur.currentStepIndex,
         toStep: next.currentStepIndex,
       };
+      const dAnyC = d as unknown as Record<string, unknown>;
+      if (next.status === "completed" && dAnyC.firstCompletionEventId === undefined) {
+        dAnyC.firstCompletionEventId = singleChannel?.eventId ?? null;
+        dAnyC.firstCompletionEvidenceCount = next.evidence.length;
+      }
     }
-    if (next !== cur) onStateChange(next);
+    // Probe: capture the predicate outcome for the exact full-match transition.
+    if (
+      singleChannel &&
+      d.firstFullMatchEventId !== null &&
+      singleChannel.eventId === d.firstFullMatchEventId
+    ) {
+      const dAny = d as unknown as Record<string, unknown>;
+      dAny.peakDispatch = {
+        eventId: singleChannel.eventId,
+        tickIndex,
+        curStatus: cur.status,
+        curStep: cur.currentStepIndex,
+        curEvidenceLen: cur.evidence.length,
+        curAttemptId: cur.attempt?.attemptId ?? null,
+        nextStatus: next.status,
+        nextStep: next.currentStepIndex,
+        nextEvidenceLen: next.evidence.length,
+        observedEvidenceChecksum: v35EvidenceCanonical(
+          projectV35PeakEvidence(obs.decoded),
+        ),
+        expectedEvidenceChecksum: V35_PEAK_EVIDENCE_CHECKSUM,
+        recentChannelCount: obs.recentChannelEvents.length,
+        recentInputCount: obs.recentInputs.length,
+        recentChannelIds: obs.recentChannelEvents.map((c) => c.eventId),
+        recentInputKeys: obs.recentInputs.map((i) => i.keyCode),
+      };
+    }
+    if (next !== cur) {
+      // CRITICAL: advance the local ref synchronously. React's setState is
+      // asynchronous and the `stateRef.current = state` effect only runs
+      // after commit. Between here and that commit, more channel events
+      // may fire in the same microtask burst; without a synchronous ref
+      // advance, subsequent dispatches read the pre-completion state,
+      // recompute a fresh in-progress `next` (peak has decayed by then),
+      // and clobber the latched completion via setStates. Once completed,
+      // never downgrade — the attempt latch is permanent for its scope.
+      if (stateRef.current.status === "completed" && next.status !== "completed") {
+        return;
+      }
+      stateRef.current = next;
+      onStateChange(next);
+    }
   }, [onStateChange]);
 
   // Attach supplementary listener to the shared client. Re-run only when the
