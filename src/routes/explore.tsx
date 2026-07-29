@@ -506,3 +506,130 @@ function EventTimelineCard({
     </section>
   );
 }
+
+// -------------------- Export Event Log ------------------------------------
+
+function ExportPanel() {
+  const session = useAgcSession();
+  const { client, ready, sessionEpoch } = session;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [last, setLast] = useState<{
+    exportedAt: string;
+    eventCount: number;
+    completeEpoch: boolean;
+    droppedBeforeEventId: number | null;
+    retainedEventLimit: number | null;
+    canonicalSha256: string;
+    filename: string;
+    sizeBytes: number;
+  } | null>(null);
+
+  async function onExport() {
+    if (!client || !ready) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const [{ buildEventLogExport, suggestedFileName }] = await Promise.all([
+        import("@/agc/eventLog/buildExport"),
+      ]);
+      const payload = await client.requestEventLogExport();
+      const doc = await buildEventLogExport(payload, ready);
+      const json = JSON.stringify(doc, null, 2);
+      const filename = suggestedFileName(doc.payload.provenance.ropeId, doc.payload.session.sessionEpoch);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setLast({
+        exportedAt: doc.envelope.exportedAt,
+        eventCount: doc.payload.integrity.eventCount,
+        completeEpoch: doc.payload.retention.completeEpoch,
+        droppedBeforeEventId: doc.payload.retention.droppedBeforeEventId,
+        retainedEventLimit: doc.payload.retention.retainedEventLimit,
+        canonicalSha256: doc.integrity.canonicalSha256,
+        filename,
+        sizeBytes: json.length,
+      });
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section
+      data-testid="export-panel"
+      className="rounded-xl border border-neutral-800 bg-neutral-950/60 p-4"
+    >
+      <h2 className="mb-2 font-mono text-[11px] uppercase tracking-widest text-neutral-500">
+        Export event log
+      </h2>
+      <p className="mb-3 text-xs text-neutral-400">
+        Deterministic snapshot of the current epoch: baseline + retained events since{" "}
+        <span className="font-mono">ready</span>. SHA-256 covers the canonical payload.
+      </p>
+      <div className="mb-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="text-neutral-500">Session epoch</div>
+        <div className="font-mono text-neutral-200" data-testid="export-session-epoch">
+          {sessionEpoch}
+        </div>
+        <div className="text-neutral-500">Schema</div>
+        <div className="font-mono text-neutral-200">apollo-agc-event-log v1</div>
+      </div>
+      <button
+        type="button"
+        onClick={onExport}
+        disabled={!client || !ready || busy}
+        data-testid="export-button"
+        className="w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {busy ? "Exporting…" : "Export JSON"}
+      </button>
+      {err && (
+        <p role="alert" className="mt-3 text-xs text-red-400" data-testid="export-error">
+          {err}
+        </p>
+      )}
+      {last && (
+        <dl
+          data-testid="export-summary"
+          className="mt-3 grid grid-cols-2 gap-y-1 text-[11px] text-neutral-400"
+        >
+          <dt>Events</dt>
+          <dd className="font-mono text-neutral-200">{last.eventCount}</dd>
+          <dt>Complete epoch</dt>
+          <dd className="font-mono text-neutral-200">{String(last.completeEpoch)}</dd>
+          <dt>Dropped before id</dt>
+          <dd className="font-mono text-neutral-200">
+            {last.droppedBeforeEventId ?? "—"}
+          </dd>
+          <dt>Retained limit</dt>
+          <dd className="font-mono text-neutral-200">
+            {last.retainedEventLimit ?? "unbounded"}
+          </dd>
+          <dt>Size</dt>
+          <dd className="font-mono text-neutral-200">{last.sizeBytes} B</dd>
+          <dt>SHA-256</dt>
+          <dd
+            className="col-span-2 truncate font-mono text-neutral-200"
+            title={last.canonicalSha256}
+            data-testid="export-sha256"
+          >
+            {last.canonicalSha256}
+          </dd>
+          <dt>File</dt>
+          <dd className="col-span-2 truncate font-mono text-neutral-200" title={last.filename}>
+            {last.filename}
+          </dd>
+        </dl>
+      )}
+    </section>
+  );
+}
