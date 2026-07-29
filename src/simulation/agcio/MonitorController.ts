@@ -206,7 +206,27 @@ export class MonitorController {
       traceCount: this.ring.count(),
       traceDropped: this.ring.droppedCount() + this.port.traceDropped(),
       blockReasons: this.blockReasons,
+      inputChannels: this.ownedInputChannels(),
     };
+  }
+
+  /** Owned input channels + their COMPLETE current shadow words. The owned
+   *  mask is derived from the registry for the ACTIVE profile; when the
+   *  monitor is off the mask is zero (nothing is owned). */
+  private ownedInputChannels(): readonly MonitorInputChannelView[] {
+    const masks = new Map<number, number>();
+    for (const ch of MONITOR_OWNED_INPUT_CHANNELS) masks.set(ch, 0);
+    if (this.isActive()) {
+      for (const m of mappedSignalsForProfile(this.profile)) {
+        masks.set(m.channel, (masks.get(m.channel) ?? 0) | m.mask);
+      }
+    }
+    return [...masks.keys()].sort((a, b) => a - b).map((channel) => ({
+      channel,
+      word: this.shadow.read(channel),
+      ownedMask: masks.get(channel) ?? 0,
+      seeded: !this.shadow.hasHostWrite(channel),
+    }));
   }
 
   traceWindow(): MonitorTraceWindow {
