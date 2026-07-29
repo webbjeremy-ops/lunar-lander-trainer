@@ -167,6 +167,20 @@ export class AgcWorkerClient {
     });
   }
 
+  /** Request a deterministic, epoch-scoped event-log payload from the
+   *  Worker. Deterministic given the same session, rope, emulator
+   *  commit, protocol version, and event sequence. The caller wraps
+   *  this payload with `buildEventLogExport` to produce the versioned
+   *  file schema. */
+  requestEventLogExport(): Promise<EventLogExportPayload> {
+    return this.request({ type: "requestEventLogExport" }, (env) => {
+      if (env.message.type !== "eventLogExport")
+        throw new Error("expected eventLogExport reply");
+      return env.message.payload;
+    });
+  }
+
+
   private request<T>(cmd: AgcCommand, extract: (env: W2CEnvelope) => T): Promise<T> {
     if (this.disposed) return Promise.reject(new Error("AgcWorkerClient disposed"));
     const requestId = `${this.instanceId}-r${++this.requestCounter}`;
