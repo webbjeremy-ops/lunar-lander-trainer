@@ -339,6 +339,17 @@ export interface AgcCommandedControl {
 
 export type AgcMonitorStatus = "off" | "active" | "interlocked" | "blocked";
 
+/** One host-owned AGC input channel as the Worker shadow currently holds
+ *  it. `ownedMask` is the union of registry masks the ACTIVE profile owns;
+ *  every other bit in `word` belongs to some other host path (DSKY keys,
+ *  PROCEED) and is preserved by the merge. */
+export interface MonitorInputChannelView {
+  readonly channel: number;
+  readonly word: number;
+  readonly ownedMask: number;
+  readonly seeded: boolean;
+}
+
 export interface AgcMonitorSnapshot {
   readonly profile: AgcMonitorProfile;
   readonly status: AgcMonitorStatus;
@@ -349,7 +360,11 @@ export interface AgcMonitorSnapshot {
   readonly traceCount: number;
   readonly traceDropped: number;
   readonly blockReasons: readonly MonitorBlockReason[];
+  /** Owned input channels (CHAN 030 / 033) with their COMPLETE current
+   *  words, so the harness can render authentic octal values. */
+  readonly inputChannels: readonly MonitorInputChannelView[];
 }
+
 
 // ---------------------------------------------------------------------------
 // Simulation protocol v2 — RESERVED, NOT ACTIVATED
