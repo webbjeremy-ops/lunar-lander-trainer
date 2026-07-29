@@ -235,8 +235,19 @@ function LearnPage() {
   }, [agcClient, lesson, state.currentStepIndex, state.attempt, isInteractive, isComplete, attemptPhase, agcEpoch, openAttempt]);
 
   // Reset attempt phase when the selected lesson or step changes so the
-  // effect above will re-open a fresh attempt on the next pass.
+  // effect above will re-open a fresh attempt on the next pass. Skip the
+  // initial mount and any spurious re-run whose key hasn't actually
+  // changed — otherwise the reset cancels the very first openAttempt via
+  // ++openingTokenRef before the async barrier handshake can resolve.
+  const prevResetKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    const key = `${selectedId}#${state.currentStepIndex}#${agcEpoch}`;
+    if (prevResetKeyRef.current === null) {
+      prevResetKeyRef.current = key;
+      return;
+    }
+    if (prevResetKeyRef.current === key) return;
+    prevResetKeyRef.current = key;
     openedKeyRef.current = null;
     ++openingTokenRef.current; // cancel any in-flight open/gate
     setAttemptPhase("idle");
