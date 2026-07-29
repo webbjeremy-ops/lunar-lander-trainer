@@ -664,6 +664,7 @@ function pumpCanonicalInit(): void {
       // silent decoder mutation. PINBALL will observe it via KEYRUPT and
       // clear the test-alarm output responsible for STBY and RESTART.
       adapter.keyPress(AGC_KEY.RSET);
+      recordHostInput(0o15, AGC_KEY.RSET);
       ci.startupRsetSent = true;
       ci.startupRsetAccepted = true; // synchronous CH015 write
       ci.startupRsetCount++;
@@ -882,6 +883,21 @@ async function handle(
       if (state.adapter) return;
       state.workerState = "initializing";
       const a = new AgcCoreAdapter({
+        // LOSSLESS observer (P5.d §7): every output packet, including
+        // repeated writes of the same value which onChannelUpdate filters.
+        onChannelPacket: (ch, val, before) => {
+          if (!state.monitor?.isActive()) return;
+          if (!EXPECTED_ACTUATOR_CHANNELS.includes(ch)) return;
+          const seq = ++state.channelObservationSeq;
+          state.tickChannelEvents.push({
+            stream: "channel",
+            sequence: { hi: 0, lo: seq },
+            cycle: { hi: 0, lo: seq },
+            channel: ch,
+            value: val,
+            valueBefore: before,
+          });
+        },
         onChannelUpdate: (ch, val) => {
           const eventId = state.nextEventId++;
           const tickIndex = currentTickIndex();
@@ -1105,6 +1121,7 @@ async function handle(
     case "dskyKeyDown": {
       if (!adapter) return;
       adapter.keyPress(cmd.keyCode);
+      recordHostInput(0o15, cmd.keyCode);
       const eventId = state.nextEventId++;
       const tickIndex = currentTickIndex();
       const missionTimeUs = Number(state.clock.getMissionTimeUs());
@@ -1154,6 +1171,7 @@ async function handle(
     case "proceedKey": {
       if (!adapter) return;
       adapter.proceedKey(cmd.pressed);
+      recordHostInput(0o32, cmd.pressed ? 0 : 1 << 13);
       const eventId = state.nextEventId++;
       const tickIndex = currentTickIndex();
       const missionTimeUs = Number(state.clock.getMissionTimeUs());
@@ -1304,6 +1322,7 @@ async function handle(
     }
     case "dispose": {
       state.disposed = true;
+      state.monitor?.dispose();
       stopScheduler();
       return;
     }
