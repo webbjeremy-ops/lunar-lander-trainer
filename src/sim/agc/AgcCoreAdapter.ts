@@ -19,6 +19,15 @@ export type RomName = "Luminary099" | "Comanche055";
 export interface AgcCoreEvents {
   onChannelUpdate?: (channel: number, value: number) => void;
   onDskyLampsUpdate?: (lampBits: number) => void;
+  /**
+   * M3.3A2-P5.d LOSSLESS observer. Fires for EVERY output packet drained
+   * from yaAGC — including repeated writes of the same value, which
+   * `onChannelUpdate` suppresses because `AgcIoState.ingest` is
+   * change-filtered. Monitor mode requires the unfiltered stream so
+   * repeated CHAN11/CHAN14 writes inside one AGC interval are preserved in
+   * order. Purely additive: the frozen M2 path is unchanged.
+   */
+  onChannelPacket?: (channel: number, value: number, valueBefore: number | null) => void;
 }
 
 interface YaAgcExports {
@@ -41,7 +50,27 @@ interface YaAgcExports {
   agc_ext_version?: () => number;
   agc_out_trace_enabled?: () => number;
   agc_out_trace_dropped?: () => number;
+  agc_out_trace_entry_size?: () => number;
+  agc_out_trace_drain?: (dst: number, max: number) => number;
+  agc_out_trace_reset?: () => void;
+  agc_out_trace_set_enabled?: (enabled: number) => number;
 }
+
+/** One drained HW-I/O v2 output-counter observation, decoded from the
+ *  32-byte `AgcOutputTraceEntry` record. Field order/semantics mirror
+ *  `third-party/virtualagc-fork/PATCHES/lovable-hwio/hwio.c`. */
+export interface AgcOutTraceRecord {
+  sequence: { hi: number; lo: number };
+  cycle: { hi: number; lo: number };
+  address: number;
+  operation: number;
+  delta: number;
+  valueBefore: number;
+  valueAfter: number;
+}
+
+const TRACE_ENTRY_BYTES = 32;
+const TRACE_DRAIN_MAX = 4096;
 
 /** Extension identity reported by the running WASM instance. */
 export interface AgcExtensionIdentity {
@@ -145,6 +174,66 @@ export class AgcCoreAdapter {
     };
   }
 
+  // ---- M3.3A2-P5.d HW-I/O v2 monitor surface ---------------------------
+  //
+  // These wrappers are the ONLY way Worker code touches the trace ABI.
+  // They are inert unless explicitly invoked: production boots dormant and
+  // the monitor controller arms them only on an accepted profile entry.
+
+  hwioVersion(): number {
+    return this.exports.agc_hwio_version?.() ?? 0;
+  }
+
+  traceEnabled(): boolean {
+    return (this.exports.agc_out_trace_enabled?.() ?? 0) !== 0;
+  }
+
+  setTraceEnabled(enabled: boolean): void {
+    this.exports.agc_out_trace_set_enabled?.(enabled ? 1 : 0);
+  }
+
+  resetTrace(): void {
+    this.exports.agc_out_trace_reset?.();
+  }
+
+  traceDropped(): number {
+    return this.exports.agc_out_trace_dropped?.() ?? 0;
+  }
+
+  /** Drain the WASM output-counter ring EXACTLY once. After this call the
+   *  ring is empty by construction — a second drain in the same tick
+   *  returns []. Never throws when the exports are absent. */
+  drainTrace(): AgcOutTraceRecord[] {
+    const drain = this.exports.agc_out_trace_drain;
+    if (!drain || !this.exports.malloc || !this.exports.free) return [];
+    const entryBytes = this.exports.agc_out_trace_entry_size?.() ?? TRACE_ENTRY_BYTES;
+    const ptr = this.exports.malloc(entryBytes * TRACE_DRAIN_MAX);
+    if (!ptr) return [];
+    try {
+      const count = drain(ptr, TRACE_DRAIN_MAX);
+      if (count <= 0) return [];
+      // memory may have grown during malloc; re-derive the view.
+      const view = new DataView(this.mem.buffer, ptr, entryBytes * count);
+      const out: AgcOutTraceRecord[] = [];
+      for (let i = 0; i < count; i++) {
+        const o = i * entryBytes;
+        out.push({
+          sequence: { hi: view.getUint32(o + 4, true), lo: view.getUint32(o + 0, true) },
+          cycle: { hi: view.getUint32(o + 12, true), lo: view.getUint32(o + 8, true) },
+          address: view.getUint16(o + 16, true),
+          operation: view.getUint16(o + 18, true),
+          delta: view.getInt32(o + 20, true),
+          valueBefore: view.getUint16(o + 24, true),
+          valueAfter: view.getUint16(o + 26, true),
+        });
+      }
+      return out;
+    } finally {
+      this.exports.free(ptr);
+      this.memArray = new Uint8Array(this.mem.buffer);
+    }
+  }
+
   /** Fetch a rope image and load it as fixed (rope) memory. */
   async loadRom(url: string): Promise<{ url: string; bytes: number; sha256: string }> {
     const response = await fetch(url);
@@ -225,6 +314,9 @@ export class AgcCoreAdapter {
       if (!packet) break;
       const [channel, value] = packet;
       const prevLamps = this.io.lampBits();
+      const before = this.io.seen(channel) ? this.io.channel(channel) : null;
+      // Lossless first: EVERY packet is observable, including repeats.
+      this.events.onChannelPacket?.(channel, value, before);
       const changed = this.io.ingest(channel, value);
       if (changed) this.events.onChannelUpdate?.(channel, value);
       const newLamps = this.io.lampBits();

@@ -67,6 +67,11 @@ export class AgcIoState {
     return this.channels.get(channel) ?? 0;
   }
 
+  /** True when this channel has been observed at least once this epoch. */
+  seen(channel: number): boolean {
+    return this.channels.has(channel);
+  }
+
   allChannels(): ReadonlyMap<number, number> {
     return this.channels;
   }
