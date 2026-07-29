@@ -13,7 +13,7 @@
 //   5. The peak was observed within V35_MAX_TICKS_TO_PEAK of the ENTR
 //      event — bounding "stale peak from a previous attempt".
 
-import { decodedDskyCanonical } from "@/agc/dsky/DskyDecoder";
+import { decodedDskyStructural } from "@/agc/dsky/DskyDecoder";
 import {
   V35_EXPECTED_KEY_SEQUENCE,
   V35_FIXTURE_ID,
