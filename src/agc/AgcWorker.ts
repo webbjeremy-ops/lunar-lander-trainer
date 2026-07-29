@@ -11,6 +11,7 @@
 
 import { AgcCoreAdapter } from "@/sim/agc/AgcCoreAdapter";
 import { MissionClock, TICK_MICROS } from "./MissionClock";
+const SCHEDULER_TICK_MICROS = TICK_MICROS;
 import { SnapshotCoalescer } from "./SnapshotCoalescer";
 import { EventLog } from "./EventLog";
 import {
@@ -40,7 +41,6 @@ import {
   type StateSnapshot,
   type W2CEnvelope,
 } from "./protocol";
-import { TICK_MICROS as SCHEDULER_TICK_MICROS } from "./MissionClock";
 import {
   readinessProjectionCanonical,
 } from "@/lessons/ReadinessTracker";
