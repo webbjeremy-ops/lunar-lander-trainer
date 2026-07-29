@@ -161,9 +161,12 @@ function LearnPage() {
     action: "beginAttempt" | "restart",
   ) => {
     const client = agcClient;
+    console.log("[openAttempt] entry", forLesson.id, action, "client?", !!client);
     if (!client) return;
     const token = ++openingTokenRef.current;
     setAttemptError(null);
+    console.log("[openAttempt] token", token, "gate?", forLesson.requiresReadinessGate);
+
 
     try {
       if (forLesson.requiresReadinessGate) {
