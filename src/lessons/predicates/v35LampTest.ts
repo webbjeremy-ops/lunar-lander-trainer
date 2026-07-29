@@ -13,7 +13,7 @@
 //   5. The peak was observed within V35_MAX_TICKS_TO_PEAK of the ENTR
 //      event — bounding "stale peak from a previous attempt".
 
-import { decodedDskyCanonical } from "@/agc/dsky/DskyDecoder";
+import { decodedDskyStructural } from "@/agc/dsky/DskyDecoder";
 import {
   V35_EXPECTED_KEY_SEQUENCE,
   V35_FIXTURE_ID,
@@ -93,7 +93,7 @@ export const v35LampTestPredicate: StepPredicate = (ctx): StepPredicateResult =>
   // 3. Peak checksum match — captured latch. Once seen, stays seen for
   //    this attempt, so we can complete at the observation where the peak
   //    first appeared even if later events perturb the display.
-  const chk = decodedDskyCanonical(ctx.observation.decoded);
+  const chk = decodedDskyStructural(ctx.observation.decoded);
   const peakNow = chk === V35_PEAK_CHECKSUM;
   if (!internal.peakSeen && peakNow) {
     internal.peakSeen = true;

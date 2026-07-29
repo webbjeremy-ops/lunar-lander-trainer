@@ -10,6 +10,8 @@
 import v35 from "../../tests/fixtures/v35-lamp-test.json";
 import v16 from "../../tests/fixtures/v16-n65-met.json";
 import { AGC_KEY } from "./keyCodes";
+import { decodedDskyStructural } from "@/agc/dsky/DskyDecoder";
+import type { DecodedDsky } from "@/agc/dsky/DskyTypes";
 import type { LessonProvenance } from "./types";
 
 export const FIXTURE_PROVENANCE: LessonProvenance = {
@@ -28,8 +30,18 @@ export const V35_EXPECTED_KEY_SEQUENCE = [
   AGC_KEY.ENTR,
 ] as const;
 
-/** Canonical checksum of the fixture-defined peak DSKY state. */
-export const V35_PEAK_CHECKSUM: string = v35.peak.checksum;
+/**
+ * Structural (EC-independent) canonical of the fixture-defined peak DSKY
+ * state. The predicate compares this against `decodedDskyStructural(observed)`
+ * so that shadow decoders seeded from an attempt boundary (whose eventCount
+ * starts at the Worker's post-readiness value) still match the fixture peak,
+ * which was captured by a different decoder instance with its own event count.
+ * The two structural checksums are identical iff every digit, sign, and
+ * annunciator is identical — which is the only semantic V35 evidence.
+ */
+export const V35_PEAK_CHECKSUM: string = decodedDskyStructural(
+  v35.peak.decoded as unknown as DecodedDsky,
+);
 /** Tick range within which the peak was observed in the reference capture. */
 export const V35_PEAK_TICK: number = v35.peak.tickIndex;
 /**
