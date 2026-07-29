@@ -78,6 +78,17 @@ interface WorkerState {
    *  from here instead of re-deriving context from the current clock. */
   recentEventsRing: ChannelEventLite[];
   recentEventsCap: number;
+  /** Canonical-initialization invariant tracking. `initialResetPerformed`
+   *  flips true when the single `loadRope` handler completes its one and
+   *  only cpu_reset(); `resetCount` increments on every adapter.reset()
+   *  regardless of source, so tests can assert exactly one call for a
+   *  session unless the user requested an explicit later reset. */
+  initialResetPerformed: boolean;
+  resetCount: number;
+  /** Session epoch. Starts at 0; every explicit `reset` command bumps it.
+   *  The initialization reset itself does NOT bump the epoch — it happens
+   *  before the public session becomes usable. */
+  sessionEpoch: number;
 }
 
 
@@ -110,6 +121,9 @@ const state: WorkerState = {
   nextEventId: 1,
   recentEventsRing: [],
   recentEventsCap: 64,
+  initialResetPerformed: false,
+  resetCount: 0,
+  sessionEpoch: 0,
 };
 
 function currentTickIndex(): number {
@@ -260,6 +274,9 @@ function diagnostics(): Diagnostics {
     ticksExecuted: s.ticksExecuted,
     lastError: state.lastError,
     workerState: state.workerState,
+    initialResetPerformed: state.initialResetPerformed,
+    resetCount: state.resetCount,
+    sessionEpoch: state.sessionEpoch,
   };
 }
 
@@ -372,7 +389,15 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.ropeSha256 = sha256;
       state.ropeSourceCommit = sourceCommit;
       state.ropeByteLength = bytes.byteLength;
+      // Canonical initialization: exactly one cpu_reset() after rope load,
+      // before the public session becomes usable. Every route (/learn, /sim,
+      // /capture) reaches this same post-reset starting state.
+      if (state.initialResetPerformed) {
+        throw new Error("canonical-init: loadRope invoked twice on one session");
+      }
       adapter.reset();
+      state.resetCount++;
+      state.initialResetPerformed = true;
       state.clock.reset();
       state.workerState = "ready";
       startScheduler();
@@ -388,6 +413,9 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           ropeByteLength: bytes.byteLength,
           wasmSha256: state.wasmSha256,
           protocolVersion: PROTOCOL_VERSION,
+          initialResetPerformed: true,
+          resetCount: state.resetCount,
+          sessionEpoch: state.sessionEpoch,
         },
       });
       return;
@@ -435,6 +463,8 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
     case "reset": {
       if (!adapter) return;
       adapter.reset();
+      state.resetCount++;
+      state.sessionEpoch++;
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();

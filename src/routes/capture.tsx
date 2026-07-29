@@ -15,6 +15,7 @@ import type { AgcEvent, ChannelEventLite, ReadyPayload, StateSnapshot } from "@/
 import { PROTOCOL_VERSION } from "@/agc/protocol";
 import type { DecodedDsky } from "@/agc/dsky/DskyTypes";
 import { decodedDskyCanonical, makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
+import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
 
 // Capture harness is opt-in via VITE_AGC_CAPTURE_MODE=true at build time.
 // In normal builds this route throws notFound() and window.__agcCapture is
@@ -83,6 +84,14 @@ function CapturePage() {
     clientRef.current = client;
     const log = logRef.current;
 
+    // Readiness tracker uses the SAME criteria as /learn's gate. The
+    // capture harness has no capture-only initialization path — it relies
+    // exclusively on the Worker's one canonical loadRope reset and then
+    // waits for the AGC to reach the same settled state that /learn does.
+    const readiness = new ReadinessTracker();
+    let readinessSnap: ReadinessSnapshot = readiness.snapshot();
+    const readyWaiters: Array<() => void> = [];
+
     client.setListeners({
       onReady: (payload) => {
         log.ready = payload;
@@ -92,6 +101,7 @@ function CapturePage() {
         if (ev.type === "channelUpdate") {
           const lite = ev.payload;
           log.allChannelEvents.push(lite);
+          readiness.applyChannelEvent(lite);
           if (lite.channel === 0o10 || lite.channel === 0o11 || lite.channel === 0o163) {
             const rec = {
               eventId: lite.eventId,
@@ -113,6 +123,16 @@ function CapturePage() {
       onSnapshot: (snap) => {
         log.latestSnapshot = snap;
         log.latestTickIndex = snap.tickIndex;
+        readiness.noteTickAdvance({
+          tickIndex: snap.tickIndex,
+          missionTimeUs: snap.missionTimeUs,
+          totalAgcSteps: snap.totalAgcSteps,
+        });
+        readinessSnap = readiness.snapshot();
+        if (readinessSnap.ready) {
+          const w = readyWaiters.splice(0, readyWaiters.length);
+          for (const r of w) r();
+        }
       },
       onDskyDecoded: (decoded, missionTimeUs, tickIndex) => {
         // Deep-clone so the timeline is not mutated by later decoder updates.
@@ -151,21 +171,41 @@ function CapturePage() {
       getLog: () => log,
       getReady: () => log.ready,
       isReady: () => log.ready !== null,
+      /** Readiness state driven by the shared ReadinessTracker. */
+      readiness: () => readinessSnap,
+      /**
+       * Wait for the AGC to reach the same settled state the /learn
+       * readiness gate requires: RESTART clear, STANDBY clear, projection
+       * quiet across V35_READINESS_QUIET_TICKS, AGC steps advancing.
+       * The wait uses the Worker's requestEventBoundary() to seed the
+       * tracker so the baseline is authoritative (same handshake /learn
+       * performs). No cpu_reset is invoked here — the only reset in the
+       * session is the canonical one loadRope already performed.
+       */
+      waitReady: async (timeoutMs = 30_000) => {
+        if (log.ready === null) {
+          await new Promise<void>((resolve) => {
+            const int = setInterval(() => {
+              if (log.ready !== null) { clearInterval(int); resolve(); }
+            }, 25);
+          });
+        }
+        const boundary = await client.requestEventBoundary();
+        readiness.reset();
+        readiness.noteBaseline(boundary);
+        readinessSnap = readiness.snapshot();
+        if (readinessSnap.ready) return readinessSnap;
+        return await new Promise<ReadinessSnapshot>((resolve, reject) => {
+          const timer = setTimeout(() => {
+            reject(new Error(
+              `waitReady timeout after ${timeoutMs}ms; blocking=${readinessSnap.blockingReason}`,
+            ));
+          }, timeoutMs);
+          readyWaiters.push(() => { clearTimeout(timer); resolve(readinessSnap); });
+        });
+      },
       resume: wrap("resume", () => client.resume(), () => null),
       pause: wrap("pause", () => client.pause(), () => null),
-      reset: () => {
-        log.commands.push({
-          tickIndex: log.latestTickIndex,
-          missionTimeUs: log.latestSnapshot?.missionTimeUs ?? 0,
-          kind: "reset",
-          payload: null,
-        });
-        // Delimit fixture segments: clear the recorded traces for the next.
-        log.ch010Events = [];
-        log.dskyEvents = [];
-        log.decodedTimeline = [];
-        client.reset();
-      },
       dskyKeyDown: wrap("dskyKeyDown", (code: number) => client.dskyKeyDown(code), (code) => ({ keyCode: code })),
       requestSnapshot: () => client.requestSnapshot(),
       setTimeScale: wrap("setTimeScale", (s: number) => client.setTimeScale(s), (s) => ({ timeScale: s })),
@@ -173,6 +213,13 @@ function CapturePage() {
         label,
         capturedAt: new Date().toISOString(),
         protocolVersion: PROTOCOL_VERSION,
+        initializationPath: "canonical",
+        captureOnlyReset: false,
+        canonicalInit: {
+          initialResetPerformed: log.ready?.initialResetPerformed ?? false,
+          resetCount: log.ready?.resetCount ?? null,
+          sessionEpoch: log.ready?.sessionEpoch ?? null,
+        },
         emulator: {
           repo: log.ready?.emulatorRepo,
           commit: log.ready?.emulatorCommit,

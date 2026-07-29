@@ -48,11 +48,17 @@ async function main() {
   // Wait for the harness to install and the Worker to signal ready.
   await waitFor(() => page.evaluate(() => (window as unknown as { __agcCapture?: { isReady(): boolean } }).__agcCapture?.isReady()));
 
-  // Give the AGC ~2 s of run time so its power-up initialization stabilizes,
-  // then reset to a canonical starting state before the V35 sequence.
-  await page.waitForTimeout(2000);
-  await page.evaluate(() => (window as unknown as { __agcCapture: { reset(): void } }).__agcCapture.reset());
-  await page.waitForTimeout(800);
+  // Canonical initialization only — NO capture-only reset. The Worker's
+  // loadRope handler already performed the one and only cpu_reset() for
+  // this session. Wait for the SAME readiness state /learn requires
+  // (RESTART clear, projection quiet across V35_READINESS_QUIET_TICKS,
+  // AGC steps advancing) using the shared ReadinessTracker exposed by
+  // the capture harness. Pre-test snapshot happens at this convergence.
+  const readySnap = await page.evaluate(
+    () => (window as unknown as { __agcCapture: { waitReady(t?: number): Promise<unknown> } })
+      .__agcCapture.waitReady(30_000),
+  );
+  console.log(`  readiness reached: ${JSON.stringify(readySnap)}`);
 
   // Snapshot the canonical pre-test decoded state from a fresh segment.
   const preTestSegment = await page.evaluate(() => {

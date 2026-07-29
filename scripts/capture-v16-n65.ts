@@ -130,9 +130,13 @@ async function main() {
   await page.goto(`${BASE_URL}/capture`, { waitUntil: "domcontentloaded" });
   await waitReady(page);
 
-  await page.waitForTimeout(2000);
-  await page.evaluate(() => (window as unknown as { __agcCapture: { reset(): void } }).__agcCapture.reset());
-  await page.waitForTimeout(800);
+  // Canonical initialization only — NO capture-only reset. Wait for the
+  // SAME readiness state /learn's gate requires. See scripts/capture-v35.ts.
+  const readySnap = await page.evaluate(
+    () => (window as unknown as { __agcCapture: { waitReady(t?: number): Promise<unknown> } })
+      .__agcCapture.waitReady(30_000),
+  );
+  console.log(`  readiness reached: ${JSON.stringify(readySnap)}`);
 
   const preTest = await page.evaluate(() =>
     (window as unknown as { __agcCapture: { snapshotFixture(l: string): unknown } }).__agcCapture.snapshotFixture("pre-test"),

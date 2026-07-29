@@ -110,6 +110,16 @@ export interface ReadyPayload {
   ropeByteLength: number;
   wasmSha256: string;
   protocolVersion: typeof PROTOCOL_VERSION;
+  /** Canonical initialization invariant: the Worker performed exactly
+   *  one cpu_reset() after rope load and before this ready message.
+   *  Always true — a false value here would be a bug. */
+  initialResetPerformed: true;
+  /** Number of cpu_reset() calls performed by the Worker during this
+   *  session (from initialization + any explicit `reset` commands). At
+   *  `ready` time this is exactly 1. */
+  resetCount: number;
+  /** Session epoch. 0 at initialization; each explicit `reset` bumps it. */
+  sessionEpoch: number;
 }
 
 export interface Diagnostics {
@@ -120,6 +130,9 @@ export interface Diagnostics {
   ticksExecuted: number;
   lastError: string | null;
   workerState: "idle" | "initializing" | "loading-rope" | "ready" | "paused" | "error";
+  initialResetPerformed: boolean;
+  resetCount: number;
+  sessionEpoch: number;
 }
 
 export type AgcEvent =
