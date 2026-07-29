@@ -52,9 +52,21 @@ import { MissionRuntime, MISSION_TICK_US } from "@/simulation/runtime/MissionRun
 import type { MissionSnapshot } from "@/simulation/runtime/types";
 import {
   SIMULATION_PROTOCOL_VERSION,
+  SUPPORTED_MONITOR_PROFILES,
+  type SetMonitorProfileCommand,
   type SimulationCommand,
   type SimulationEvent,
 } from "./simulationProtocol";
+// ---- M3.3A2-P5.d monitor mode ------------------------------------------
+// The Worker owns ALL monitor state. React receives compact snapshots only.
+import { MonitorController, type MonitorHwPort } from "@/simulation/agcio/MonitorController";
+import { validateSetMonitorProfileCommand } from "@/simulation/agcio/profileValidation";
+import { EXPECTED_ACTUATOR_CHANNELS } from "@/simulation/agcio/actuatorRegistry";
+import type { LmDiscreteSensorState } from "@/simulation/agcio/discreteEncoder";
+import type {
+  AgcOutputChannelEvent,
+  AgcOutputCounterEvent,
+} from "@/simulation/agcio/types";
 
 const SNAPSHOT_SCHEMA_VERSION = 1;
 
@@ -130,6 +142,10 @@ function sendSimReady(requestId?: string): void {
         simulationEpoch: state.missionRuntime.getSimulationEpoch(),
         missionTickUs: MISSION_TICK_US,
         status: state.missionRuntime.getStatus(),
+        // STATIC capability advertisement only. Mutable monitor state
+        // (current profile / status / block reasons) never rides on
+        // sim:ready — it lives on mission snapshots.
+        supportedMonitorProfiles: SUPPORTED_MONITOR_PROFILES,
       },
     },
     requestId,
