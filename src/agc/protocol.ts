@@ -208,6 +208,18 @@ export interface ReadyPayload {
   /** Canonical startup RSET sequence outcome. Public input is only enabled
    *  after this sequence completes. */
   canonicalInit: CanonicalInitInfo;
+  /** M3.3A2-P4: identity of the extended runtime the Worker loaded.
+   *  Absent only in test contexts that instantiate the frozen artifact. */
+  extensionIdentity?: {
+    hwioVersion: number;
+    extVersion: string;
+    extensionTag: string;
+    /** 0 in production — canonical runtime is dormant by default. */
+    traceEnabled: number;
+    /** 0 in production — no whitelisted deltas are ever observed while
+     *  tracing remains disabled. */
+    traceDropped: number;
+  };
 }
 
 export interface Diagnostics {
@@ -229,6 +241,8 @@ export interface Diagnostics {
   resetCount: number;
   sessionEpoch: number;
   canonicalInit: CanonicalInitInfo | null;
+  /** M3.3A2-P4: extension identity reported by the loaded WASM. */
+  extensionIdentity?: ReadyPayload["extensionIdentity"];
 }
 
 export type AgcEvent =
