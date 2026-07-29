@@ -66,8 +66,14 @@ describe("M3.3A2-P4 readiness-protocol compatibility", () => {
       resetCount: 1,
       sessionEpoch: 0,
       canonicalInit: {
-        performed: true,
-        rsetPressCursor: 0,
+        cpuResetPerformed: true,
+        cpuResetCount: 1,
+        startupRsetSent: true,
+        startupRsetCode: 0o22,
+        startupRsetAccepted: true,
+        startupRsetCount: 1,
+        restartObservedBeforeRset: false,
+        restartClearedAfterRset: true,
         settledAtTick: 0,
       },
     };
