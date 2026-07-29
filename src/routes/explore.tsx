@@ -635,3 +635,270 @@ function ExportPanel() {
     </section>
   );
 }
+
+// -------------------- Import Event Log ------------------------------------
+
+type ImportPanelResult = import("@/agc/eventLog/importSchema").ImportResult;
+
+function ImportPanel() {
+  const session = useAgcSession();
+  const { ready } = session;
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<ImportPanelResult | null>(null);
+  const [pickedName, setPickedName] = useState<string | null>(null);
+
+  async function onFile(file: File) {
+    setBusy(true);
+    setResult(null);
+    setPickedName(file.name);
+    try {
+      const { validateImport } = await import("@/agc/eventLog/validateImport");
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      const r = await validateImport(bytes, {
+        currentSession: {
+          ready,
+          timing: ready
+            ? { nominalStepNs: 11720, schedulerTickUs: 20000 } // canonical M1 timing
+            : null,
+        },
+      });
+      setResult(r);
+    } catch (e) {
+      setResult({
+        status: "invalid",
+        errors: [
+          {
+            code: "malformed-json",
+            path: "",
+            message: e instanceof Error ? e.message : String(e),
+          },
+        ],
+        truncated: false,
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section
+      data-testid="import-panel"
+      className="rounded-xl border border-neutral-800 bg-neutral-950/60 p-4"
+    >
+      <h2 className="mb-2 font-mono text-[11px] uppercase tracking-widest text-neutral-500">
+        Import event log
+      </h2>
+      <p className="mb-3 text-xs text-neutral-400">
+        Load and verify a previously exported <code>apollo-agc-event-log</code>{" "}
+        v1 file. Import is <strong>read-only</strong>: it does not touch the
+        live AGC session.
+      </p>
+      <label className="block">
+        <span className="sr-only">Choose event-log file</span>
+        <input
+          type="file"
+          accept="application/json,.json"
+          data-testid="import-file"
+          disabled={busy}
+          onChange={(e) => {
+            const f = e.currentTarget.files?.[0];
+            if (f) void onFile(f);
+            e.currentTarget.value = "";
+          }}
+          className="block w-full text-xs text-neutral-300 file:mr-3 file:rounded file:border file:border-neutral-700 file:bg-neutral-900 file:px-3 file:py-1.5 file:text-neutral-100 hover:file:bg-neutral-800"
+        />
+      </label>
+      {busy && (
+        <p className="mt-3 text-xs text-neutral-400" data-testid="import-progress">
+          Validating…
+        </p>
+      )}
+      {result && (
+        <div className="mt-3 space-y-3">
+          <ImportResultBanner result={result} filename={pickedName} />
+          {result.status === "invalid" ? (
+            <ImportErrorList result={result} />
+          ) : (
+            <ImportRecordingSummary result={result} />
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ImportResultBanner({
+  result,
+  filename,
+}: {
+  result: ImportPanelResult;
+  filename: string | null;
+}) {
+  const status = result.status;
+  const cls =
+    status === "valid-compatible"
+      ? "border-emerald-600 bg-emerald-950/40 text-emerald-200"
+      : status === "valid-incompatible"
+        ? "border-amber-600 bg-amber-950/40 text-amber-200"
+        : "border-red-600 bg-red-950/40 text-red-200";
+  const label =
+    status === "valid-compatible"
+      ? "Valid · compatible with live session"
+      : status === "valid-incompatible"
+        ? "Valid · not replay-eligible on live session"
+        : "Invalid — will not be accepted";
+  return (
+    <div
+      role="status"
+      data-testid="import-status"
+      data-import-status={status}
+      className={`rounded border px-3 py-2 font-mono text-[11px] uppercase tracking-widest ${cls}`}
+    >
+      <div>{label}</div>
+      {filename && (
+        <div className="mt-0.5 truncate text-[10px] normal-case text-neutral-300">
+          {/* Treat file name as untrusted display text. */}
+          {filename.slice(0, 200)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImportErrorList({
+  result,
+}: {
+  result: Extract<ImportPanelResult, { status: "invalid" }>;
+}) {
+  return (
+    <div data-testid="import-errors" className="space-y-1">
+      {result.errors.slice(0, 20).map((e, i) => (
+        <div
+          key={i}
+          className="rounded border border-red-900 bg-red-950/40 px-2 py-1 font-mono text-[10px] text-red-200"
+        >
+          <div className="text-red-300">
+            {e.code}
+            {e.path ? ` @ ${e.path}` : ""}
+          </div>
+          <div className="text-red-100">{e.message.slice(0, 300)}</div>
+        </div>
+      ))}
+      {result.errors.length > 20 && (
+        <div className="text-[10px] text-neutral-500">
+          … {result.errors.length - 20} more errors hidden.
+        </div>
+      )}
+      {result.truncated && (
+        <div className="text-[10px] text-neutral-500">
+          Additional errors suppressed by validator limit.
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImportRecordingSummary({
+  result,
+}: {
+  result: Extract<ImportPanelResult, { status: "valid-compatible" | "valid-incompatible" }>;
+}) {
+  const s = result.recording.summary;
+  const c = result.compatibility;
+  return (
+    <div className="space-y-3">
+      <dl
+        data-testid="import-summary"
+        className="grid grid-cols-2 gap-y-1 text-[11px] text-neutral-400"
+      >
+        <dt>Exported at</dt>
+        <dd className="truncate font-mono text-neutral-200">{s.exportedAt}</dd>
+        <dt>Rope</dt>
+        <dd className="truncate font-mono text-neutral-200">
+          {s.ropeId.slice(0, 40)}
+        </dd>
+        <dt>Session epoch</dt>
+        <dd className="font-mono text-neutral-200">{s.sessionEpoch}</dd>
+        <dt>Events</dt>
+        <dd className="font-mono text-neutral-200">{s.eventCount}</dd>
+        <dt>ID range</dt>
+        <dd className="font-mono text-neutral-200">
+          {s.firstEventId ?? "—"} … {s.lastEventId ?? "—"}
+        </dd>
+        <dt>Complete epoch</dt>
+        <dd className="font-mono text-neutral-200">{String(s.completeEpoch)}</dd>
+        <dt>Dropped before</dt>
+        <dd className="font-mono text-neutral-200">
+          {s.droppedBeforeEventId ?? "—"}
+        </dd>
+        <dt>Size</dt>
+        <dd className="font-mono text-neutral-200">{s.fileSizeBytes} B</dd>
+        <dt>SHA-256</dt>
+        <dd
+          className="col-span-2 truncate font-mono text-neutral-200"
+          title={s.canonicalSha256}
+          data-testid="import-sha256"
+        >
+          {s.canonicalSha256}
+        </dd>
+      </dl>
+      <div>
+        <div className="mb-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+          Compatibility vs live session
+        </div>
+        <ul className="space-y-0.5 font-mono text-[10px]">
+          <CompatRow label="Schema version" m={c.schemaVersion} />
+          <CompatRow label="Protocol version" m={c.protocolVersion} />
+          <CompatRow label="Emulator commit" m={c.emulatorCommit} />
+          <CompatRow label="WASM SHA-256" m={c.wasmSha256} />
+          <CompatRow label="Rope id" m={c.ropeId} />
+          <CompatRow label="Rope SHA-256" m={c.ropeSha256} />
+          <CompatRow label="Rope commit" m={c.ropeSourceCommit} />
+          <CompatRow label="Scheduler tick µs" m={c.schedulerTickUs} />
+          <CompatRow label="Nominal step ns" m={c.nominalStepNs} />
+        </ul>
+        <div
+          data-testid="import-replay-eligible"
+          className={
+            "mt-2 rounded border px-2 py-1 text-[10px] font-mono uppercase tracking-widest " +
+            (c.replayEligible
+              ? "border-emerald-600 bg-emerald-950/40 text-emerald-200"
+              : "border-amber-600 bg-amber-950/40 text-amber-200")
+          }
+        >
+          Replay eligible: {String(c.replayEligible)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CompatRow({
+  label,
+  m,
+}: {
+  label: string;
+  m: import("@/agc/eventLog/importSchema").MatchResult;
+}) {
+  const status = m.status;
+  const dot =
+    status === "match"
+      ? "bg-emerald-400"
+      : status === "differs"
+        ? "bg-red-400"
+        : "bg-neutral-500";
+  return (
+    <li className="flex items-center gap-2 text-neutral-300">
+      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
+      <span className="w-32 text-neutral-500">{label}</span>
+      <span className="truncate">
+        {status === "match"
+          ? "match"
+          : status === "differs"
+            ? "differs"
+            : "no live session"}
+      </span>
+    </li>
+  );
+}
+
