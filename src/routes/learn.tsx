@@ -229,7 +229,7 @@ function LearnPage() {
     if (!agcClient || !isInteractive || isComplete) return;
     const key = `${lesson.id}#${state.currentStepIndex}#${agcEpoch}`;
     if (state.attempt && openedKeyRef.current === key && attemptPhase === "ready") return;
-    if (openedKeyRef.current === key && attemptPhase === "opening") return;
+    if (openedKeyRef.current === key && (attemptPhase === "opening" || attemptPhase === "gating")) return;
     openedKeyRef.current = key;
     void openAttempt(lesson, "beginAttempt");
   }, [agcClient, lesson, state.currentStepIndex, state.attempt, isInteractive, isComplete, attemptPhase, agcEpoch, openAttempt]);
@@ -238,9 +238,12 @@ function LearnPage() {
   // effect above will re-open a fresh attempt on the next pass.
   useEffect(() => {
     openedKeyRef.current = null;
+    ++openingTokenRef.current; // cancel any in-flight open/gate
     setAttemptPhase("idle");
     setLastBoundary(null);
     setAttemptError(null);
+    setReadinessSnap(null);
+    readinessTrackerRef.current = null;
   }, [selectedId, state.currentStepIndex, agcEpoch]);
 
   function ackCurrent() {
@@ -254,15 +257,16 @@ function LearnPage() {
 
   function resetLesson() {
     openedKeyRef.current = null;
+    ++openingTokenRef.current;
     setAttemptPhase("idle");
     setLastBoundary(null);
+    setReadinessSnap(null);
+    readinessTrackerRef.current = null;
     setStates((s) => ({ ...s, [lesson.id]: initialLessonState(lesson) }));
   }
 
   function restartInteractive() {
     if (!isInteractive || !agcClient) return;
-    // Force the effect to re-run by clearing the key, then fire a restart
-    // through the barrier handshake.
     openedKeyRef.current = null;
     void openAttempt(lesson, "restart");
   }
@@ -270,8 +274,11 @@ function LearnPage() {
   function resetAgc() {
     setAgcEpoch((n) => n + 1);
     openedKeyRef.current = null;
+    ++openingTokenRef.current;
     setAttemptPhase("idle");
     setLastBoundary(null);
+    setReadinessSnap(null);
+    readinessTrackerRef.current = null;
     setStates(() => {
       const init: Record<string, LessonState> = {};
       for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
@@ -297,8 +304,10 @@ function LearnPage() {
       boundaryTick: lastBoundary?.tickIndex ?? null,
       latestEventId: latestSnapshotRef.current?.latestEventId ?? null,
       snapshot: latestSnapshotRef.current,
+      readiness: readinessSnap,
+      readinessRequired: lesson.requiresReadinessGate === true,
     };
-  }, [lesson, step, state, states, agcEpoch, attemptPhase, attemptError, lastBoundary]);
+  }, [lesson, step, state, states, agcEpoch, attemptPhase, attemptError, lastBoundary, readinessSnap]);
 
   // Interaction lock: DSKY input is suppressed while an interactive attempt
   // is being opened. This prevents a keystroke from carrying an eventId
