@@ -100,6 +100,35 @@ export interface StateSnapshot {
 }
 
 
+/**
+ * Canonical initialization outcome. Reports the Worker-driven post-reset
+ * DSKY RSET startup sequence that runs before every public `ready`:
+ *   1. cpu_reset() (exactly once per epoch).
+ *   2. AGC scheduler starts privately (public input disabled).
+ *   3. Observe initial RESTART assertion + AGC step advance.
+ *   4. Send RSET (keycode 0o22) through the authentic DSKY input path.
+ *   5. Observe RESTART clear from the emulator's own channel output.
+ *   6. Run the 20-tick activity-filtered quiet-state gate.
+ *   7. Publish public ready.
+ *
+ * The startup RSET is a simulator startup convention — not a claim that
+ * the AGC pressed its own key. It is NOT another cpu_reset() and does NOT
+ * silently mutate any channel or decoded value.
+ */
+export interface CanonicalInitInfo {
+  cpuResetPerformed: boolean;
+  cpuResetCount: number;
+  startupRsetSent: boolean;
+  /** Fixed at 0o22 (decimal 18) — the AGC RSET key code. */
+  startupRsetCode: number;
+  startupRsetAccepted: boolean;
+  startupRsetCount: number;
+  restartObservedBeforeRset: boolean;
+  restartClearedAfterRset: boolean;
+  /** Mission tick index at which the quiet-window gate declared settled. */
+  settledAtTick: number;
+}
+
 export interface ReadyPayload {
   emulatorRepo: string;
   emulatorCommit: string;
@@ -120,6 +149,9 @@ export interface ReadyPayload {
   resetCount: number;
   /** Session epoch. 0 at initialization; each explicit `reset` bumps it. */
   sessionEpoch: number;
+  /** Canonical startup RSET sequence outcome. Public input is only enabled
+   *  after this sequence completes. */
+  canonicalInit: CanonicalInitInfo;
 }
 
 export interface Diagnostics {
@@ -129,10 +161,18 @@ export interface Diagnostics {
   schedulerOverruns: number;
   ticksExecuted: number;
   lastError: string | null;
-  workerState: "idle" | "initializing" | "loading-rope" | "ready" | "paused" | "error";
+  workerState:
+    | "idle"
+    | "initializing"
+    | "loading-rope"
+    | "canonical-init"
+    | "ready"
+    | "paused"
+    | "error";
   initialResetPerformed: boolean;
   resetCount: number;
   sessionEpoch: number;
+  canonicalInit: CanonicalInitInfo | null;
 }
 
 export type AgcEvent =
