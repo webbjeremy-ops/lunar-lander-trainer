@@ -303,6 +303,7 @@ const state: WorkerState = {
   ropeSourceCommit: "",
   ropeByteLength: 0,
   emulatorVersion: "",
+  extensionIdentity: undefined,
   lastError: null,
   workerState: "idle",
   disposed: false,
