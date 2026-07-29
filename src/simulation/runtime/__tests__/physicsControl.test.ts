@@ -67,13 +67,16 @@ describe("advanceMissionPhysics", () => {
 describe("compile-time structural boundary", () => {
   it("AgcCommandedControl cannot be passed to advanceMissionPhysics", () => {
     const agcCommanded: AgcCommandedControl = {
+      engineCommand: "on",
       engineEnabled: true,
-      throttleFraction: 0.8,
-      valid: true,
-      invalidReasons: [],
+      throttleFraction: null,
+      valid: false,
+      invalidReasons: ["throttle-scale-unresolved"],
       sampledAtMissionTick: 0,
-      raw: { thrustCounterEvents: [], channel11: null, channel14: null },
+      thrustDriveActivity: { observedThisTick: false, eventCount: 0 },
+      raw: { channel11: [], channel14: [], thrustCounter: [] },
     };
+
 
     // @ts-expect-error P5 CONTRACT: AgcCommandedControl (Luminary output decode)
     // MUST NOT be assignable to ResolvedPhysicsControl. If this line stops
