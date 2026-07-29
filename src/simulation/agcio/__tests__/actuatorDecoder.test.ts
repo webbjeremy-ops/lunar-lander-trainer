@@ -22,7 +22,7 @@ import {
   reduceAgcActuatorTick,
 } from "../actuatorDecoder";
 import type { AgcActuatorDecoderState } from "../actuatorDecoder";
-import { decideMonitorEntry } from "../profileValidation";
+import { REQUIRED_ROPE_ID, decideMonitorEntry } from "../profileValidation";
 import { SIMULATION_PROTOCOL_VERSION } from "../../../agc/simulationProtocol";
 import type {
   AgcActuatorTickEvents,
@@ -346,14 +346,14 @@ describe("frozen invariants", () => {
 
   it("descent-monitor-v1 remains blocked", () => {
     const decision = decideMonitorEntry("descent-monitor-v1", {
+      simulationEpoch: 3,
+      agcSessionEpoch: 1,
       agcReady: true,
       hwioVersion: 2,
-      ropeIsLuminary099: true,
-      simulationEpoch: 1,
-      commandSimulationEpoch: 1,
-      agcEpoch: 1,
-      commandAgcEpoch: 1,
+      ropeId: REQUIRED_ROPE_ID,
+      ropeSha256: "0".repeat(64),
       runtimeStatus: "running",
+      activeScenarioId: "golden",
       traceCurrentlyEnabled: false,
     });
     expect(decision.outcome).toBe("blocked");
