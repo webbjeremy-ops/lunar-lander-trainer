@@ -392,13 +392,21 @@ agc_hw_input_apply(const AgcHwInputRecord *records, uint32_t record_count) {
 }
 
 /* --- Hook invoked by wasm.c per cpu_step iteration --- */
+/* Dormancy contract (M3.3A2-P3): with TraceEnabled == 0, this hook must be a
+ * true nonmutating no-op. No cycle counter increment, no sampler baseline
+ * initialization, no ring writes. Verified by dormancy audit test. */
 void hwio_after_agc_engine(void) {
+  if (!TraceEnabled) return;
   CycleCounter++;
   trace_sample_all();
 }
 
 /* --- Reset trace on cpu_reset (invoked from wasm.c). --- */
+/* cpu_reset always disarms the trace. The monitor adapter re-arms it
+ * explicitly after each reset. This prevents any accidental carry-over of
+ * arm state across a canonical startup RSET. */
 void hwio_on_cpu_reset(void) {
   agc_out_trace_reset();
   CycleCounter = 0;
+  TraceEnabled = 0;
 }
