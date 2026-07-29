@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SimRouteImport } from './routes/sim'
 import { Route as LearnRouteImport } from './routes/learn'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const SimRoute = SimRouteImport.update({
 const LearnRoute = LearnRouteImport.update({
   id: '/learn',
   path: '/learn',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CaptureRoute = CaptureRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/capture': typeof CaptureRoute
+  '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/capture': typeof CaptureRoute
+  '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
@@ -68,22 +76,39 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/capture': typeof CaptureRoute
+  '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/capture' | '/learn' | '/sim' | '/sources'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/capture'
+    | '/explore'
+    | '/learn'
+    | '/sim'
+    | '/sources'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/capture' | '/learn' | '/sim' | '/sources'
-  id: '__root__' | '/' | '/about' | '/capture' | '/learn' | '/sim' | '/sources'
+  to: '/' | '/about' | '/capture' | '/explore' | '/learn' | '/sim' | '/sources'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/capture'
+    | '/explore'
+    | '/learn'
+    | '/sim'
+    | '/sources'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   CaptureRoute: typeof CaptureRoute
+  ExploreRoute: typeof ExploreRoute
   LearnRoute: typeof LearnRoute
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
@@ -110,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/learn'
       fullPath: '/learn'
       preLoaderRoute: typeof LearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/capture': {
@@ -140,6 +172,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CaptureRoute: CaptureRoute,
+  ExploreRoute: ExploreRoute,
   LearnRoute: LearnRoute,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
