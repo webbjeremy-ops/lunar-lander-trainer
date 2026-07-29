@@ -231,14 +231,28 @@ function LearnPage() {
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => {
               unsub();
-              reject(new Error("Timed out waiting for AGC readiness (RESTART clear + stable scans)."));
+              reject(new Error(`Timed out waiting for AGC readiness (${tracker.snapshot().blockingReason ?? "unknown"}).`));
             }, 45_000);
             const unsub = client.addListener({
-              onChannelUpdate: (ev) => {
+              onChannelUpdate: (chEv) => {
                 if (openingTokenRef.current !== token) {
                   clearTimeout(timer); unsub(); resolve(); return;
                 }
-                tracker.applyChannelEvent(ev);
+                tracker.applyChannelEvent(chEv);
+                setReadinessSnap(tracker.snapshot());
+                if (tracker.isReady()) {
+                  clearTimeout(timer); unsub(); resolve();
+                }
+              },
+              onSnapshot: (snap) => {
+                if (openingTokenRef.current !== token) {
+                  clearTimeout(timer); unsub(); resolve(); return;
+                }
+                tracker.noteTickAdvance({
+                  tickIndex: snap.tickIndex,
+                  missionTimeUs: snap.missionTimeUs,
+                  totalAgcSteps: snap.totalAgcSteps,
+                });
                 setReadinessSnap(tracker.snapshot());
                 if (tracker.isReady()) {
                   clearTimeout(timer); unsub(); resolve();
@@ -550,7 +564,7 @@ function LearnPage() {
                       }
                     >
                       {attemptPhase === "gating"
-                        ? `Waiting for the AGC to complete startup before beginning the lamp test… (RESTART ${readinessSnap?.restartCleared ? "cleared" : "active"}, stable scans ${readinessSnap?.stableConsecutiveScans ?? 0}/1, scans after restart ${readinessSnap?.scansAfterRestart ?? 0}/2)`
+                        ? `Waiting for the AGC to settle before beginning the lamp test… (RESTART ${readinessSnap?.restartCleared ? "cleared" : "active"}, STANDBY ${readinessSnap?.standby ? "on" : "off"}, quiet ticks ${readinessSnap?.quietTicks ?? 0}/${readinessSnap?.requiredQuietTicks ?? 20}${readinessSnap?.blockingReason ? `, ${readinessSnap.blockingReason}` : ""})`
                         : attemptPhase === "opening"
                           ? "Preparing authentic AGC observation…"
                           : attemptPhase === "error"
