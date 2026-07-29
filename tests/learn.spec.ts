@@ -203,7 +203,12 @@ async function waitUntilLessonComplete(page: Page, lessonId: string, timeoutMs =
       return safe;
     });
     // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console
     console.error("[lesson-timeout]", JSON.stringify(diag, null, 2));
+    try {
+      const fs = await import("node:fs");
+      fs.writeFileSync("/tmp/lesson-timeout.json", JSON.stringify(diag, null, 2));
+    } catch { /* ignore */ }
     throw err;
   }
 }
