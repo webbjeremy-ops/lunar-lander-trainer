@@ -556,6 +556,8 @@ function publishReady(): void {
   if (initTraceHistory.length > 8) initTraceHistory.splice(0, initTraceHistory.length - 8);
   state.nextEventId = 1;
   state.recentEventsRing.length = 0;
+  state.publicEventsRing.length = 0;
+  state.publicEventsAppendedTotal = 0;
   state.lastLamps = adapter.lampBits();
   state.lastChannelEventCount = adapter.totalChannelEvents();
   // Align the Worker-owned decoder's EC counter with the client-side pure
@@ -566,6 +568,17 @@ function publishReady(): void {
   // capture fixtures). We reset ONLY `eventCount`, preserving digits, signs,
   // and annunciators so the UI keeps showing the actual settled DSKY state.
   state.decodedDsky.eventCount = 0;
+  // Capture the epoch-start baseline BEFORE flipping publicPhaseStarted so
+  // no channel/input event can race in and shift the recorded origin.
+  // Deep-clone decodedDsky so downstream mutations cannot perturb it.
+  state.epochStartBaseline = {
+    tickIndex: currentTickIndex(),
+    missionTimeUs: Number(state.clock.getMissionTimeUs()),
+    totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+    decodedDsky: JSON.parse(JSON.stringify(state.decodedDsky)) as DecodedDsky,
+    decodedDskyChecksum: decodedDskyCanonical(state.decodedDsky),
+    channelValues: snapshotAllChannels(adapter),
+  };
   state.publicPhaseStarted = true;
   state.workerState = "ready";
   send({
