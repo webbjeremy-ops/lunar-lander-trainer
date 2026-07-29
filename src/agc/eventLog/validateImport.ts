@@ -225,7 +225,7 @@ function validateDskyRegister(r: unknown, path: string, c: Collector): boolean {
   }
   const digits = r.digits;
   if (!Array.isArray(digits) || digits.length !== 5) {
-    c.add("invalid-decoded-baseline", `${path}.digits`, "Expected array of length 5.");
+    c.add("invalid-decoded-baseline", `${path}.digits`, "Expected non-empty array (\u22648) of digits.");
     return false;
   }
   for (let i = 0; i < digits.length; i++) {
