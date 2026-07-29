@@ -31,7 +31,7 @@ import {
   EXPECTED_ACTUATOR_CHANNELS,
   validateActuatorRegistry,
 } from "./actuatorRegistry";
-import { validateRegistry } from "./sensorRegistry";
+import { mappedSignalsForProfile, validateRegistry } from "./sensorRegistry";
 import { decideMonitorEntry, type MonitorEntryContext } from "./profileValidation";
 import { AgcInputChannelShadow } from "./inputShadow";
 import { MonitorTraceRing, type MonitorTraceWindow } from "./monitorTrace";
@@ -45,8 +45,12 @@ import type {
   ChannelMaskUpdateAction,
   EncodedSensorDiagnostics,
   MonitorBlockReason,
+  MonitorInputChannelView,
   ThrustCounterDiagnostic,
 } from "./types";
+
+/** Input channels any monitor profile may own (CHAN 030 / 033). */
+export const MONITOR_OWNED_INPUT_CHANNELS: readonly number[] = [0o30, 0o33];
 
 /** Every emulator touchpoint the monitor needs. Implemented in the Worker
  *  by a thin wrapper over `AgcCoreAdapter`. */
