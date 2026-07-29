@@ -77,8 +77,14 @@ export function MonitorPanel() {
       <h2 id="mon-h" className="text-xs uppercase tracking-widest text-amber-400">
         AGC monitor mode (diagnostic)
       </h2>
+      <p className="mt-2 rounded bg-amber-950/40 px-3 py-2 text-xs font-bold uppercase text-amber-300" data-testid="monitor-banner">
+        DISCRETE INTERFACE DIAGNOSTIC ONLY
+        <br />
+        NOT A POWERED-DESCENT MONITOR
+      </p>
       <p className="mt-2 rounded bg-amber-950/40 px-3 py-2 text-xs text-amber-300" data-testid="monitor-warning">
-        NOT A POWERED-DESCENT MONITOR. discrete-observer-v0 injects only
+        AGC output is observed for diagnostics only and is never applied to
+        the spacecraft. discrete-observer-v0 injects only
         source-mapped avionics discretes on CHAN 030/033 and observes CHAN
         011/014 and the THRUST output counter. Landing-radar and PIPA
         interfaces remain unresolved; DPS throttle magnitude is NOT derived.
@@ -144,6 +150,18 @@ export function MonitorPanel() {
           LR status: {avionics.landingRadarStatus} (acquisition cannot be fabricated)
         </span>
       </div>
+
+      <h3 className="mt-4 text-xs uppercase tracking-widest text-neutral-500">
+        Owned input channels (host → AGC, octal)
+      </h3>
+      <ul className="mt-2 space-y-0.5 text-xs" data-testid="mon-input-channels">
+        {(monitor?.inputChannels ?? []).map((c) => (
+          <li key={c.channel} data-testid={`mon-in-ch${c.channel.toString(8).padStart(3, "0")}`}>
+            CH{c.channel.toString(8).padStart(3, "0")} word {oct(c.word)} owned-mask{" "}
+            {oct(c.ownedMask)} {c.seeded ? "(seeded)" : "(host-written)"}
+          </li>
+        ))}
+      </ul>
 
       <h3 className="mt-4 text-xs uppercase tracking-widest text-neutral-500">
         Decoded AGC outputs (observation only)

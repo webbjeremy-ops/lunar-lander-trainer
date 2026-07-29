@@ -16,7 +16,7 @@ async function readWorkerBoots(page: Page): Promise<number> {
 
 async function waitForSimReady(page: Page): Promise<void> {
   await expect(page.getByTestId("sim-ready")).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByTestId("sim-protocol")).toHaveText("1");
+  await expect(page.getByTestId("sim-protocol")).toHaveText("2");
   await expect(page.getByTestId("sim-tick-us")).toHaveText("20000");
 }
 
