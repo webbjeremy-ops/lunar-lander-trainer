@@ -18,7 +18,7 @@ import {
   type AgcEventLogExportV1,
   type AgcEventLogPayloadV1,
 } from "./schema";
-import type { DecodedDsky, DskyRegister } from "../dsky/DskyTypes";
+import type { DecodedDsky } from "../dsky/DskyTypes";
 import { decodedDskyCanonical } from "../dsky/DskyDecoder";
 import { DSKY_KEYS } from "@/sim/agc/AgcChannelRegistry";
 import {
@@ -673,6 +673,5 @@ export async function validateImport(
   const compatibility = buildCompatibilityReport(validated, opts.currentSession ?? { ready: null });
   const status = compatibility.replayEligible ? "valid-compatible" : "valid-incompatible";
   // Silence unused-import warning: DskyRegister is used only in typedoc.
-  void ({} as DskyRegister);
   return { status, recording: validated, compatibility };
 }
