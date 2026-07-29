@@ -253,8 +253,8 @@ describe("encodeDiscreteSensorTick — discrete-observer-v0", () => {
   it("rejects missing avionics fields (does not default to flight-ready)", () => {
     const s0 = createDiscreteEncoderState("discrete-observer-v0");
     // Strip a required key.
-    const partial = { ...FLIGHT_READY } as Partial<LmDiscreteSensorState>;
-    delete partial.imuHealthy;
+    const { imuHealthy: _omit, ...partial } = FLIGHT_READY;
+    void _omit;
     const r = encodeDiscreteSensorTick(
       s0,
       partial as LmDiscreteSensorState,
