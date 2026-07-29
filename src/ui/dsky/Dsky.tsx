@@ -60,7 +60,7 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: {
+export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null }: {
   rope: RopeImage;
   onClient?: (client: AgcWorkerClient | null) => void;
   onSnapshot?: (snap: StateSnapshot) => void;
@@ -71,13 +71,20 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
    *  boundary, preventing races where a keypress carries an eventId that
    *  precedes the boundary the lesson attempt is scoped to. */
   disabled?: boolean;
+  /** Opt-in: attach to an externally-owned AgcWorkerClient (e.g. from the
+   *  shared AgcSessionProvider). When provided, Dsky does NOT create, init,
+   *  loadRope, or dispose the client — it only registers a supplementary
+   *  listener via `client.addListener(...)`. Set `sharedReady` to the
+   *  external ready payload so the phase can settle immediately. */
+  sharedClient?: AgcWorkerClient | null;
+  sharedReady?: ReadyPayload | null;
 }) {
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
   const [lamps, setLamps] = useState(0);
   const [decoded, setDecoded] = useState<DecodedDsky>(() => makeEmptyDecodedDsky());
-  const [ready, setReady] = useState<ReadyPayload | null>(null);
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [ready, setReady] = useState<ReadyPayload | null>(sharedReady);
+  const [phase, setPhase] = useState<Phase>(sharedClient ? (sharedReady ? "ready" : "loading-rom") : "idle");
   const [error, setError] = useState<string | null>(null);
   const [erasableBase, setErasableBase] = useState(0o20);
   const [selectedChannel, setSelectedChannel] = useState<number>(0o10);
@@ -85,7 +92,68 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
   const [paused, setPaused] = useState(false);
   const [timeScale, setTimeScaleState] = useState<number>(1);
 
+  // ------- Shared-client mode: attach as supplementary listener only. -------
   useEffect(() => {
+    if (!sharedClient) return;
+    clientRef.current = sharedClient;
+    onClient?.(sharedClient);
+    if (typeof window !== "undefined") {
+      const w = window as unknown as { __agcTest?: Record<string, unknown> };
+      const t = (w.__agcTest ??= { snapshots: 0, workerBoots: 0 });
+      t.client = sharedClient;
+    }
+    // Seed from cached ready if the shared client already booted.
+    const cachedReady = sharedReady ?? sharedClient.ready();
+    if (cachedReady) {
+      setReady(cachedReady);
+      setPhase("ready");
+    }
+    const unsub = sharedClient.addListener({
+      onReady: (payload) => {
+        setReady(payload);
+        onReady?.(payload);
+        setPhase("ready");
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          if (w.__agcTest) w.__agcTest.ready = payload;
+        }
+      },
+      onSnapshot: (snap) => {
+        setSnapshot(snap);
+        onSnapshot?.(snap);
+        setLamps(snap.lamps);
+        setPaused(!snap.running);
+        setTimeScaleState(snap.timeScale);
+        if (snap.decodedDsky) setDecoded(snap.decodedDsky);
+        if (typeof window !== "undefined") {
+          const w = window as unknown as { __agcTest?: Record<string, unknown> };
+          const t = w.__agcTest;
+          if (t) {
+            t.snapshot = snap;
+            t.snapshots = ((t.snapshots as number) ?? 0) + 1;
+          }
+        }
+      },
+      onDsky: (l) => setLamps(l),
+      onDskyDecoded: (d) => setDecoded(d),
+      onFatalError: (code, message) => {
+        setError(`${code}: ${message}`);
+        setPhase("error");
+      },
+    });
+    // Ask the worker for a fresh snapshot so late-attached mirrors do not
+    // wait for the next coalesced 25 Hz tick to show current state.
+    try { sharedClient.requestSnapshot(); } catch { /* ignore */ }
+    return () => {
+      unsub();
+      onClient?.(null);
+      clientRef.current = null;
+    };
+  }, [sharedClient, sharedReady, onClient, onSnapshot, onReady]);
+
+  // ------- Standalone mode: own the client end-to-end. -------
+  useEffect(() => {
+    if (sharedClient) return;
     setPhase("booting-worker");
     let client: AgcWorkerClient;
     try {
@@ -145,7 +213,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
       client.dispose();
       clientRef.current = null;
     };
-  }, [rope.id, rope.url, rope.manifestUrl, attempt, onClient, onSnapshot, onReady]);
+  }, [sharedClient, rope.id, rope.url, rope.manifestUrl, attempt, onClient, onSnapshot, onReady]);
 
 
   // Push erasable-base changes to the worker.
