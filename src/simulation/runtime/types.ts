@@ -13,6 +13,7 @@ import type {
   TimedLmCommand,
   TouchdownResult,
 } from "@/simulation/lm";
+import type { AgcMonitorSnapshot } from "@/simulation/agcio/types";
 
 /** Runtime status is deliberately separate from the shared MissionClock
  *  state. `interlocked` is reserved for the AGC-reset-during-scenario
@@ -111,6 +112,10 @@ export interface MissionSnapshot {
   readonly lm: LmPhysicsState | null;
   readonly control: LmControlInput;
   readonly touchdown: TouchdownResult | null;
+  /** Compact monitor state (simulation protocol v2). Never carries the
+   *  retained trace ring — that is fetched via `sim:request-monitor-trace`.
+   *  `null` when no monitor profile has ever been requested. */
+  readonly monitor: AgcMonitorSnapshot | null;
 }
 
 export interface TerminalTouchdownEvent {
