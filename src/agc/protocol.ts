@@ -34,8 +34,64 @@ export type AgcCommand =
   | { type: "requestSnapshot" }
   | { type: "requestDiagnostics" }
   | { type: "requestEventBoundary" }
+  | { type: "requestEventLogExport" }
   | { type: "configure"; erasableBase?: number; erasableLength?: number }
   | { type: "dispose" };
+
+/** ---------- Event-log export (Worker → client reply) --------------------
+ *  Deterministic snapshot of the current public epoch: the baseline captured
+ *  at the moment public event IDs began (post-canonical-init) plus every
+ *  retained public event since. The main-thread `buildEventLogExport` helper
+ *  wraps this raw payload into the versioned file schema. */
+export interface PublicInputRecord {
+  type: "inputAccepted";
+  eventId: number;
+  tickIndex: number;
+  missionTimeUs: number;
+  totalAgcSteps: number;
+  kind: "dskyKeyDown" | "dskyKeyUp" | "proceedKey";
+  keyCode?: number;
+  pressed?: boolean;
+}
+
+export interface PublicChannelRecord {
+  type: "channelUpdate";
+  eventId: number;
+  tickIndex: number;
+  missionTimeUs: number;
+  totalAgcSteps: number;
+  channel: number;
+  value: number;
+}
+
+export type PublicEventRecord = PublicInputRecord | PublicChannelRecord;
+
+export interface EventLogExportPayload {
+  sessionEpoch: number;
+  timing: {
+    /** Nanoseconds per AGC step (11720 ns nominal). */
+    nominalStepNs: number;
+    /** Scheduler tick period in microseconds. */
+    schedulerTickUs: number;
+  };
+  baseline: {
+    tickIndex: number;
+    missionTimeUs: number;
+    totalAgcSteps: number;
+    decodedDsky: DecodedDsky;
+    decodedDskyChecksum: string;
+    channelValues: Record<string, number>;
+  };
+  events: PublicEventRecord[];
+  retention: {
+    /** True iff no events have been dropped from the head of the ring. */
+    completeEpoch: boolean;
+    /** eventId of the oldest retained event when completeEpoch is false. */
+    droppedBeforeEventId: number | null;
+    /** Configured ring capacity; null if unbounded. */
+    retainedEventLimit: number | null;
+  };
+}
 
 /**
  * Worker-allocated attempt boundary. The `boundaryEventId` is drawn from the
