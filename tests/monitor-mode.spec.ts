@@ -43,6 +43,11 @@ async function clearSamples(page: Page): Promise<void> {
   });
 }
 
+async function startGolden(page: Page): Promise<void> {
+  await page.getByTestId("cmd-start-golden").click();
+  await expect(page.getByTestId("ms-status")).toHaveText("running", { timeout: 30_000 });
+}
+
 test.describe("M3.3A2-P5.e monitor mode", () => {
   test("boots protocol v2 on one Worker with the monitor dormant", async ({ page }) => {
     const wasmRequests: string[] = [];
@@ -75,6 +80,9 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
   test("entering discrete-observer-v0 arms the trace and merges owned bits", async ({ page }) => {
     await page.goto("/dev/mission-runtime");
     await waitForSimReady(page);
+    // Monitor entry requires an ACTIVE scenario — the profile may not arm
+    // against an idle runtime.
+    await startGolden(page);
 
     // Operator declares the discretes; the Worker never invents them.
     await page.getByTestId("av-engineArmed").click();
@@ -115,6 +123,7 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
   test("descent-monitor-v1 is blocked with unresolved-mapping reasons", async ({ page }) => {
     await page.goto("/dev/mission-runtime");
     await waitForSimReady(page);
+    await startGolden(page);
 
     await page.getByTestId("mon-enter-descent").click();
     await expect(page.getByTestId("mon-blocked")).toBeVisible({ timeout: 30_000 });
@@ -129,6 +138,7 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
   test("exiting the profile disarms the trace and clears retained diagnostics", async ({ page }) => {
     await page.goto("/dev/mission-runtime");
     await waitForSimReady(page);
+    await startGolden(page);
     await page.getByTestId("av-engineArmed").click();
     await page.getByTestId("mon-enter-discrete").click();
     await expect(page.getByTestId("mon-status")).toHaveText("active", { timeout: 30_000 });
@@ -143,8 +153,7 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
   test("a scenario reset interlocks the monitor instead of re-arming it", async ({ page }) => {
     await page.goto("/dev/mission-runtime");
     await waitForSimReady(page);
-    await page.getByTestId("cmd-start-golden").click();
-    await expect(page.getByTestId("ms-status")).toHaveText("running", { timeout: 30_000 });
+    await startGolden(page);
 
     await page.getByTestId("av-engineArmed").click();
     await page.getByTestId("mon-enter-discrete").click();
@@ -155,33 +164,32 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
     await expect(page.getByTestId("mon-trace-enabled")).toHaveText("false");
   });
 
-  test("LM physics is bit-identical with the monitor off and on", async ({ page }) => {
-    await page.goto("/dev/mission-runtime");
-    await waitForSimReady(page);
+  test("LM physics is bit-identical with the monitor off and on", async ({ browser }) => {
+    // Two FRESH sessions rather than an in-page reset: each boots the same
+    // canonical runtime and starts the same golden scenario, so physics is a
+    // pure function of scenario-elapsed time in both.
+    async function run(withMonitor: boolean): Promise<Samples> {
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto("/dev/mission-runtime");
+      await waitForSimReady(page);
+      await startGolden(page);
+      if (withMonitor) {
+        await page.getByTestId("av-engineArmed").click();
+        await page.getByTestId("av-lgcInControl").click();
+        await page.getByTestId("mon-enter-discrete").click();
+        await expect(page.getByTestId("mon-status")).toHaveText("active", { timeout: 30_000 });
+      }
+      await page.waitForTimeout(8_000);
+      const samples = await readSamples(page);
+      await context.close();
+      return samples;
+    }
 
-    // Run A — monitor OFF.
-    await clearSamples(page);
-    await page.getByTestId("cmd-start-golden").click();
-    await expect(page.getByTestId("ms-status")).toHaveText("running", { timeout: 30_000 });
-    await page.waitForTimeout(6_000);
-    const runOff = await readSamples(page);
+    const runOff = await run(false);
+    const runOn = await run(true);
     expect(Object.keys(runOff).length).toBeGreaterThan(3);
 
-    // Reset to the identical initial condition, then run B — monitor ON.
-    await page.getByTestId("cmd-reset-scenario").click();
-    await expect(page.getByTestId("ms-status")).not.toHaveText("running", { timeout: 30_000 });
-    await clearSamples(page);
-    await page.getByTestId("av-engineArmed").click();
-    await page.getByTestId("av-lgcInControl").click();
-    await page.getByTestId("mon-enter-discrete").click();
-    await page.getByTestId("cmd-start-golden").click();
-    await expect(page.getByTestId("ms-status")).toHaveText("running", { timeout: 30_000 });
-    await page.waitForTimeout(6_000);
-    const runOn = await readSamples(page);
-
-    // Compare every scenario-elapsed key both runs published. Physics is a
-    // pure function of elapsed scenario time, so overlapping keys must be
-    // EXACTLY equal — the monitor may not perturb the kernel.
     const shared = Object.keys(runOff).filter((k) => k in runOn);
     expect(shared.length).toBeGreaterThan(2);
     for (const k of shared) {
