@@ -150,7 +150,7 @@ interface WorkerState {
   ropeSourceCommit: string;
   ropeByteLength: number;
   emulatorVersion: string;
-  extensionIdentity: ReadyPayload["extensionIdentity"] | undefined;
+  extensionIdentity: Diagnostics["extensionIdentity"] | undefined;
   lastError: string | null;
   workerState: Diagnostics["workerState"];
   disposed: boolean;
