@@ -142,6 +142,20 @@ interface DiagState {
     fromStep: number;
     toStep: number;
   } | null;
+  // Attempt-bootstrap diagnostics.
+  attemptKey?: string | null;
+  seedCount?: number;
+  seedSource?: string | null;
+  listenerAttachedEventId?: number | null;
+  bufferedPreSeedCount?: number;
+  replayedPostSeedCount?: number;
+  firstReplayedEventId?: number | null;
+  lastProcessedEventId?: number | null;
+  duplicateEventCount?: number;
+  outOfOrderEventCount?: number;
+  staleAttemptEventCount?: number;
+  downgradeAttempts?: number;
+  propOverwriteAttempts?: number;
 }
 
 function makeEmptyDiag(): DiagState {
@@ -151,6 +165,14 @@ function makeEmptyDiag(): DiagState {
     firstDigitMatchEventId: null, firstAnnMatchEventId: null, firstFullMatchEventId: null,
     closestTransition: null,
     keyEventIds: {},
+    seedCount: 0,
+    bufferedPreSeedCount: 0,
+    replayedPostSeedCount: 0,
+    duplicateEventCount: 0,
+    outOfOrderEventCount: 0,
+    staleAttemptEventCount: 0,
+    downgradeAttempts: 0,
+    propOverwriteAttempts: 0,
   };
 }
 
