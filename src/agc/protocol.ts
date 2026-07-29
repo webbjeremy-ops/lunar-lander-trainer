@@ -239,6 +239,7 @@ export type AgcEvent =
   | { type: "channelUpdate"; payload: ChannelEventLite }
   | { type: "inputAccepted"; payload: InputAcceptedEvent }
   | { type: "eventBoundary"; payload: EventBoundaryPayload }
+  | { type: "eventLogExport"; payload: EventLogExportPayload }
   | { type: "alarm"; payload: { code: number; missionTimeUs: number; eventId: number; tickIndex: number } }
   | { type: "paused"; payload: { missionTimeUs: number } }
   | { type: "resumed"; payload: { missionTimeUs: number; timeScale: number } }
