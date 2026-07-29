@@ -274,6 +274,9 @@ function diagnostics(): Diagnostics {
     ticksExecuted: s.ticksExecuted,
     lastError: state.lastError,
     workerState: state.workerState,
+    initialResetPerformed: state.initialResetPerformed,
+    resetCount: state.resetCount,
+    sessionEpoch: state.sessionEpoch,
   };
 }
 
