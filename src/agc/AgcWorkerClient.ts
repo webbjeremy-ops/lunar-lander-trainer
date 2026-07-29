@@ -269,6 +269,9 @@ export class AgcWorkerClient {
         this.lastReady = msg.payload;
         fanout("onReady", (l) => l.onReady?.(msg.payload));
         break;
+      case "agc:extension-ready":
+        fanout("onExtensionReady", (l) => l.onExtensionReady?.(msg));
+        break;
       case "stateSnapshot":
         fanout("onSnapshot", (l) => l.onSnapshot?.(msg.payload));
         break;
