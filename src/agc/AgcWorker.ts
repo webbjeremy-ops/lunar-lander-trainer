@@ -735,6 +735,7 @@ function diagnostics(): Diagnostics {
     canonicalInit: state.initialResetPerformed
       ? canonicalInitInfo(state.canonicalInit)
       : null,
+    extensionIdentity: state.extensionIdentity,
   };
 }
 
