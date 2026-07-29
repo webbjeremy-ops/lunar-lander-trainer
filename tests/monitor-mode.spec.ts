@@ -37,12 +37,6 @@ async function readSamples(page: Page): Promise<Samples> {
   });
 }
 
-async function clearSamples(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    (window as unknown as { __missionSamples?: Samples }).__missionSamples = {};
-  });
-}
-
 async function startGolden(page: Page): Promise<void> {
   await page.getByTestId("cmd-start-golden").click();
   await expect(page.getByTestId("ms-status")).toHaveText("running", { timeout: 30_000 });
