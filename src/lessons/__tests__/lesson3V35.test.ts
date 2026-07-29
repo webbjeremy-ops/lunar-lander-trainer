@@ -25,8 +25,9 @@ import type { LessonState, LessonInputEvent } from "@/lessons/types";
 import type { ChannelEventLite } from "@/agc/protocol";
 import {
   FIXTURE_PROVENANCE,
-  V35_PEAK_CHECKSUM,
+  V35_PEAK_EVIDENCE_CHECKSUM,
 } from "@/lessons/fixtureExpectations";
+
 import { AGC_KEY } from "@/lessons/keyCodes";
 import { channelEv, keyInput, makeObservation, resetEventIds } from "./testHelpers";
 
@@ -148,7 +149,7 @@ describe("Lesson 3 — V35 lamp test", () => {
     expect(interactive).toBeDefined();
     expect(interactive!.classification).toBe("authentic-emulator");
     expect(interactive!.educationalInteractionOnly).toBe(false);
-    expect(interactive!.decodedStateChecksum).toBe(V35_PEAK_CHECKSUM);
+    expect(interactive!.decodedStateChecksum).toBe(V35_PEAK_EVIDENCE_CHECKSUM);
     expect(interactive!.inputEventIds.length).toBe(4);
     expect(interactive!.channelEventIds.length).toBeGreaterThan(0);
     expect(interactive!.fixtureId).toBe("v35-lamp-test");

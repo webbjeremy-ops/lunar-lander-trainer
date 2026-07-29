@@ -425,14 +425,89 @@ test.describe("/learn production acceptance", () => {
     expect(ev3.channelEventIds.length).toBeGreaterThan(0);
     for (const id of ev3.channelEventIds) expect(id).toBeGreaterThan(maxInputId);
 
-    // Visible DSKY reflects the V35 peak too (22b: DSKY matches accessible mirror).
-    const liveText = (await page.getByTestId("dsky-live").textContent()) ?? "";
-    expect(liveText).toContain("Program 88");
-    expect(liveText).toContain("Verb 88");
-    expect(liveText).toContain("Noun 88");
-    expect(liveText).toContain("R1 +88888");
-    expect(liveText).toContain("R2 +88888");
-    expect(liveText).toContain("R3 +88888");
+    // 22b: Visible DSKY consistency with the CURRENT published snapshot.
+    //
+    // The lossless V35 peak already proved authentic completion above. The
+    // visible DSKY is intentionally the latest published emulator snapshot,
+    // NOT a frozen peak — Luminary tears the lamp test down as soon as it
+    // completes. We assert: at the instant Playwright reads the DOM, the
+    // visible digits AND the aria-live text describe the SAME published
+    // snapshot (identified by `data-snapshot-seq` / `publishedDsky.sequence`).
+    // Partial or fully-blanked teardown is authentic and accepted.
+    const consistency = await (async () => {
+      for (let attempt = 0; attempt < 20; attempt++) {
+        const sample = await page.evaluate(() => {
+          const digitsOf = (id: string) => {
+            const svgs = document.querySelectorAll(
+              `[data-testid="${id}"] svg`,
+            );
+            // Non-blank digit path fill is #8fff8f; blank is #1a1a1a. We only
+            // need to know per-cell blank vs. lit for the consistency check.
+            return Array.from(svgs).map((s) => {
+              const p = s.querySelector("path") as SVGPathElement | null;
+              return p?.getAttribute("fill") === "#8fff8f";
+            });
+          };
+          const root = document.querySelector('[data-testid="agc-dsky"]');
+          const seqBefore = root?.getAttribute("data-snapshot-seq") ?? null;
+          const liveText =
+            document.querySelector('[data-testid="dsky-live"]')?.textContent ?? "";
+          const litMask = {
+            prog: digitsOf("reg-prog"),
+            verb: digitsOf("reg-verb"),
+            noun: digitsOf("reg-noun"),
+            r1: digitsOf("reg-r1"),
+            r2: digitsOf("reg-r2"),
+            r3: digitsOf("reg-r3"),
+          };
+          const seqAfter = root?.getAttribute("data-snapshot-seq") ?? null;
+          const pub = (window as unknown as {
+            __agcTest?: { publishedDsky?: { sequence: number; decodedDsky: unknown } };
+          }).__agcTest?.publishedDsky;
+          return { seqBefore, seqAfter, liveText, litMask, pub };
+        });
+        if (sample.seqBefore !== null && sample.seqBefore === sample.seqAfter) {
+          return sample;
+        }
+      }
+      throw new Error("visible DSKY never stabilised for one snapshot sequence");
+    })();
+
+    // The published snapshot object must exist and match the DOM sequence.
+    expect(consistency.pub, `diag=${await diagnostics(page)}`).toBeTruthy();
+    expect(String(consistency.pub!.sequence)).toBe(consistency.seqBefore);
+
+    // The aria-live text MUST derive from that same published decoded value.
+    // Recompute the expected text from publishedDsky and compare.
+    type Reg = {
+      digits: Array<{ value: number | null }>;
+      sign?: { plus?: boolean; minus?: boolean } | null;
+    };
+    type Dec = {
+      program: Reg; verb: Reg; noun: Reg; r1: Reg; r2: Reg; r3: Reg;
+      annunciators: Record<string, boolean>;
+    };
+    const d = consistency.pub!.decodedDsky as Dec;
+    const digitsStr = (r: Reg) =>
+      r.digits.map((x) => (x.value === null ? "_" : String(x.value))).join("");
+    const signStr = (r: Reg) =>
+      r.sign?.plus && r.sign?.minus ? "±" : r.sign?.plus ? "+" : r.sign?.minus ? "-" : "";
+    const onList = Object.entries(d.annunciators).filter(([, v]) => v).map(([k]) => k).join(", ") || "none";
+    const expectedLive =
+      `Program ${digitsStr(d.program)}, Verb ${digitsStr(d.verb)}, Noun ${digitsStr(d.noun)}. ` +
+      `R1 ${signStr(d.r1)}${digitsStr(d.r1)}. R2 ${signStr(d.r2)}${digitsStr(d.r2)}. R3 ${signStr(d.r3)}${digitsStr(d.r3)}. ` +
+      `Indicators: ${onList}.`;
+    expect(consistency.liveText).toBe(expectedLive);
+
+    // The rendered digit lit/blank mask MUST match publishedDsky exactly.
+    const maskOf = (r: Reg) => r.digits.map((x) => x.value !== null);
+    expect(consistency.litMask.prog).toEqual(maskOf(d.program));
+    expect(consistency.litMask.verb).toEqual(maskOf(d.verb));
+    expect(consistency.litMask.noun).toEqual(maskOf(d.noun));
+    expect(consistency.litMask.r1).toEqual(maskOf(d.r1));
+    expect(consistency.litMask.r2).toEqual(maskOf(d.r2));
+    expect(consistency.litMask.r3).toEqual(maskOf(d.r3));
+
 
     // 12. Focus remains on a sensible control (rendered ENTR key or its
     //     containing pad) after auto-completion. We assert the document

@@ -153,6 +153,34 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
     clientRef.current?.configure(erasableBase, 16);
   }, [erasableBase]);
 
+  // Test-only atomic published-DSKY identity. Every time the value that
+  // renders the visible register digits changes, we bump a monotonic sequence
+  // AFTER commit and publish the paired decoded object. Playwright reads the
+  // sequence, then the DOM, then the sequence again — retrying if it changed
+  // — so it can compare visible+aria state against the exact snapshot that
+  // produced them, without artificial latching.
+  const publishedSeqRef = useRef(0);
+  const dskyRootRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    publishedSeqRef.current += 1;
+    const seq = publishedSeqRef.current;
+    if (dskyRootRef.current) {
+      dskyRootRef.current.setAttribute("data-snapshot-seq", String(seq));
+    }
+    if (typeof window !== "undefined") {
+      const w = window as unknown as { __agcTest?: Record<string, unknown> };
+      const t = w.__agcTest;
+      if (t) {
+        t.publishedDsky = {
+          sequence: seq,
+          tickIndex: (t.snapshot as { tickIndex?: number } | undefined)?.tickIndex ?? null,
+          decodedDsky: decoded,
+        };
+      }
+    }
+  }, [decoded]);
+
+
   const sendKey = useCallback((code: number | "PRO") => {
     const c = clientRef.current;
     if (!c) return;
@@ -216,7 +244,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false }: 
   const erasableView = snapshot?.erasableWindow ?? [];
 
   return (
-    <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]" data-testid="agc-dsky">
+    <div ref={dskyRootRef} className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]" data-testid="agc-dsky">
       <div className="rounded border border-neutral-800 bg-neutral-950 p-3 shadow-inner">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-xs uppercase tracking-widest text-neutral-500">DSKY</h3>
@@ -503,27 +531,23 @@ function RegistersPanel({ decoded }: { decoded: DecodedDsky }) {
 
 function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
   // Consolidated ARIA live region — the only accessible mirror of DSKY output.
-  // Digits/lamps themselves are aria-hidden.
-  const [text, setText] = useState("");
-  const lastUpdateRef = useRef(0);
-  useEffect(() => {
-    const now = Date.now();
-    if (now - lastUpdateRef.current < 500) return; // 2 Hz cap
-    lastUpdateRef.current = now;
-    const digits = (r: DskyRegister) =>
-      r.digits.map((d) => (d.value === null ? "_" : String(d.value))).join("");
-    const sign = (r: DskyRegister) =>
-      r.sign?.plus && r.sign?.minus ? "±" : r.sign?.plus ? "+" : r.sign?.minus ? "-" : "";
-    const on = Object.entries(decoded.annunciators)
-      .filter(([, v]) => v)
-      .map(([k]) => k)
-      .join(", ") || "none";
-    setText(
-      `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
-      `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
-      `Indicators: ${on}.`,
-    );
-  }, [decoded]);
+  // MUST derive from the SAME `decoded` value in the SAME React commit as the
+  // visible register digits, so screen-reader text and rendered digits never
+  // describe different published snapshots. aria-live="polite" already lets the
+  // screen reader coalesce naturally; we do not throttle here (throttling let
+  // the text and the digits drift onto different snapshots).
+  const digits = (r: DskyRegister) =>
+    r.digits.map((d) => (d.value === null ? "_" : String(d.value))).join("");
+  const sign = (r: DskyRegister) =>
+    r.sign?.plus && r.sign?.minus ? "±" : r.sign?.plus ? "+" : r.sign?.minus ? "-" : "";
+  const on = Object.entries(decoded.annunciators)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .join(", ") || "none";
+  const text =
+    `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
+    `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
+    `Indicators: ${on}.`;
   return (
     <div
       role="status"
@@ -536,6 +560,7 @@ function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
     </div>
   );
 }
+
 
 export function LampTestButton({ rope: _rope }: { rope: RopeImage }) {
   return (
