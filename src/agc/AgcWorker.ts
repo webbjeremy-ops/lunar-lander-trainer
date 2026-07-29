@@ -78,6 +78,17 @@ interface WorkerState {
    *  from here instead of re-deriving context from the current clock. */
   recentEventsRing: ChannelEventLite[];
   recentEventsCap: number;
+  /** Canonical-initialization invariant tracking. `initialResetPerformed`
+   *  flips true when the single `loadRope` handler completes its one and
+   *  only cpu_reset(); `resetCount` increments on every adapter.reset()
+   *  regardless of source, so tests can assert exactly one call for a
+   *  session unless the user requested an explicit later reset. */
+  initialResetPerformed: boolean;
+  resetCount: number;
+  /** Session epoch. Starts at 0; every explicit `reset` command bumps it.
+   *  The initialization reset itself does NOT bump the epoch — it happens
+   *  before the public session becomes usable. */
+  sessionEpoch: number;
 }
 
 
