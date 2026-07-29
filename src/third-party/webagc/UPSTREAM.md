@@ -24,7 +24,7 @@ this directory at the time of vendoring:
 | File | Bytes | SHA-256 | Origin |
 | --- | --- | --- | --- |
 | `yaAGC.wasm` | 132617 | `a595f3ad3cc6833638b49879e2d41149a7327b1a10577828f50466d6c7747f14` | verified-byte-identical-to-webAGC@0575ea7 (frozen; comparison-only) |
-| `yaAGC-ext.wasm` | 274621 | `aa00b11a1680b0934fcc0aa3f21835a307e5cf612600d9305fbf387103b10738` | M3.3A2-P2 extended build; see `third-party/virtualagc-fork/PATCHES/lovable-hwio/README.md`. Not promoted to runtime in P2 — sits alongside the frozen artifact for P3 parity comparison. |
+| `yaAGC-ext.wasm` | 274716 | `7d9b90978b9096c0e387e00309f2f159779dbd5ff99756c28d8edff919ddf4a4` | M3.3A2-P2 extended build; see `third-party/virtualagc-fork/PATCHES/lovable-hwio/README.md`. Not promoted to runtime in P2 — sits alongside the frozen artifact for P3 parity comparison. |
 
 **`origin: verified-byte-identical-to-webAGC@0575ea7`** was established during
 M3.3A2 Phase 0 by cloning `michaelfranzl/webAGC @ 0575ea7a1231e3948bae7d2c22a6ac146da0c38d`
