@@ -129,6 +129,24 @@ interface WorkerState {
    *  from here instead of re-deriving context from the current clock. */
   recentEventsRing: ChannelEventLite[];
   recentEventsCap: number;
+  /** Bounded ring of PUBLIC events (inputAccepted + channelUpdate) since
+   *  the current epoch's `ready`. Used exclusively for event-log export.
+   *  Distinct from `recentEventsRing` (channel-only, snapshot-facing). */
+  publicEventsRing: PublicEventRecord[];
+  publicEventsCap: number;
+  /** Total number of public events APPENDED to the ring this epoch
+   *  (including any that have since been dropped from the head). */
+  publicEventsAppendedTotal: number;
+  /** Epoch-start baseline captured at publishReady. Null before ready and
+   *  between reset and the next ready. */
+  epochStartBaseline: {
+    tickIndex: number;
+    missionTimeUs: number;
+    totalAgcSteps: number;
+    decodedDsky: DecodedDsky;
+    decodedDskyChecksum: string;
+    channelValues: Record<string, number>;
+  } | null;
   /** Canonical-initialization invariant tracking. `initialResetPerformed`
    *  flips true when the single `loadRope` handler completes its one and
    *  only cpu_reset(); `resetCount` increments on every adapter.reset()
