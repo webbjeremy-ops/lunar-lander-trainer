@@ -463,6 +463,8 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
     case "reset": {
       if (!adapter) return;
       adapter.reset();
+      state.resetCount++;
+      state.sessionEpoch++;
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
