@@ -864,6 +864,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         kind: "dskyKeyDown",
         payload: { keyCode: cmd.keyCode },
       });
+      if (state.publicPhaseStarted) {
+        appendPublicEvent({
+          type: "inputAccepted",
+          eventId, tickIndex, missionTimeUs,
+          totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          kind: "dskyKeyDown", keyCode: cmd.keyCode,
+        });
+      }
       send({
         type: "inputAccepted",
         payload: { eventId, tickIndex, missionTimeUs, kind: "dskyKeyDown", keyCode: cmd.keyCode },
@@ -880,6 +888,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         kind: "dskyKeyUp",
         payload: { keyCode: cmd.keyCode },
       });
+      if (state.publicPhaseStarted) {
+        appendPublicEvent({
+          type: "inputAccepted",
+          eventId, tickIndex, missionTimeUs,
+          totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          kind: "dskyKeyUp", keyCode: cmd.keyCode,
+        });
+      }
       send({
         type: "inputAccepted",
         payload: { eventId, tickIndex, missionTimeUs, kind: "dskyKeyUp", keyCode: cmd.keyCode },
@@ -897,6 +913,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         kind: "proceedKey",
         payload: { pressed: cmd.pressed },
       });
+      if (state.publicPhaseStarted) {
+        appendPublicEvent({
+          type: "inputAccepted",
+          eventId, tickIndex, missionTimeUs,
+          totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          kind: "proceedKey", pressed: cmd.pressed,
+        });
+      }
       send({
         type: "inputAccepted",
         payload: { eventId, tickIndex, missionTimeUs, kind: "proceedKey", pressed: cmd.pressed },
