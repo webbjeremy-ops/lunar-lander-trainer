@@ -23,6 +23,8 @@
 +	  --export=agc_out_trace_drain \
 +	  --export=agc_out_trace_dropped \
 +	  --export=agc_out_trace_reset \
++	  --export=agc_out_trace_set_enabled \
++	  --export=agc_out_trace_enabled \
 +	  --export=agc_ext_version \
 +	  --export=agc_hwio_version
 +	wasm-opt $@ -Oz -o $@
