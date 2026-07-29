@@ -113,8 +113,14 @@ export function AgcSessionProvider({ children }: { children: ReactNode }) {
     setClient(c);
 
     if (typeof window !== "undefined") {
-      const w = window as unknown as { __agcSession?: unknown };
+      const w = window as unknown as {
+        __agcSession?: unknown;
+        __agcTest?: Record<string, unknown>;
+      };
       w.__agcSession = { client: c, epoch };
+      const t = (w.__agcTest ??= { snapshots: 0, workerBoots: 0 });
+      t.workerBoots = ((t.workerBoots as number) ?? 0) + 1;
+      t.client = c;
     }
 
     return () => {
