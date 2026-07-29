@@ -157,4 +157,18 @@ export function decodedDskyCanonical(state: DecodedDsky): string {
   ].join("|");
 }
 
+/**
+ * Structural (EC-independent) canonical of a DecodedDsky. Suitable for
+ * identity comparisons across decoder instances that started from different
+ * baselines (e.g. LessonHost's shadow decoder seeded from an attempt
+ * boundary vs. the Worker-owned decoder that has been running since public
+ * phase start). Two states with identical digits/signs/annunciators produce
+ * the same structural canonical regardless of how many events each decoder
+ * has processed.
+ */
+export function decodedDskyStructural(state: DecodedDsky): string {
+  const c = decodedDskyCanonical(state);
+  return c.replace(/\|EC:\d+$/, "");
+}
+
 export { makeEmptyDecodedDsky, BLANK_DIGIT, SIGN_OFF };
