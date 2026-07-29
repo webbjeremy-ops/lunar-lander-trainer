@@ -479,17 +479,14 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
       };
     }
     if (next !== cur) {
-      // CRITICAL: advance the local ref synchronously. React's setState is
-      // asynchronous and the `stateRef.current = state` effect only runs
-      // after commit. Between here and that commit, more channel events
-      // may fire in the same microtask burst; without a synchronous ref
-      // advance, subsequent dispatches read the pre-completion state,
-      // recompute a fresh in-progress `next` (peak has decayed by then),
-      // and clobber the latched completion via setStates. Once completed,
-      // never downgrade — the attempt latch is permanent for its scope.
+      // Never downgrade: once completed, the attempt latch is terminal.
       if (stateRef.current.status === "completed" && next.status !== "completed") {
+        diagRef.current.downgradeAttempts =
+          (diagRef.current.downgradeAttempts ?? 0) + 1;
         return;
       }
+      // Advance ref synchronously so events in the same microtask burst see
+      // the latched state and short-circuit on the completed guard above.
       stateRef.current = next;
       onStateChange(next);
     }
