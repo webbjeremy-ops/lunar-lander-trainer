@@ -142,7 +142,11 @@ export class ReadinessTracker {
         this.scansObserved++;
         if (this.restartCleared) {
           this.scansAfterRestart++;
-          const chk = decodedDskyCanonical(this.shadow);
+          // Strip the "EC:<n>" event-count suffix — it monotonically grows
+          // per applied event, so two IDENTICAL relay-state scans would
+          // otherwise never match. Stability is about latched display, not
+          // event count.
+          const chk = decodedDskyCanonical(this.shadow).replace(/\|EC:\d+$/, "");
           if (this.lastScanChecksum !== null && this.lastScanChecksum === chk) {
             this.stableConsecutiveScans++;
           } else {
