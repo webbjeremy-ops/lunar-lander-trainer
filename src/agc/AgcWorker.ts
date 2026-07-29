@@ -46,6 +46,13 @@ import {
 } from "@/lessons/ReadinessTracker";
 import { V35_READINESS_QUIET_TICKS } from "@/lessons/fixtureExpectations";
 import { AGC_KEY } from "@/lessons/keyCodes";
+import { MissionRuntime, MISSION_TICK_US } from "@/simulation/runtime/MissionRuntime";
+import type { MissionSnapshot } from "@/simulation/runtime/types";
+import {
+  SIMULATION_PROTOCOL_VERSION,
+  type SimulationCommand,
+  type SimulationEvent,
+} from "./simulationProtocol";
 
 const SNAPSHOT_SCHEMA_VERSION = 1;
 
@@ -101,6 +108,30 @@ function send(message: AgcEvent, requestId?: string, missionTimeUs?: number): vo
     missionTimeUs,
   });
   ctx.postMessage(env);
+}
+
+/** Dedicated dispatcher for M3.2 simulation events. Distinct from `send()`
+ *  because sim events are never subject to the pre-ready canonical-init
+ *  suppression list — the sim runtime publishes independently. */
+function sendSimEvent(message: SimulationEvent, requestId?: string): void {
+  const env: W2CEnvelope = makeEnvelope("w2c", ++outSeq, message, { requestId });
+  ctx.postMessage(env);
+}
+
+function sendSimReady(requestId?: string): void {
+  state.simReadyPublished = true;
+  sendSimEvent(
+    {
+      type: "sim:ready",
+      payload: {
+        simulationProtocolVersion: SIMULATION_PROTOCOL_VERSION,
+        simulationEpoch: state.missionRuntime.getSimulationEpoch(),
+        missionTickUs: MISSION_TICK_US,
+        status: state.missionRuntime.getStatus(),
+      },
+    },
+    requestId,
+  );
 }
 
 interface WorkerState {
@@ -164,6 +195,11 @@ interface WorkerState {
    *  to true, at which point public event IDs restart from 1. */
   publicPhaseStarted: boolean;
   canonicalInit: CanonicalInitState;
+  // ---- M3.2 mission runtime (deterministic sim coordinator) ----------
+  missionRuntime: MissionRuntime;
+  missionCoalescer: SnapshotCoalescer<MissionSnapshot>;
+  lastPublishedSimSnapshot: MissionSnapshot | null;
+  simReadyPublished: boolean;
 }
 
 type CanonicalInitPhase =
@@ -283,6 +319,16 @@ const state: WorkerState = {
   sessionEpoch: 0,
   publicPhaseStarted: false,
   canonicalInit: makeCanonicalInitState(0, 0, 0, 0),
+  missionRuntime: new MissionRuntime(),
+  missionCoalescer: new SnapshotCoalescer<MissionSnapshot>({
+    minIntervalMs: 40,
+    publish: (snap) => {
+      state.lastPublishedSimSnapshot = snap;
+      sendSimEvent({ type: "sim:snapshot", payload: snap });
+    },
+  }),
+  lastPublishedSimSnapshot: null,
+  simReadyPublished: false,
 };
 
 /** Trace of pre-ready initialization traces retained across sessions for
@@ -401,6 +447,53 @@ function buildSnapshot(): StateSnapshot {
   };
 }
 
+/**
+ * The single mission-tick pipeline. Called ONCE per 20 000 µs MissionClock
+ * tick from every code path that advances mission time (scheduler wake AND
+ * `stepSimulation`). Enforces the M3.2 phase order:
+ *   1. apply due MissionCommands       (runtime.applyBoundaryCommands)
+ *   2. AGC-input sampling               (reserved for M3.3)
+ *   3. advance AGC by whole 11 720 ns instructions
+ *   4. AGC-output resolution            (reserved for M3.3)
+ *   5. advance LM physics by 20 000 µs
+ *   6. latch terminal touchdown         (emits sim:terminalTouchdown)
+ *   7. offer coalesced sim snapshot     (coalescer publishes on cadence)
+ *
+ * NOTE on timing: MissionClock.executeTick increments missionTimeUs BEFORE
+ * calling this callback and increments ticksExecuted AFTER it returns. So
+ * inside this function, getMissionTimeUs() is the END of the tick and
+ * stats().ticksExecuted is the index of the tick being executed (0-based).
+ */
+function runMissionTickPipeline(steps: number): void {
+  const adapter = state.adapter;
+  if (!adapter) return;
+  const tickEndUs = Number(state.clock.getMissionTimeUs());
+  const tickStartUs = tickEndUs - MISSION_TICK_US;
+  const tickIndex = state.clock.stats().ticksExecuted;
+  // Phase 1 — commands due at or before this tick's start boundary.
+  const rejections = state.missionRuntime.applyBoundaryCommands(tickStartUs);
+  for (const rej of rejections) {
+    sendSimEvent({ type: "sim:commandAck", payload: rej });
+  }
+  // Phase 3 — AGC.
+  adapter.stepCpu(steps);
+  adapter.drainIo();
+  // Phases 5 + 6 — physics + terminal.
+  const terminal = state.missionRuntime.advancePhysics(tickStartUs, tickIndex);
+  if (terminal) {
+    sendSimEvent({ type: "sim:terminalTouchdown", payload: terminal });
+  }
+  // Phase 7 — sim snapshot (gated on sim:ready, same as AGC public gate).
+  if (state.simReadyPublished) {
+    const snap = state.missionRuntime.snapshot(
+      tickIndex,
+      tickEndUs,
+      state.clock.isPaused(),
+    );
+    state.missionCoalescer.offer(snap);
+  }
+}
+
 function startScheduler(): void {
   if (state.schedulerHandle !== null) return;
   // 20 ms scheduler wake. MissionClock decides how many ticks are due based
@@ -408,12 +501,10 @@ function startScheduler(): void {
   state.schedulerHandle = setInterval(() => {
     const adapter = state.adapter;
     if (!adapter || state.disposed) return;
-    state.clock.advanceByWallClock((steps) => {
-      adapter.stepCpu(steps);
-      adapter.drainIo();
-    });
+    state.clock.advanceByWallClock(runMissionTickPipeline);
     onPostTick();
     state.coalescer.tick();
+    state.missionCoalescer.tick();
   }, 20);
 }
 
@@ -614,6 +705,9 @@ function publishReady(): void {
       canonicalInit: canonicalInitInfo(state.canonicalInit),
     },
   });
+  // Publish the M3.2 sim:ready AFTER the AGC ready so consumers see AGC
+  // provenance first, then the sim namespace open in a separate frame.
+  sendSimReady();
 }
 
 function diagnostics(): Diagnostics {
@@ -675,7 +769,19 @@ async function loadRopeVerified(
   return { bytes, sha256, sourceCommit };
 }
 
-async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
+async function handle(
+  rawCmd: AgcCommand | SimulationCommand,
+  requestId?: string,
+): Promise<void> {
+  // ---- M3.2 simulation namespace dispatch ------------------------------
+  const anyCmd = rawCmd as { type: string };
+  if (anyCmd.type.startsWith("sim:")) {
+    handleSimulationCommand(rawCmd as SimulationCommand, requestId);
+    return;
+  }
+  // Below this line the message is a frozen AGC command. Shadowing the
+  // parameter as `cmd` keeps the (large, unchanged) switch body intact.
+  const cmd = rawCmd as AgcCommand;
   const adapter = state.adapter;
   switch (cmd.type) {
     case "initialize": {
@@ -831,6 +937,12 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       // session epoch, then re-enter canonical initialization so the same
       // authentic startup RSET-and-settle sequence runs before the next
       // public `ready`. Ordinary navigation must never invoke this path.
+      // M3.2: if a scenario is running, transition the MissionRuntime into
+      // the `interlocked` state. Only a subsequent `sim:resetScenario`
+      // command can clear the interlock — an AGC-side epoch change alone
+      // does NOT resume physics.
+      state.missionRuntime.interlock("agc-epoch-changed");
+      state.simReadyPublished = false;
       adapter.reset();
       state.resetCount++;
       state.sessionEpoch++;
@@ -931,13 +1043,11 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       if (!adapter) return;
       const ticks = Math.max(1, cmd.ticks ?? 1);
       for (let i = 0; i < ticks; i++) {
-        state.clock.stepOneTick((steps) => {
-          adapter.stepCpu(steps);
-          adapter.drainIo();
-        });
+        state.clock.stepOneTick(runMissionTickPipeline);
       }
       onPostTick();
       state.coalescer.flushNow();
+      state.missionCoalescer.flushNow();
       return;
     }
     case "stepAgcDebug": {
@@ -1058,6 +1168,41 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
     case "dispose": {
       state.disposed = true;
       stopScheduler();
+      return;
+    }
+  }
+}
+
+/**
+ * M3.2 simulation-namespace dispatcher. Synchronous — every sim command
+ * completes in constant time so the FIFO `commandQueue` in the message
+ * listener never blocks on physics. Runtime state mutations only happen
+ * here (enqueue) or inside `runMissionTickPipeline` (apply + advance).
+ */
+function handleSimulationCommand(
+  cmd: SimulationCommand,
+  requestId?: string,
+): void {
+  switch (cmd.type) {
+    case "sim:queryReady": {
+      // Idempotent: caller may ask again to re-sync after a route mount.
+      sendSimReady(requestId);
+      return;
+    }
+    case "sim:enqueue": {
+      const ack = state.missionRuntime.enqueue(cmd.command);
+      sendSimEvent({ type: "sim:commandAck", payload: ack }, requestId);
+      return;
+    }
+    case "sim:forceSnapshot": {
+      const stats = state.clock.stats();
+      const snap = state.missionRuntime.snapshot(
+        stats.ticksExecuted,
+        Number(state.clock.getMissionTimeUs()),
+        state.clock.isPaused(),
+      );
+      state.missionCoalescer.offer(snap);
+      state.missionCoalescer.flushNow();
       return;
     }
   }

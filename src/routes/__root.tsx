@@ -131,6 +131,7 @@ function RootComponent() {
           <Link to="/" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Home</Link>
           <Link to="/learn" data-testid="nav-learn" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Learn</Link>
           <Link to="/explore" data-testid="nav-explore" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Explore</Link>
+          <Link to="/dev/mission-runtime" data-testid="nav-mission-runtime" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Mission runtime</Link>
         </nav>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />

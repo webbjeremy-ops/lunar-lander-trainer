@@ -271,8 +271,12 @@ export interface Envelope<TPayload> {
   message: TPayload;
 }
 
-export type C2WEnvelope = Envelope<AgcCommand>;
-export type W2CEnvelope = Envelope<AgcEvent>;
+import type { SimulationCommand, SimulationEvent } from "./simulationProtocol";
+// Widened to carry the M3.2 simulation namespace over the same channel.
+// The AGC discriminated unions above are unchanged; sim messages are all
+// prefixed `sim:` and dispatched by the Worker in a separate handler.
+export type C2WEnvelope = Envelope<AgcCommand | SimulationCommand>;
+export type W2CEnvelope = Envelope<AgcEvent | SimulationEvent>;
 
 export function makeEnvelope<T>(
   dir: Direction,
