@@ -15,6 +15,7 @@ import type { AgcEvent, ChannelEventLite, ReadyPayload, StateSnapshot } from "@/
 import { PROTOCOL_VERSION } from "@/agc/protocol";
 import type { DecodedDsky } from "@/agc/dsky/DskyTypes";
 import { decodedDskyCanonical, makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
+import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
 
 // Capture harness is opt-in via VITE_AGC_CAPTURE_MODE=true at build time.
 // In normal builds this route throws notFound() and window.__agcCapture is
