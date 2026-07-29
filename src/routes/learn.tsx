@@ -133,6 +133,22 @@ function LearnPage() {
   const [readinessSnap, setReadinessSnap] = useState<ReadinessSnapshot | null>(null);
   const openingTokenRef = useRef(0);
   const readinessTrackerRef = useRef<ReadinessTracker | null>(null);
+  const instanceIdRef = useRef<string>("");
+  if (instanceIdRef.current === "") {
+    instanceIdRef.current = `learn-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  // Test-only diagnostic ring. Kept tiny; never printed in production paths.
+  const diagRef = useRef<Array<Record<string, unknown>>>([]);
+  const testOnlyLog = useCallback((entry: Record<string, unknown>) => {
+    const withMeta = { ...entry, t: Date.now(), instanceId: instanceIdRef.current };
+    const buf = diagRef.current;
+    buf.push(withMeta);
+    if (buf.length > 200) buf.shift();
+    if (typeof window !== "undefined") {
+      (window as unknown as { __learnLifecycle?: unknown[] }).__learnLifecycle = buf;
+    }
+  }, []);
 
   const handleClient = useCallback((c: AgcWorkerClient | null) => {
     setAgcClient(c);
