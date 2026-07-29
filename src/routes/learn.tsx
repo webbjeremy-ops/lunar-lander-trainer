@@ -13,6 +13,7 @@ import { Dsky } from "@/ui/dsky/Dsky";
 import { ropeById } from "@/sim/agc/roms";
 import type { AgcWorkerClient } from "@/agc/AgcWorkerClient";
 import type { EventBoundaryPayload, StateSnapshot } from "@/agc/protocol";
+import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -109,7 +110,7 @@ function nextAttemptId(lessonId: string): string {
   return `att-${lessonId}-${Date.now().toString(36)}-${++ATTEMPT_SEQ}`;
 }
 
-type AttemptPhase = "idle" | "opening" | "ready" | "error";
+type AttemptPhase = "idle" | "gating" | "opening" | "ready" | "error";
 
 function LearnPage() {
   const rope = useMemo(() => ropeById("Luminary099"), []);
