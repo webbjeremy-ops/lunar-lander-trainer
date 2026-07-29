@@ -132,6 +132,16 @@ interface DiagState {
   firstFullMatchEventId: number | null;
   closestTransition: { eventId: number; diffFieldCount: number; diff: unknown } | null;
   keyEventIds: Record<string, number>;
+  predicateCalls?: number;
+  predicateStateChanges?: number;
+  lastPredicateChange?: {
+    eventId: number | null;
+    tickIndex: number;
+    fromStatus: string;
+    toStatus: string;
+    fromStep: number;
+    toStep: number;
+  } | null;
 }
 
 function makeEmptyDiag(): DiagState {
