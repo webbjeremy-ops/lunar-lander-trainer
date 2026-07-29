@@ -30,6 +30,8 @@ interface ExtExports {
   agc_out_trace_drain: (dst: number, max: number) => number;
   agc_out_trace_dropped: () => number;
   agc_out_trace_reset: () => void;
+  agc_out_trace_set_enabled: (enabled: number) => number;
+  agc_out_trace_enabled: () => number;
   agc_counter_increment: (address: number, incType: number) => number;
   agc_hw_input_apply: (records: number, count: number) => number;
   agc_hw_input_last_error_index: () => number;
@@ -44,6 +46,7 @@ const EXTENSION_EXPORTS = [
   "agc_ext_version", "agc_hwio_version",
   "agc_out_trace_entry_size", "agc_out_trace_drain",
   "agc_out_trace_dropped", "agc_out_trace_reset",
+  "agc_out_trace_set_enabled", "agc_out_trace_enabled",
   "agc_counter_increment", "agc_hw_input_apply",
   "agc_hw_input_last_error_index",
 ] as const;
