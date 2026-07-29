@@ -104,9 +104,21 @@ test.describe("M3.3A2-P5.e monitor mode", () => {
       })
       .toBeGreaterThan(0);
 
+    // Change one declared discrete WHILE active so a fresh owned-bit merge
+    // lands at the tail of the retained window the panel renders.
+    await page.getByTestId("av-autoThrottleEnabled").click();
     await page.getByTestId("mon-request-trace").click();
     await expect(page.getByTestId("mon-trace")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("mon-trace-row").first()).toContainText(/IN {2}CH03[03]/);
+    await expect
+      .poll(
+        async () => {
+          await page.getByTestId("mon-request-trace").click();
+          const rows = await page.getByTestId("mon-trace-row").allTextContents();
+          return rows.some((r) => /IN {2}CH03[03] mask 0[0-7]{5} val 0[0-7]{5} word 0[0-7]{5}/.test(r));
+        },
+        { timeout: 30_000 },
+      )
+      .toBe(true);
 
     // Throttle magnitude is never resolved into a number or percentage.
     const throttle = page.getByTestId("mon-throttle");
