@@ -32,6 +32,23 @@ interface YaAgcExports {
   set_fixed: (ptr: number) => void;
   malloc: (n: number) => number;
   free: (ptr: number) => void;
+  // ---- Optional M3.3A2 extension exports (present on yaAGC-ext.wasm).
+  // Legacy code paths never call these; they exist only so the Worker's
+  // startup ABI-validation step can observe extension identity + confirm
+  // trace collection is disabled at boot. Absence means the frozen artifact
+  // was loaded (production loader forbids this at runtime).
+  agc_hwio_version?: () => number;
+  agc_ext_version?: () => number;
+  agc_out_trace_enabled?: () => number;
+  agc_out_trace_dropped?: () => number;
+}
+
+/** Extension identity reported by the running WASM instance. */
+export interface AgcExtensionIdentity {
+  hwioVersion: number;
+  extVersion: string;
+  traceEnabled: number;
+  traceDropped: number;
 }
 
 const PROCEED_CHANNEL = 0o32;
