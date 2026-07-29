@@ -68,7 +68,7 @@ function makeWorkerPayload(
 
 async function makeValidDocJson(
   events: PublicEventRecord[] = [
-    { type: "inputAccepted", eventId: 1, tickIndex: 43, missionTimeUs: 860000, totalAgcSteps: 71800, kind: "dskyKeyDown", keyCode: 0o27 },
+    { type: "inputAccepted", eventId: 1, tickIndex: 43, missionTimeUs: 860000, totalAgcSteps: 71800, kind: "dskyKeyDown", keyCode: 0o21 },
     { type: "channelUpdate", eventId: 2, tickIndex: 43, missionTimeUs: 860000, totalAgcSteps: 71800, channel: 0o11, value: 0o1 },
   ],
 ): Promise<string> {
