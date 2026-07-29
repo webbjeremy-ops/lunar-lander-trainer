@@ -229,6 +229,7 @@ function LearnPage() {
   // does not yet have one — but only via the async barrier handshake.
   const openedKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    console.log("[open-effect]", { hasClient:!!agcClient, isInteractive, isComplete, step: state.currentStepIndex, phase: attemptPhase, opened: openedKeyRef.current });
     if (!agcClient || !isInteractive || isComplete) return;
     const key = `${lesson.id}#${state.currentStepIndex}#${agcEpoch}`;
     if (state.attempt && openedKeyRef.current === key && attemptPhase === "ready") return;
