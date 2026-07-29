@@ -121,6 +121,9 @@ const state: WorkerState = {
   nextEventId: 1,
   recentEventsRing: [],
   recentEventsCap: 64,
+  initialResetPerformed: false,
+  resetCount: 0,
+  sessionEpoch: 0,
 };
 
 function currentTickIndex(): number {
