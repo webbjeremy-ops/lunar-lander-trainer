@@ -10,6 +10,7 @@
 /// <reference lib="webworker" />
 
 import { AgcCoreAdapter } from "@/sim/agc/AgcCoreAdapter";
+import { CANONICAL_AGC_RUNTIME } from "./AgcRuntimeManifest";
 import { MissionClock, TICK_MICROS } from "./MissionClock";
 const SCHEDULER_TICK_MICROS = Number(TICK_MICROS);
 import { SnapshotCoalescer } from "./SnapshotCoalescer";
