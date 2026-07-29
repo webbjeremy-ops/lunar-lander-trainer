@@ -398,7 +398,11 @@ describe("LessonHost — terminal completion latching", () => {
     // Parent now re-renders with a stale IN-PROGRESS prop for the SAME
     // attempt (delayed reflection). The Case-D guard must reject it and
     // increment propOverwriteAttempts.
-    await harness.render({ state, boundary: makeBoundary(900) });
+    // Fresh object identity (same attemptId, still in-progress) so React
+    // actually re-runs the prop effect that hosts the Case-D guard.
+    const staleReflection: LessonState = { ...state };
+    await harness.render({ state: staleReflection, boundary: makeBoundary(900) });
+
     let d = harness.diag();
     expect((d?.propOverwriteAttempts as number) ?? 0).toBeGreaterThanOrEqual(1);
 
