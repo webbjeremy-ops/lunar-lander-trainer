@@ -52,6 +52,10 @@ export interface AgcWorkerLike {
 
 export interface AgcWorkerClientListeners {
   onReady?: (payload: ReadyPayload) => void;
+  /** M3.3A2-P4: fires with the extension-identity announcement that follows
+   *  every `ready`. Separate from `onReady` so the frozen M2 readiness
+   *  shape is untouched for legacy consumers. */
+  onExtensionReady?: (msg: import("./protocol").AgcExtensionReadyMessage) => void;
   onSnapshot?: (snapshot: StateSnapshot) => void;
   onDsky?: (lamps: number, missionTimeUs: number) => void;
   onDskyDecoded?: (decoded: import("./dsky/DskyTypes").DecodedDsky, missionTimeUs: number, tickIndex: number) => void;
