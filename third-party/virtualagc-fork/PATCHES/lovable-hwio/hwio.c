@@ -209,12 +209,17 @@ static void trace_sample_all(void) {
 
 export const char *
 agc_ext_version(void) {
-  return "ddc65e7be+apollo-browser-hwio-v1";
+  /* v2 adds explicit trace arming exports:
+   *   agc_out_trace_set_enabled(uint32_t)
+   *   agc_out_trace_enabled(void)
+   * Armed trace semantics are unchanged from v1; default is disabled.
+   */
+  return "ddc65e7be+apollo-browser-hwio-v2";
 }
 
 export uint32_t
 agc_hwio_version(void) {
-  return 1u;
+  return 2u;
 }
 
 export uint32_t
