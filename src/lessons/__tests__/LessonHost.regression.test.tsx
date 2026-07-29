@@ -403,19 +403,20 @@ describe("LessonHost — terminal completion latching", () => {
     const staleReflection: LessonState = { ...state };
     await harness.render({ state: staleReflection, boundary: makeBoundary(900) });
 
-    let d = harness.diag();
-    expect((d?.propOverwriteAttempts as number) ?? 0).toBeGreaterThanOrEqual(1);
-
-    // Another burst — still no downgrade, no new onStateChange.
+    // The Case-D guard runs in a useEffect and returns without publishing
+    // diag. Push one more channel event to flush publishDiag so the counter
+    // is observable, then assert.
     const before = harness.states.length;
     await act(async () => {
       harness!.push(envChannel(makeChannel(902, 301, 0o11, 0o2)));
       harness!.push(envChannel(makeChannel(903, 302, 0o11, 0o4)));
     });
-    d = harness.diag();
+    const d = harness.diag();
+    expect((d?.propOverwriteAttempts as number) ?? 0).toBeGreaterThanOrEqual(1);
     expect(harness.states.length).toBe(before);
     expect((d?.downgradeAttempts as number) ?? 0).toBe(0);
     expect(harness.states.at(-1)?.status).toBe("completed");
+
   });
 });
 
