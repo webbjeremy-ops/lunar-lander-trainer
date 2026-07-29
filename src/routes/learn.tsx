@@ -161,17 +161,22 @@ function LearnPage() {
     action: "beginAttempt" | "restart",
   ) => {
     const client = agcClient;
+    console.log("[openAttempt] entry", forLesson.id, action, "client?", !!client);
     if (!client) return;
     const token = ++openingTokenRef.current;
     setAttemptError(null);
+    console.log("[openAttempt] token", token, "gate?", forLesson.requiresReadinessGate);
+
 
     try {
       if (forLesson.requiresReadinessGate) {
+        console.log("[openAttempt] -> gating");
         setAttemptPhase("gating");
         const tracker = new ReadinessTracker();
         readinessTrackerRef.current = tracker;
         // Seed shadow from a Worker-authoritative baseline.
         const seed = await client.requestEventBoundary();
+        console.log("[openAttempt] gating baseline received; token match?", openingTokenRef.current === token);
         if (openingTokenRef.current !== token) return;
         tracker.noteBaseline(seed);
         setReadinessSnap(tracker.snapshot());
@@ -196,9 +201,11 @@ function LearnPage() {
               },
             });
           });
+          console.log("[openAttempt] readiness resolved; token match?", openingTokenRef.current === token);
           if (openingTokenRef.current !== token) return;
         }
       }
+
 
       setAttemptPhase("opening");
       const boundary = await client.requestEventBoundary();
@@ -226,6 +233,7 @@ function LearnPage() {
   // does not yet have one — but only via the async barrier handshake.
   const openedKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    console.log("[open-effect]", { hasClient:!!agcClient, isInteractive, isComplete, step: state.currentStepIndex, phase: attemptPhase, opened: openedKeyRef.current });
     if (!agcClient || !isInteractive || isComplete) return;
     const key = `${lesson.id}#${state.currentStepIndex}#${agcEpoch}`;
     if (state.attempt && openedKeyRef.current === key && attemptPhase === "ready") return;
@@ -235,8 +243,19 @@ function LearnPage() {
   }, [agcClient, lesson, state.currentStepIndex, state.attempt, isInteractive, isComplete, attemptPhase, agcEpoch, openAttempt]);
 
   // Reset attempt phase when the selected lesson or step changes so the
-  // effect above will re-open a fresh attempt on the next pass.
+  // effect above will re-open a fresh attempt on the next pass. Skip the
+  // initial mount and any spurious re-run whose key hasn't actually
+  // changed — otherwise the reset cancels the very first openAttempt via
+  // ++openingTokenRef before the async barrier handshake can resolve.
+  const prevResetKeyRef = useRef<string | null>(null);
   useEffect(() => {
+    const key = `${selectedId}#${state.currentStepIndex}#${agcEpoch}`;
+    if (prevResetKeyRef.current === null) {
+      prevResetKeyRef.current = key;
+      return;
+    }
+    if (prevResetKeyRef.current === key) return;
+    prevResetKeyRef.current = key;
     openedKeyRef.current = null;
     ++openingTokenRef.current; // cancel any in-flight open/gate
     setAttemptPhase("idle");
