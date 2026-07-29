@@ -527,14 +527,31 @@ function buildSnapshot(): StateSnapshot {
 /**
  * The single mission-tick pipeline. Called ONCE per 20 000 µs MissionClock
  * tick from every code path that advances mission time (scheduler wake AND
- * `stepSimulation`). Enforces the M3.2 phase order:
- *   1. apply due MissionCommands       (runtime.applyBoundaryCommands)
- *   2. AGC-input sampling               (reserved for M3.3)
- *   3. advance AGC by whole 11 720 ns instructions
- *   4. AGC-output resolution            (reserved for M3.3)
- *   5. advance LM physics by 20 000 µs
- *   6. latch terminal touchdown         (emits sim:terminalTouchdown)
- *   7. offer coalesced sim snapshot     (coalescer publishes on cadence)
+ * `stepSimulation`). Enforces the M3.3A2-P5.d phase order EXACTLY:
+ *
+ *   1.  apply queued mission + monitor-profile commands
+ *   2.  sample LM + explicit avionics state at tick start
+ *   3.  purely encode all due sensor actions
+ *   4.  validate the COMPLETE action set before applying anything
+ *   5.  apply channel-mask updates in suborder through the input shadow
+ *   6.  advance the AGC by exactly one normal 20 ms mission tick
+ *   7.  drain the WASM output-counter trace EXACTLY once
+ *   8.  collect lossless CHAN11/CHAN14 events from that AGC interval
+ *   9.  run the pure actuator decoder
+ *   10. append bounded monitor diagnostics
+ *   11. advance physics using BRANDED scenario/manual control only
+ *   12. latch touchdown and publish compact snapshots
+ *
+ * Phases 2–5 and 7–10 are inert while the monitor profile is `off`, which
+ * is the production default; the resulting physics trace is bit-identical
+ * to the frozen M3.2 result either way.
+ *
+ * ORDERING CAVEAT (documented, not papered over): `packet_write` host
+ * inputs and immediate non-CDU counter calls do NOT provide a proven
+ * sub-instruction total ordering inside one AGC interval. P5 therefore
+ * emits channel-mask sensor actions only, keeps the channel and counter
+ * OUTPUT streams distinct, and never fabricates a cross-stream sub-cycle
+ * order.
  *
  * NOTE on timing: MissionClock.executeTick increments missionTimeUs BEFORE
  * calling this callback and increments ticksExecuted AFTER it returns. So
@@ -547,28 +564,118 @@ function runMissionTickPipeline(steps: number): void {
   const tickEndUs = Number(state.clock.getMissionTimeUs());
   const tickStartUs = tickEndUs - MISSION_TICK_US;
   const tickIndex = state.clock.stats().ticksExecuted;
-  // Phase 1 — commands due at or before this tick's start boundary.
+  // ---- Phase 1: mission commands due at this tick's start boundary ----
   const rejections = state.missionRuntime.applyBoundaryCommands(tickStartUs);
   for (const rej of rejections) {
     sendSimEvent({ type: "sim:commandAck", payload: rej });
   }
-  // Phase 3 — AGC.
+  // ---- Phase 1 (cont.): monitor-profile commands, same boundary rule ----
+  applyDueMonitorCommands(tickStartUs);
+
+  const monitor = state.monitor;
+  // ---- Phases 2-5: sample -> encode -> validate -> apply ---------------
+  if (monitor?.isActive()) {
+    state.tickChannelEvents = [];
+    monitor.preAgcTick({
+      missionTick: tickIndex,
+      missionTimeUs: tickStartUs,
+      avionics: state.avionics,
+    });
+  }
+
+  // ---- Phase 6: AGC, exactly one normal mission tick -------------------
   adapter.stepCpu(steps);
   adapter.drainIo();
-  // Phases 5 + 6 — physics + terminal.
+
+  // ---- Phases 7-10: drain once, decode, retain bounded diagnostics -----
+  if (monitor?.isActive()) {
+    monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents);
+    state.tickChannelEvents = [];
+  }
+
+  // ---- Phases 11 + 12: physics (branded control only) + terminal -------
   const terminal = state.missionRuntime.advancePhysics(tickStartUs, tickIndex);
   if (terminal) {
+    // A terminal state disarms monitoring; it never re-arms implicitly.
+    monitor?.onTerminalState();
     sendSimEvent({ type: "sim:terminalTouchdown", payload: terminal });
   }
-  // Phase 7 — sim snapshot (gated on sim:ready, same as AGC public gate).
+  // Compact sim snapshot (gated on sim:ready, same as AGC public gate).
   if (state.simReadyPublished) {
     const snap = state.missionRuntime.snapshot(
       tickIndex,
       tickEndUs,
       state.clock.isPaused(),
+      monitorSnapshot(tickIndex),
     );
     state.missionCoalescer.offer(snap);
   }
+}
+
+/** Compact monitor snapshot, or null when the monitor has never been used
+ *  (keeps frozen-shaped snapshots for pure-M3.2 sessions). */
+function monitorSnapshot(tickIndex: number) {
+  const monitor = state.monitor;
+  if (!monitor) return null;
+  const facts = monitor.facts();
+  if (facts.profile === "off" && facts.status === "off" && facts.interlockReason === null) {
+    return null;
+  }
+  return monitor.snapshot(tickIndex);
+}
+
+/** Apply every epoch-bound monitor-profile command whose tick boundary has
+ *  arrived. Deterministic: drained in (applyAt, commandId) order. */
+function applyDueMonitorCommands(tickStartUs: number): void {
+  if (state.monitorCommandQueue.length === 0) return;
+  state.monitorCommandQueue.sort((a, b) =>
+    a.applyAtMissionTimeUs !== b.applyAtMissionTimeUs
+      ? a.applyAtMissionTimeUs - b.applyAtMissionTimeUs
+      : a.commandId - b.commandId,
+  );
+  const due: SetMonitorProfileCommand[] = [];
+  while (
+    state.monitorCommandQueue.length > 0 &&
+    state.monitorCommandQueue[0].applyAtMissionTimeUs <= tickStartUs
+  ) {
+    due.push(state.monitorCommandQueue.shift()!);
+  }
+  for (const cmd of due) applyMonitorProfileCommand(cmd);
+}
+
+function applyMonitorProfileCommand(cmd: SetMonitorProfileCommand): void {
+  const monitor = state.monitor;
+  if (!monitor) return;
+  const runtimeState = state.missionRuntime.getState();
+  const result = monitor.requestProfile(
+    cmd.profile,
+    {
+      simulationEpoch: state.missionRuntime.getSimulationEpoch(),
+      agcSessionEpoch: state.sessionEpoch,
+      agcReady: state.publicPhaseStarted,
+      hwioVersion: state.adapter?.hwioVersion() ?? 0,
+      ropeId: state.ropeId ?? "",
+      ropeSha256: state.ropeSha256,
+      runtimeStatus: runtimeState.status,
+      activeScenarioId: runtimeState.scenarioId,
+      traceCurrentlyEnabled: state.adapter?.traceEnabled() ?? false,
+    },
+    state.avionics,
+  );
+  if (result.outcome === "blocked") {
+    sendSimEvent({
+      type: "sim:monitor-blocked",
+      commandId: cmd.commandId,
+      simulationEpoch: state.missionRuntime.getSimulationEpoch(),
+      requestedProfile: cmd.profile,
+      reasons: result.reasons,
+    });
+    return;
+  }
+  sendSimEvent({
+    type: "sim:commandAck",
+    payload: { accepted: true, commandId: cmd.commandId },
+  });
 }
 
 function startScheduler(): void {
