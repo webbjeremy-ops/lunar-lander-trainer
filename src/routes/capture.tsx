@@ -171,21 +171,41 @@ function CapturePage() {
       getLog: () => log,
       getReady: () => log.ready,
       isReady: () => log.ready !== null,
+      /** Readiness state driven by the shared ReadinessTracker. */
+      readiness: () => readinessSnap,
+      /**
+       * Wait for the AGC to reach the same settled state the /learn
+       * readiness gate requires: RESTART clear, STANDBY clear, projection
+       * quiet across V35_READINESS_QUIET_TICKS, AGC steps advancing.
+       * The wait uses the Worker's requestEventBoundary() to seed the
+       * tracker so the baseline is authoritative (same handshake /learn
+       * performs). No cpu_reset is invoked here — the only reset in the
+       * session is the canonical one loadRope already performed.
+       */
+      waitReady: async (timeoutMs = 30_000) => {
+        if (log.ready === null) {
+          await new Promise<void>((resolve) => {
+            const int = setInterval(() => {
+              if (log.ready !== null) { clearInterval(int); resolve(); }
+            }, 25);
+          });
+        }
+        const boundary = await client.requestEventBoundary();
+        readiness.reset();
+        readiness.noteBaseline(boundary);
+        readinessSnap = readiness.snapshot();
+        if (readinessSnap.ready) return readinessSnap;
+        return await new Promise<ReadinessSnapshot>((resolve, reject) => {
+          const timer = setTimeout(() => {
+            reject(new Error(
+              `waitReady timeout after ${timeoutMs}ms; blocking=${readinessSnap.blockingReason}`,
+            ));
+          }, timeoutMs);
+          readyWaiters.push(() => { clearTimeout(timer); resolve(readinessSnap); });
+        });
+      },
       resume: wrap("resume", () => client.resume(), () => null),
       pause: wrap("pause", () => client.pause(), () => null),
-      reset: () => {
-        log.commands.push({
-          tickIndex: log.latestTickIndex,
-          missionTimeUs: log.latestSnapshot?.missionTimeUs ?? 0,
-          kind: "reset",
-          payload: null,
-        });
-        // Delimit fixture segments: clear the recorded traces for the next.
-        log.ch010Events = [];
-        log.dskyEvents = [];
-        log.decodedTimeline = [];
-        client.reset();
-      },
       dskyKeyDown: wrap("dskyKeyDown", (code: number) => client.dskyKeyDown(code), (code) => ({ keyCode: code })),
       requestSnapshot: () => client.requestSnapshot(),
       setTimeScale: wrap("setTimeScale", (s: number) => client.setTimeScale(s), (s) => ({ timeScale: s })),
