@@ -36,8 +36,13 @@ interface AgcTestSnapshot {
 
 async function readAgc(page: Page): Promise<AgcTestSnapshot> {
   return await page.evaluate(() => {
-    const w = window as unknown as { __agcTest?: AgcTestSnapshot };
-    return JSON.parse(JSON.stringify(w.__agcTest ?? {}));
+    const w = window as unknown as {
+      __agcTest?: AgcTestSnapshot;
+      __agcSession?: { epoch?: number };
+    };
+    const t = JSON.parse(JSON.stringify(w.__agcTest ?? {})) as AgcTestSnapshot;
+    t.sessionEpoch = w.__agcSession?.epoch;
+    return t;
   });
 }
 
