@@ -138,36 +138,69 @@ async function waitUntilLessonComplete(page: Page, lessonId: string, timeoutMs =
       const l = (window as unknown as { __learnTest?: LearnTestState }).__learnTest;
       const transitions = ((t.transitions as Array<{ checksum: string }>) || []);
       const peakPrefix = "PROG:88|VERB:88|NOUN:88|R1:+.88888|R2:+.88888|R3:+.88888";
-      return {
-        boundaryEventId: t.boundaryEventId,
-        attemptId: t.attemptId,
-        shadowChecksum: t.shadowChecksum,
-        shadowStructural: t.shadowStructural,
-        expectedEvidenceChecksum: t.expectedEvidenceChecksum,
-        currentEvidenceDiff: t.currentEvidenceDiff,
-        enterEventId: t.enterEventId,
-        enterTick: t.enterTick,
-        keyEventIds: t.keyEventIds,
-        firstDigitMatchEventId: t.firstDigitMatchEventId,
-        firstAnnMatchEventId: t.firstAnnMatchEventId,
-        firstFullMatchEventId: t.firstFullMatchEventId,
-        closestTransition: t.closestTransition,
-        predicateCalls: t.predicateCalls,
-        predicateStateChanges: t.predicateStateChanges,
-        lastPredicateChange: t.lastPredicateChange,
-        peakDispatch: t.peakDispatch,
-        firstCompletionEventId: t.firstCompletionEventId,
-        firstCompletionEvidenceCount: t.firstCompletionEvidenceCount,
-        rawChannels: ((t.rawChannels as unknown[]) || []).length,
-        transitionsCount: transitions.length,
-        peakSeen: transitions.some((x) => x.checksum && x.checksum.startsWith(peakPrefix)),
-        firstFiveTransitions: transitions.slice(0, 5),
-        lastFiveTransitions: transitions.slice(-5),
-        snapshotsPublished: ((t.publishedSnapshots as unknown[]) || []).length,
-        learnStatus: l?.state?.status,
-        learnEvidence: l?.state?.evidence?.length,
-        learnAttempt: l?.state?.attempt,
-      };
+      let safe: Record<string, unknown>;
+      try {
+        safe = JSON.parse(JSON.stringify({
+          // Attempt identity
+          attemptId: t.attemptId,
+          attemptKey: t.attemptKey,
+          sessionEpoch: l?.agcEpoch,
+          boundaryEventId: t.boundaryEventId,
+          // Seeding
+          seedCount: t.seedCount,
+          seedSource: t.seedSource,
+          // Listener
+          listenerAttachedEventId: t.listenerAttachedEventId,
+          // Buffer / replay
+          bufferedPreSeedCount: t.bufferedPreSeedCount,
+          replayedPostSeedCount: t.replayedPostSeedCount,
+          firstReplayedEventId: t.firstReplayedEventId,
+          lastProcessedEventId: t.lastProcessedEventId,
+          duplicateEventCount: t.duplicateEventCount,
+          outOfOrderEventCount: t.outOfOrderEventCount,
+          staleAttemptEventCount: t.staleAttemptEventCount,
+          // Monotonicity guards
+          propOverwriteAttempts: t.propOverwriteAttempts,
+          downgradeAttempts: t.downgradeAttempts,
+          // Decoded / evidence state
+          shadowChecksum: t.shadowChecksum,
+          shadowStructural: t.shadowStructural,
+          expectedEvidenceChecksum: t.expectedEvidenceChecksum,
+          currentEvidenceDiff: t.currentEvidenceDiff,
+          // V35 milestones
+          enterEventId: t.enterEventId,
+          enterTick: t.enterTick,
+          keyEventIds: t.keyEventIds,
+          firstDigitMatchEventId: t.firstDigitMatchEventId,
+          firstAnnMatchEventId: t.firstAnnMatchEventId,
+          firstFullMatchEventId: t.firstFullMatchEventId,
+          closestTransition: t.closestTransition,
+          // Predicate
+          predicateCalls: t.predicateCalls,
+          predicateStateChanges: t.predicateStateChanges,
+          lastPredicateChange: t.lastPredicateChange,
+          peakDispatch: t.peakDispatch,
+          firstCompletionEventId: t.firstCompletionEventId,
+          firstCompletionEvidenceCount: t.firstCompletionEvidenceCount,
+          // Stream sizes
+          rawChannels: ((t.rawChannels as unknown[]) || []).length,
+          transitionsCount: transitions.length,
+          peakSeen: transitions.some((x) => x.checksum && x.checksum.startsWith(peakPrefix)),
+          firstFiveTransitions: transitions.slice(0, 5),
+          lastFiveTransitions: transitions.slice(-5),
+          snapshotsPublished: ((t.publishedSnapshots as unknown[]) || []).length,
+          // Final engine state (learnTest)
+          learnStatus: l?.state?.status,
+          learnStepIndex: l?.state?.currentStepIndex,
+          learnEvidence: l?.state?.evidence?.length,
+          learnAttempt: l?.state?.attempt,
+          attemptPhase: l?.attemptPhase,
+          attemptError: l?.attemptError,
+        }));
+      } catch (e) {
+        safe = { __serializationError: String(e) };
+      }
+      return safe;
     });
     // eslint-disable-next-line no-console
     console.error("[lesson-timeout]", JSON.stringify(diag, null, 2));
