@@ -130,7 +130,9 @@ function LearnPage() {
   const [attemptPhase, setAttemptPhase] = useState<AttemptPhase>("idle");
   const [attemptError, setAttemptError] = useState<string | null>(null);
   const [lastBoundary, setLastBoundary] = useState<EventBoundaryPayload | null>(null);
+  const [readinessSnap, setReadinessSnap] = useState<ReadinessSnapshot | null>(null);
   const openingTokenRef = useRef(0);
+  const readinessTrackerRef = useRef<ReadinessTracker | null>(null);
 
   const handleClient = useCallback((c: AgcWorkerClient | null) => {
     setAgcClient(c);
@@ -150,7 +152,10 @@ function LearnPage() {
 
   /** Perform the barrier handshake and open a fresh lesson attempt.
    *  MUST be called only when there is a live client and an interactive
-   *  step. The keypad remains locked until phase transitions to "ready". */
+   *  step. The keypad remains locked until phase transitions to "ready".
+   *  When `forLesson.requiresReadinessGate` is true, the AGC must first
+   *  satisfy authentic post-restart preconditions before the attempt
+   *  boundary is requested — no fast-forward, no injection. */
   const openAttempt = useCallback(async (
     forLesson: LessonDefinition,
     action: "beginAttempt" | "restart",
@@ -158,21 +163,54 @@ function LearnPage() {
     const client = agcClient;
     if (!client) return;
     const token = ++openingTokenRef.current;
-    setAttemptPhase("opening");
     setAttemptError(null);
+
     try {
+      if (forLesson.requiresReadinessGate) {
+        setAttemptPhase("gating");
+        const tracker = new ReadinessTracker();
+        readinessTrackerRef.current = tracker;
+        // Seed shadow from a Worker-authoritative baseline.
+        const seed = await client.requestEventBoundary();
+        if (openingTokenRef.current !== token) return;
+        tracker.noteBaseline(seed);
+        setReadinessSnap(tracker.snapshot());
+        // If we happen to already be ready (rare — restart cleared and
+        // fixture-stable), skip subscription and proceed.
+        if (!tracker.isReady()) {
+          await new Promise<void>((resolve, reject) => {
+            const timer = setTimeout(() => {
+              unsub();
+              reject(new Error("Timed out waiting for AGC readiness (RESTART clear + stable scans)."));
+            }, 45_000);
+            const unsub = client.addListener({
+              onChannelUpdate: (ev) => {
+                if (openingTokenRef.current !== token) {
+                  clearTimeout(timer); unsub(); resolve(); return;
+                }
+                tracker.applyChannelEvent(ev);
+                setReadinessSnap(tracker.snapshot());
+                if (tracker.isReady()) {
+                  clearTimeout(timer); unsub(); resolve();
+                }
+              },
+            });
+          });
+          if (openingTokenRef.current !== token) return;
+        }
+      }
+
+      setAttemptPhase("opening");
       const boundary = await client.requestEventBoundary();
-      // If a newer open-request has started (e.g. user switched lesson),
-      // discard this stale reply — its boundary is scoped to nothing.
       if (openingTokenRef.current !== token) return;
       setLastBoundary(boundary);
-      const seed = boundarySeedObservation(boundary, latestSnapshotRef.current);
+      const seedObs = boundarySeedObservation(boundary, latestSnapshotRef.current);
       setStates((prev) => {
         const cur = prev[forLesson.id] ?? initialLessonState(forLesson);
         const next = stepLesson(forLesson, cur, {
           kind: action,
           attemptId: nextAttemptId(forLesson.id),
-          observation: seed,
+          observation: seedObs,
         });
         return { ...prev, [forLesson.id]: next };
       });
