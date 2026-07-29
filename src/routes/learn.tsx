@@ -110,6 +110,36 @@ function nextAttemptId(lessonId: string): string {
   return `att-${lessonId}-${Date.now().toString(36)}-${++ATTEMPT_SEQ}`;
 }
 
+/** Pure state committer used by the /learn parent to route incoming
+ *  LessonState updates by `next.lessonId`. Extracted to make the
+ *  routing + monotonic-completion invariants directly testable.
+ *
+ *  Invariants:
+ *   - Writes into `s[next.lessonId]` — never into a caller-captured id,
+ *     so a listener wired up during Lesson 1 that completes Lesson 3
+ *     cannot stomp Lesson 1's bucket.
+ *   - Never downgrades a completed attempt back to a non-completed status
+ *     when the attemptId matches (delayed / stale callbacks).
+ *   - A distinct attemptId (new attempt) is allowed to overwrite the
+ *     bucket — that is a real reset, not a downgrade.
+ */
+export function applyLessonStateUpdate(
+  s: Record<string, LessonState>,
+  next: LessonState,
+): Record<string, LessonState> {
+  const prev = s[next.lessonId];
+  if (
+    prev &&
+    prev.status === "completed" &&
+    next.status !== "completed" &&
+    prev.attempt?.attemptId === next.attempt?.attemptId
+  ) {
+    return s;
+  }
+  return { ...s, [next.lessonId]: next };
+}
+
+
 type AttemptPhase = "idle" | "gating" | "opening" | "ready" | "error";
 
 function LearnPage() {
@@ -128,17 +158,9 @@ function LearnPage() {
   // stateRef but never landed in the parent because the callback closed over
   // the initial lesson's id).
   const handleLessonState = useCallback((next: LessonState) => {
-    setStates((s) => {
-      const prev = s[next.lessonId];
-      // Monotonic completion at the parent boundary too: never downgrade a
-      // completed attempt back to in-progress via a delayed callback.
-      if (prev && prev.status === "completed" && next.status !== "completed"
-          && prev.attempt?.attemptId === next.attempt?.attemptId) {
-        return s;
-      }
-      return { ...s, [next.lessonId]: next };
-    });
+    setStates((s) => applyLessonStateUpdate(s, next));
   }, []);
+
 
 
   // ---- Shared AGC session for the whole /learn route (stable ownership).
