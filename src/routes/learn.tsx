@@ -166,17 +166,8 @@ function LearnPage() {
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
 
-  /** Perform the barrier handshake and open a fresh lesson attempt.
-   *  MUST be called only when there is a live client and an interactive
-   *  step. The keypad remains locked until phase transitions to "ready".
-   *  When `forLesson.requiresReadinessGate` is true, the AGC must first
-   *  satisfy authentic post-restart preconditions before the attempt
-   *  boundary is requested — no fast-forward, no injection. */
-  const openAttempt = useCallback(async (
-    forLesson: LessonDefinition,
-  const step = lesson.steps[state.currentStepIndex] ?? null;
-  const isInteractive = step?.kind === "interactive";
-  const isComplete = state.status === "completed";
+
+
 
   // Semantic keys. `openKey` identifies exactly one attempt-opening workflow;
   // `resetKey` identifies a true session/reset boundary. Neither includes
