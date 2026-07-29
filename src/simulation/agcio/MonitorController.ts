@@ -31,7 +31,7 @@ import {
   EXPECTED_ACTUATOR_CHANNELS,
   validateActuatorRegistry,
 } from "./actuatorRegistry";
-import { validateRegistry } from "./sensorRegistry";
+import { mappedSignalsForProfile, validateRegistry } from "./sensorRegistry";
 import { decideMonitorEntry, type MonitorEntryContext } from "./profileValidation";
 import { AgcInputChannelShadow } from "./inputShadow";
 import { MonitorTraceRing, type MonitorTraceWindow } from "./monitorTrace";
@@ -45,8 +45,12 @@ import type {
   ChannelMaskUpdateAction,
   EncodedSensorDiagnostics,
   MonitorBlockReason,
+  MonitorInputChannelView,
   ThrustCounterDiagnostic,
 } from "./types";
+
+/** Input channels any monitor profile may own (CHAN 030 / 033). */
+export const MONITOR_OWNED_INPUT_CHANNELS: readonly number[] = [0o30, 0o33];
 
 /** Every emulator touchpoint the monitor needs. Implemented in the Worker
  *  by a thin wrapper over `AgcCoreAdapter`. */
@@ -206,7 +210,27 @@ export class MonitorController {
       traceCount: this.ring.count(),
       traceDropped: this.ring.droppedCount() + this.port.traceDropped(),
       blockReasons: this.blockReasons,
+      inputChannels: this.ownedInputChannels(),
     };
+  }
+
+  /** Owned input channels + their COMPLETE current shadow words. The owned
+   *  mask is derived from the registry for the ACTIVE profile; when the
+   *  monitor is off the mask is zero (nothing is owned). */
+  private ownedInputChannels(): readonly MonitorInputChannelView[] {
+    const masks = new Map<number, number>();
+    for (const ch of MONITOR_OWNED_INPUT_CHANNELS) masks.set(ch, 0);
+    if (this.isActive()) {
+      for (const m of mappedSignalsForProfile(this.profile)) {
+        masks.set(m.channel, (masks.get(m.channel) ?? 0) | m.mask);
+      }
+    }
+    return [...masks.keys()].sort((a, b) => a - b).map((channel) => ({
+      channel,
+      word: this.shadow.read(channel),
+      ownedMask: masks.get(channel) ?? 0,
+      seeded: !this.shadow.hasHostWrite(channel),
+    }));
   }
 
   traceWindow(): MonitorTraceWindow {
