@@ -215,9 +215,12 @@ describe("golden scenario — regression lock", () => {
     expect(td.touchdownTimeUs).toBeGreaterThan(0);
     expect(td.remainingPropellantKg).toBeGreaterThanOrEqual(0);
     // Locked expected values (recorded from this build of the kernel).
-    expect(td.touchdownTimeUs).toMatchInlineSnapshot();
-    expect(Number(td.verticalVelocityMps.toFixed(4))).toMatchInlineSnapshot();
-    expect(Number(td.remainingPropellantKg.toFixed(4))).toMatchInlineSnapshot();
-    expect(td.classification).toMatchInlineSnapshot();
+    expect(td.classification).toBe("crash");
+    expect(td.touchdownTimeUs).toBe(368_279_425);
+    expect(td.verticalVelocityMps).toBeCloseTo(-228.3144, 3);
+    expect(td.remainingPropellantKg).toBe(0);
+    expect(s.altitudeM).toBe(0);
+    expect(s.verticalVelocityMps).toBe(0);
   });
 });
+
