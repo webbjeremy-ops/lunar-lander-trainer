@@ -130,6 +130,12 @@ static uint64_t CycleCounter = 0;  /* incremented by cpu_step wrapper */
 static uint16_t OutLast[CAPS_COUNT];
 static int OutInit = 0;
 
+/* Trace arming. MUST default to 0 (disabled) so that merely swapping the WASM
+ * binary in place of yaAGC.wasm produces no observable side effect and no
+ * accumulating state. The monitor adapter enables tracing explicitly after
+ * instantiation and after cpu_reset. See docs/M3_3A2_P3.md (dormancy audit). */
+static uint32_t TraceEnabled = 0;
+
 static int find_cap_index(uint16_t address, int role_filter) {
   for (uint32_t i = 0; i < CAPS_COUNT; i++) {
     if (CAPS[i].address == address) {
