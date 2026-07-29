@@ -353,6 +353,11 @@ function stopScheduler(): void {
 function onPostTick(): void {
   const adapter = state.adapter;
   if (!adapter) return;
+  // Canonical initialization pump runs BEFORE we publish any per-tick
+  // event so that the tick which transitions us to `settled` also emits
+  // the `ready` message, and the public-phase gate opens before the
+  // dsky/decoded/snapshot fanout below.
+  pumpCanonicalInit();
   const lamps = adapter.lampBits();
   const evCount = adapter.totalChannelEvents();
   if (lamps !== state.lastLamps) {
@@ -377,6 +382,145 @@ function onPostTick(): void {
   }
 }
 
+/**
+ * Pre-ready canonical initialization state machine. Advances at most one
+ * transition per scheduler tick; publishes public `ready` when settled.
+ * Preconditions established by `enterCanonicalInit()`:
+ *   - state.publicPhaseStarted === false
+ *   - adapter present, scheduler running, mission clock advancing
+ *   - state.decodedDsky reflects live emulator channel output
+ *   - state.canonicalInit set to a fresh `await-agc-active` state
+ */
+function pumpCanonicalInit(): void {
+  if (state.publicPhaseStarted) return;
+  const adapter = state.adapter;
+  if (!adapter) return;
+  const ci = state.canonicalInit;
+  const tickIndex = currentTickIndex();
+  const stepsNow = Number(state.clock.getTotalAgcSteps());
+  const missionTimeUs = Number(state.clock.getMissionTimeUs());
+  const restartLit = state.decodedDsky.annunciators.restart;
+
+  if (!ci.restartObservedBeforeRset && restartLit) {
+    ci.restartObservedBeforeRset = true;
+    ci.trace.push({ kind: "restartObserved", tickIndex, missionTimeUs });
+  }
+
+  switch (ci.phase) {
+    case "await-agc-active": {
+      // AGC must have taken steps beyond the reset baseline. This ensures
+      // PINBALL and the executive have had scheduler time before we submit
+      // any DSKY input; sending RSET on tick 0 would race the boot code.
+      if (stepsNow <= ci.stepsAtReset) return;
+      if (tickIndex - ci.ticksAtReset < 2) return;
+      ci.phase = "await-rset-send";
+      return;
+    }
+    case "await-rset-send": {
+      // Send exactly one RSET keycode (0o22) through the SAME authentic
+      // path the rendered DSKY keypad uses. Not another cpu_reset(); not a
+      // silent decoder mutation. PINBALL will observe it via KEYRUPT and
+      // clear the test-alarm output responsible for STBY and RESTART.
+      adapter.keyPress(AGC_KEY.RSET);
+      ci.startupRsetSent = true;
+      ci.startupRsetAccepted = true; // synchronous CH015 write
+      ci.startupRsetCount++;
+      ci.trace.push({ kind: "startupRsetSent", tickIndex, missionTimeUs });
+      ci.phase = ci.restartObservedBeforeRset || restartLit
+        ? "await-restart-clear"
+        : "quiet-window";
+      ci.quietWindowSeedTick = tickIndex;
+      ci.quietWindowSeedSteps = stepsNow;
+      ci.quietWindowSeedProjection = readinessProjectionCanonical(state.decodedDsky);
+      return;
+    }
+    case "await-restart-clear": {
+      if (!restartLit) {
+        ci.restartClearedAfterRset = true;
+        ci.trace.push({ kind: "restartCleared", tickIndex, missionTimeUs });
+        ci.quietWindowSeedTick = tickIndex;
+        ci.quietWindowSeedSteps = stepsNow;
+        ci.quietWindowSeedProjection = readinessProjectionCanonical(state.decodedDsky);
+        ci.phase = "quiet-window";
+      }
+      return;
+    }
+    case "quiet-window": {
+      const standbyLit = state.decodedDsky.annunciators.standby;
+      if (restartLit || standbyLit) {
+        // Regression: restart/standby re-asserted. Restart the wait.
+        if (restartLit) {
+          ci.restartClearedAfterRset = false;
+          ci.phase = "await-restart-clear";
+        } else {
+          ci.quietWindowSeedTick = tickIndex;
+          ci.quietWindowSeedSteps = stepsNow;
+          ci.quietWindowSeedProjection = readinessProjectionCanonical(state.decodedDsky);
+        }
+        return;
+      }
+      const proj = readinessProjectionCanonical(state.decodedDsky);
+      if (proj !== ci.quietWindowSeedProjection) {
+        ci.quietWindowSeedTick = tickIndex;
+        ci.quietWindowSeedProjection = proj;
+        return;
+      }
+      if (stepsNow <= ci.quietWindowSeedSteps) return;
+      if (tickIndex - ci.quietWindowSeedTick < V35_READINESS_QUIET_TICKS) return;
+      ci.settledAtTick = tickIndex;
+      ci.phase = "settled";
+      ci.trace.push({ kind: "settled", tickIndex, missionTimeUs });
+      publishReady();
+      return;
+    }
+    case "settled":
+      return;
+  }
+}
+
+/**
+ * Transition from pre-ready canonical init to the public session. Public
+ * event IDs restart from 1 so lesson attempt boundaries and the public
+ * event log begin from a documented origin; pre-ready channel events
+ * (including RSET's own inputAccepted echo) never appear in the public
+ * event log by construction. The initialization trace is preserved in
+ * `initTraceHistory` for post-hoc inspection.
+ */
+function publishReady(): void {
+  const adapter = state.adapter;
+  if (!adapter || state.ropeId === null) return;
+  // Archive the pre-ready trace, then start the public session clean.
+  initTraceHistory.push({
+    sessionEpoch: state.sessionEpoch,
+    entries: state.canonicalInit.trace.slice(),
+  });
+  if (initTraceHistory.length > 8) initTraceHistory.splice(0, initTraceHistory.length - 8);
+  state.nextEventId = 1;
+  state.recentEventsRing.length = 0;
+  state.lastLamps = adapter.lampBits();
+  state.lastChannelEventCount = adapter.totalChannelEvents();
+  state.publicPhaseStarted = true;
+  state.workerState = "ready";
+  send({
+    type: "ready",
+    payload: {
+      emulatorRepo: "michaelfranzl/webAGC",
+      emulatorCommit: "0575ea7a1231e3948bae7d2c22a6ac146da0c38d",
+      emulatorVersionString: state.emulatorVersion,
+      ropeId: state.ropeId,
+      ropeSha256: state.ropeSha256,
+      ropeSourceCommit: state.ropeSourceCommit,
+      ropeByteLength: state.ropeByteLength,
+      wasmSha256: state.wasmSha256,
+      protocolVersion: PROTOCOL_VERSION,
+      initialResetPerformed: true,
+      resetCount: state.resetCount,
+      sessionEpoch: state.sessionEpoch,
+      canonicalInit: canonicalInitInfo(state.canonicalInit),
+    },
+  });
+}
+
 function diagnostics(): Diagnostics {
   const s = state.clock.stats();
   return {
@@ -394,6 +538,9 @@ function diagnostics(): Diagnostics {
     initialResetPerformed: state.initialResetPerformed,
     resetCount: state.resetCount,
     sessionEpoch: state.sessionEpoch,
+    canonicalInit: state.initialResetPerformed
+      ? canonicalInitInfo(state.canonicalInit)
+      : null,
   };
 }
 
