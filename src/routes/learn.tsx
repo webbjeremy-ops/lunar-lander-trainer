@@ -133,6 +133,22 @@ function LearnPage() {
   const [readinessSnap, setReadinessSnap] = useState<ReadinessSnapshot | null>(null);
   const openingTokenRef = useRef(0);
   const readinessTrackerRef = useRef<ReadinessTracker | null>(null);
+  const instanceIdRef = useRef<string>("");
+  if (instanceIdRef.current === "") {
+    instanceIdRef.current = `learn-${Math.random().toString(36).slice(2, 10)}`;
+  }
+
+  // Test-only diagnostic ring. Kept tiny; never printed in production paths.
+  const diagRef = useRef<Array<Record<string, unknown>>>([]);
+  const testOnlyLog = useCallback((entry: Record<string, unknown>) => {
+    const withMeta = { ...entry, t: Date.now(), instanceId: instanceIdRef.current };
+    const buf = diagRef.current;
+    buf.push(withMeta);
+    if (buf.length > 200) buf.shift();
+    if (typeof window !== "undefined") {
+      (window as unknown as { __learnLifecycle?: unknown[] }).__learnLifecycle = buf;
+    }
+  }, []);
 
   const handleClient = useCallback((c: AgcWorkerClient | null) => {
     setAgcClient(c);
@@ -150,38 +166,67 @@ function LearnPage() {
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
 
+
+
+
+  // Semantic keys. `openKey` identifies exactly one attempt-opening workflow;
+  // `resetKey` identifies a true session/reset boundary. Neither includes
+  // rapidly-changing runtime values (snapshots, mission time, event counts).
+  const openKey = `${agcEpoch}:${lesson.id}:${step?.id ?? "-"}`;
+  const resetKey = `${agcEpoch}:${lesson.id}`;
+
+  // Single choke point for every token mutation. Callers MUST supply a reason
+  // so lifecycle diagnostics can attribute cancellations.
+  const invalidateOpening = useCallback((reason: string): number => {
+    const previous = openingTokenRef.current;
+    const next = previous + 1;
+    openingTokenRef.current = next;
+    testOnlyLog({
+      type: "opening-invalidated",
+      reason,
+      previous,
+      next,
+      openKey,
+      resetKey,
+      agcEpoch,
+      lessonId: lesson.id,
+      stepId: step?.id ?? null,
+    });
+    return next;
+  }, [testOnlyLog, openKey, resetKey, agcEpoch, lesson.id, step?.id]);
+
+  // Mount / unmount lifecycle probe.
+  useEffect(() => {
+    testOnlyLog({ type: "component-mount" });
+    return () => {
+      testOnlyLog({ type: "component-unmount" });
+    };
+  }, [testOnlyLog]);
+
   /** Perform the barrier handshake and open a fresh lesson attempt.
    *  MUST be called only when there is a live client and an interactive
-   *  step. The keypad remains locked until phase transitions to "ready".
-   *  When `forLesson.requiresReadinessGate` is true, the AGC must first
-   *  satisfy authentic post-restart preconditions before the attempt
-   *  boundary is requested — no fast-forward, no injection. */
+   *  step. The keypad remains locked until phase transitions to "ready". */
   const openAttempt = useCallback(async (
     forLesson: LessonDefinition,
     action: "beginAttempt" | "restart",
   ) => {
     const client = agcClient;
-    console.log("[openAttempt] entry", forLesson.id, action, "client?", !!client);
     if (!client) return;
-    const token = ++openingTokenRef.current;
+    const token = invalidateOpening("new-open-request");
     setAttemptError(null);
-    console.log("[openAttempt] token", token, "gate?", forLesson.requiresReadinessGate);
-
+    testOnlyLog({ type: "openAttempt-entry", token, action, lessonId: forLesson.id, gate: !!forLesson.requiresReadinessGate });
 
     try {
       if (forLesson.requiresReadinessGate) {
-        console.log("[openAttempt] -> gating");
         setAttemptPhase("gating");
         const tracker = new ReadinessTracker();
         readinessTrackerRef.current = tracker;
-        // Seed shadow from a Worker-authoritative baseline.
+        testOnlyLog({ type: "boundary-request-sent", token, purpose: "readiness-baseline" });
         const seed = await client.requestEventBoundary();
-        console.log("[openAttempt] gating baseline received; token match?", openingTokenRef.current === token);
+        testOnlyLog({ type: "boundary-response-received", token, purpose: "readiness-baseline", tokenMatch: openingTokenRef.current === token, boundaryEventId: seed.boundaryEventId });
         if (openingTokenRef.current !== token) return;
         tracker.noteBaseline(seed);
         setReadinessSnap(tracker.snapshot());
-        // If we happen to already be ready (rare — restart cleared and
-        // fixture-stable), skip subscription and proceed.
         if (!tracker.isReady()) {
           await new Promise<void>((resolve, reject) => {
             const timer = setTimeout(() => {
@@ -201,14 +246,15 @@ function LearnPage() {
               },
             });
           });
-          console.log("[openAttempt] readiness resolved; token match?", openingTokenRef.current === token);
+          testOnlyLog({ type: "readiness-resolved", token, tokenMatch: openingTokenRef.current === token });
           if (openingTokenRef.current !== token) return;
         }
       }
 
-
       setAttemptPhase("opening");
+      testOnlyLog({ type: "boundary-request-sent", token, purpose: "attempt-open" });
       const boundary = await client.requestEventBoundary();
+      testOnlyLog({ type: "boundary-response-received", token, purpose: "attempt-open", tokenMatch: openingTokenRef.current === token, boundaryEventId: boundary.boundaryEventId });
       if (openingTokenRef.current !== token) return;
       setLastBoundary(boundary);
       const seedObs = boundarySeedObservation(boundary, latestSnapshotRef.current);
@@ -227,43 +273,53 @@ function LearnPage() {
       setAttemptError(err instanceof Error ? err.message : String(err));
       setAttemptPhase("error");
     }
-  }, [agcClient]);
+  }, [agcClient, invalidateOpening, testOnlyLog]);
 
-  // Auto-open an attempt whenever an interactive step becomes current and
-  // does not yet have one — but only via the async barrier handshake.
+  // Auto-open an attempt for the current interactive step. Depends on the
+  // stable semantic `openKey` plus the essentials — NOT snapshot, decoded
+  // state, readiness, or state.attempt (openAttempt sets state.attempt on
+  // success, which would otherwise re-trigger this effect).
   const openedKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    console.log("[open-effect]", { hasClient:!!agcClient, isInteractive, isComplete, step: state.currentStepIndex, phase: attemptPhase, opened: openedKeyRef.current });
+    testOnlyLog({ type: "open-effect-start", hasClient: !!agcClient, isInteractive, isComplete, openKey, opened: openedKeyRef.current, phase: attemptPhase });
     if (!agcClient || !isInteractive || isComplete) return;
-    const key = `${lesson.id}#${state.currentStepIndex}#${agcEpoch}`;
-    if (state.attempt && openedKeyRef.current === key && attemptPhase === "ready") return;
-    if (openedKeyRef.current === key && (attemptPhase === "opening" || attemptPhase === "gating")) return;
-    openedKeyRef.current = key;
+    if (openedKeyRef.current === openKey) return; // one active workflow per openKey
+    openedKeyRef.current = openKey;
     void openAttempt(lesson, "beginAttempt");
-  }, [agcClient, lesson, state.currentStepIndex, state.attempt, isInteractive, isComplete, attemptPhase, agcEpoch, openAttempt]);
+    return () => {
+      testOnlyLog({ type: "open-effect-cleanup", openKey });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agcClient, openKey, isInteractive, isComplete, openAttempt]);
 
-  // Reset attempt phase when the selected lesson or step changes so the
-  // effect above will re-open a fresh attempt on the next pass. Skip the
-  // initial mount and any spurious re-run whose key hasn't actually
-  // changed — otherwise the reset cancels the very first openAttempt via
-  // ++openingTokenRef before the async barrier handshake can resolve.
+  // Reset attempt state on a true session/reset boundary (agcEpoch or lesson
+  // change). Step change alone MUST NOT invalidate — openAttempt itself
+  // increments the token when the open-effect re-runs on a new openKey.
   const prevResetKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    const key = `${selectedId}#${state.currentStepIndex}#${agcEpoch}`;
+    testOnlyLog({ type: "reset-effect-start", resetKey, prev: prevResetKeyRef.current });
     if (prevResetKeyRef.current === null) {
-      prevResetKeyRef.current = key;
+      prevResetKeyRef.current = resetKey;
       return;
     }
-    if (prevResetKeyRef.current === key) return;
-    prevResetKeyRef.current = key;
+    if (prevResetKeyRef.current === resetKey) return;
+    prevResetKeyRef.current = resetKey;
     openedKeyRef.current = null;
-    ++openingTokenRef.current; // cancel any in-flight open/gate
+    invalidateOpening("explicit-reset");
     setAttemptPhase("idle");
     setLastBoundary(null);
     setAttemptError(null);
     setReadinessSnap(null);
     readinessTrackerRef.current = null;
-  }, [selectedId, state.currentStepIndex, agcEpoch]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
+
+  // Committed-phase diagnostic — the only reliable observation that
+  // setAttemptPhase actually flushed before any subsequent cancellation.
+  useEffect(() => {
+    testOnlyLog({ type: "attempt-phase-committed", attemptPhase, openKey });
+  }, [attemptPhase, openKey, testOnlyLog]);
+
 
   function ackCurrent() {
     if (!step || step.kind !== "reading") return;
