@@ -1,0 +1,32 @@
+--- /tmp/va-orig/yaAGC/wasm.c	2021-05-21 07:45:24.000000000 +0000
++++ /tmp/virtualagc-ddc65e7bed41f1301921b934fcbaaee93db99dda/yaAGC/wasm.c	2026-07-29 15:37:36.073450011 +0000
+@@ -38,6 +38,9 @@
+ #include "agc_engine.h"
+ #include "ringbuffer.h"
+ 
++extern void hwio_after_agc_engine(void);
++extern void hwio_on_cpu_reset(void);
++
+ #define export __attribute__((visibility("default")))
+ 
+ agc_t State;
+@@ -95,6 +98,7 @@
+ cpu_reset ()
+ {
+   agc_engine_init (&State, NULL, NULL, 0);
++  hwio_on_cpu_reset();
+ }
+ 
+ 
+@@ -105,8 +109,10 @@
+ export void
+ cpu_step (uint32_t steps)
+ {
+-  for (uint32_t i = 0; i < steps; i++)
++  for (uint32_t i = 0; i < steps; i++) {
+     agc_engine (&State);
++    hwio_after_agc_engine();
++  }
+ }
+ 
+ 
