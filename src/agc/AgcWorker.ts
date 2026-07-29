@@ -51,10 +51,30 @@ const ctx = self as unknown as DedicatedWorkerGlobalScope;
 let outSeq = 0;
 
 /**
- * Events that MUST NOT leak to the client during the canonical
- * initialization window. The client only sees the AGC session AFTER the
- * Worker publishes `ready`; pre-ready boot activity and the system-generated
- * startup RSET must not appear in the public event log.
+ * ============================================================================
+ *  ⚠  PRE-READY EVENT SUPPRESSION — MAINTENANCE-CRITICAL LIST  ⚠
+ * ============================================================================
+ *  Every AGC output that could carry visible session state MUST appear here
+ *  until the dispatcher is inverted to an allowlist / bypass-flag model
+ *  (see `send()` below and the M2.2 review action item).
+ *
+ *  Rationale: while the Worker runs the canonical startup RSET-and-settle
+ *  sequence, `publicPhaseStarted === false`. Anything that leaks in this
+ *  window pollutes the public event-id namespace, exposes the system-
+ *  generated RSET keypress as if the astronaut pressed it, or makes boot
+ *  DSKY transients look like fresh channel activity to lesson observers.
+ *
+ *  If you add a NEW `AgcEvent` variant that carries emulator output
+ *  (channel writes, DSKY updates, input echoes, snapshots, alarms, etc.)
+ *  you MUST add its `type` to this set. If you deliberately want the
+ *  event to publish during canonical init (e.g. `fatalError`,
+ *  `performanceWarning`, `diagnostics`, `ready`) leave it out — those are
+ *  the only categories currently intended to bypass suppression.
+ *
+ *  TODO(M2.3): replace this blocklist with an explicit per-event
+ *  `bypassInitialSuppression` flag enforced at `send()` so new emitters
+ *  fail closed instead of open.
+ * ============================================================================
  */
 const PRE_READY_SUPPRESSED_EVENTS: ReadonlySet<AgcEvent["type"]> = new Set([
   "channelUpdate",
@@ -62,7 +82,12 @@ const PRE_READY_SUPPRESSED_EVENTS: ReadonlySet<AgcEvent["type"]> = new Set([
   "dskyUpdate",
   "dskyDecoded",
   "stateSnapshot",
+  "eventBoundary",
+  "alarm",
+  "paused",
+  "resumed",
 ]);
+
 
 function send(message: AgcEvent, requestId?: string, missionTimeUs?: number): void {
   if (!state.publicPhaseStarted && PRE_READY_SUPPRESSED_EVENTS.has(message.type)) {
