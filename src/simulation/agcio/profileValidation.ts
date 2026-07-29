@@ -13,6 +13,12 @@ import type {
   MonitorBlockReason,
   ReservedSetMonitorProfileCommand,
 } from "./types";
+import {
+  MONITOR_SIGNAL_REGISTRY,
+  mappedSignalsForProfile,
+  unresolvedSignalsForProfile,
+  validateRegistry,
+} from "./sensorRegistry";
 
 /** Static snapshot of runtime facts the validator needs to decide whether
  *  a monitor profile can be entered atomically. Every field is derived from
@@ -155,8 +161,38 @@ export function decideMonitorEntry(
   }
 
   if (profile === "descent-monitor-v1") {
+    // Registry structural integrity is a HARD gate — a malformed registry
+    // must never permit entry regardless of the unresolved list.
+    for (const err of validateRegistry()) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `registry: ${err.message}`,
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+    // Every required signal must be marked `mapped` in the registry —
+    // removing a string from the block list alone is NOT sufficient.
+    const stillUnresolved = unresolvedSignalsForProfile(profile);
+    for (const u of stillUnresolved) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `${u.id}: ${u.physicalMeaning}`,
+        reference: u.sourceCitation,
+      });
+    }
+    // Fallback: hand-maintained block list is applied in addition, so a
+    // policy-level block (e.g. CDU drain budget) can persist even after
+    // registry rows are marked mapped.
     for (const reason of DESCENT_MONITOR_V1_UNRESOLVED_MAPPINGS) {
       reasons.push(reason);
+    }
+    // Sanity: ensure at least one mapped row exists for the profile.
+    if (mappedSignalsForProfile(profile).length === 0) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: "descent-monitor-v1 has no mapped signals in registry",
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
     }
   }
 
@@ -166,11 +202,16 @@ export function decideMonitorEntry(
   return { outcome: "blocked", profile, reasons };
 }
 
+// Re-export for convenience so callers don't need to import from two places.
+export { MONITOR_SIGNAL_REGISTRY };
+
 /**
- * The exact list of unresolved LR/PIPA mappings currently blocking
- * `descent-monitor-v1`. Removing an entry from this list is the sole
- * mechanism by which the profile becomes enterable; there is no bypass.
- * Sourced verbatim from `docs/M3_3_IO_MAP.md`.
+ * Policy-level unresolved-mapping block for `descent-monitor-v1`. This is
+ * ONE of several gates; the profile also requires an empty
+ * `unresolvedSignalsForProfile("descent-monitor-v1")` set AND a clean
+ * `validateRegistry()` result AND every runtime prerequisite
+ * (`agcReady`, epochs, active scenario, provenance, trace disabled).
+ * Removing an entry here alone is NOT sufficient to enable the profile.
  */
 export const DESCENT_MONITOR_V1_UNRESOLVED_MAPPINGS: readonly MonitorBlockReason[] = [
   {

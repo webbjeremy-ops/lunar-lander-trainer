@@ -160,10 +160,16 @@ export interface AgcHwInputRecord {
  */
 export type AgcSensorAction =
   | {
-      readonly kind: "channel-write";
+      readonly kind: "channel-mask-update";
       readonly channel: number;
+      /** Bits owned by the emitting profile. `value & ~mask === 0` is
+       *  invariant; the future Worker merges via
+       *  `(current & ~mask) | (value & mask)` so unrelated bits (e.g.
+       *  PROCEED on CHAN32) are preserved bit-identically. */
+      readonly mask: number;
       readonly value: number;
       readonly suborder: number;
+      readonly mappingId: string;
     }
   | {
       readonly kind: "counter-pulses";
@@ -171,14 +177,22 @@ export type AgcSensorAction =
       readonly incType: AgcIncrementType;
       readonly pulseCount: number;
       readonly suborder: number;
+      readonly mappingId: string;
     };
+
+/** Narrowed view of the owned-bit-update variant used by the future Worker
+ *  merge helper (`applyChannelMaskUpdate`). */
+export type ChannelMaskUpdateAction = Extract<
+  AgcSensorAction,
+  { kind: "channel-mask-update" }
+>;
 
 /** Per-tick sensor diagnostics returned by the encoder for the harness /
  *  monitor snapshot. Kept compact; large traces live in the retrievable
  *  monitor-trace ring, not in every snapshot. */
 export interface EncodedSensorDiagnostics {
   readonly missionTimeUs: number;
-  readonly channelWriteCount: number;
+  readonly channelMaskUpdateCount: number;
   readonly counterPulseCount: number;
   readonly perCounter: readonly {
     readonly counterAddress: number;
