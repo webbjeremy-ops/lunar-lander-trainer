@@ -221,6 +221,9 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
       firstAnnMatchEventId: d.firstAnnMatchEventId,
       firstFullMatchEventId: d.firstFullMatchEventId,
       closestTransition: d.closestTransition,
+      predicateCalls: d.predicateCalls ?? 0,
+      predicateStateChanges: d.predicateStateChanges ?? 0,
+      lastPredicateChange: d.lastPredicateChange ?? null,
     };
   }, []);
 
