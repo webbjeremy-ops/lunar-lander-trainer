@@ -62,6 +62,7 @@ import {
 import { MonitorController, type MonitorHwPort } from "@/simulation/agcio/MonitorController";
 import { validateSetMonitorProfileCommand } from "@/simulation/agcio/profileValidation";
 import { EXPECTED_ACTUATOR_CHANNELS } from "@/simulation/agcio/actuatorRegistry";
+import { MONITOR_TRACE_CAPACITY } from "@/simulation/agcio/monitorTrace";
 import type { LmDiscreteSensorState } from "@/simulation/agcio/discreteEncoder";
 import type {
   AgcOutputChannelEvent,
@@ -1210,6 +1211,14 @@ async function handle(
       adapter.reset();
       state.resetCount++;
       state.sessionEpoch++;
+      // cpu_reset() disarms HW-I/O tracing inside the WASM. Monitor mode
+      // therefore INTERLOCKS: injection stops, the trace is confirmed
+      // disabled, and re-entry requires an explicit scenario reset plus a
+      // new profile command. It never re-arms itself.
+      state.monitor?.onAgcEpochChanged(state.sessionEpoch);
+      state.avionics = null;
+      state.monitorCommandQueue.length = 0;
+      state.tickChannelEvents.length = 0;
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
@@ -1467,9 +1476,79 @@ function handleSimulationCommand(
         stats.ticksExecuted,
         Number(state.clock.getMissionTimeUs()),
         state.clock.isPaused(),
+        monitorSnapshot(stats.ticksExecuted),
       );
       state.missionCoalescer.offer(snap);
       state.missionCoalescer.flushNow();
+      return;
+    }
+    // ---- Simulation protocol v2: monitor mode --------------------------
+    case "sim:set-avionics": {
+      // Operator-declared discretes. Rejected on a stale epoch so an
+      // avionics state can never leak across a scenario reset.
+      const epoch = state.missionRuntime.getSimulationEpoch();
+      if (cmd.simulationEpoch !== epoch) {
+        sendSimEvent({
+          type: "sim:commandAck",
+          payload: {
+            accepted: false,
+            commandId: cmd.commandId,
+            reason: "stale-simulation-epoch",
+            message: `command epoch ${cmd.simulationEpoch} != runtime epoch ${epoch}`,
+          },
+        }, requestId);
+        return;
+      }
+      state.avionics = { ...cmd.avionics };
+      sendSimEvent({
+        type: "sim:commandAck",
+        payload: { accepted: true, commandId: cmd.commandId },
+      }, requestId);
+      return;
+    }
+    case "sim:set-monitor-profile": {
+      const epoch = state.missionRuntime.getSimulationEpoch();
+      const validation = validateSetMonitorProfileCommand(
+        cmd,
+        epoch,
+        state.missionRuntime.getState().acceptedCursorUs,
+        MISSION_TICK_US,
+      );
+      if (!validation.ok) {
+        sendSimEvent({
+          type: "sim:monitor-blocked",
+          commandId: cmd.commandId,
+          simulationEpoch: epoch,
+          requestedProfile: cmd.profile,
+          reasons: [{ code: "prerequisite-missing", detail: validation.message }],
+        }, requestId);
+        return;
+      }
+      state.monitorCommandQueue.push(cmd);
+      return;
+    }
+    case "sim:request-monitor-trace": {
+      const monitor = state.monitor;
+      const window = monitor
+        ? monitor.traceWindow()
+        : { events: [], firstSeq: null, lastSeq: null, retainedCount: 0, droppedCount: 0, capacity: MONITOR_TRACE_CAPACITY, firstMissionTick: null, lastMissionTick: null };
+      sendSimEvent({
+        type: "sim:monitor-trace",
+        requestId: cmd.requestId,
+        simulationEpoch: state.missionRuntime.getSimulationEpoch(),
+        agcEpoch: state.sessionEpoch,
+        profile: monitor?.facts().profile ?? "off",
+        firstSeq: window.firstSeq,
+        lastSeq: window.lastSeq,
+        retainedCount: window.retainedCount,
+        capacity: window.capacity,
+        droppedCount: window.droppedCount,
+        wasmDroppedCount: state.adapter?.traceDropped() ?? 0,
+        // The ring is drained once per mission tick, so nothing is pending
+        // between ticks. Reported explicitly rather than assumed.
+        wasmPendingCount: 0,
+        events: window.events,
+      }, requestId);
       return;
     }
   }
