@@ -192,7 +192,7 @@ export type ChannelMaskUpdateAction = Extract<
  *  monitor-trace ring, not in every snapshot. */
 export interface EncodedSensorDiagnostics {
   readonly missionTimeUs: number;
-  readonly channelWriteCount: number;
+  readonly channelMaskUpdateCount: number;
   readonly counterPulseCount: number;
   readonly perCounter: readonly {
     readonly counterAddress: number;
