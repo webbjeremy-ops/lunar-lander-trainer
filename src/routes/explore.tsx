@@ -152,6 +152,8 @@ function ExplorePanels() {
       <div className="space-y-6">
         <ProvenanceCard ready={ready} snapshot={snapshot} sessionEpoch={sessionEpoch} />
         <ExportPanel />
+        <ImportPanel />
+
         <ChannelTableCard snapshot={snapshot} />
         <DecodedDumpCard decoded={decoded} />
       </div>
