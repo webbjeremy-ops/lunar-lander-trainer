@@ -550,7 +550,7 @@ function LearnPage() {
                       }
                     >
                       {attemptPhase === "gating"
-                        ? `Waiting for the AGC to complete startup before beginning the lamp test… (RESTART ${readinessSnap?.restartCleared ? "cleared" : "active"}, stable scans ${readinessSnap?.stableConsecutiveScans ?? 0}/1, scans after restart ${readinessSnap?.scansAfterRestart ?? 0}/2)`
+                        ? `Waiting for the AGC to settle before beginning the lamp test… (RESTART ${readinessSnap?.restartCleared ? "cleared" : "active"}, STANDBY ${readinessSnap?.standby ? "on" : "off"}, quiet ticks ${readinessSnap?.quietTicks ?? 0}/${readinessSnap?.requiredQuietTicks ?? 20}${readinessSnap?.blockingReason ? `, ${readinessSnap.blockingReason}` : ""})`
                         : attemptPhase === "opening"
                           ? "Preparing authentic AGC observation…"
                           : attemptPhase === "error"
