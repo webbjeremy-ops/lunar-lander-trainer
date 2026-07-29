@@ -11,6 +11,7 @@
 
 import { AgcCoreAdapter } from "@/sim/agc/AgcCoreAdapter";
 import { MissionClock, TICK_MICROS } from "./MissionClock";
+const SCHEDULER_TICK_MICROS = Number(TICK_MICROS);
 import { SnapshotCoalescer } from "./SnapshotCoalescer";
 import { EventLog } from "./EventLog";
 import {
@@ -35,6 +36,8 @@ import {
   type CanonicalInitInfo,
   type ChannelEventLite,
   type Diagnostics,
+  type EventLogExportPayload,
+  type PublicEventRecord,
   type StateSnapshot,
   type W2CEnvelope,
 } from "./protocol";
@@ -126,6 +129,24 @@ interface WorkerState {
    *  from here instead of re-deriving context from the current clock. */
   recentEventsRing: ChannelEventLite[];
   recentEventsCap: number;
+  /** Bounded ring of PUBLIC events (inputAccepted + channelUpdate) since
+   *  the current epoch's `ready`. Used exclusively for event-log export.
+   *  Distinct from `recentEventsRing` (channel-only, snapshot-facing). */
+  publicEventsRing: PublicEventRecord[];
+  publicEventsCap: number;
+  /** Total number of public events APPENDED to the ring this epoch
+   *  (including any that have since been dropped from the head). */
+  publicEventsAppendedTotal: number;
+  /** Epoch-start baseline captured at publishReady. Null before ready and
+   *  between reset and the next ready. */
+  epochStartBaseline: {
+    tickIndex: number;
+    missionTimeUs: number;
+    totalAgcSteps: number;
+    decodedDsky: DecodedDsky;
+    decodedDskyChecksum: string;
+    channelValues: Record<string, number>;
+  } | null;
   /** Canonical-initialization invariant tracking. `initialResetPerformed`
    *  flips true when the single `loadRope` handler completes its one and
    *  only cpu_reset(); `resetCount` increments on every adapter.reset()
@@ -253,6 +274,10 @@ const state: WorkerState = {
   nextEventId: 1,
   recentEventsRing: [],
   recentEventsCap: 64,
+  publicEventsRing: [],
+  publicEventsCap: 32768,
+  publicEventsAppendedTotal: 0,
+  epochStartBaseline: null,
   initialResetPerformed: false,
   resetCount: 0,
   sessionEpoch: 0,
@@ -284,6 +309,43 @@ async function sha256Hex(input: ArrayBuffer | Uint8Array): Promise<string> {
     .join("");
 }
 
+/** Append a public event to the export ring, evicting the oldest entry
+ *  when the ring is at capacity. `publicEventsAppendedTotal` counts every
+ *  append (including dropped ones), so the current head's eventId
+ *  reveals the drop boundary. */
+function appendPublicEvent(rec: PublicEventRecord): void {
+  state.publicEventsRing.push(rec);
+  state.publicEventsAppendedTotal++;
+  if (state.publicEventsRing.length > state.publicEventsCap) {
+    state.publicEventsRing.splice(0, state.publicEventsRing.length - state.publicEventsCap);
+  }
+}
+
+
+
+
+/** Deterministic snapshot of every AGC channel the adapter has observed.
+ *  Keys are decimal-encoded channel numbers as strings; values are
+ *  canonical numbers. Uses `io.allChannels()` when the private accessor
+ *  is available and falls back to the DSKY-relevant channel list. */
+function snapshotAllChannels(adapter: AgcCoreAdapter): Record<string, number> {
+  const out: Record<string, number> = {};
+  const anyAdapter = adapter as unknown as {
+    io?: { allChannels(): ReadonlyMap<number, number> };
+  };
+  if (anyAdapter.io && typeof anyAdapter.io.allChannels === "function") {
+    for (const [c, v] of anyAdapter.io.allChannels().entries()) {
+      out[String(c)] = v;
+    }
+    return out;
+  }
+  const KNOWN = [0o10, 0o11, 0o13, 0o15, 0o30, 0o31, 0o32, 0o33, 0o163];
+  for (const c of KNOWN) out[String(c)] = adapter.channel(c);
+  return out;
+}
+
+
+
 function buildSnapshot(): StateSnapshot {
   const adapter = state.adapter;
   if (!adapter) {
@@ -307,22 +369,9 @@ function buildSnapshot(): StateSnapshot {
       decodedDsky: state.decodedDsky,
     };
   }
+  const snap = snapshotAllChannels(adapter);
   const channels: Record<number, number> = {};
-  for (const [c, v] of ((): Iterable<[number, number]> => {
-    const anyAdapter = adapter as unknown as {
-      io?: { allChannels(): ReadonlyMap<number, number> };
-    };
-    // AgcCoreAdapter keeps the io state private; walk known channels instead
-    // when the private accessor is not available.
-    if (anyAdapter.io && typeof anyAdapter.io.allChannels === "function") {
-      return anyAdapter.io.allChannels().entries();
-    }
-    // Fallback: iterate the small set of channels the DSKY cares about.
-    const KNOWN = [0o10, 0o11, 0o13, 0o15, 0o30, 0o31, 0o32, 0o33, 0o163];
-    return KNOWN.map((c) => [c, adapter.channel(c)] as [number, number])[Symbol.iterator]();
-  })()) {
-    channels[c] = v;
-  }
+  for (const key of Object.keys(snap)) channels[Number(key)] = snap[key];
   const era = adapter.erasable();
   const window: number[] = new Array(state.erasableLength);
   for (let i = 0; i < state.erasableLength; i++) window[i] = era[state.erasableBase + i] ?? 0;
@@ -522,6 +571,8 @@ function publishReady(): void {
   if (initTraceHistory.length > 8) initTraceHistory.splice(0, initTraceHistory.length - 8);
   state.nextEventId = 1;
   state.recentEventsRing.length = 0;
+  state.publicEventsRing.length = 0;
+  state.publicEventsAppendedTotal = 0;
   state.lastLamps = adapter.lampBits();
   state.lastChannelEventCount = adapter.totalChannelEvents();
   // Align the Worker-owned decoder's EC counter with the client-side pure
@@ -532,6 +583,17 @@ function publishReady(): void {
   // capture fixtures). We reset ONLY `eventCount`, preserving digits, signs,
   // and annunciators so the UI keeps showing the actual settled DSKY state.
   state.decodedDsky.eventCount = 0;
+  // Capture the epoch-start baseline BEFORE flipping publicPhaseStarted so
+  // no channel/input event can race in and shift the recorded origin.
+  // Deep-clone decodedDsky so downstream mutations cannot perturb it.
+  state.epochStartBaseline = {
+    tickIndex: currentTickIndex(),
+    missionTimeUs: Number(state.clock.getMissionTimeUs()),
+    totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+    decodedDsky: JSON.parse(JSON.stringify(state.decodedDsky)) as DecodedDsky,
+    decodedDskyChecksum: decodedDskyCanonical(state.decodedDsky),
+    channelValues: snapshotAllChannels(adapter),
+  };
   state.publicPhaseStarted = true;
   state.workerState = "ready";
   send({
@@ -637,6 +699,18 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
           state.recentEventsRing.push(lite);
           if (state.recentEventsRing.length > state.recentEventsCap) {
             state.recentEventsRing.splice(0, state.recentEventsRing.length - state.recentEventsCap);
+          }
+          // Record on the public event ring for event-log export. The
+          // `send()` gate below drops this event before it reaches the
+          // client during pre-ready canonical init; mirror that here so
+          // the export ring cannot contain pre-public events either.
+          if (state.publicPhaseStarted) {
+            appendPublicEvent({
+              type: "channelUpdate",
+              eventId, tickIndex, missionTimeUs,
+              totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+              channel: ch, value: val,
+            });
           }
           send({ type: "channelUpdate", payload: lite });
         },
@@ -764,6 +838,9 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
       state.recentEventsRing.length = 0;
+      state.publicEventsRing.length = 0;
+      state.publicEventsAppendedTotal = 0;
+      state.epochStartBaseline = null;
       state.lastLamps = 0;
       state.lastChannelEventCount = 0;
       state.publicPhaseStarted = false;
@@ -787,6 +864,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         kind: "dskyKeyDown",
         payload: { keyCode: cmd.keyCode },
       });
+      if (state.publicPhaseStarted) {
+        appendPublicEvent({
+          type: "inputAccepted",
+          eventId, tickIndex, missionTimeUs,
+          totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          kind: "dskyKeyDown", keyCode: cmd.keyCode,
+        });
+      }
       send({
         type: "inputAccepted",
         payload: { eventId, tickIndex, missionTimeUs, kind: "dskyKeyDown", keyCode: cmd.keyCode },
@@ -803,6 +888,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         kind: "dskyKeyUp",
         payload: { keyCode: cmd.keyCode },
       });
+      if (state.publicPhaseStarted) {
+        appendPublicEvent({
+          type: "inputAccepted",
+          eventId, tickIndex, missionTimeUs,
+          totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          kind: "dskyKeyUp", keyCode: cmd.keyCode,
+        });
+      }
       send({
         type: "inputAccepted",
         payload: { eventId, tickIndex, missionTimeUs, kind: "dskyKeyUp", keyCode: cmd.keyCode },
@@ -820,6 +913,14 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         kind: "proceedKey",
         payload: { pressed: cmd.pressed },
       });
+      if (state.publicPhaseStarted) {
+        appendPublicEvent({
+          type: "inputAccepted",
+          eventId, tickIndex, missionTimeUs,
+          totalAgcSteps: Number(state.clock.getTotalAgcSteps()),
+          kind: "proceedKey", pressed: cmd.pressed,
+        });
+      }
       send({
         type: "inputAccepted",
         payload: { eventId, tickIndex, missionTimeUs, kind: "proceedKey", pressed: cmd.pressed },
@@ -888,6 +989,70 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
         },
         requestId,
       );
+      return;
+    }
+    case "requestEventLogExport": {
+      if (!state.publicPhaseStarted || !state.epochStartBaseline) {
+        // Reply with an empty-epoch export so the client can still show a
+        // well-formed "no data yet" state. `sessionEpoch` still identifies
+        // which epoch this is (pre-ready → the epoch currently spinning up).
+        send(
+          {
+            type: "eventLogExport",
+            payload: {
+              sessionEpoch: state.sessionEpoch,
+              timing: { nominalStepNs: 11720, schedulerTickUs: SCHEDULER_TICK_MICROS },
+              baseline: {
+                tickIndex: 0,
+                missionTimeUs: 0,
+                totalAgcSteps: 0,
+                decodedDsky: makeEmptyDecodedDsky(),
+                decodedDskyChecksum: decodedDskyCanonical(makeEmptyDecodedDsky()),
+                channelValues: {},
+              },
+              events: [],
+              retention: {
+                completeEpoch: true,
+                droppedBeforeEventId: null,
+                retainedEventLimit: state.publicEventsCap,
+              },
+            },
+          },
+          requestId,
+        );
+        return;
+      }
+      // Deep-copy ring records so the caller receives its own snapshot; a
+      // subsequent tick could otherwise append into the same array before
+      // postMessage's structured clone runs.
+      const eventsCopy: PublicEventRecord[] = state.publicEventsRing.map((e) =>
+        e.type === "channelUpdate" ? { ...e } : { ...e },
+      );
+      const dropped =
+        state.publicEventsAppendedTotal - state.publicEventsRing.length;
+      const firstRetainedId =
+        eventsCopy.length > 0 ? eventsCopy[0].eventId : null;
+      const payload: EventLogExportPayload = {
+        sessionEpoch: state.sessionEpoch,
+        timing: { nominalStepNs: 11720, schedulerTickUs: SCHEDULER_TICK_MICROS },
+        baseline: {
+          tickIndex: state.epochStartBaseline.tickIndex,
+          missionTimeUs: state.epochStartBaseline.missionTimeUs,
+          totalAgcSteps: state.epochStartBaseline.totalAgcSteps,
+          decodedDsky: JSON.parse(
+            JSON.stringify(state.epochStartBaseline.decodedDsky),
+          ) as DecodedDsky,
+          decodedDskyChecksum: state.epochStartBaseline.decodedDskyChecksum,
+          channelValues: { ...state.epochStartBaseline.channelValues },
+        },
+        events: eventsCopy,
+        retention: {
+          completeEpoch: dropped === 0,
+          droppedBeforeEventId: dropped === 0 ? null : firstRetainedId,
+          retainedEventLimit: state.publicEventsCap,
+        },
+      };
+      send({ type: "eventLogExport", payload }, requestId);
       return;
     }
     case "dispose": {
