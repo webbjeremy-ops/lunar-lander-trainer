@@ -170,11 +170,13 @@ function LearnPage() {
 
     try {
       if (forLesson.requiresReadinessGate) {
+        console.log("[openAttempt] -> gating");
         setAttemptPhase("gating");
         const tracker = new ReadinessTracker();
         readinessTrackerRef.current = tracker;
         // Seed shadow from a Worker-authoritative baseline.
         const seed = await client.requestEventBoundary();
+        console.log("[openAttempt] gating baseline received; token match?", openingTokenRef.current === token);
         if (openingTokenRef.current !== token) return;
         tracker.noteBaseline(seed);
         setReadinessSnap(tracker.snapshot());
@@ -199,9 +201,11 @@ function LearnPage() {
               },
             });
           });
+          console.log("[openAttempt] readiness resolved; token match?", openingTokenRef.current === token);
           if (openingTokenRef.current !== token) return;
         }
       }
+
 
       setAttemptPhase("opening");
       const boundary = await client.requestEventBoundary();
