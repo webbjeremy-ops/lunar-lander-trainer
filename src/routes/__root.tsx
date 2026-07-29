@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { AgcSessionProvider } from "@/agc/AgcSession";
 
 function NotFoundComponent() {
   return (
@@ -119,8 +120,12 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      {/* Shared AGC Worker session — one emulator instance persists across
+          route changes (/learn ↔ /explore). See src/agc/AgcSession.tsx. */}
+      <AgcSessionProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+      </AgcSessionProvider>
     </QueryClientProvider>
   );
 }
