@@ -84,11 +84,7 @@ describe("canonical AGC session initialization", () => {
 });
 
 describe("canonical initialization surface (protocol shape)", () => {
-  it("Worker ready contract includes initialResetPerformed:true, resetCount:1, sessionEpoch:0", async () => {
-    // Structural check on the protocol type — a fake ready payload with
-    // the required invariants must satisfy the ReadyPayload type at
-    // compile time. If someone drops these fields, this test breaks the
-    // build via tsgo.
+  it("Worker ready contract includes canonicalInit + reset accounting", async () => {
     const { ReadyPayload } = await import("@/agc/protocol").then((m) => ({
       ReadyPayload: null as unknown as import("@/agc/protocol").ReadyPayload,
     }));
@@ -106,9 +102,32 @@ describe("canonical initialization surface (protocol shape)", () => {
       initialResetPerformed: true,
       resetCount: 1,
       sessionEpoch: 0,
+      canonicalInit: {
+        cpuResetPerformed: true,
+        cpuResetCount: 1,
+        startupRsetSent: true,
+        // RSET keycode is 0o22 (decimal 18). Same integer the rendered
+        // keypad emits — the canonical startup sequence uses the authentic
+        // input path, not a bespoke pre-ready channel.
+        startupRsetCode: 0o22,
+        startupRsetAccepted: true,
+        startupRsetCount: 1,
+        restartObservedBeforeRset: true,
+        restartClearedAfterRset: true,
+        settledAtTick: 42,
+      },
     };
     expect(sample.initialResetPerformed).toBe(true);
     expect(sample.resetCount).toBe(1);
     expect(sample.sessionEpoch).toBe(0);
+    expect(sample.canonicalInit.startupRsetCode).toBe(0o22);
+    expect(sample.canonicalInit.startupRsetCount).toBe(1);
+    expect(sample.canonicalInit.cpuResetCount).toBe(sample.resetCount);
+  });
+
+  it("RSET keycode constant matches AGC_KEY.RSET (0o22)", async () => {
+    const { AGC_KEY } = await import("@/lessons/keyCodes");
+    expect(AGC_KEY.RSET).toBe(0o22);
+    expect(AGC_KEY.RSET).toBe(18);
   });
 });
