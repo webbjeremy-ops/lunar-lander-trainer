@@ -205,6 +205,33 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
   const lessonRef = useRef<LessonDefinition>(lesson);
   useEffect(() => { lessonRef.current = lesson; }, [lesson]);
 
+  // Shadow decoder — advances losslessly from channelUpdate events.
+  const shadowRef = useRef<DecodedDsky>(makeEmptyDecodedDsky());
+  const shadowSeededAttemptIdRef = useRef<string | null>(null);
+  const boundaryEventIdRef = useRef<number>(-1);
+
+  // AUTHORITATIVE synchronous LessonEngine state.
+  //
+  // We deliberately DO NOT continuously mirror `state` (prop) into stateRef.
+  // React's setState is asynchronous; a prop commit from a stale reducer
+  // path can arrive AFTER a synchronous transition to `completed`, and if
+  // we blindly reseed the ref we'd erase the latch. During an active
+  // attempt, stateRef.current is the source of truth; parent-prop commits
+  // must not overwrite a newer ref state.
+  //
+  // The ref is seeded exactly once per attempt when the attempt-key changes.
+  const stateRef = useRef<LessonState>(state);
+
+  const lessonRef = useRef<LessonDefinition>(lesson);
+  useEffect(() => { lessonRef.current = lesson; }, [lesson]);
+
+  // Pre-seed channel buffer: events that arrived after we opened an attempt
+  // but before the boundary/shadow was seeded. Drained on seed.
+  const pendingPreSeedRef = useRef<ChannelEventLite[]>([]);
+  // Highest eventId processed against the shadow — used to reject
+  // out-of-order / duplicate events (attempt-scoped).
+  const lastProcessedEventIdRef = useRef<number>(-1);
+
   const provenance = useMemo<LessonProvenance>(() => {
     if (!ready) return FIXTURE_PROVENANCE;
     return {
@@ -236,6 +263,19 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
       ),
       boundaryEventId: boundaryEventIdRef.current,
       attemptId: stateRef.current.attempt?.attemptId ?? null,
+      attemptKey: d.attemptKey ?? null,
+      seedCount: d.seedCount ?? 0,
+      seedSource: d.seedSource ?? null,
+      listenerAttachedEventId: d.listenerAttachedEventId ?? null,
+      bufferedPreSeedCount: d.bufferedPreSeedCount ?? 0,
+      replayedPostSeedCount: d.replayedPostSeedCount ?? 0,
+      firstReplayedEventId: d.firstReplayedEventId ?? null,
+      lastProcessedEventId: d.lastProcessedEventId ?? null,
+      duplicateEventCount: d.duplicateEventCount ?? 0,
+      outOfOrderEventCount: d.outOfOrderEventCount ?? 0,
+      staleAttemptEventCount: d.staleAttemptEventCount ?? 0,
+      downgradeAttempts: d.downgradeAttempts ?? 0,
+      propOverwriteAttempts: d.propOverwriteAttempts ?? 0,
       enterEventId: d.enterEventId,
       enterTick: d.enterTick,
       keyEventIds: d.keyEventIds,
@@ -252,7 +292,60 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     };
   }, []);
 
-  // Reseed the shadow when a new attempt begins with a fresh boundary.
+  // Detect meaningful prop-driven state changes that are NOT ours (i.e.
+  // parent reset, lesson/step navigation, restartInteractive). These are the
+  // only legitimate reasons to reseed stateRef mid-mount.
+  useEffect(() => {
+    const ref = stateRef.current;
+    const nextAttemptId = state.attempt?.attemptId ?? null;
+    const refAttemptId = ref.attempt?.attemptId ?? null;
+    // Case A: parent cleared the attempt (teardown / navigation).
+    if (nextAttemptId === null && refAttemptId !== null) {
+      stateRef.current = state;
+      shadowSeededAttemptIdRef.current = null;
+      lastProcessedEventIdRef.current = -1;
+      pendingPreSeedRef.current.length = 0;
+      return;
+    }
+    // Case B: parent switched lesson entirely (different lessonId is implied
+    // by remount; if same host receives different lesson.id, treat as reset).
+    if (state.lessonId !== ref.lessonId) {
+      stateRef.current = state;
+      shadowSeededAttemptIdRef.current = null;
+      lastProcessedEventIdRef.current = -1;
+      pendingPreSeedRef.current.length = 0;
+      return;
+    }
+    // Case C: parent's status/step changed while NO attempt is active
+    // (e.g. reading-only step advance). Safe to mirror.
+    if (nextAttemptId === null && refAttemptId === null) {
+      if (state !== ref) stateRef.current = state;
+      return;
+    }
+    // Case D: parent commit for the SAME attempt as our ref. If the ref
+    // has already advanced past prop (e.g. we synchronously latched
+    // completed and this prop is the delayed reflection or an older
+    // reflection), do NOT overwrite. Count it for diagnostics.
+    if (nextAttemptId === refAttemptId) {
+      // Never downgrade completed → in-progress via prop.
+      if (ref.status === "completed" && state.status !== "completed") {
+        diagRef.current.propOverwriteAttempts =
+          (diagRef.current.propOverwriteAttempts ?? 0) + 1;
+        return;
+      }
+      // If prop carries strictly newer information (more evidence), accept.
+      if (state.evidence.length > ref.evidence.length) {
+        stateRef.current = state;
+      }
+      return;
+    }
+    // Case E: attempt IDs differ — parent opened a NEW attempt. Seed once
+    // via the attempt-key effect below (do nothing here to avoid double
+    // seeding).
+  }, [state]);
+
+  // Reseed the shadow AND stateRef when a new attempt begins with a fresh
+  // boundary. This is the ONLY place stateRef is seeded for an attempt.
   useEffect(() => {
     const cur = state.attempt;
     if (!cur) {
@@ -261,19 +354,48 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
     }
     if (shadowSeededAttemptIdRef.current === cur.attemptId) return;
     if (!boundary) return;
-    // Reseed strictly from the worker-authoritative decoded baseline that
-    // corresponds to boundary.boundaryEventId. This is the ONLY correct
-    // starting point for lossless per-event application.
+    // Attempt-key: sessionEpoch is implied by boundary.boundaryEventId
+    // monotonically resetting on worker epoch changes.
+    const attemptKey = `${boundary.boundaryEventId}:${state.lessonId}:${cur.attemptId}`;
+
+    // Seed shadow strictly from worker-authoritative baseline.
     shadowRef.current = cloneDecoded(boundary.decodedDsky);
     boundaryEventIdRef.current = boundary.boundaryEventId;
     shadowSeededAttemptIdRef.current = cur.attemptId;
     previousDecodedRef.current = null;
-    // Clear per-attempt buffers so predicates never see stale evidence.
     channelBufRef.current.length = 0;
+    lastProcessedEventIdRef.current = boundary.boundaryEventId;
+
+    // Seed stateRef from parent's initial attempt state (exactly once).
+    stateRef.current = state;
+
     // Fresh diagnostic slate per attempt.
-    diagRef.current = makeEmptyDiag();
+    const nextDiag = makeEmptyDiag();
+    nextDiag.attemptKey = attemptKey;
+    nextDiag.seedCount = 1;
+    nextDiag.seedSource = "attempt-key-change";
+    diagRef.current = nextDiag;
+
+    // Drain any pre-seed channel events that arrived while we were waiting
+    // for the boundary. Discard <= boundary; replay > boundary in eventId
+    // order.
+    const pending = pendingPreSeedRef.current
+      .filter((e) => e.eventId > boundary.boundaryEventId)
+      .sort((a, b) => a.eventId - b.eventId);
+    pendingPreSeedRef.current.length = 0;
+    diagRef.current.bufferedPreSeedCount = pending.length;
+    if (pending.length > 0) {
+      diagRef.current.firstReplayedEventId = pending[0].eventId;
+      for (const ev of pending) {
+        applyDskyChannelEvent(shadowRef.current, ev.channel, ev.value);
+        lastProcessedEventIdRef.current = ev.eventId;
+        diagRef.current.replayedPostSeedCount =
+          (diagRef.current.replayedPostSeedCount ?? 0) + 1;
+      }
+    }
+    diagRef.current.lastProcessedEventId = lastProcessedEventIdRef.current;
     publishDiag();
-  }, [state.attempt, boundary, publishDiag]);
+  }, [state, state.attempt, boundary, publishDiag]);
 
   const dispatchObservation = useCallback((
     decoded: DecodedDsky,
