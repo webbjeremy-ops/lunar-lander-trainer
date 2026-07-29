@@ -309,6 +309,28 @@ async function sha256Hex(input: ArrayBuffer | Uint8Array): Promise<string> {
     .join("");
 }
 
+/** Deterministic snapshot of every AGC channel the adapter has observed.
+ *  Keys are decimal-encoded channel numbers as strings; values are
+ *  canonical numbers. Uses `io.allChannels()` when the private accessor
+ *  is available and falls back to the DSKY-relevant channel list. */
+function snapshotAllChannels(adapter: AgcCoreAdapter): Record<string, number> {
+  const out: Record<string, number> = {};
+  const anyAdapter = adapter as unknown as {
+    io?: { allChannels(): ReadonlyMap<number, number> };
+  };
+  if (anyAdapter.io && typeof anyAdapter.io.allChannels === "function") {
+    for (const [c, v] of anyAdapter.io.allChannels().entries()) {
+      out[String(c)] = v;
+    }
+    return out;
+  }
+  const KNOWN = [0o10, 0o11, 0o13, 0o15, 0o30, 0o31, 0o32, 0o33, 0o163];
+  for (const c of KNOWN) out[String(c)] = adapter.channel(c);
+  return out;
+}
+
+
+
 function buildSnapshot(): StateSnapshot {
   const adapter = state.adapter;
   if (!adapter) {
