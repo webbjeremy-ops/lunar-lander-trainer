@@ -841,6 +841,49 @@ async function handle(
         send({ type: "fatalError", payload: { code: "yaagc-version-mismatch", message: msg } });
         throw new Error(msg);
       }
+      // M3.3A2-P4: production must always instantiate the extended runtime
+      // (`yaAGC-ext.wasm`, HW-I/O v2). The frozen artifact is missing the
+      // extension exports and is a hard-failure in the Worker; the parity
+      // harness loads it directly under Vitest, never through this path.
+      const extId = a.extensionIdentity();
+      if (!extId) {
+        const msg =
+          `AGC runtime is missing HW-I/O extension exports. ` +
+          `Expected canonical extended runtime (agc_hwio_version=${CANONICAL_AGC_RUNTIME.hwioVersion}) ` +
+          `at ${cmd.wasmUrl}; got frozen artifact. This is a build/deploy defect.`;
+        state.lastError = msg;
+        state.workerState = "error";
+        send({ type: "fatalError", payload: { code: "agc-runtime-not-extended", message: msg } });
+        throw new Error(msg);
+      }
+      if (extId.hwioVersion !== CANONICAL_AGC_RUNTIME.hwioVersion) {
+        const msg =
+          `AGC HW-I/O version mismatch: expected ${CANONICAL_AGC_RUNTIME.hwioVersion}, ` +
+          `got ${extId.hwioVersion}`;
+        state.lastError = msg;
+        state.workerState = "error";
+        send({ type: "fatalError", payload: { code: "agc-hwio-version-mismatch", message: msg } });
+        throw new Error(msg);
+      }
+      // Dormancy contract: the canonical runtime boots with tracing disabled.
+      // Any nonzero counter here means the extension code path was invoked
+      // before the Worker got to observe it, which violates M3.3A2-P4.
+      if (extId.traceEnabled !== 0 || extId.traceDropped !== 0) {
+        const msg =
+          `AGC runtime is not dormant at boot: trace_enabled=${extId.traceEnabled}, ` +
+          `trace_dropped=${extId.traceDropped}`;
+        state.lastError = msg;
+        state.workerState = "error";
+        send({ type: "fatalError", payload: { code: "agc-runtime-not-dormant", message: msg } });
+        throw new Error(msg);
+      }
+      state.extensionIdentity = {
+        hwioVersion: extId.hwioVersion,
+        extVersion: extId.extVersion,
+        extensionTag: CANONICAL_AGC_RUNTIME.extensionTag,
+        traceEnabled: extId.traceEnabled,
+        traceDropped: extId.traceDropped,
+      };
       // Compute WASM SHA-256 for diagnostics (best-effort; skip on failure).
       try {
         const resp = await fetch(cmd.wasmUrl);
