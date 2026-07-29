@@ -219,6 +219,21 @@ interface WorkerState {
   missionCoalescer: SnapshotCoalescer<MissionSnapshot>;
   lastPublishedSimSnapshot: MissionSnapshot | null;
   simReadyPublished: boolean;
+  // ---- M3.3A2-P5.d monitor mode (Worker-owned authoritative state) ----
+  /** Null until `initialize` creates the adapter. */
+  monitor: MonitorController | null;
+  /** Operator-declared avionics discretes. NEVER invented by the Worker;
+   *  monitor entry is blocked until a complete state is supplied. */
+  avionics: LmDiscreteSensorState | null;
+  /** Epoch-bound, tick-aligned profile commands awaiting their boundary. */
+  monitorCommandQueue: SetMonitorProfileCommand[];
+  /** Lossless CHAN11/CHAN14 output events captured during the CURRENT AGC
+   *  interval. Cleared at the start of every mission tick. */
+  tickChannelEvents: AgcOutputChannelEvent[];
+  /** Monotonic pseudo-sequence for lossless channel observations. The
+   *  packet path exposes no AGC cycle counter, so ordering (not absolute
+   *  cycle) is what is preserved — documented in docs/M3_3A2_P5.md. */
+  channelObservationSeq: number;
 }
 
 type CanonicalInitPhase =
@@ -349,7 +364,49 @@ const state: WorkerState = {
   }),
   lastPublishedSimSnapshot: null,
   simReadyPublished: false,
+  monitor: null,
+  avionics: null,
+  monitorCommandQueue: [],
+  tickChannelEvents: [],
+  channelObservationSeq: 0,
 };
+
+/** Adapter-backed HW-I/O port for the monitor controller. Every emulator
+ *  touch the monitor makes goes through here, so the controller itself
+ *  stays WASM-free and unit-testable. */
+function makeMonitorPort(): MonitorHwPort {
+  return {
+    hwioVersion: () => state.adapter?.hwioVersion() ?? 0,
+    traceEnabled: () => state.adapter?.traceEnabled() ?? false,
+    setTraceEnabled: (enabled) => state.adapter?.setTraceEnabled(enabled),
+    resetTrace: () => state.adapter?.resetTrace(),
+    traceDropped: () => state.adapter?.traceDropped() ?? 0,
+    drainTrace: (): readonly AgcOutputCounterEvent[] => {
+      const records = state.adapter?.drainTrace() ?? [];
+      return records.map((r) => ({
+        stream: "counter" as const,
+        sequence: { hi: r.sequence.hi, lo: r.sequence.lo },
+        cycle: { hi: r.cycle.hi, lo: r.cycle.lo },
+        address: r.address,
+        operation: r.operation,
+        delta: r.delta,
+        valueBefore: r.valueBefore,
+        valueAfter: r.valueAfter,
+      }));
+    },
+    writeInputChannel: (channel, word) => {
+      // Authentic frozen host-input path — a COMPLETE word, never a mask.
+      state.adapter?.writeIo(channel, word);
+    },
+  };
+}
+
+/** Record a host input write in the authoritative shadow. Called for EVERY
+ *  accepted host→AGC packet (DSKY keys, PROCEED, monitor discretes) so the
+ *  shadow can never drift from the emulator. */
+function recordHostInput(channel: number, word: number): void {
+  state.monitor?.inputShadow().write(channel, word);
+}
 
 /** Trace of pre-ready initialization traces retained across sessions for
  *  diagnostics. Never emitted publicly; exposed via `requestDiagnostics`
