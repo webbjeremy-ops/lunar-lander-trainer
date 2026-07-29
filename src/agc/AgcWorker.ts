@@ -319,6 +319,9 @@ function appendPublicEvent(rec: PublicEventRecord): void {
   if (state.publicEventsRing.length > state.publicEventsCap) {
     state.publicEventsRing.splice(0, state.publicEventsRing.length - state.publicEventsCap);
   }
+}
+
+
 
 
 /** Deterministic snapshot of every AGC channel the adapter has observed.
