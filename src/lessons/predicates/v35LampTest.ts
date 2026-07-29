@@ -13,14 +13,15 @@
 //   5. The peak was observed within V35_MAX_TICKS_TO_PEAK of the ENTR
 //      event — bounding "stale peak from a previous attempt".
 
-import { decodedDskyStructural } from "@/agc/dsky/DskyDecoder";
 import {
   V35_EXPECTED_KEY_SEQUENCE,
   V35_FIXTURE_ID,
   V35_MAX_TICKS_TO_PEAK,
-  V35_PEAK_CHECKSUM,
+  V35_PEAK_EVIDENCE_CHECKSUM,
   V35_PEAK_LIT_ANNUNCIATORS,
   FIXTURE_PROVENANCE,
+  projectV35PeakEvidence,
+  v35EvidenceCanonical,
 } from "../fixtureExpectations";
 import type {
   DskyAnnunciators,
@@ -90,11 +91,14 @@ export const v35LampTestPredicate: StepPredicate = (ctx): StepPredicateResult =>
     return { completed: false, internal };
   }
 
-  // 3. Peak checksum match — captured latch. Once seen, stays seen for
-  //    this attempt, so we can complete at the observation where the peak
-  //    first appeared even if later events perturb the display.
-  const chk = decodedDskyStructural(ctx.observation.decoded);
-  const peakNow = chk === V35_PEAK_CHECKSUM;
+  // 3. Peak evidence match — evaluate the AUTHORITATIVE evidence projection
+  //    (digits + signs + non-activity annunciators) instead of the full
+  //    structural checksum. Activity-driven annunciators (COMP ACTY,
+  //    Verb/Noun flash) are excluded because they cannot be deterministically
+  //    sampled at the exact digit-peak tick. See fixtureExpectations.ts.
+  const projection = projectV35PeakEvidence(ctx.observation.decoded);
+  const chk = v35EvidenceCanonical(projection);
+  const peakNow = chk === V35_PEAK_EVIDENCE_CHECKSUM;
   if (!internal.peakSeen && peakNow) {
     internal.peakSeen = true;
     internal.peakAtTick = ctx.observation.tickIndex;
