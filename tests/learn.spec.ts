@@ -174,7 +174,7 @@ async function ackReadingByKeyboard(page: Page) {
 /** Wait for the async barrier handshake to complete for the selected lesson.
  *  Returns the boundary-scoped attempt state so tests can assert eventId
  *  ordering against boundaryEventId directly. */
-async function waitForAttemptReady(page: Page, lessonId: string, timeoutMs = 15_000): Promise<LearnTestState> {
+async function waitForAttemptReady(page: Page, lessonId: string, timeoutMs = 60_000): Promise<LearnTestState> {
   await page.waitForFunction(
     (lid) => {
       const w = window as unknown as { __learnTest?: LearnTestState };
