@@ -123,6 +123,15 @@ function RootComponent() {
       {/* Shared AGC Worker session — one emulator instance persists across
           route changes (/learn ↔ /explore). See src/agc/AgcSession.tsx. */}
       <AgcSessionProvider>
+        <nav
+          aria-label="Primary"
+          data-testid="app-nav"
+          className="flex gap-4 border-b border-neutral-900 bg-neutral-950/60 px-4 py-2 text-xs font-mono uppercase tracking-widest text-neutral-500"
+        >
+          <Link to="/" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Home</Link>
+          <Link to="/learn" data-testid="nav-learn" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Learn</Link>
+          <Link to="/explore" data-testid="nav-explore" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Explore</Link>
+        </nav>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </AgcSessionProvider>
