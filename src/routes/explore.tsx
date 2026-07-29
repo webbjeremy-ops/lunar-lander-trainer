@@ -96,6 +96,10 @@ function ExplorePanels() {
   const [filterChannel, setFilterChannel] = useState<number | "all">("all");
   const [showInputs, setShowInputs] = useState(true);
   const [paused, setPaused] = useState(false);
+  const [importResult, setImportResult] = useState<
+    import("@/agc/eventLog/importSchema").ImportResult | null
+  >(null);
+  const [importedFilename, setImportedFilename] = useState<string | null>(null);
 
   useEffect(() => {
     if (!client) return;
@@ -138,6 +142,7 @@ function ExplorePanels() {
           sessionEpoch={sessionEpoch}
         />
         <DskyMirrorCard decoded={decoded} lamps={lamps} />
+        <ReplayPanel result={importResult} filename={importedFilename} />
         <EventTimelineCard
           rows={filteredRows}
           totalRows={rows.length}
@@ -152,7 +157,12 @@ function ExplorePanels() {
       <div className="space-y-6">
         <ProvenanceCard ready={ready} snapshot={snapshot} sessionEpoch={sessionEpoch} />
         <ExportPanel />
-        <ImportPanel />
+        <ImportPanel
+          onResult={(r, name) => {
+            setImportResult(r);
+            setImportedFilename(name);
+          }}
+        />
 
         <ChannelTableCard snapshot={snapshot} />
         <DecodedDumpCard decoded={decoded} />
@@ -640,7 +650,11 @@ function ExportPanel() {
 
 type ImportPanelResult = import("@/agc/eventLog/importSchema").ImportResult;
 
-function ImportPanel() {
+function ImportPanel({
+  onResult,
+}: {
+  onResult?: (result: ImportPanelResult | null, filename: string | null) => void;
+}) {
   const session = useAgcSession();
   const { ready } = session;
   const [busy, setBusy] = useState(false);
@@ -651,6 +665,7 @@ function ImportPanel() {
     setBusy(true);
     setResult(null);
     setPickedName(file.name);
+    onResult?.(null, file.name);
     try {
       const { validateImport } = await import("@/agc/eventLog/validateImport");
       const bytes = new Uint8Array(await file.arrayBuffer());
@@ -663,8 +678,9 @@ function ImportPanel() {
         },
       });
       setResult(r);
+      onResult?.(r, file.name);
     } catch (e) {
-      setResult({
+      const r: ImportPanelResult = {
         status: "invalid",
         errors: [
           {
@@ -674,7 +690,9 @@ function ImportPanel() {
           },
         ],
         truncated: false,
-      });
+      };
+      setResult(r);
+      onResult?.(r, file.name);
     } finally {
       setBusy(false);
     }
@@ -902,3 +920,302 @@ function CompatRow({
   );
 }
 
+
+// -------------------- Replay imported recording ---------------------------
+//
+// Pure-reducer-driven replay of a validated import. Live-isolation contract:
+//   * Never touches the shared AgcSession / worker client.
+//   * Never sends inputs, resets, or timing changes to the live AGC.
+//   * The replay DSKY is a SEPARATE render tree from the live DskyMirrorCard.
+//   * On result-change / unmount, the ReplayClock is disposed.
+
+import type { ReplayState } from "@/agc/replay/ReplayReducer";
+import { ReplayClock, REPLAY_SPEED_PRESETS } from "@/agc/replay/ReplayClock";
+import {
+  canDeterministicallyPlay,
+  eventIndexToSliderValue,
+  initReplayState,
+  isReplayable,
+  sliderValueToEventIndex,
+} from "@/agc/replay/ReplayReducer";
+import { useRef } from "react";
+
+function ReplayPanel({
+  result,
+  filename,
+}: {
+  result: ImportPanelResult | null;
+  filename: string | null;
+}) {
+  if (!isReplayable(result)) return null;
+  const valid = result as Extract<ImportPanelResult, { status: "valid-compatible" | "valid-incompatible" }>;
+  return <ReplayPanelInner key={valid.recording.summary.canonicalSha256} result={valid} filename={filename} />;
+}
+
+function ReplayPanelInner({
+  result,
+  filename,
+}: {
+  result: Extract<ImportPanelResult, { status: "valid-compatible" | "valid-incompatible" }>;
+  filename: string | null;
+}) {
+  const payload = result.recording.raw.payload;
+  const eventCount = payload.events.length;
+  const timedOk = canDeterministicallyPlay(result);
+  const [state, setState] = useState<ReplayState>(() => initReplayState(payload));
+  const clockRef = useRef<ReplayClock | null>(null);
+  const [speed, setSpeed] = useState<number>(1);
+
+  useEffect(() => {
+    const clk = new ReplayClock(payload, (s) => setState(s), { initialSpeed: speed });
+    clockRef.current = clk;
+    // Expose for Playwright — read-only, per-instance.
+    if (typeof window !== "undefined") {
+      const w = window as unknown as { __agcReplayTest?: unknown };
+      w.__agcReplayTest = {
+        get state() { return clk.getState(); },
+        get eventCount() { return clk.getEventCount(); },
+        get speed() { return clk.getSpeed(); },
+        canDeterministicallyPlay: timedOk,
+      };
+    }
+    return () => {
+      clk.dispose();
+      clockRef.current = null;
+      if (typeof window !== "undefined") {
+        const w = window as unknown as { __agcReplayTest?: unknown };
+        w.__agcReplayTest = undefined;
+      }
+    };
+    // Deliberately payload-scoped: replacing the recording tears down and
+    // rebuilds. `speed` handled via setSpeed below to avoid remounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payload]);
+
+  function withClock(f: (c: ReplayClock) => void) {
+    const c = clockRef.current;
+    if (c) f(c);
+  }
+
+  const cur = state.currentEventIndex;
+  const curEvent = cur >= 0 ? payload.events[cur] : null;
+
+  return (
+    <section
+      data-testid="replay-panel"
+      data-replay-status={state.status}
+      className="rounded-xl border border-neutral-800 bg-neutral-950/60 p-4"
+    >
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="font-mono text-[11px] uppercase tracking-widest text-neutral-500">
+          Replay imported recording
+        </h2>
+        <span
+          className={
+            "rounded border px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest " +
+            (timedOk
+              ? "border-emerald-600 bg-emerald-950/40 text-emerald-200"
+              : "border-amber-600 bg-amber-950/40 text-amber-200")
+          }
+          data-testid="replay-compat-label"
+        >
+          {timedOk ? "Timed playback certified" : "Manual inspection only"}
+        </span>
+      </div>
+      {!timedOk && (
+        <p className="mb-3 rounded border border-amber-800/60 bg-amber-950/30 px-2 py-1 text-[11px] text-amber-200">
+          Manual inspection available. Deterministic timed playback is not
+          certified for this build — inspecting the recording only
+          reconstructs its saved channel outputs; it does not run the foreign
+          rope on the live AGC.
+        </p>
+      )}
+      {filename && (
+        <p className="mb-3 truncate text-[11px] text-neutral-400" title={filename}>
+          {filename}
+        </p>
+      )}
+
+      {/* Replay DSKY — separate render tree from the live mirror. */}
+      <div className="mb-3 rounded border border-neutral-800 bg-black p-3">
+        <div className="grid gap-1.5">
+          <div className="flex gap-4">
+            <MiniRegister label="PROG" reg={state.decodedDsky.program} />
+            <MiniRegister label="VERB" reg={state.decodedDsky.verb} />
+            <MiniRegister label="NOUN" reg={state.decodedDsky.noun} />
+          </div>
+          <MiniRegister label="R1" reg={state.decodedDsky.r1} />
+          <MiniRegister label="R2" reg={state.decodedDsky.r2} />
+          <MiniRegister label="R3" reg={state.decodedDsky.r3} />
+        </div>
+      </div>
+
+      {/* Controls */}
+      <div className="mb-2 flex flex-wrap items-center gap-2 font-mono text-[10px]">
+        <button
+          type="button"
+          data-testid="replay-start"
+          onClick={() => withClock((c) => c.toStart())}
+          className="rounded border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-neutral-100 hover:bg-neutral-800"
+        >|◄ Start</button>
+        <button
+          type="button"
+          data-testid="replay-prev"
+          onClick={() => withClock((c) => c.prev())}
+          className="rounded border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-neutral-100 hover:bg-neutral-800 disabled:opacity-50"
+          disabled={cur <= -1}
+        >◄ Prev</button>
+        <button
+          type="button"
+          data-testid="replay-play"
+          onClick={() => withClock((c) => c.play())}
+          disabled={!timedOk || state.status === "playing" || cur >= eventCount - 1}
+          className="rounded border border-emerald-700 bg-emerald-950/40 px-2 py-0.5 text-emerald-200 hover:bg-emerald-900/50 disabled:opacity-40"
+        >▶ Play</button>
+        <button
+          type="button"
+          data-testid="replay-pause"
+          onClick={() => withClock((c) => c.pause())}
+          disabled={state.status !== "playing"}
+          className="rounded border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-neutral-100 hover:bg-neutral-800 disabled:opacity-40"
+        >❚❚ Pause</button>
+        <button
+          type="button"
+          data-testid="replay-next"
+          onClick={() => withClock((c) => c.next())}
+          disabled={cur >= eventCount - 1}
+          className="rounded border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-neutral-100 hover:bg-neutral-800 disabled:opacity-50"
+        >Next ►</button>
+        <button
+          type="button"
+          data-testid="replay-end"
+          onClick={() => withClock((c) => c.toEnd())}
+          className="rounded border border-neutral-700 bg-neutral-900 px-2 py-0.5 text-neutral-100 hover:bg-neutral-800"
+        >End ►|</button>
+        <label className="ml-auto flex items-center gap-1 text-neutral-400">
+          speed
+          <select
+            data-testid="replay-speed"
+            value={String(speed)}
+            disabled={!timedOk}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setSpeed(v);
+              withClock((c) => c.setSpeed(v));
+            }}
+            className="rounded border border-neutral-700 bg-neutral-950 px-1 py-0.5 text-neutral-200 disabled:opacity-40"
+          >
+            {REPLAY_SPEED_PRESETS.map((r) => (
+              <option key={r} value={String(r)}>{r}×</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <input
+        type="range"
+        data-testid="replay-scrubber"
+        min={0}
+        max={eventCount}
+        step={1}
+        value={eventIndexToSliderValue(cur)}
+        onChange={(e) => {
+          const idx = sliderValueToEventIndex(Number(e.target.value));
+          withClock((c) => c.seek(idx));
+        }}
+        className="w-full"
+        aria-label="Replay position"
+      />
+
+      {/* Status readout */}
+      <dl
+        data-testid="replay-status"
+        className="mt-3 grid grid-cols-2 gap-y-0.5 font-mono text-[11px] text-neutral-400"
+      >
+        <dt>Position</dt>
+        <dd className="text-neutral-200" data-testid="replay-status-index">
+          {cur + 1} / {eventCount}
+        </dd>
+        <dt>Event id</dt>
+        <dd className="text-neutral-200" data-testid="replay-status-eventid">
+          {state.currentEventId ?? "—"}
+        </dd>
+        <dt>Tick</dt>
+        <dd className="text-neutral-200" data-testid="replay-status-tick">
+          {state.tickIndex}
+        </dd>
+        <dt>MET µs</dt>
+        <dd className="text-neutral-200" data-testid="replay-status-met">
+          {state.missionTimeUs.toLocaleString()}
+        </dd>
+        <dt>Type</dt>
+        <dd className="text-neutral-200">
+          {curEvent ? curEvent.type : "baseline"}
+        </dd>
+        <dt>Detail</dt>
+        <dd className="truncate text-neutral-200" data-testid="replay-status-detail">
+          {curEvent
+            ? curEvent.type === "channelUpdate"
+              ? `ch 0${curEvent.channel.toString(8)} ← 0${curEvent.value.toString(8).padStart(5, "0")}`
+              : `${curEvent.kind}${curEvent.keyCode !== undefined ? ` keyCode=0o${curEvent.keyCode.toString(8)}` : ""}`
+            : "—"}
+        </dd>
+        <dt>Status</dt>
+        <dd className="text-neutral-200" data-testid="replay-status-mode">{state.status}</dd>
+      </dl>
+
+      {/* Small event window (±10 around current) */}
+      <ReplayWindow payload={payload} cur={cur} />
+    </section>
+  );
+}
+
+function ReplayWindow({
+  payload,
+  cur,
+}: {
+  payload: import("@/agc/eventLog/schema").AgcEventLogPayloadV1;
+  cur: number;
+}) {
+  const events = payload.events;
+  const start = Math.max(0, cur - 10);
+  const end = Math.min(events.length, cur + 11);
+  const slice = events.slice(start, end);
+  return (
+    <div
+      data-testid="replay-window"
+      className="mt-3 max-h-56 overflow-auto rounded border border-neutral-900 bg-black/40 p-2 font-mono text-[10px]"
+    >
+      {slice.length === 0 ? (
+        <div className="text-neutral-600">No events in recording.</div>
+      ) : (
+        slice.map((e, i) => {
+          const idx = start + i;
+          const selected = idx === cur;
+          const isInput = e.type === "inputAccepted";
+          const chIsDsky =
+            e.type === "channelUpdate" &&
+            (e.channel === 0o10 || e.channel === 0o11 || e.channel === 0o163);
+          const cls = selected
+            ? "bg-emerald-950/60 text-emerald-100"
+            : isInput
+              ? "text-amber-300"
+              : chIsDsky
+                ? "text-sky-300"
+                : "text-neutral-400";
+          return (
+            <div key={e.eventId} className={cls} data-selected={selected ? "true" : undefined}>
+              <span className="text-neutral-600">#{e.eventId.toString().padStart(6, "0")}</span>{" "}
+              <span className="text-neutral-500">t{e.tickIndex}</span>{" "}
+              {e.type === "channelUpdate" ? (
+                <>CH 0{e.channel.toString(8)} ← 0{e.value.toString(8).padStart(5, "0")}</>
+              ) : (
+                <>INPUT {e.kind}{e.keyCode !== undefined && ` keyCode=0o${e.keyCode.toString(8)}`}</>
+              )}
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
+}
