@@ -286,6 +286,7 @@ describe("MonitorController — disarm and interlock paths", () => {
 
   it("an AGC reset interlocks and never re-arms implicitly", () => {
     const { port, mc } = armed();
+    port.calls = [];
     mc.onAgcEpochChanged(1);
     expect(mc.facts().status).toBe("interlocked");
     expect(mc.facts().interlockReason).toBe("agc-reset");
