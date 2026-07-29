@@ -838,6 +838,9 @@ async function handle(cmd: AgcCommand, requestId?: string): Promise<void> {
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
       state.recentEventsRing.length = 0;
+      state.publicEventsRing.length = 0;
+      state.publicEventsAppendedTotal = 0;
+      state.epochStartBaseline = null;
       state.lastLamps = 0;
       state.lastChannelEventCount = 0;
       state.publicPhaseStarted = false;
