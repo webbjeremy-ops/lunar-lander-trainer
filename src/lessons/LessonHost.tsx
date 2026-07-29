@@ -195,15 +195,6 @@ export function LessonHost(props: LessonHostProps): React.ReactElement {
   const channelBufRef = useRef<ChannelEventLite[]>([]);
   const previousDecodedRef = useRef<DecodedDsky | null>(null);
 
-  // Shadow decoder — advances losslessly from channelUpdate events.
-  const shadowRef = useRef<DecodedDsky>(makeEmptyDecodedDsky());
-  const shadowSeededAttemptIdRef = useRef<string | null>(null);
-  const boundaryEventIdRef = useRef<number>(-1);
-
-  const stateRef = useRef<LessonState>(state);
-  useEffect(() => { stateRef.current = state; }, [state]);
-  const lessonRef = useRef<LessonDefinition>(lesson);
-  useEffect(() => { lessonRef.current = lesson; }, [lesson]);
 
   // Shadow decoder — advances losslessly from channelUpdate events.
   const shadowRef = useRef<DecodedDsky>(makeEmptyDecodedDsky());
