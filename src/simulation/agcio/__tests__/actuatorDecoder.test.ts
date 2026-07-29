@@ -340,8 +340,10 @@ describe("purity and determinism", () => {
 });
 
 describe("frozen invariants", () => {
-  it("active simulation protocol remains v1", () => {
-    expect(SIMULATION_PROTOCOL_VERSION).toBe(1);
+  // P5.d activated simulation protocol v2 (monitor mode). The FROZEN M2
+  // AGC protocol is a different namespace and remains untouched.
+  it("active simulation protocol is v2", () => {
+    expect(SIMULATION_PROTOCOL_VERSION).toBe(2);
   });
 
   it("descent-monitor-v1 remains blocked", () => {
