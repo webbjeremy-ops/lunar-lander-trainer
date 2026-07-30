@@ -1475,7 +1475,7 @@ async function handle(
 /** PROG register -> integer major mode. Blank digits read as P00, which is
  *  what a freshly reset, pre-scenario AGC displays. */
 function decodedProgramNumber(dsky: DecodedDsky): number {
-  const text = dsky.program.digits.map((d) => (d.blank ? "0" : String(d.value ?? 0))).join("");
+  const text = dsky.program.digits.map((d) => String(d.value ?? 0)).join("");
   const n = Number.parseInt(text, 10);
   return Number.isFinite(n) ? n : 0;
 }
