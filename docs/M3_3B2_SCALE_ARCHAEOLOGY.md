@@ -33,7 +33,12 @@ neither a DECA actuator count nor a physical thrust. Any future
 
 Explicitly **not** adopted; no secondary figure was promoted to a constant.
 
-1. **PIPA ΔV per pulse.** The widely-repeated 5.85 cm/s appears in no primary
+1. ~~**PIPA ΔV per pulse.**~~ **RESOLVED in M3.3C** — 1.00 cm/s/pulse for the
+   LM; the 5.85 cm/s figure is the COMMAND MODULE weight. Primary: Draper
+   *Design Survey of the Apollo Inertial Subsystem* (NTRS 19700018941)
+   Fig. 4-3, p.66. See docs/M3_3C_PRIMARY_SOURCE_RESOLUTION.md. Original
+   note retained below for the record:
+   The widely-repeated 5.85 cm/s appears in no primary
    page opened here. LMA790-3-LM §2.1.4.1.7 describes the PIPA loop and the
    3200-cps signal-generator excitation, but gives no pulse weight. Requires
    R-567 GSOP Sec. 5 numeric tables or ND-1021042 §2.

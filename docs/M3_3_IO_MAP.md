@@ -259,3 +259,36 @@ Fine mode 20 arc-sec/pulse, Δθc word 40 arc-sec, coarse-align increment
 A registry row becomes `mapped` only when a citation supports it; deleting a
 policy string is never sufficient — `decideMonitorEntry` re-derives blocks
 from `sensorRegistry` on every call.
+
+---
+
+## M3.3C addendum — PIPA ΔV pulse weight RESOLVED (supersedes "still unresolved" item 1)
+
+**1 PIPA pulse = 1.00 cm/s = 0.01 m/s (Lunar Module).**
+
+Primary: Draper Lab, *Design Survey of the Apollo Inertial Subsystem*
+(March 1970, NTRS `19700018941`), Fig. 4-3 "PIP Accelerometer Block Diagram",
+PDF p.66 — verbatim `AV COMMAND MODULE 5.85 CM/SEC/PULSE` /
+`AV LEM 1.0 CM/SEC/PULSE`. The 5.85 cm/s figure that blocked M3.3B2 is the
+**Command Module** weight and was never applicable to the LM.
+
+Independent rope derivation: `Luminary099/SERVICER.agc:192` declares
+`ABDELV = CM/SEC*2(-14)` and `:219` `CA KPIP1 # TP MPAC = ABDELV AT 2(14)
+CM/SEC`; `ABDELV` is formed from the raw `PIPAX/Y/Z` counter difference with
+no intervening scale, so one count is one cm/s.
+
+Registry effect: the discrete row `unresolved.pipa-increments` is deleted and
+replaced by three `mapped` rows in the new `MONITOR_COUNTER_REGISTRY`
+(`pipa.x/y/z.delta-v-pulse`, counters `0o37`/`0o40`/`0o41`, PINC/MINC,
+0.01 m/s per pulse). `docs/M3_3C_PRIMARY_SOURCE_RESOLUTION.md` is the evidence
+record.
+
+`descent-monitor-v1` REMAINS BLOCKED. The blockers are now:
+
+1. Stable-member ↔ LM body axis bootstrap (REFSMMAT + initial CDU angles) not
+   source-proven for the golden scenario.
+2. CDU angle pulse weight usage + drain budget (`cdu.x/y/z.angle` rows remain
+   `unresolved`).
+3. LR velocity-beam / CHAN13 beam-select sequencing.
+4. Physical force per THRUST count (unchanged; the pulse train is an
+   incremental DECA throttle-command delta, not a force).
