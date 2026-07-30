@@ -86,6 +86,13 @@ export const AGC_MONITOR_PROFILE_LABELS: {
     description:
       "Injects only source-mapped steady-state discretes (CHAN30/CHAN33) and observes CHAN11/CHAN14 discretes and the THRUST output-counter trace. Not a substitute for LR/PIPA sensing.",
   },
+  "landing-radar-observer-v1": {
+    title: "Landing-radar range diagnostic",
+    banner:
+      "LANDING-RADAR RANGE DIAGNOSTIC ONLY — NOT A POWERED-DESCENT MONITOR",
+    description:
+      "Discrete-observer behaviour plus one authentic serial RNRAD (0o46) RANGE transaction per diagnostic cadence, delivered with the native RADARUPT latch. Altitude/range only — no velocity beams, no PIPA.",
+  },
   "descent-monitor-v1": {
     title: "Descent monitor v1",
     banner: "AGC MONITOR ONLY — COMMAND NOT APPLIED TO SPACECRAFT",
