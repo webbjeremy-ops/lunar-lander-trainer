@@ -64,6 +64,27 @@ export interface RequestMonitorTraceCommand {
   readonly simulationEpoch: number;
 }
 
+/** M3.3C Phase 4B — install the NON-FLIGHT SCENARIO PAD LOAD (fixed-attitude
+ *  IMU bootstrap). Carries NO addresses or words: the Worker owns the
+ *  source-derived manifest, so this can never become a memory editor. */
+export interface ApplyImuBootstrapCommand {
+  readonly type: "sim:apply-imu-bootstrap";
+  readonly commandId: number;
+  readonly simulationEpoch: number;
+  readonly manifestId: "luminary099-fixed-attitude-descent-padload-v1";
+}
+
+export interface ImuBootstrapResultEvent {
+  readonly type: "sim:imu-bootstrap-result";
+  readonly commandId: number;
+  readonly simulationEpoch: number;
+  readonly agcEpoch: number;
+  readonly ok: boolean;
+  readonly manifestId: string;
+  readonly installedWords: number;
+  readonly failures: readonly { readonly code: string; readonly detail: string }[];
+}
+
 /** Structural-clone-safe wire form: MissionCommand is already all
  *  primitives + a plain LmScenarioDefinition (numbers/strings/booleans). */
 export type SimulationCommand =
@@ -72,7 +93,8 @@ export type SimulationCommand =
   | { type: "sim:forceSnapshot" }
   | SetMonitorProfileCommand
   | SetAvionicsStateCommand
-  | RequestMonitorTraceCommand;
+  | RequestMonitorTraceCommand
+  | ApplyImuBootstrapCommand;
 
 export interface SimReadyPayload {
   simulationProtocolVersion: typeof SIMULATION_PROTOCOL_VERSION;
@@ -117,7 +139,8 @@ export type SimulationEvent =
   | { type: "sim:commandAck"; payload: CommandAck }
   | { type: "sim:terminalTouchdown"; payload: TerminalTouchdownEvent }
   | MonitorBlockedEvent
-  | MonitorTraceEvent;
+  | MonitorTraceEvent
+  | ImuBootstrapResultEvent;
 
 export function isSimulationMessage(msg: { type: string } | null | undefined): boolean {
   return !!msg && typeof msg.type === "string" && msg.type.startsWith("sim:");

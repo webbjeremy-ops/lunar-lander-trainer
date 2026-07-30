@@ -155,10 +155,10 @@ export function decideMonitorEntry(
       detail: "Canonical yaAGC-ext HW-I/O exports are not present.",
       reference: "docs/M3_3A2_P4.md",
     });
-  } else if (ctx.hwioVersion !== 3) {
+  } else if (ctx.hwioVersion !== 4) {
     reasons.push({
       code: "canonical-hwio-wrong-version",
-      detail: `Canonical HW-I/O version must be 3 (got ${ctx.hwioVersion}).`,
+      detail: `Canonical HW-I/O version must be 4 (got ${ctx.hwioVersion}).`,
       reference: "docs/M3_3A2_P4.md",
     });
   }

@@ -152,9 +152,9 @@ function expectedRnrad(initial: number, word: number, bitCount: number): number 
 }
 
 describe("HW-I/O v3 — ABI surface", () => {
-  it("reports version 3 and exposes the radar transaction record size", async () => {
+  it("reports version 4 and exposes the radar transaction record size", async () => {
     const { ex } = await loadExt();
-    expect(ex.agc_hwio_version()).toBe(3);
+    expect(ex.agc_hwio_version()).toBe(4);
     expect(ex.agc_landing_radar_update_size()).toBe(8);
   });
 

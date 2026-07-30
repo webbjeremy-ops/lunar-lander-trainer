@@ -38,11 +38,11 @@ export interface CanonicalAgcRuntime {
 
 export const CANONICAL_AGC_RUNTIME: CanonicalAgcRuntime = {
   wasmPath: () => `${base()}agc/yaAGC-ext.wasm`,
-  sha256: "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3",
+  sha256: "2e7c28ec75be794da991c49a5842ba3db6140f8936892f1c84f25883040a6abc",
   upstreamVersion: "2020-12-24 ddc65e7be",
-  hwioVersion: 3,
-  extVersion: "ddc65e7be+apollo-browser-hwio-v3",
-  extensionTag: "apollo-browser-hwio-v3",
+  hwioVersion: 4,
+  extVersion: "ddc65e7be+apollo-browser-hwio-v4",
+  extensionTag: "apollo-browser-hwio-v4",
 } as const;
 
 /** URL of the frozen historical artifact. Loaded ONLY by explicit parity

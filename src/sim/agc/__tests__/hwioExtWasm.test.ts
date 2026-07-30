@@ -111,8 +111,8 @@ describe("M3.3A2-P2 extended WASM ABI", () => {
 
   it("preserves upstream ancestry via version() and separates extension identity", () => {
     expect(readCstr(memory, ex.version())).toBe("2020-12-24 ddc65e7be");
-    expect(readCstr(memory, ex.agc_ext_version())).toBe("ddc65e7be+apollo-browser-hwio-v3");
-    expect(ex.agc_hwio_version()).toBe(3);
+    expect(readCstr(memory, ex.agc_ext_version())).toBe("ddc65e7be+apollo-browser-hwio-v4");
+    expect(ex.agc_hwio_version()).toBe(4);
   });
 
   it("output-trace entry is 32 bytes (matches TS layout)", () => {

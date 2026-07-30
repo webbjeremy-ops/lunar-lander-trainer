@@ -17,7 +17,7 @@ const HAPPY_CTX: MonitorEntryContext = {
   simulationEpoch: 3,
   agcSessionEpoch: 1,
   agcReady: true,
-  hwioVersion: 3,
+  hwioVersion: 4,
   ropeId: REQUIRED_ROPE_ID,
   ropeSha256: "0".repeat(64),
   runtimeStatus: "running",

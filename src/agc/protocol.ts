@@ -219,7 +219,7 @@ export interface ReadyPayload {
  */
 export interface AgcExtensionReadyMessage {
   type: "agc:extension-ready";
-  hwioVersion: 3;
+  hwioVersion: 4;
   extVersion: string;
   extensionTag: string;
   wasmSha256: string;

@@ -63,6 +63,8 @@ import { MonitorController, type MonitorHwPort } from "@/simulation/agcio/Monito
 import { validateSetMonitorProfileCommand } from "@/simulation/agcio/profileValidation";
 import { EXPECTED_ACTUATOR_CHANNELS } from "@/simulation/agcio/actuatorRegistry";
 import { MONITOR_TRACE_CAPACITY } from "@/simulation/agcio/monitorTrace";
+import { applyFixedAttitudeImuBootstrapV1 } from "@/simulation/agcio/bootstrapTransaction";
+import { LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1 } from "@/simulation/agcio/padLoadManifest";
 import type { LmDiscreteSensorState } from "@/simulation/agcio/discreteEncoder";
 import type {
   AgcOutputChannelEvent,
@@ -235,6 +237,10 @@ interface WorkerState {
    *  packet path exposes no AGC cycle counter, so ordering (not absolute
    *  cycle) is what is preserved — documented in docs/M3_3A2_P5.md. */
   channelObservationSeq: number;
+  /** M3.3C Phase 4B: AGC epoch in which the fixed-attitude IMU bootstrap was
+   *  installed and verified. Null until installed; invalidated by any AGC
+   *  reset because `sessionEpoch` advances. */
+  imuBootstrapAgcEpoch: number | null;
 }
 
 type CanonicalInitPhase =
@@ -368,6 +374,7 @@ const state: WorkerState = {
   monitor: null,
   avionics: null,
   monitorCommandQueue: [],
+  imuBootstrapAgcEpoch: null,
   tickChannelEvents: [],
   channelObservationSeq: 0,
 };
@@ -908,7 +915,7 @@ function publishReady(): void {
     const ext = state.extensionIdentity;
     send({
       type: "agc:extension-ready",
-      hwioVersion: 3,
+      hwioVersion: 4,
       extVersion: ext.extVersion,
       extensionTag: ext.extensionTag,
       wasmSha256: state.wasmSha256,
@@ -1465,6 +1472,14 @@ async function handle(
  * listener never blocks on physics. Runtime state mutations only happen
  * here (enqueue) or inside `runMissionTickPipeline` (apply + advance).
  */
+/** PROG register -> integer major mode. Blank digits read as P00, which is
+ *  what a freshly reset, pre-scenario AGC displays. */
+function decodedProgramNumber(dsky: DecodedDsky): number {
+  const text = dsky.program.digits.map((d) => String(d.value ?? 0)).join("");
+  const n = Number.parseInt(text, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function handleSimulationCommand(
   cmd: SimulationCommand,
   requestId?: string,
@@ -1535,6 +1550,64 @@ function handleSimulationCommand(
         return;
       }
       state.monitorCommandQueue.push(cmd);
+      return;
+    }
+    // ---- M3.3C Phase 4B: fixed-attitude IMU bootstrap ------------------
+    case "sim:apply-imu-bootstrap": {
+      const epoch = state.missionRuntime.getSimulationEpoch();
+      const manifest = LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1;
+      const emit = (
+        ok: boolean,
+        installedWords: number,
+        failures: readonly { code: string; detail: string }[],
+      ) =>
+        sendSimEvent({
+          type: "sim:imu-bootstrap-result",
+          commandId: cmd.commandId,
+          simulationEpoch: epoch,
+          agcEpoch: state.sessionEpoch,
+          ok,
+          manifestId: manifest.id,
+          installedWords,
+          failures,
+        }, requestId);
+
+      if (cmd.simulationEpoch !== epoch) {
+        emit(false, 0, [{
+          code: "stale-simulation-epoch",
+          detail: `command epoch ${cmd.simulationEpoch} != runtime epoch ${epoch}`,
+        }]);
+        return;
+      }
+      if (cmd.manifestId !== manifest.id) {
+        emit(false, 0, [{ code: "unknown-manifest", detail: cmd.manifestId }]);
+        return;
+      }
+      const adapter = state.adapter;
+      if (!adapter) {
+        emit(false, 0, [{ code: "no-adapter", detail: "AGC core is not initialized" }]);
+        return;
+      }
+
+      const runtimeState = state.missionRuntime.getState();
+      const result = applyFixedAttitudeImuBootstrapV1(adapter, {
+        clockPaused: state.clock.isPaused(),
+        monitorProfile: state.monitor?.facts().profile ?? "off",
+        traceRingCount: state.monitor?.traceWindow().retainedCount ?? 0,
+        pendingHwInputRecords: 0,
+        ropeId: state.ropeId,
+        ropeSha256: state.ropeSha256,
+        runtimeSha256: state.wasmSha256,
+        agcEpoch: state.sessionEpoch,
+        simulationEpoch: epoch,
+        installedInAgcEpoch: state.imuBootstrapAgcEpoch,
+        majorMode: decodedProgramNumber(state.decodedDsky),
+        scenarioId: runtimeState.scenarioId ?? "",
+        allowedScenarioIds: manifest.allowedScenarioIds,
+      }, manifest);
+
+      if (result.ok) state.imuBootstrapAgcEpoch = state.sessionEpoch;
+      emit(result.ok, result.installedWords, result.failures);
       return;
     }
     case "sim:request-monitor-trace": {

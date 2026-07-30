@@ -288,10 +288,10 @@ export class MonitorController {
         reference: "src/simulation/agcio/actuatorRegistry.ts",
       });
     }
-    if (this.port.hwioVersion() !== 3) {
+    if (this.port.hwioVersion() !== 4) {
       reasons.push({
         code: "canonical-hwio-wrong-version",
-        detail: `Running WASM reports HW-I/O version ${this.port.hwioVersion()}; monitor requires 3.`,
+        detail: `Running WASM reports HW-I/O version ${this.port.hwioVersion()}; monitor requires 4.`,
         reference: "docs/M3_3A2_P4.md",
       });
     }
