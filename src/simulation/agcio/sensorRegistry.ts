@@ -13,15 +13,21 @@
 // declared here so the descent-monitor-v1 gate has a machine-readable list
 // of what is still missing.
 //
-// Polarity convention:
-//   - "active-high": logical TRUE encodes as bit=1
-//   - "active-low":  logical TRUE encodes as bit=0
-// CHAN30 discretes are documented as inverted-sense (0 = asserted) in
-// Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:146-148 — hence
-// "active-low" for every CHAN30 row.
-// CHAN33 discretes carry no inversion header in that block, so LR status
-// bits are treated as active-high per the surrounding source text
-// ("valid only when CHAN33 bit 5 asserted (data good)").
+// Polarity convention (M3.3B correction):
+//   Each row names the RAW AGC SIGNAL as Luminary names it. `polarity`
+//   describes how "signal present" is encoded on the bus:
+//     - "active-high": signal present encodes as bit = 1
+//     - "active-low":  signal present encodes as bit = 0
+//   The encoder therefore derives a SIGNAL-PRESENT boolean per row; it never
+//   applies a second inversion of its own.
+//
+// Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:143-144 states
+// verbatim: "ALL BITS IN CHANNELS 30-33 ARE INVERTED AS SENSED BY THE
+// PROGRAM, SO THAT A VALUE OF ZERO MEANS THAT THE INDICATED SIGNAL IS
+// PRESENT." That note covers channels 30, 31, 32 AND 33 — so every CHAN30
+// *and* CHAN33 row below is "active-low". (The pre-M3.3B registry wrongly
+// treated CHAN33 as active-high and additionally double-inverted the IMU
+// FAIL row by naming it "imu-healthy"; both are corrected here.)
 
 import type { AgcMonitorProfile } from "./types";
 
