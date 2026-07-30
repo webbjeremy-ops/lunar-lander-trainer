@@ -263,8 +263,8 @@ describe("HW-I/O v3 — native inhibit and dispatch are untouched", () => {
   });
 
   it("holds the request through INHINT and services it only after RELINT", () => {
-    // Execute INHINT at 04000.
-    ex.cpu_step(1);
+    // Step 1 executes `TCF 04100`; step 2 executes INHINT.
+    ex.cpu_step(2);
     expect(ex.agc_interrupt_inhibited()).toBe(1);
 
     expect(ex.agc_request_hardware_interrupt(RADARUPT_INDEX)).toBe(0);
