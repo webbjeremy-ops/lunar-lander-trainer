@@ -18,9 +18,13 @@ const DEFAULT_AVIONICS: LmDiscreteSensorState = {
   lgcInControl: false,
   issOperate: false,
   imuHealthy: false,
+  imuCduHealthy: false,
+  pipaHealthy: false,
   landingRadarStatus: "not-acquired",
   landingRadarAntenna: "transit",
+  landingRadarRangeLowScale: false,
 };
+
 
 const oct = (v: number | null | undefined, digits = 5): string =>
   v === null || v === undefined ? "—" : `0${(v >>> 0).toString(8).padStart(digits, "0")}`;

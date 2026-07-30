@@ -279,11 +279,12 @@ export function encodeDiscreteSensorTick(
 
   let suborder = 0;
   for (const m of mapped) {
-    const logical = logicalLevelFor(m.id, avionics);
+    const logical = signalPresentFor(m.id, avionics);
     nextLevels[m.id] = logical;
     const encoded = encodeOwnedBits(m, logical);
     const prev = encoderState.lastLogicalLevels[m.id];
     const changed = prev === undefined || prev !== logical;
+
     const shouldEmit = !encoderState.initialized || changed;
 
     if (shouldEmit) {
