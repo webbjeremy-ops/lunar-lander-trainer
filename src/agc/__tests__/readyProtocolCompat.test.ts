@@ -93,7 +93,7 @@ describe("M3.3A2-P4 readiness-protocol compatibility", () => {
       traceDropped: 0,
     };
     expect(msg.type).toBe("agc:extension-ready");
-    expect(msg.hwioVersion).toBe(3);
+    expect(msg.hwioVersion).toBe(4);
     expect(msg.traceEnabled).toBe(false);
     expect(msg.traceDropped).toBe(0);
   });
