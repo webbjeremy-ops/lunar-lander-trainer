@@ -16,9 +16,12 @@ import type {
 import {
   MONITOR_SIGNAL_REGISTRY,
   mappedSignalsForProfile,
+  unresolvedCountersForProfile,
   unresolvedSignalsForProfile,
+  validateCounterRegistry,
   validateRegistry,
 } from "./sensorRegistry";
+
 
 /** Static snapshot of runtime facts the validator needs to decide whether
  *  a monitor profile can be entered atomically. Every field is derived from
