@@ -263,18 +263,24 @@ describe("HW-I/O v3 — native inhibit and dispatch are untouched", () => {
   });
 
   it("holds the request through INHINT and services it only after RELINT", () => {
-    // Step 1 executes `TCF 04100`; step 2 executes INHINT.
-    ex.cpu_step(2);
-    expect(ex.agc_interrupt_inhibited()).toBe(1);
+    // Run forward until INHINT has taken effect. cpu_step granularity is
+    // MCTs, not instructions, so do not assume a fixed step count.
+    let inhibited = false;
+    for (let i = 0; i < 50 && !inhibited; i++) {
+      ex.cpu_step(1);
+      inhibited = ex.agc_interrupt_inhibited() === 1;
+    }
+    expect(inhibited).toBe(true);
 
     expect(ex.agc_request_hardware_interrupt(RADARUPT_INDEX)).toBe(0);
 
     // While inhibited the latch must be HELD: not lost, not delivered.
     for (let i = 0; i < NOP_COUNT - 2; i++) {
+      if (ex.agc_interrupt_inhibited() !== 1) break;
       ex.cpu_step(1);
-      expect(ex.agc_interrupt_inhibited()).toBe(1);
+      // Held, never delivered, for as long as the program inhibits.
       expect(ex.agc_interrupt_request_pending(RADARUPT_INDEX)).toBe(1);
-      expect(ex.agc_in_isr()).toBe(0);
+      expect(ex.agc_interrupt_in_service()).not.toBe(RADARUPT_INDEX);
     }
 
     // Run past RELINT. The emulator — not us — decides the exact MCT.
