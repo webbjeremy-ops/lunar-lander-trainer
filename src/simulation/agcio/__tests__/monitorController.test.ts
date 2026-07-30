@@ -28,7 +28,7 @@ class FakePort implements MonitorHwPort {
   dropped = 0;
   pending: AgcOutputCounterEvent[] = [];
   writes: { channel: number; word: number }[] = [];
-  hwio = 3;
+  hwio = 4;
 
   private rec(name: string, ...args: unknown[]) {
     this.calls.push({ name, args });
