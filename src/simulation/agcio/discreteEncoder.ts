@@ -219,9 +219,13 @@ export function encodeDiscreteSensorTick(
     "lgcInControl",
     "issOperate",
     "imuHealthy",
+    "imuCduHealthy",
+    "pipaHealthy",
     "landingRadarStatus",
     "landingRadarAntenna",
+    "landingRadarRangeLowScale",
   ];
+
   for (const k of requiredKeys) {
     if (avionics[k] === undefined) missing.push(k);
   }
