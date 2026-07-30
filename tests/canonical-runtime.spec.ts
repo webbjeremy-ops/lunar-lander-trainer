@@ -80,7 +80,7 @@ test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
 
     // 2. Extension-ready contract.
     expect(snap1.extensionReady?.type).toBe("agc:extension-ready");
-    expect(snap1.extensionReady?.hwioVersion).toBe(2);
+    expect(snap1.extensionReady?.hwioVersion).toBe(3);
     expect(snap1.extensionReady?.traceEnabled).toBe(false);
     expect(snap1.extensionReady?.traceDropped).toBe(0);
     expect(snap1.extensionReady?.wasmSha256).toBe(CANONICAL_SHA);
@@ -129,7 +129,7 @@ test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
       return JSON.parse(JSON.stringify(w.__agcTest?.diagnostics ?? {}));
     });
     if (diag && diag.extensionIdentity) {
-      expect(diag.extensionIdentity.hwioVersion).toBe(2);
+      expect(diag.extensionIdentity.hwioVersion).toBe(3);
       expect(diag.extensionIdentity.traceEnabled).toBe(0);
       expect(diag.extensionIdentity.traceDropped).toBe(0);
     }

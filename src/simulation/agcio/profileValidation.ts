@@ -61,7 +61,37 @@ export const REQUIRED_ROPE_ID = "Luminary099" as const;
 export const SUPPORTED_MONITOR_PROFILES: readonly AgcMonitorProfile[] = [
   "off",
   "discrete-observer-v0",
+  "landing-radar-observer-v1",
   "descent-monitor-v1",
+] as const;
+
+/**
+ * Policy-level block for `landing-radar-observer-v1`.
+ *
+ * The RANGE scale and the RNRAD representation ARE resolved (HSCAL
+ * 1.079 ft/bit; 14-bit shift counter). What is NOT resolved is the
+ * transaction *cadence and solicitation*: in Luminary099 the LGC itself
+ * requests each read by writing the CHAN13 select + ACTIVITY bits, and the
+ * altitude read is scheduled by READACCS/SERVICER — a PIPA-driven cycle
+ * whose ΔV pulse weight is still unresolved. A host-side free-running
+ * emission would be fabricated Apollo operation, so the profile stays
+ * atomically blocked. The 250 ms encoder fixture is test-only.
+ */
+export const LANDING_RADAR_OBSERVER_V1_BLOCKS: readonly MonitorBlockReason[] = [
+  {
+    code: "radar-update-cadence-unresolved",
+    detail:
+      "Landing-radar reads are AGC-SOLICITED: INITREAD clears the CHAN13 radar bits (CS ALLREAD / WAND CHAN13) and writes select+ACTIVITY (WOR CHAN13); the PSA answers with a serial RNRAD load and RADARUPT. No host-side emission cadence is source-supported.",
+    reference:
+      "Luminary099/P20-P25.agc INITREAD p.554, RADAREAD p.555; docs/M3_3_IO_MAP.md",
+  },
+  {
+    code: "radar-update-cadence-unresolved",
+    detail:
+      "LR altitude read scheduling (LRHTASK: set by READACCS, 50 ms before the next READACCS task, below 25,000 ft) is phased to the PIPA-driven SERVICER cycle; PIPA ΔV pulse weight is unresolved, so the schedule cannot be reproduced.",
+    reference:
+      "Luminary099/SERVICER.agc LRHTASK p.872, LRHJOB p.892; docs/M3_3B2_SCALE_ARCHAEOLOGY.md#still-unresolved",
+  },
 ] as const;
 
 export interface MonitorEntryDecisionAllowed {
@@ -158,6 +188,20 @@ export function decideMonitorEntry(
       detail:
         "HW-I/O output-counter trace is already enabled outside monitor lifecycle; refusing to enter.",
     });
+  }
+
+  if (profile === "landing-radar-observer-v1") {
+    // Registry integrity is a hard gate here too.
+    for (const err of validateRegistry()) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `registry: ${err.message}`,
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+    for (const reason of LANDING_RADAR_OBSERVER_V1_BLOCKS) {
+      reasons.push(reason);
+    }
   }
 
   if (profile === "descent-monitor-v1") {

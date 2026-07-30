@@ -57,3 +57,28 @@ faithfully — but it is not yet implemented.
 Warning: the 3200-cps figure in the AOH power tables is IMU/PIPA excitation
 power, a *different subsystem* from the 32-units/centisecond throttle counter
 rate. The numeric coincidence is not evidence.
+
+## Addendum — radar cadence and transaction ordering (pinned rope)
+
+Opened this pass: `Luminary099/P20-P25.agc`, `Luminary099/SERVICER.agc`,
+`Luminary099/RADAR_LEADIN_ROUTINES.agc`,
+`Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc`
+(chrislgarry/Apollo-11 @ 911e5c0).
+
+| Question | Answer | Source |
+|---|---|---|
+| Who initiates a radar read? | The LGC. `WAND CHAN13` clears radar bits, `WOR CHAN13` sets select + ACTIVITY. | P20-P25.agc INITREAD, p.554 |
+| CHAN13 layout | bits 1-3 RADAR A/B/C select, bit 4 RADAR ACTIVITY | I/O bit descriptions, p.56 |
+| Select codes | `ALLREAD/LRALT 17`, `LRVELZ 16`, `LRVELY 15`, `LRVELX 14`, `RRRANGE 11`, `RRRDOT 12` | P20-P25.agc p.553-554 |
+| Words per RADARUPT | exactly one, selected by CHAN13 bits 1-3 | P20-P25.agc RADAREAD, p.555 |
+| Ordering | select+activity → serial RNRAD fill → RADARUPT → handler reads RNRAD → DATA GOOD checked after read → ACTIVITY reset | P20-P25.agc RADAREAD/RESAMPLE, p.555-557 |
+| LR altitude schedule | WAITLIST task from READACCS, 50 ms before next READACCS, below 25,000 ft | SERVICER.agc LRHTASK, p.872 |
+| LR altitude sample window | ~95 ms, one sample; "LRH DATA 1.079 FT/BIT" | SERVICER.agc LRHJOB, p.892 |
+| LR velocity | 5 samples, ~500 ms, `VSELECT` beam sequencing, below 15,000 ft | SERVICER.agc LRVJOB, p.892 |
+| Data-good discretes | CHAN33 `DGBITS OCT 230`; LR range DG bit 5, velocity DG bit 4, position bit 6 (all active-low) | P20-P25.agc INITREAD/LRHEIGHT/RENDRAD |
+
+**Consequence.** The cadence is inseparable from READACCS, which is the
+PIPA-driven SERVICER cycle. With the PIPA ΔV weight still unresolved, a
+host-timed radar emission would be fabricated operation. `landing-radar-
+observer-v1` stays blocked with `radar-update-cadence-unresolved`; the 250 ms
+constant is retained only as a named test fixture.

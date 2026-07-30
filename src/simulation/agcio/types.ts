@@ -87,11 +87,11 @@ export const AGC_MONITOR_PROFILE_LABELS: {
       "Injects only source-mapped steady-state discretes (CHAN30/CHAN33) and observes CHAN11/CHAN14 discretes and the THRUST output-counter trace. Not a substitute for LR/PIPA sensing.",
   },
   "landing-radar-observer-v1": {
-    title: "Landing-radar range diagnostic",
+    title: "Landing-radar range diagnostic (BLOCKED)",
     banner:
-      "LANDING-RADAR RANGE DIAGNOSTIC ONLY — NOT A POWERED-DESCENT MONITOR",
+      "LANDING-RADAR INTERFACE DIAGNOSTIC — NOT A COMPLETE POWERED-DESCENT MONITOR",
     description:
-      "Discrete-observer behaviour plus one authentic serial RNRAD (0o46) RANGE transaction per diagnostic cadence, delivered with the native RADARUPT latch. Altitude/range only — no velocity beams, no PIPA.",
+      "Would add one authentic serial RNRAD (0o46) RANGE transaction plus native RADARUPT to discrete-observer behaviour. BLOCKED: the authentic read is AGC-solicited through CHAN13 (P20-P25.agc INITREAD/RADAREAD) and scheduled by READACCS/SERVICER (SERVICER.agc LRHTASK), which depends on the unresolved PIPA ΔV scale. No host-side cadence is source-supported, so the profile never enters.",
   },
   "descent-monitor-v1": {
     title: "Descent monitor v1",
@@ -119,7 +119,8 @@ export type MonitorBlockReasonCode =
   | "sensor-range-invalid"
   | "prerequisite-missing"
   | "trace-already-enabled"
-  | "cdu-drain-budget-unproven";
+  | "cdu-drain-budget-unproven"
+  | "radar-update-cadence-unresolved";
 
 export interface MonitorBlockReason {
   readonly code: MonitorBlockReasonCode;
