@@ -140,3 +140,26 @@ rows:
 Per approved plan: **stop and report**. No encoder, decoder, Worker change,
 or protocol change written. No files under `src/simulation/agcio/` created.
 No `sim:` protocol bump.
+
+---
+
+## M3.3B addendum — supersedes parts of the above
+
+See `docs/M3_3B_SOURCE_ARCHAEOLOGY.md` for the full pinned-source evidence.
+
+Resolved since this document was written:
+
+- Item 1 above is **done**: `yaAGC-ext.wasm` (`hwio-v2`) exports
+  `agc_counter_increment` and ordered batched `agc_hw_input_apply`, plus a
+  lossless output-counter trace ring. Sub-item (b), the RUPT-fire API, was
+  **not** implemented and is the remaining radar blocker.
+- Counter addresses: PIPAX/Y/Z `0o37`–`0o41` (PINC/MINC), IMU CDU `0o32`–`0o34`
+  (PCDU/MCDU, 128-entry per-axis FIFO), shared radar `RNRAD` `0o46`
+  (axis selected by CHAN13), `THRUST` `0o55` (output, throttle command).
+- **Polarity correction:** `INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:143-144`
+  states every bit in channels 30-33 is inverted. Earlier text in this document
+  treating CHAN33 landing-radar bits as active-high was wrong; all CH30-33 rows
+  are `active-low` ("0 means signal present").
+
+Still unresolved, keeping `descent-monitor-v1` blocked: PIPA pulse weight,
+IMU CDU angular LSB, `RADARUPT` generation, DPS throttle magnitude.
