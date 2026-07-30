@@ -67,7 +67,18 @@ interface YaAgcExports {
   agc_interrupt_in_service?: () => number;
   agc_landing_radar_update_size?: () => number;
   agc_landing_radar_update_apply?: (ptr: number) => number;
+  // M3.3C Phase 4B (HW-I/O v4): gated NON-FLIGHT scenario pad load.
+  agc_pad_load_record_size?: () => number;
+  agc_pad_load_max_records?: () => number;
+  agc_pad_load_status?: () => number;
+  agc_pad_load_applied_count?: () => number;
+  agc_pad_load_last_error_index?: () => number;
+  agc_pad_load_window_open?: () => number;
+  agc_pad_load_window_close?: () => number;
+  agc_erasable_pad_load_apply?: (records: number, count: number) => number;
+  agc_erasable_read_word?: (address: number) => number;
 }
+
 
 /** Native interrupt-vector indices. Index i vectors to 04000 + 4*i
  *  (yaAGC `agc_engine.c` dispatch loop). Only RADARUPT is host-requestable
