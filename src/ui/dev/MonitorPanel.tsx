@@ -11,6 +11,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAgcSession } from "@/agc/AgcSession";
 import type { LmDiscreteSensorState } from "@/simulation/agcio/discreteEncoder";
 import type { AgcMonitorProfile } from "@/simulation/agcio/types";
+import {
+  LR_RANGE_CADENCE_CITATIONS,
+  LR_RANGE_FEET_PER_BIT,
+  LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_LABEL,
+  LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_US,
+  LR_RANGE_SCALE_CITATION,
+} from "@/simulation/agcio/radarObserver";
 
 const DEFAULT_AVIONICS: LmDiscreteSensorState = {
   engineArmed: false,
@@ -123,6 +130,12 @@ export function MonitorPanel() {
           disabled={!client || !simReady}
         >Request descent-monitor-v1 (blocked)</button>
         <button
+          data-testid="mon-enter-radar"
+          className="rounded border border-neutral-700 px-3 py-1 hover:bg-neutral-800 disabled:opacity-40"
+          onClick={() => requestProfile("landing-radar-observer-v1")}
+          disabled={!client || !simReady}
+        >Request landing-radar-observer-v1 (blocked)</button>
+        <button
           data-testid="mon-exit"
           className="rounded border border-neutral-700 px-3 py-1 hover:bg-neutral-800 disabled:opacity-40"
           onClick={() => requestProfile("off")}
@@ -188,7 +201,78 @@ export function MonitorPanel() {
         <span data-testid="mon-throttle">
           {control?.throttleFraction ?? "null — PHYSICAL THROTTLE SCALE NOT YET RESOLVED"}
         </span>
+        <span className="text-neutral-500">CHAN 014 / THRUST semantics</span>
+        <span data-testid="mon-throttle-semantics" className="uppercase">
+          LGC THROTTLE COMMAND DELTA INTO DECA SUMMING JUNCTION — NOT THRUST —
+          PHYSICAL FORCE SCALE NOT RESOLVED
+        </span>
       </div>
+
+      <h3 className="mt-4 text-xs uppercase tracking-widest text-neutral-500">
+        Landing-radar interface diagnostic
+      </h3>
+      <p
+        className="mt-2 rounded bg-amber-950/40 px-3 py-2 text-xs font-bold uppercase text-amber-300"
+        data-testid="radar-banner"
+      >
+        LANDING-RADAR INTERFACE DIAGNOSTIC
+        <br />
+        NOT A COMPLETE POWERED-DESCENT MONITOR
+        <br />
+        AGC OUTPUT OBSERVED ONLY
+        <br />
+        COMMAND NOT APPLIED TO SPACECRAFT
+      </p>
+      <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs" data-testid="mon-radar">
+        <span className="text-neutral-500">Profile state</span>
+        <span data-testid="mon-radar-state">
+          {monitor?.profile === "landing-radar-observer-v1"
+            ? "active"
+            : "blocked — radar-update-cadence-unresolved"}
+        </span>
+        <span className="text-neutral-500">RNRAD (0o46) representation</span>
+        <span data-testid="mon-radar-representation">
+          14-bit shift counter (mask 0o37777), 15 serial bits shifted, unsigned;
+          out-of-range values are REFUSED, never wrapped
+        </span>
+        <span className="text-neutral-500">Range bit weight</span>
+        <span data-testid="mon-radar-bit-weight">
+          {LR_RANGE_FEET_PER_BIT} ft/bit ({LR_RANGE_SCALE_CITATION})
+        </span>
+        <span className="text-neutral-500">Range rate</span>
+        <span>not displayed — beam/CHAN13 sequencing unresolved</span>
+        <span className="text-neutral-500">Update cadence</span>
+        <span data-testid="mon-radar-cadence">
+          UNRESOLVED — AGC-solicited via CHAN13 ACTIVITY; not host-timed
+        </span>
+        <span className="text-neutral-500">Test fixture</span>
+        <span data-testid="mon-radar-fixture">
+          {LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_US / 1000} ms —{" "}
+          {LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_LABEL}
+        </span>
+        <span className="text-neutral-500">CHAN 033 merged word</span>
+        <span data-testid="mon-radar-ch033">
+          {oct(
+            (monitor?.inputChannels ?? []).find((c) => c.channel === 0o33)?.word ??
+              null,
+          )}
+        </span>
+        <span className="text-neutral-500">RADARUPT</span>
+        <span data-testid="mon-radar-radarupt">
+          not requested — profile blocked (no partial transaction is applied)
+        </span>
+        <span className="text-neutral-500">Missing prerequisites</span>
+        <span data-testid="mon-radar-prereq">
+          PIPA ΔV pulse weight unresolved; CDU drain budget unproven; TTCA
+          throttle bias unresolved
+        </span>
+      </div>
+      <ul className="mt-2 space-y-0.5 text-xs text-neutral-500" data-testid="mon-radar-citations">
+        {LR_RANGE_CADENCE_CITATIONS.map((c) => (
+          <li key={c}>{c}</li>
+        ))}
+      </ul>
+
 
       {monitorBlocked && (
         <div className="mt-4 rounded border border-red-800 p-3" data-testid="mon-blocked">

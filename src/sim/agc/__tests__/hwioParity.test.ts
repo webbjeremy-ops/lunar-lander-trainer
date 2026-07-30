@@ -151,6 +151,48 @@ interface ParityRun {
   totalStepsSoFar: number;
 }
 
+// ------------------------------------------------------------------
+// Test-integrity ledger (M3.3B2 §8).
+//
+// A parity suite that silently skips is worse than no suite. Every segment
+// records the scenario name, the number of PACKET pairs actually compared,
+// and the cumulative cpu_step count. A final meta-test asserts that all six
+// required scenarios executed with non-zero comparisons and non-zero steps,
+// so an accidental whole-suite skip FAILS instead of reporting green.
+// ------------------------------------------------------------------
+
+export interface ParityLedgerEntry {
+  comparedPackets: number;
+  cpuSteps: number;
+  segments: number;
+}
+
+const PARITY_LEDGER = new Map<string, ParityLedgerEntry>();
+
+const REQUIRED_PARITY_SCENARIOS = [
+  "cold-init",
+  "long-idle",
+  "V35E",
+  "V16N65E",
+  "pause-single-step",
+  "mixed-dsky",
+] as const;
+
+function recordLedger(run: ParityRun): void {
+  const e = PARITY_LEDGER.get(run.scenario) ?? {
+    comparedPackets: 0,
+    cpuSteps: 0,
+    segments: 0,
+  };
+  e.comparedPackets = Math.max(
+    e.comparedPackets,
+    Math.min(run.frozen.packets.length, run.extended.packets.length),
+  );
+  e.cpuSteps = run.totalStepsSoFar;
+  e.segments += 1;
+  PARITY_LEDGER.set(run.scenario, e);
+}
+
 function comparePackets(run: ParityRun): void {
   const a = run.frozen.packets;
   const b = run.extended.packets;
@@ -268,6 +310,7 @@ function runSegment(run: ParityRun, steps: number, label: string): void {
   run.segmentIndex++;
   run.totalStepsSoFar += steps;
   comparePackets(run);
+  recordLedger(run);
   assertDormant(run, `after-segment[${label}]`);
 }
 
@@ -403,6 +446,22 @@ describe("M3.3A2-P3 frozen-vs-extended behavioural parity", () => {
     // Let everything settle.
     for (let i = 0; i < 8; i++) runSegment(run, 50_000, `settle+${i}`);
     checkpointErasable(run, "post-mixed-dsky");
+  });
+
+  it("test integrity: every required parity scenario actually executed", () => {
+    const report: Record<string, ParityLedgerEntry> = {};
+    for (const [k, v] of PARITY_LEDGER) report[k] = v;
+    // Fails loudly if the suite (or any scenario) was skipped.
+    expect(Object.keys(report).sort()).toEqual([...REQUIRED_PARITY_SCENARIOS].sort());
+    for (const name of REQUIRED_PARITY_SCENARIOS) {
+      const e = report[name];
+      expect(e, `scenario ${name} never ran`).toBeDefined();
+      expect(e.segments, `scenario ${name} compared no segments`).toBeGreaterThan(0);
+      expect(e.comparedPackets, `scenario ${name} compared no packets`).toBeGreaterThan(0);
+      expect(e.cpuSteps, `scenario ${name} executed no cpu_steps`).toBeGreaterThan(0);
+    }
+    // Surface the ledger in CI output for the freeze report.
+    console.log("[M3.3B2 parity ledger]", JSON.stringify(report));
   });
 
   it("dormancy: extended core never armed tracing across the full parity suite", () => {

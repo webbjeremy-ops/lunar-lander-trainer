@@ -55,15 +55,50 @@ export const LR_RANGE_MAX_COUNT = RNRAD_COUNTER_MASK;
 export const RNRAD_ADDRESS = 0o46;
 
 /**
- * Diagnostic emission cadence.
+ * NON-AUTHENTIC TEST CADENCE — NOT USED BY PRODUCTION PROFILE.
  *
- * NOT source-proven: the real LGC solicits each LR read from
- * `P20-P25.agc` READRADR/RADAREAD, and that solicitation sequence is NOT
- * modelled here. 250 ms is an explicitly-declared DIAGNOSTIC cadence,
- * reported as such in the UI, and is a multiple of the 20 ms mission tick
- * so emission stays tick-aligned and deterministic.
+ * Kept ONLY as a development/test fixture so the pure encoder can be
+ * exercised deterministically. No production monitor profile may consult
+ * it: the authentic landing-radar read is AGC-SOLICITED, never host-timed.
+ *
+ * Source (pinned Luminary099, chrislgarry/Apollo-11 @ 911e5c0):
+ *   * `P20-P25.agc` INITREAD (p. 554) — the LGC clears the CHAN13 radar
+ *     bits (`CS ALLREAD` / `WAND CHAN13`) and then writes the select +
+ *     ACTIVITY bits (`WOR CHAN13`); the PSA answers by shifting the data
+ *     serially into RNRAD and raising RADARUPT.
+ *   * `P20-P25.agc` RADAREAD (p. 555) — the RADARUPT handler reads RNRAD
+ *     and resets the ACTIVITY bit; one RADARUPT delivers ONE selected data
+ *     word, chosen by CHAN13 bits 1-3.
+ *   * `SERVICER.agc` LRHTASK (p. 872) — the altitude read is a WAITLIST
+ *     task "set by READACCS during the descent braking phase when the ALT
+ *     to the lunar surface is less than 25,000 FT ... 50 MS prior to the
+ *     next READACCS task", i.e. phased to the PIPA-driven READACCS cycle.
+ *   * `SERVICER.agc` LRHJOB (p. 892) — "about 95 MS" sampling window,
+ *     "LRH DATA 1.079 FT/BIT".
+ *
+ * The cadence is therefore inseparable from READACCS/SERVICER, which is
+ * driven by the PIPA read whose ΔV pulse weight is UNRESOLVED
+ * (docs/M3_3B2_SCALE_ARCHAEOLOGY.md §"Still UNRESOLVED", item 1). A
+ * host-side free-running timer would fabricate Apollo operation, so
+ * `landing-radar-observer-v1` stays atomically blocked with
+ * `radar-update-cadence-unresolved`.
  */
-export const LR_OBSERVER_CADENCE_US = 250_000;
+export const LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_US = 250_000;
+
+/** Verbatim label that MUST accompany any presentation of the fixture. */
+export const LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_LABEL =
+  "NON-AUTHENTIC TEST CADENCE — NOT USED BY PRODUCTION PROFILE";
+
+/** Citations for the AGC-solicited transaction, recorded verbatim in
+ *  docs/M3_3_IO_MAP.md. */
+export const LR_RANGE_CADENCE_CITATIONS: readonly string[] = [
+  "Luminary099/P20-P25.agc INITREAD (p.554) — CS ALLREAD / WAND CHAN13, then WOR CHAN13 select+ACTIVITY: the read is AGC-solicited.",
+  "Luminary099/P20-P25.agc RADAREAD (p.555) — one RADARUPT delivers ONE data word selected by CHAN13 bits 1-3; handler resets ACTIVITY (BIT4).",
+  "Luminary099/SERVICER.agc LRHTASK (p.872) — LR altitude read scheduled by READACCS, 50 ms before the next READACCS task, below 25,000 ft.",
+  "Luminary099/SERVICER.agc LRHJOB (p.892) — sampling window ~95 ms; 'LRH DATA 1.079 FT/BIT'.",
+  "Luminary099/SERVICER.agc LRVJOB (p.892) — velocity read is 5 samples, ~500 ms, beam-sequenced by VSELECT; not modelled.",
+] as const;
+
 
 export interface LandingRadarObserverState {
   readonly kind: "landing-radar-observer-state-v1";
@@ -127,6 +162,14 @@ export interface LandingRadarObserverInputs {
   /** Operator-declared LR RANGE DATA GOOD discrete. The observer never
    *  invents acquisition: with the discrete unasserted nothing is sent. */
   readonly rangeDataGood: boolean;
+  /**
+   * Emission cadence, µs. REQUIRED and explicit — there is no default,
+   * because no source-supported host-side cadence exists (the authentic
+   * read is AGC-solicited via CHAN13; see LR_RANGE_CADENCE_CITATIONS).
+   * Production profiles must not supply one; tests pass
+   * `LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_US`.
+   */
+  readonly cadenceUs: number;
 }
 
 export interface LandingRadarObserverResult {
@@ -143,7 +186,7 @@ function emptyDiagnostic(
 ): LandingRadarObserverDiagnostic {
   return {
     missionTimeUs: inputs.missionTimeUs,
-    cadenceUs: LR_OBSERVER_CADENCE_US,
+    cadenceUs: inputs.cadenceUs,
     cadenceSourced: false,
     altitudeMeters: inputs.altitudeMeters,
     altitudeFeet:
@@ -214,7 +257,7 @@ export function encodeLandingRadarTick(
 
   const due =
     state.lastEmitMissionTimeUs === null ||
-    inputs.missionTimeUs - state.lastEmitMissionTimeUs >= LR_OBSERVER_CADENCE_US;
+    inputs.missionTimeUs - state.lastEmitMissionTimeUs >= inputs.cadenceUs;
 
   if (!inputs.rangeDataGood || saturated || !due) {
     return {

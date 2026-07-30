@@ -163,3 +163,99 @@ Resolved since this document was written:
 
 Still unresolved, keeping `descent-monitor-v1` blocked: PIPA pulse weight,
 IMU CDU angular LSB, `RADARUPT` generation, DPS throttle magnitude.
+
+---
+
+## M3.3B2 addendum — HW-I/O v3, radar cadence, and corrected THRUST
+
+This addendum supersedes any earlier statement in this document that
+conflicts with it. Every claim below is traced to pinned source
+(`chrislgarry/Apollo-11 @ 911e5c0`, `virtualagc @ ddc65e7be`) or to a primary
+document recorded in `docs/M3_3B2_SCALE_ARCHAEOLOGY.md`.
+
+### RADARUPT — corrected history
+
+Earlier text said "no emulator API drives RADARUPT". Precisely:
+`yaAGC/agc_engine.c` already wires interrupt vector `04044` to
+`InterruptRequests[9]`, but nothing inside the emulator ever *sets* that
+latch. HW-I/O **v3** adds `agc_request_hardware_interrupt` (allow-listed to
+index 9 only) and `agc_landing_radar_update_apply`, which performs the serial
+RNRAD load and then sets the native latch. Delivery, priority, `INHINT`
+holding and `RELINT` release are left entirely to the emulator's own
+dispatcher; the host never writes Z and never forces handler entry.
+Proven by `src/sim/agc/__tests__/hwioRadarInterrupt.test.ts` (13 tests).
+
+### RNRAD (0o46) — complete representation
+
+| Property | Value | Source |
+|---|---|---|
+| Address | `0o46` | `SERVICER.agc` / `P20-P25.agc` `RNRAD` |
+| Counter type | shift counter, `CounterSHINC`/`CounterSHANC` | `yaAGC/agc_engine.c:1292-1316` |
+| Retained width | 14 bits, mask `0o37777` | same |
+| Serial bits per transaction | 15 | PSA serial read; only low 14 retained |
+| Sign | unsigned magnitude for LR RANGE; Luminary masks with `POSMAX` before use | `P20-P25.agc` RADIN (`CAF POSMAX` / `MASK RNRAD`) |
+| Replacement semantics | serial shift replaces the word; no accumulate | `CounterSHINC` |
+| Range bit weight | **1.079 ft/bit** | `CONTROLLED_CONSTANTS.agc` `HSCAL`; confirmed in-line by `SERVICER.agc` LRHJOB comment "LRH DATA 1.079 FT/BIT" |
+| Valid host range | `0 … 0o37777` counts | derived from retained width |
+| Out-of-range behaviour | **host refuses to emit**; no wrap | no source specifies wrapping, so refusal is the conservative correct behaviour |
+
+### Landing-radar update cadence — UNRESOLVED (profile blocked)
+
+The read is **AGC-solicited**, not host-timed:
+
+- `P20-P25.agc` INITREAD (p. 554): `CS ALLREAD` / `WAND CHAN13` clears the
+  radar bits, then `WOR CHAN13` sets the select code + **ACTIVITY (bit 4)**.
+  `ALLREAD OCT 17`; lead-ins `LRALT OCT 17`, `LRVELZ 16`, `LRVELY 15`,
+  `LRVELX 14`, `RRRANGE 11`.
+- CHAN13 bits 1-3 = RADAR A/B/C select, bit 4 = RADAR ACTIVITY
+  (`INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc`, p. 56).
+- `P20-P25.agc` RADAREAD (p. 555): the RADARUPT handler reads `RNRAD`,
+  checks the CHAN33 DATA GOOD bit, and resets the ACTIVITY bit
+  (`RXOR CHAN13` / `WOR CHAN13`). **One RADARUPT delivers one data word**,
+  selected by CHAN13 bits 1-3 — not a multi-component packet.
+- Ordering per transaction: select+activity write → PSA serial fill of RNRAD
+  → RADARUPT → handler reads counter → DATA GOOD checked *after* the read
+  ("DATA GOOD ISN'T CHECKED UNTIL AFTER READING DATA").
+- `SERVICER.agc` LRHTASK (p. 872): the altitude read is a WAITLIST task "set
+  by READACCS during the descent braking phase when the ALT to the lunar
+  surface is less than 25,000 FT ... 50 MS prior to the next READACCS task".
+- `SERVICER.agc` LRHJOB (p. 892): sampling window "about 95 MS", one sample
+  per reading (`LRALT TC INITREAD -1`).
+- `SERVICER.agc` LRVJOB (p. 892): velocity is 5 samples, ~500 ms, beams
+  sequenced by `VSELECT`, only below 15,000 ft.
+
+Because the schedule is phased to READACCS — the PIPA-driven SERVICER cycle —
+and the PIPA ΔV pulse weight remains unresolved, **no host-side cadence is
+source-supported**. `landing-radar-observer-v1` is therefore atomically
+blocked with `radar-update-cadence-unresolved`. The 250 ms encoder constant
+survives only as `LR_RANGE_NON_AUTHENTIC_TEST_CADENCE_US`, labelled
+"NON-AUTHENTIC TEST CADENCE — NOT USED BY PRODUCTION PROFILE", and is
+consulted by tests only.
+
+### CHAN14 / THRUST (0o55) — corrected interpretation
+
+`THRUST_CONTROL_ROUTINES.agc` `FRATE` gives the counter rate of **32 units
+per centisecond (3200/s)**. LMA790-3-LM §2.1.3.1 establishes that the DECA
+**analog-sums** the LGC digital throttle command with the TTCA manual
+command. The CHAN14/THRUST pulse train is therefore an *incremental LGC
+throttle-command delta into the DECA summing junction* — **not** a thrust,
+not a force, and not a percentage. `throttleFraction` stays `null`; no
+pounds-force, newton or percentage value may be displayed.
+
+### CDU angular scales (resolved; not yet used)
+
+Fine mode 20 arc-sec/pulse, Δθc word 40 arc-sec, coarse-align increment
+160 arc-sec (LMA790-3-LM §2.1.4.1.3). The frequently-repeated
+**39.3 arc-sec figure is disputed and is NOT adopted**.
+
+### Still unresolved (registry rows remain `unresolved`)
+
+1. PIPA ΔV per pulse — absent from every primary page opened.
+2. CDU FIFO drain budget over a 20 ms mission tick.
+3. TTCA fixed throttle bias — described qualitatively only.
+4. Physical force per THRUST count.
+5. LR velocity-beam / CHAN13 beam-select sequencing as a host transaction.
+
+A registry row becomes `mapped` only when a citation supports it; deleting a
+policy string is never sufficient — `decideMonitorEntry` re-derives blocks
+from `sensorRegistry` on every call.
