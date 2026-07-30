@@ -76,7 +76,7 @@ afterwards `agc_pad_load_window_open()` returns `-30` and apply returns `-20`,
 with `0o1733` still reading `0o20000`. `cpu_reset()` closes the lifecycle,
 zeroes `agc_pad_load_status()`/`applied_count()`, and discards all 22 words.
 
-## 4. Rope-level verification — PROVEN (read-back + execution survival)
+## 4. Rope-level verification — read-back PROVEN, consumption BLOCKED
 
 `src/simulation/agcio/__tests__/ropeBootstrap.test.ts`: after installation the
 18 REFSMMAT words decode (half-unit scale, row-major, reference→stable-member)
@@ -85,9 +85,55 @@ to the identity matrix within 1e-7; REFSMFLG is set in FLAGWRD3; 400 000 normal
 PIPAX/Y/Z at zero; the pad window is closed throughout; and 200 000 stepped
 cycles emit **no** CHAN12 ZERO-IMU-CDUS / COARSE-ALIGN discrete (`0o30`).
 
-**Remaining gap (open):** an independent rope calculation that *consumes*
-REFSMMAT and yields a predictable value has not yet been captured. Read-back
-plus absence-of-coarse-align is necessary but not sufficient for §4.
+### Independent consumption proof — HARD BLOCKER (stop condition 1)
+
+The intended proof route was the normal Servicer chain
+`PINC/MINC → READACCS → DELV → REFSMMAT → DELVREF`. It is **not reachable**
+from any state this milestone may legitimately create, and the attempt was
+stopped rather than fabricated.
+
+Executable evidence: `src/simulation/agcio/__tests__/servicerReachability.test.ts`.
+After the real 22-word bootstrap, 2 000 000 cycles of normal fresh-start
+execution, an asymmetric host PINC injection (X=7, Y=3, Z=5 through native
+`agc_counter_increment`, no direct erasable writes) and a further 5 000 000
+normal cycles, the counters still read exactly `7 / 3 / 5`. The rope never
+reads or clears them.
+
+Rope reason, from the pinned source:
+
+| Citation | Content |
+| --- | --- |
+| `FLAGWORD_ASSIGNMENTS.agc:809-810` | `AVEGFLAG = 115D`, `AVEGFBIT = BIT5` — "AVERAGEG (SERVICER) DESIRED" |
+| `SERVICER.agc:53` | "SET V37FLAG AND AVEGFLAG (BITS 5 AND 6 …)" |
+| `SERVICER.agc:77-83` | `READACCS` runs only as a WAITLIST task inside the AVERAGEG loop |
+| `SERVICER.agc:109` | `BZF AVEGOUT` — the loop exits immediately while AVEGFLAG is down |
+| `SERVICER.agc:147` | "END TASK WITHOUT CALLING READACCS" |
+
+Also attempted and rejected: entering the descent program by **normal DSKY
+keying** (`V37E 63E` on channel 015 with authentic key codes). The rope does
+not start AVERAGEG, because P63 entry presupposes mission state that does not
+exist after a cold start.
+
+**Smallest missing bootstrap field set** (all required together; none of it is
+source-derivable for this scenario today, so installing it would be fabricated
+mission operation):
+
+1. `AVEGFLAG` (FLAGWRD7 bit 5) set — but only legitimately as a *consequence*
+   of a program that owns the Servicer loop, never by pad load.
+2. A valid vehicle state vector `RN`/`VN` (double-precision position/velocity)
+   plus `PIPTIME`/`PIPTIME1`, which the AVERAGEG integration reads on its
+   first pass.
+3. Orbital-integration setup (`SETINTG` / `MOONFLAG` permanent-state
+   selection) consistent with that state vector.
+4. The P63 major-mode entry conditions themselves (`V37FLAG`, average-G
+   scheduling via the WAITLIST/`ATTACHIT` chain).
+
+That is a full powered-descent mission bootstrap, not a pad load. Per the
+milestone's stop rules, work halted here: sections 2–8 of the continuation
+(live PIPA wiring, CHAN13 Worker fold, RNRAD/RADARUPT responses, profile
+activation, diagnostics, browser acceptance) are all gated on this proof and
+were **not** started, so nothing downstream rests on an unproven transform.
+
 
 ## 6. Channel 13 authentic request capture — decoder PROVEN, wiring open
 
@@ -116,20 +162,30 @@ level, not end to end.
 
 ## Accurate remaining blockers
 
-* §4 — independent rope-side REFSMMAT consumption proof.
+* §4 — **hard blocker.** Independent rope-side REFSMMAT *consumption* proof is
+  unreachable: the Servicer/READACCS path requires a full powered-descent
+  mission bootstrap (see §4 above). Everything below is gated on it.
 * §5 — live PIPA injection into the Worker (encoder exists, wiring does not).
 * §7 — altitude RNRAD/RADARUPT transaction driven by captured CHAN13 requests.
 * §8 — `landing-radar-observer-v1` profile gating on the above.
 * §9 — diagnostics panel fields for bootstrap, PIPA and radar transactions.
 * §11 — browser acceptance specs for the new paths.
 
+## Next highest-value milestone
+
+Source-derive and prove the **powered-descent mission bootstrap** (state
+vector `RN`/`VN`, `PIPTIME`, integration selection, P63 entry) from primary
+Apollo 11 documents. It is the single prerequisite that unblocks the REFSMMAT
+consumption proof, live PIPA, and every landing-radar transaction at once.
+
 ## Verification totals (this pass)
 
 | Check | Result |
 | --- | --- |
-| Vitest | **494 / 494 passed**, 48 files, 0 skipped |
+| Vitest | **495 / 495 passed**, 49 files, 0 skipped |
 | Typecheck (`tsgo --noEmit`) | clean |
 | Physics firewall | unchanged; golden touchdown `368,279,425 µs` still asserted by the M3.1/M3.2 suites |
 | Closed-loop AGC control | still prohibited and absent |
 
 **M3.3C is not ready to freeze.**
+
