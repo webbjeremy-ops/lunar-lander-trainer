@@ -41,7 +41,7 @@ interface AgcTestSnapshot {
 }
 
 const CANONICAL_SHA =
-  "8cac2dc90d4896caa5f80888d4334616e5357b58f45233f6b27599e68a4b85cf";
+  "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3";
 
 test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
   test("browser fetches ONLY yaAGC-ext.wasm and reports HW-I/O v3 across routes", async ({
