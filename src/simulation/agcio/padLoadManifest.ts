@@ -39,6 +39,7 @@ import {
   type Matrix3,
   type SourceCitation,
 } from "./imuBootstrap";
+import { CANONICAL_AGC_RUNTIME } from "@/agc/AgcRuntimeManifest";
 
 /** Erasable window the HW-I/O v4 pad load will accept (hwio.c
  *  `HWIO_PAD_MIN_ADDRESS` / `HWIO_PAD_MAX_ADDRESS`). */
@@ -126,15 +127,16 @@ function buildRecords(): readonly SourceMappedPadLoadRecord[] {
   return out;
 }
 
-/** SHA-256 of the pinned Luminary099 rope (public/ropes/Luminary099.manifest.json). */
+/** SHA-256 of the pinned Luminary099 rope
+ *  (public/ropes/Luminary099.manifest.json -> artifactProvenance.sha256). */
 export const REQUIRED_ROPE_SHA256 =
-  "1b7fcf7b0eb02a94e0d97b3aeb4b1bb9c3e2d4e9c1c3e4bb92a2a63c1f2e0f19";
+  "1f5326e038de5b741b2f27b01ec949dbd688cf1906994e997402587c8628f40e";
 
 export const LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1: AgcScenarioPadLoadManifestV1 = {
   id: "luminary099-fixed-attitude-descent-padload-v1",
   kind: "NON-FLIGHT SCENARIO PAD LOAD",
-  ropeSha256: "", // filled by the Worker from the loaded rope provenance
-  runtimeSha256: "", // filled by the Worker from the canonical runtime manifest
+  ropeSha256: REQUIRED_ROPE_SHA256,
+  runtimeSha256: CANONICAL_AGC_RUNTIME.sha256,
   requiredMajorMode: 0,
   records: buildRecords(),
   citations: BOOT.citations,
