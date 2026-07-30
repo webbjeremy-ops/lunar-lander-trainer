@@ -133,7 +133,7 @@ describe("HW-I/O v4 — identity and ABI surface", () => {
       "agc_interrupt_inhibited", "agc_in_isr", "agc_interrupt_in_service",
       "agc_landing_radar_update_size", "agc_landing_radar_update_apply",
     ]) {
-      expect(typeof name in ex ? typeof ex[name] : "missing").toBe("function");
+      expect(name in ex ? typeof ex[name] : "missing").toBe("function");
     }
   });
 });
