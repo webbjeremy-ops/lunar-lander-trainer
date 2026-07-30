@@ -120,11 +120,13 @@ export interface MonitorBlockReason {
  */
 export type AgcIncrementType =
   | "PINC"
-  | "MINC"
   | "PCDU"
+  | "MINC"
   | "MCDU"
   | "DINC"
-  | "PYJK";
+  | "SHINC"
+  | "SHANC";
+
 
 /** A single ordered unprogrammed-counter action queued for a mission tick.
  *  Only the P5.d Worker will produce these; the pure P5.b encoder emits an

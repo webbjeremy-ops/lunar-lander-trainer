@@ -69,7 +69,9 @@ export const AGC_INC_TYPE_IDS = {
   MINC: 2,
   MCDU: 3,
   DINC: 4,
-  PYJK: 5,
+  SHINC: 5,
+  SHANC: 6,
+
 } as const;
 
 export type AgcIncTypeName = keyof typeof AGC_INC_TYPE_IDS;
