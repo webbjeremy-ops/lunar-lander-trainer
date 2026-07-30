@@ -178,6 +178,25 @@ vector `RN`/`VN`, `PIPTIME`, integration selection, P63 entry) from primary
 Apollo 11 documents. It is the single prerequisite that unblocks the REFSMMAT
 consumption proof, live PIPA, and every landing-radar transaction at once.
 
+## M3.3D checkpoint-recovery attempt (see `M3_3D_POWERED_DESCENT_CHECKPOINT.md`)
+
+M3.3D attempted to unblock the above by recovering the Apollo-era MIT digital
+simulation checkpoint. It **halted at Gate 1** with no runtime change, for two
+reasons:
+
+1. **No machine-readable artifact exists in publicly located material.** Both
+   Internet Archive items (1969 `LMY99`, 1971 `AP11ROPE`) contain only page
+   scans and OCR derivatives — no tape data, no erasable image, no CPU state.
+2. **The premise was refuted by the source.** `LAST SNAP` is a page-header
+   field reporting the snapshot the run most recently *wrote*. Both runs are
+   labelled `NEW SIMULATION` with `LAST SNAP NONE` throughout initialization,
+   then emit `SNAPSHOT 367700`, `367750`, `367850`, `367900` on a periodic
+   schedule. `367700` is an **output** of the run, not a prerequisite it
+   resumed from — so there is no lost checkpoint to recover.
+
+The blocker in §4 above therefore stands unchanged and now has a documented
+external-acquisition dependency.
+
 ## Verification totals (this pass)
 
 | Check | Result |
@@ -188,4 +207,5 @@ consumption proof, live PIPA, and every landing-radar transaction at once.
 | Closed-loop AGC control | still prohibited and absent |
 
 **M3.3C is not ready to freeze.**
+
 
