@@ -41,6 +41,11 @@ export type LandingRadarStatus =
  * defaulted to a flight-ready condition — the encoder rejects an
  * incomplete state (see `encodeDiscreteSensorTick`).
  *
+ * Fields are expressed in OPERATOR terms (healthy / enabled / acquired).
+ * The registry row decides how each maps onto the raw Luminary signal name
+ * and its bus polarity; channels 30-33 are wholly inverted per
+ * `INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:143-144`.
+ *
  * `landingRadarStatus` names match Luminary LR data-good semantics:
  *   - "not-acquired" → RANGE_GOOD/VEL_GOOD both unasserted
  *   - "acquired-valid" → both asserted (only permitted when the caller has
@@ -53,10 +58,17 @@ export interface LmDiscreteSensorState {
   readonly lgcInControl: boolean;
   readonly issOperate: boolean;
   readonly imuHealthy: boolean;
+  /** ISS/IMU CDU health — drives CHAN30 bit 12 (IMU CDU FAIL). */
+  readonly imuCduHealthy: boolean;
+  /** Accelerometer health — drives CHAN33 bit 13 (PIPA FAIL). */
+  readonly pipaHealthy: boolean;
   readonly landingRadarStatus: LandingRadarStatus;
   /** Antenna position discrete. `"transit"` = neither POS1 nor POS2. */
   readonly landingRadarAntenna: "pos1" | "pos2" | "transit";
+  /** CHAN33 bit 9 — LR RANGE LOW SCALE. */
+  readonly landingRadarRangeLowScale: boolean;
 }
+
 
 // ---------------------------------------------------------------------------
 // Encoder state
@@ -108,10 +120,16 @@ export interface DiscreteEncoderResult {
 }
 
 // ---------------------------------------------------------------------------
-// Logical-level extraction
+// Signal-present extraction
+//
+// Each function below returns "is the RAW Luminary signal named by this
+// registry row PRESENT?". Bus polarity is applied afterwards, exactly once,
+// by `encodeOwnedBits`. Pre-M3.3B this layer returned an operator-level
+// boolean ("imu healthy") for a row named after the failure signal ("IMU
+// FAIL"), which double-inverted CHAN30 bit 13.
 // ---------------------------------------------------------------------------
 
-function logicalLevelFor(
+function signalPresentFor(
   mappingId: string,
   s: LmDiscreteSensorState,
 ): boolean {
@@ -121,11 +139,15 @@ function logicalLevelFor(
     case "chan30.bit05.auto-throttle":
       return s.autoThrottleEnabled;
     case "chan30.bit09.iss-operate":
-      return s.issOperate;
+      // "IMU OPERATE WITH NO MALFUNCTION" — present only when the ISS is in
+      // OPERATE *and* the IMU is not failed.
+      return s.issOperate && s.imuHealthy;
     case "chan30.bit10.lgc-in-control":
       return s.lgcInControl;
-    case "chan30.bit13.imu-healthy":
-      return s.imuHealthy;
+    case "chan30.bit12.imu-cdu-fail":
+      return !s.imuCduHealthy;
+    case "chan30.bit13.imu-fail":
+      return !s.imuHealthy;
     case "chan33.bit05.lr-range-good":
       return s.landingRadarStatus === "acquired-valid";
     case "chan33.bit06.lr-pos1":
@@ -134,15 +156,22 @@ function logicalLevelFor(
       return s.landingRadarAntenna === "pos2";
     case "chan33.bit08.lr-velocity-good":
       return s.landingRadarStatus === "acquired-valid";
+    case "chan33.bit09.lr-range-low-scale":
+      return s.landingRadarRangeLowScale;
+    case "chan33.bit13.pipa-fail":
+      return !s.pipaHealthy;
     default:
       throw new Error(`unknown mappingId ${mappingId}`);
   }
 }
 
-function encodeOwnedBits(m: MonitorSignalMapping, logical: boolean): number {
-  const asserted = m.polarity === "active-high" ? logical : !logical;
-  return asserted ? m.mask : 0;
+/** Apply bus polarity exactly once. `signalPresent` is the raw Luminary
+ *  signal level; channels 30-33 encode "present" as bit = 0. */
+function encodeOwnedBits(m: MonitorSignalMapping, signalPresent: boolean): number {
+  const busHigh = m.polarity === "active-high" ? signalPresent : !signalPresent;
+  return busHigh ? m.mask : 0;
 }
+
 
 // ---------------------------------------------------------------------------
 // Pure encode
@@ -190,9 +219,13 @@ export function encodeDiscreteSensorTick(
     "lgcInControl",
     "issOperate",
     "imuHealthy",
+    "imuCduHealthy",
+    "pipaHealthy",
     "landingRadarStatus",
     "landingRadarAntenna",
+    "landingRadarRangeLowScale",
   ];
+
   for (const k of requiredKeys) {
     if (avionics[k] === undefined) missing.push(k);
   }
@@ -246,11 +279,12 @@ export function encodeDiscreteSensorTick(
 
   let suborder = 0;
   for (const m of mapped) {
-    const logical = logicalLevelFor(m.id, avionics);
+    const logical = signalPresentFor(m.id, avionics);
     nextLevels[m.id] = logical;
     const encoded = encodeOwnedBits(m, logical);
     const prev = encoderState.lastLogicalLevels[m.id];
     const changed = prev === undefined || prev !== logical;
+
     const shouldEmit = !encoderState.initialized || changed;
 
     if (shouldEmit) {

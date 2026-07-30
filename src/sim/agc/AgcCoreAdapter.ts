@@ -54,7 +54,59 @@ interface YaAgcExports {
   agc_out_trace_drain?: (dst: number, max: number) => number;
   agc_out_trace_reset?: () => void;
   agc_out_trace_set_enabled?: (enabled: number) => number;
+  // M3.3B: ordered batched host counter input (Pinc/Minc/Pcdu/Mcdu).
+  agc_hw_input_apply?: (records: number, count: number) => number;
+  agc_hw_input_last_error_index?: () => number;
+  agc_counter_increment?: (address: number, incType: number) => number;
 }
+
+/** Native `AgcIncType` ids — mirror the `HWIO_INC_*` defines in
+ *  `third-party/virtualagc-fork/PATCHES/lovable-hwio/hwio.c`. Values are the
+ *  yaAGC `UnprogrammedIncrement` sequence ids and MUST NOT be renumbered. */
+export const AGC_INC_TYPE_IDS = {
+  PINC: 0,
+  PCDU: 1,
+  MINC: 2,
+  MCDU: 3,
+  DINC: 4,
+  SHINC: 5,
+  SHANC: 6,
+
+} as const;
+
+export type AgcIncTypeName = keyof typeof AGC_INC_TYPE_IDS;
+
+/** One ordered host-input record. `suborder` is a stable sort key applied
+ *  inside the WASM; equal suborders retain insertion order. */
+export interface AgcHwInputRecordInput {
+  readonly counterAddress: number;
+  readonly incType: AgcIncTypeName;
+  readonly pulseCount: number;
+  readonly suborder: number;
+}
+
+/** Result codes returned by `agc_hw_input_apply` (hwio.c `HWIO_ERR_*`). */
+export const AGC_HW_INPUT_RESULT = {
+  OK: 0,
+  INVALID_ADDRESS: -1,
+  INVALID_INC_TYPE: -2,
+  NOT_PERMITTED: -3,
+  INTERNAL: -4,
+  BATCH_LIMIT: -5,
+  OVERFLOW: -6,
+} as const;
+
+export interface AgcHwInputApplyResult {
+  readonly code: number;
+  readonly ok: boolean;
+  /** Index of the offending record when the batch was rejected, else -1. */
+  readonly errorIndex: number;
+}
+
+const HW_INPUT_RECORD_BYTES = 12;
+/** `HWIO_MAX_RECORDS` in hwio.c. */
+export const AGC_HW_INPUT_MAX_RECORDS = 256;
+
 
 /** One drained HW-I/O v2 output-counter observation, decoded from the
  *  32-byte `AgcOutputTraceEntry` record. Field order/semantics mirror
@@ -228,6 +280,55 @@ export class AgcCoreAdapter {
         });
       }
       return out;
+    } finally {
+      this.exports.free(ptr);
+      this.memArray = new Uint8Array(this.mem.buffer);
+    }
+  }
+
+  /** True when the running artifact exposes the batched host-input ABI. */
+  hwInputSupported(): boolean {
+    return typeof this.exports.agc_hw_input_apply === "function";
+  }
+
+  /**
+   * Apply an ordered batch of unprogrammed counter increments through
+   * `agc_hw_input_apply`. Validation inside the WASM is ATOMIC: on any
+   * error NO record is applied. Opposing pulses are never collapsed here —
+   * the records are transcribed verbatim and applied one pulse at a time so
+   * the CDU FIFO ordering yaAGC models is preserved.
+   */
+  applyHwInput(records: readonly AgcHwInputRecordInput[]): AgcHwInputApplyResult {
+    const apply = this.exports.agc_hw_input_apply;
+    if (!apply || !this.exports.malloc || !this.exports.free) {
+      return { code: AGC_HW_INPUT_RESULT.INTERNAL, ok: false, errorIndex: -1 };
+    }
+    if (records.length === 0) {
+      return { code: AGC_HW_INPUT_RESULT.OK, ok: true, errorIndex: -1 };
+    }
+    if (records.length > AGC_HW_INPUT_MAX_RECORDS) {
+      return { code: AGC_HW_INPUT_RESULT.BATCH_LIMIT, ok: false, errorIndex: -1 };
+    }
+    const ptr = this.exports.malloc(HW_INPUT_RECORD_BYTES * records.length);
+    if (!ptr) {
+      return { code: AGC_HW_INPUT_RESULT.INTERNAL, ok: false, errorIndex: -1 };
+    }
+    try {
+      const view = new DataView(this.mem.buffer, ptr, HW_INPUT_RECORD_BYTES * records.length);
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        const o = i * HW_INPUT_RECORD_BYTES;
+        view.setUint16(o + 0, r.counterAddress, true);
+        view.setUint16(o + 2, AGC_INC_TYPE_IDS[r.incType], true);
+        view.setUint32(o + 4, r.pulseCount, true);
+        view.setUint32(o + 8, r.suborder, true);
+      }
+      const code = apply(ptr, records.length);
+      const errorIndex =
+        code === AGC_HW_INPUT_RESULT.OK
+          ? -1
+          : (this.exports.agc_hw_input_last_error_index?.() ?? -1);
+      return { code, ok: code === AGC_HW_INPUT_RESULT.OK, errorIndex };
     } finally {
       this.exports.free(ptr);
       this.memArray = new Uint8Array(this.mem.buffer);

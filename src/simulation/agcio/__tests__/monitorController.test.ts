@@ -58,9 +58,13 @@ const AVIONICS: LmDiscreteSensorState = {
   lgcInControl: true,
   issOperate: true,
   imuHealthy: true,
+  imuCduHealthy: true,
+  pipaHealthy: true,
   landingRadarStatus: "not-acquired",
   landingRadarAntenna: "transit",
+  landingRadarRangeLowScale: false,
 };
+
 
 function ctx(over: Partial<MonitorEntryContext> = {}): MonitorEntryContext {
   return {

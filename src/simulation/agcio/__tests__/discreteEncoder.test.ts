@@ -27,8 +27,11 @@ const NOT_FLIGHT_READY: LmDiscreteSensorState = {
   lgcInControl: false,
   issOperate: false,
   imuHealthy: false,
+  imuCduHealthy: false,
+  pipaHealthy: false,
   landingRadarStatus: "not-acquired",
   landingRadarAntenna: "transit",
+  landingRadarRangeLowScale: false,
 };
 
 const FLIGHT_READY: LmDiscreteSensorState = {
@@ -37,9 +40,13 @@ const FLIGHT_READY: LmDiscreteSensorState = {
   lgcInControl: true,
   issOperate: true,
   imuHealthy: true,
+  imuCduHealthy: true,
+  pipaHealthy: true,
   landingRadarStatus: "acquired-valid",
   landingRadarAntenna: "pos1",
+  landingRadarRangeLowScale: false,
 };
+
 
 function onlyMaskUpdates(actions: readonly AgcSensorAction[]): readonly ChannelMaskUpdateAction[] {
   return actions.map((a) => {
@@ -168,19 +175,22 @@ describe("encodeDiscreteSensorTick — discrete-observer-v0", () => {
     expect(armedReady.value).toBe(0);
   });
 
-  it("active-high CHAN33 LR bits encode true→bit=1, false→bit=0", () => {
+  // M3.3B correction: INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:143-144 says
+  // ALL bits in channels 30-33 are inverted, so CHAN33 LR bits are
+  // active-low exactly like CHAN30.
+  it("active-low CHAN33 LR bits encode signal-present→bit=0, absent→bit=1", () => {
     const state = createDiscreteEncoderState("discrete-observer-v0");
     const notReady = encodeDiscreteSensorTick(state, NOT_FLIGHT_READY, 0);
     const rangeGood = onlyMaskUpdates(notReady.actions).find(
       (a) => a.mappingId === "chan33.bit05.lr-range-good",
     )!;
-    expect(rangeGood.value).toBe(0);
+    expect(rangeGood.value).toBe(rangeGood.mask);
 
     const ready = encodeDiscreteSensorTick(state, FLIGHT_READY, 0);
     const rangeGoodReady = onlyMaskUpdates(ready.actions).find(
       (a) => a.mappingId === "chan33.bit05.lr-range-good",
     )!;
-    expect(rangeGoodReady.value).toBe(rangeGoodReady.mask);
+    expect(rangeGoodReady.value).toBe(0);
   });
 
   it("does not encode LR as acquired when radar status is not-acquired", () => {
@@ -191,7 +201,8 @@ describe("encodeDiscreteSensorTick — discrete-observer-v0", () => {
       "chan33.bit08.lr-velocity-good",
     ]) {
       const a = onlyMaskUpdates(r.actions).find((x) => x.mappingId === id)!;
-      expect(a.value).toBe(0);
+      // active-low: DATA GOOD absent means the bus bit stays HIGH.
+      expect(a.value).toBe(a.mask);
     }
   });
 
@@ -205,8 +216,29 @@ describe("encodeDiscreteSensorTick — discrete-observer-v0", () => {
     const rg = onlyMaskUpdates(r.actions).find(
       (a) => a.mappingId === "chan33.bit05.lr-range-good",
     )!;
-    expect(rg.value).toBe(0);
+    expect(rg.value).toBe(rg.mask);
   });
+
+  it("IMU FAIL / PIPA FAIL rows are not double-inverted", () => {
+    const state = createDiscreteEncoderState("discrete-observer-v0");
+    // Healthy IMU/PIPA => the FAIL signal is ABSENT => active-low bus bit HIGH.
+    const healthy = encodeDiscreteSensorTick(state, FLIGHT_READY, 0);
+    for (const id of ["chan30.bit13.imu-fail", "chan33.bit13.pipa-fail"]) {
+      const a = onlyMaskUpdates(healthy.actions).find((x) => x.mappingId === id)!;
+      expect(a.value).toBe(a.mask);
+    }
+    // Failed IMU/PIPA => signal PRESENT => bus bit LOW.
+    const failed = encodeDiscreteSensorTick(
+      state,
+      { ...FLIGHT_READY, imuHealthy: false, pipaHealthy: false },
+      0,
+    );
+    for (const id of ["chan30.bit13.imu-fail", "chan33.bit13.pipa-fail"]) {
+      const a = onlyMaskUpdates(failed.actions).find((x) => x.mappingId === id)!;
+      expect(a.value).toBe(0);
+    }
+  });
+
 
   it("unchanged state emits zero actions on subsequent ticks", () => {
     const s0 = createDiscreteEncoderState("discrete-observer-v0");

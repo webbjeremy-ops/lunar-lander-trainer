@@ -18,9 +18,13 @@ const DEFAULT_AVIONICS: LmDiscreteSensorState = {
   lgcInControl: false,
   issOperate: false,
   imuHealthy: false,
+  imuCduHealthy: false,
+  pipaHealthy: false,
   landingRadarStatus: "not-acquired",
   landingRadarAntenna: "transit",
+  landingRadarRangeLowScale: false,
 };
+
 
 const oct = (v: number | null | undefined, digits = 5): string =>
   v === null || v === undefined ? "—" : `0${(v >>> 0).toString(8).padStart(digits, "0")}`;
@@ -136,7 +140,16 @@ export function MonitorPanel() {
         Operator-declared avionics discretes
       </h3>
       <div className="mt-2 flex flex-wrap gap-2" data-testid="mon-avionics">
-        {(["engineArmed", "autoThrottleEnabled", "lgcInControl", "issOperate", "imuHealthy"] as const).map((k) => (
+        {([
+          "engineArmed",
+          "autoThrottleEnabled",
+          "lgcInControl",
+          "issOperate",
+          "imuHealthy",
+          "imuCduHealthy",
+          "pipaHealthy",
+          "landingRadarRangeLowScale",
+        ] as const).map((k) => (
           <button
             key={k}
             data-testid={`av-${k}`}
