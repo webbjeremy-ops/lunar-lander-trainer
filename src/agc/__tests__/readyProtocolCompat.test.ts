@@ -85,7 +85,7 @@ describe("M3.3A2-P4 readiness-protocol compatibility", () => {
   it("AgcExtensionReadyMessage carries the required additive shape", () => {
     const msg: AgcExtensionReadyMessage = {
       type: "agc:extension-ready",
-      hwioVersion: 3,
+      hwioVersion: 4,
       extVersion: "ddc65e7be+apollo-browser-hwio-v3",
       extensionTag: "apollo-browser-hwio-v3",
       wasmSha256: "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3",
@@ -102,7 +102,7 @@ describe("M3.3A2-P4 readiness-protocol compatibility", () => {
     // Purely a compile-time proof; if the union drifts, tsgo fails.
     const asEvent: AgcEvent = {
       type: "agc:extension-ready",
-      hwioVersion: 3,
+      hwioVersion: 4,
       extVersion: "x",
       extensionTag: "y",
       wasmSha256: "z",
