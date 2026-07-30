@@ -140,7 +140,16 @@ export function MonitorPanel() {
         Operator-declared avionics discretes
       </h3>
       <div className="mt-2 flex flex-wrap gap-2" data-testid="mon-avionics">
-        {(["engineArmed", "autoThrottleEnabled", "lgcInControl", "issOperate", "imuHealthy"] as const).map((k) => (
+        {([
+          "engineArmed",
+          "autoThrottleEnabled",
+          "lgcInControl",
+          "issOperate",
+          "imuHealthy",
+          "imuCduHealthy",
+          "pipaHealthy",
+          "landingRadarRangeLowScale",
+        ] as const).map((k) => (
           <button
             key={k}
             data-testid={`av-${k}`}
