@@ -27,8 +27,11 @@ const NOT_FLIGHT_READY: LmDiscreteSensorState = {
   lgcInControl: false,
   issOperate: false,
   imuHealthy: false,
+  imuCduHealthy: false,
+  pipaHealthy: false,
   landingRadarStatus: "not-acquired",
   landingRadarAntenna: "transit",
+  landingRadarRangeLowScale: false,
 };
 
 const FLIGHT_READY: LmDiscreteSensorState = {
@@ -37,9 +40,13 @@ const FLIGHT_READY: LmDiscreteSensorState = {
   lgcInControl: true,
   issOperate: true,
   imuHealthy: true,
+  imuCduHealthy: true,
+  pipaHealthy: true,
   landingRadarStatus: "acquired-valid",
   landingRadarAntenna: "pos1",
+  landingRadarRangeLowScale: false,
 };
+
 
 function onlyMaskUpdates(actions: readonly AgcSensorAction[]): readonly ChannelMaskUpdateAction[] {
   return actions.map((a) => {
