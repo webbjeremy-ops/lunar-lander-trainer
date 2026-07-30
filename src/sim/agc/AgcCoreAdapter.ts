@@ -259,6 +259,67 @@ export class AgcCoreAdapter {
     return this.exports.agc_hwio_version?.() ?? 0;
   }
 
+  // ---- M3.3C Phase 4B: HW-I/O v4 NON-FLIGHT SCENARIO PAD LOAD ----------
+  //
+  // Deliberately NOT a generic memory writer. The only caller is the
+  // Worker's `applyFixedAttitudeImuBootstrapV1` transaction, which supplies
+  // the validated source-derived manifest. Never exposed to UI, DSKY,
+  // monitor commands or a console API.
+
+  padLoadSupported(): boolean {
+    return typeof this.exports.agc_erasable_pad_load_apply === "function";
+  }
+
+  /** Bitfield: 1 open, 2 consumed, 4 sealed, 8 cpu-ran (hwio.c). */
+  padLoadStatus(): number {
+    return this.exports.agc_pad_load_status?.() ?? 0;
+  }
+
+  padLoadMaxRecords(): number {
+    return this.exports.agc_pad_load_max_records?.() ?? 0;
+  }
+
+  padLoadRecordSize(): number {
+    return this.exports.agc_pad_load_record_size?.() ?? 0;
+  }
+
+  padLoadLastErrorIndex(): number {
+    return this.exports.agc_pad_load_last_error_index?.() ?? -1;
+  }
+
+  padLoadAppliedCount(): number {
+    return this.exports.agc_pad_load_applied_count?.() ?? 0;
+  }
+
+  openPadLoadWindow(): number {
+    return this.exports.agc_pad_load_window_open?.() ?? -1;
+  }
+
+  closePadLoadWindow(): number {
+    return this.exports.agc_pad_load_window_close?.() ?? -1;
+  }
+
+  /** Apply a pre-encoded `AgcPadLoadRecord[]` byte image atomically. */
+  applyPadLoad(encoded: Uint8Array, count: number): number {
+    const apply = this.exports.agc_erasable_pad_load_apply;
+    if (!apply || !this.exports.malloc || !this.exports.free) return -1;
+    const ptr = this.exports.malloc(encoded.byteLength);
+    if (!ptr) return -1;
+    try {
+      new Uint8Array(this.mem.buffer, ptr, encoded.byteLength).set(encoded);
+      return apply(ptr, count);
+    } finally {
+      this.exports.free(ptr);
+    }
+  }
+
+  /** Read-back path for bootstrap verification. */
+  readErasableWord(address: number): number {
+    return this.exports.agc_erasable_read_word?.(address) ?? -1;
+  }
+
+
+
   traceEnabled(): boolean {
     return (this.exports.agc_out_trace_enabled?.() ?? 0) !== 0;
   }
