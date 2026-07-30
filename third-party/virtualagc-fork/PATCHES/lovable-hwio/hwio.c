@@ -531,11 +531,165 @@ agc_landing_radar_update_apply(const AgcLandingRadarUpdate *update) {
   return HWIO_OK;
 }
 
+/* ============ v4: gated NON-FLIGHT scenario pad load (M3.3C Phase 4B) =========
+ *
+ * THIS IS NOT AN UPLINK AND NOT A HARDWARE PATH.
+ *
+ * It installs *scenario initialization state* -- mission operations that are
+ * declared to have completed before the simulated descent begins (an IMU fine
+ * alignment). The historically authentic in-flight mechanism for a contiguous
+ * REFSMMAT update is P27 / V71, entered from P00 by ground uplink through
+ * INLINK + UPRUPT with triple-character redundancy, uplink-lockout handling
+ * and V33 verification. None of that is modelled or imitated here; it is
+ * deferred to a separate ground-communications milestone. Calling this an
+ * uplink would be false. It is a pad load performed on a *stopped* machine.
+ *
+ * Safety shape (all mandatory):
+ *   - explicitly opened window, one-shot, permanently closable
+ *   - full-batch validation BEFORE the first write (atomic)
+ *   - compare-before-write (expected_before must match every word)
+ *   - bounded count, bounded address range, duplicate-address rejection
+ *   - invalidated by ANY cpu_step while the window is open
+ *   - refuses while the output trace is armed or its ring is non-empty
+ *   - disarmed by cpu_reset
+ *   - generates no trace entry, no counter event, no interrupt
+ *   - completely dormant (zero state mutation) until opened
+ */
+
+#define HWIO_ERR_PAD_WINDOW_CLOSED   -20
+#define HWIO_ERR_PAD_ALREADY_OPEN    -21
+#define HWIO_ERR_PAD_CONSUMED        -22
+#define HWIO_ERR_PAD_CPU_RAN         -23
+#define HWIO_ERR_PAD_TRACE_ACTIVE    -24
+#define HWIO_ERR_PAD_COUNT           -25
+#define HWIO_ERR_PAD_ADDRESS         -26
+#define HWIO_ERR_PAD_DUPLICATE       -27
+#define HWIO_ERR_PAD_WORD            -28
+#define HWIO_ERR_PAD_MISMATCH        -29
+#define HWIO_ERR_PAD_SEALED          -30
+
+#define HWIO_PAD_MAX_RECORDS 64
+/* Erasable is 8 banks x 256 words. Central (0-017) and editing (020-023)
+ * registers are excluded: scenario state never legitimately lands there. */
+#define HWIO_PAD_MIN_ADDRESS 024
+#define HWIO_PAD_MAX_ADDRESS 2047
+
+typedef struct {
+  uint16_t address;          /* flat erasable address 024..2047 */
+  uint16_t expected_before;  /* must equal the current word */
+  uint16_t value;            /* replacement word, 0..077777 */
+} AgcPadLoadRecord;
+
+_Static_assert(sizeof(AgcPadLoadRecord) == 6, "pad-load record size stable");
+
+static uint32_t PadWindowOpen = 0;     /* window currently open */
+static uint32_t PadConsumed = 0;       /* an apply succeeded in this epoch */
+static uint32_t PadSealed = 0;         /* window closed -> no reopen this epoch */
+static uint32_t PadCpuRan = 0;         /* cpu_step observed while open */
+static uint32_t PadAppliedCount = 0;   /* words written by the last apply */
+static int32_t  PadLastErrorIndex = -1;
+
+export uint32_t
+agc_pad_load_record_size(void) {
+  return (uint32_t)sizeof(AgcPadLoadRecord);
+}
+
+export uint32_t
+agc_pad_load_max_records(void) {
+  return (uint32_t)HWIO_PAD_MAX_RECORDS;
+}
+
+/* Bitfield: 1 open, 2 consumed, 4 sealed, 8 cpu-ran-while-open. */
+export uint32_t
+agc_pad_load_status(void) {
+  return (PadWindowOpen ? 1u : 0u) | (PadConsumed ? 2u : 0u)
+       | (PadSealed ? 4u : 0u) | (PadCpuRan ? 8u : 0u);
+}
+
+export uint32_t
+agc_pad_load_applied_count(void) {
+  return PadAppliedCount;
+}
+
+export int32_t
+agc_pad_load_last_error_index(void) {
+  return PadLastErrorIndex;
+}
+
+export int32_t
+agc_pad_load_window_open(void) {
+  if (PadWindowOpen) return HWIO_ERR_PAD_ALREADY_OPEN;
+  if (PadSealed) return HWIO_ERR_PAD_SEALED;
+  if (PadConsumed) return HWIO_ERR_PAD_CONSUMED;
+  if (TraceEnabled || TraceCount != 0) return HWIO_ERR_PAD_TRACE_ACTIVE;
+  PadWindowOpen = 1;
+  PadCpuRan = 0;
+  PadLastErrorIndex = -1;
+  return HWIO_OK;
+}
+
+export int32_t
+agc_pad_load_window_close(void) {
+  PadWindowOpen = 0;
+  PadSealed = 1;
+  return HWIO_OK;
+}
+
+export int32_t
+agc_erasable_pad_load_apply(const AgcPadLoadRecord *records, uint32_t count) {
+  PadLastErrorIndex = -1;
+  if (!PadWindowOpen) return HWIO_ERR_PAD_WINDOW_CLOSED;
+  if (PadConsumed) return HWIO_ERR_PAD_CONSUMED;
+  if (PadCpuRan) return HWIO_ERR_PAD_CPU_RAN;
+  if (TraceEnabled || TraceCount != 0) return HWIO_ERR_PAD_TRACE_ACTIVE;
+  if (!records) return HWIO_ERR_INTERNAL;
+  if (count == 0 || count > HWIO_PAD_MAX_RECORDS) return HWIO_ERR_PAD_COUNT;
+
+  /* --- validate the COMPLETE batch before touching a single word --- */
+  for (uint32_t i = 0; i < count; i++) {
+    AgcPadLoadRecord r = records[i];
+    if (r.address < HWIO_PAD_MIN_ADDRESS || r.address > HWIO_PAD_MAX_ADDRESS) {
+      PadLastErrorIndex = (int32_t)i; return HWIO_ERR_PAD_ADDRESS;
+    }
+    if (r.value > 077777 || r.expected_before > 077777) {
+      PadLastErrorIndex = (int32_t)i; return HWIO_ERR_PAD_WORD;
+    }
+    for (uint32_t j = 0; j < i; j++) {
+      if (records[j].address == r.address) {
+        PadLastErrorIndex = (int32_t)i; return HWIO_ERR_PAD_DUPLICATE;
+      }
+    }
+    uint16_t current =
+      (uint16_t)(State.Erasable[r.address >> 8][r.address & 0377] & 077777);
+    if (current != r.expected_before) {
+      PadLastErrorIndex = (int32_t)i; return HWIO_ERR_PAD_MISMATCH;
+    }
+  }
+
+  /* --- commit, in caller order --- */
+  for (uint32_t i = 0; i < count; i++) {
+    AgcPadLoadRecord r = records[i];
+    State.Erasable[r.address >> 8][r.address & 0377] = r.value;
+  }
+  PadConsumed = 1;
+  PadAppliedCount = count;
+  return HWIO_OK;
+}
+
+/* Read-back helper. Read-only; valid regardless of window state. */
+export int32_t
+agc_erasable_read_word(uint16_t address) {
+  if (address > HWIO_PAD_MAX_ADDRESS) return HWIO_ERR_PAD_ADDRESS;
+  return (int32_t)(State.Erasable[address >> 8][address & 0377] & 077777);
+}
+
 /* --- Hook invoked by wasm.c per cpu_step iteration --- */
-/* Dormancy contract (M3.3A2-P3): with TraceEnabled == 0, this hook must be a
- * true nonmutating no-op. No cycle counter increment, no sampler baseline
+/* Dormancy contract (M3.3A2-P3, extended in v4): with TraceEnabled == 0 and
+ * the pad-load window closed (both the defaults), this hook must be a true
+ * nonmutating no-op. No cycle counter increment, no sampler baseline
  * initialization, no ring writes. Verified by dormancy audit test. */
 void hwio_after_agc_engine(void) {
+  if (PadWindowOpen) PadCpuRan = 1;
   if (!TraceEnabled) return;
   CycleCounter++;
   trace_sample_all();
@@ -544,9 +698,16 @@ void hwio_after_agc_engine(void) {
 /* --- Reset trace on cpu_reset (invoked from wasm.c). --- */
 /* cpu_reset always disarms the trace. The monitor adapter re-arms it
  * explicitly after each reset. This prevents any accidental carry-over of
- * arm state across a canonical startup RSET. */
+ * arm state across a canonical startup RSET. A reset also begins a new AGC
+ * epoch, which is the ONLY way to make the machine pad-load eligible again. */
 void hwio_on_cpu_reset(void) {
   agc_out_trace_reset();
   CycleCounter = 0;
   TraceEnabled = 0;
+  PadWindowOpen = 0;
+  PadConsumed = 0;
+  PadSealed = 0;
+  PadCpuRan = 0;
+  PadAppliedCount = 0;
+  PadLastErrorIndex = -1;
 }
