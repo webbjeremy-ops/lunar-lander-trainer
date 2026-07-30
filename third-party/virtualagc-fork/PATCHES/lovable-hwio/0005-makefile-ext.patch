@@ -32,7 +32,7 @@
 +	  --export=agc_in_isr \
 +	  --export=agc_interrupt_in_service \
 +	  --export=agc_landing_radar_update_size \
-+	  --export=agc_landing_radar_update_apply
++	  --export=agc_landing_radar_update_apply \
 +	  --export=agc_pad_load_record_size \
 +	  --export=agc_pad_load_max_records \
 +	  --export=agc_pad_load_status \
