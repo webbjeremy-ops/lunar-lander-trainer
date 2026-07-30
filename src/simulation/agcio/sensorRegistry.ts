@@ -260,10 +260,12 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     channel: -1,
     mask: 0,
     polarity: "active-high",
-    physicalMeaning: "IMU CDU angles X/Y/Z via Pinc/Minc",
-    sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
-    hardwarePath: "Pinc/Minc counter pulses — CDU drain budget unproven",
-    validStates: "unresolved",
+    physicalMeaning: "IMU CDU angles X/Y/Z via Pinc/Minc (CHANGING attitude only)",
+    sourceCitation:
+      "docs/M3_3C_PHASE4A_COORDINATE_CHAIN.md; docs/M3_3_IO_MAP.md#row-4",
+    hardwarePath: "Pinc/Minc counter pulses — CDU drain budget still unproven",
+    validStates:
+      "M3.3C Phase 4A narrowed this: the CDU counter WORD representation is now proven (15-bit two's complement, 180 deg full scale, 180/2^14 deg per count — POWERED_FLIGHT_SUBROUTINES.agc:77 CDUTRIGS -> INTERPRETER.agc CDULOGIC; ERASABLE_ASSIGNMENTS.agc:1927-1929) and SERVICER.agc:570-581 proves the counters are READ, never drained, at PIPA time — so a FIXED attitude needs no CDU pulses at all and is covered by LUMINARY099_FIXED_ATTITUDE_IMU_V1. What remains unresolved is the DYNAMIC drive path: pulse rate limits and the CDU drain budget for a CHANGING attitude.",
     requiredForProfiles: ["descent-monitor-v1"],
   },
   {
