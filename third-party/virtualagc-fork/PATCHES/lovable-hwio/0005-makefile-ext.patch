@@ -1,5 +1,5 @@
---- /tmp/va-orig/yaAGC/Makefile	2021-05-21 07:45:24.000000000 +0000
-+++ /tmp/virtualagc-ddc65e7bed41f1301921b934fcbaaee93db99dda/yaAGC/Makefile	2026-07-29 15:37:43.872874181 +0000
+--- Makefile.orig	2026-07-30 04:37:05.882361414 +0000
++++ Makefile	2026-07-30 04:37:05.938031500 +0000
 @@ -145,7 +145,7 @@
  LDFLAGS2 = \
  	--no-entry \
@@ -9,11 +9,10 @@
  	-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi \
  	-lc \
  	--export=malloc \
-@@ -217,6 +217,32 @@
+@@ -217,6 +217,29 @@
  	wasm-opt $@ -Oz -o $@
  	wasm-strip $@
  
-+
 +yaAGC-ext.wasm: wasm.o hwio.o agc_engine.o agc_engine_init.o agc_utilities.o ringbuffer_api.o ringbuffer.o version.o
 +	${WASI_SDK_PATH}/bin/wasm-ld ${LDFLAGS2} -o $@ $^ \
 +	  --export=agc_counter_increment \
