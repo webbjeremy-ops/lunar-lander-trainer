@@ -120,10 +120,16 @@ export interface DiscreteEncoderResult {
 }
 
 // ---------------------------------------------------------------------------
-// Logical-level extraction
+// Signal-present extraction
+//
+// Each function below returns "is the RAW Luminary signal named by this
+// registry row PRESENT?". Bus polarity is applied afterwards, exactly once,
+// by `encodeOwnedBits`. Pre-M3.3B this layer returned an operator-level
+// boolean ("imu healthy") for a row named after the failure signal ("IMU
+// FAIL"), which double-inverted CHAN30 bit 13.
 // ---------------------------------------------------------------------------
 
-function logicalLevelFor(
+function signalPresentFor(
   mappingId: string,
   s: LmDiscreteSensorState,
 ): boolean {
@@ -133,11 +139,15 @@ function logicalLevelFor(
     case "chan30.bit05.auto-throttle":
       return s.autoThrottleEnabled;
     case "chan30.bit09.iss-operate":
-      return s.issOperate;
+      // "IMU OPERATE WITH NO MALFUNCTION" — present only when the ISS is in
+      // OPERATE *and* the IMU is not failed.
+      return s.issOperate && s.imuHealthy;
     case "chan30.bit10.lgc-in-control":
       return s.lgcInControl;
-    case "chan30.bit13.imu-healthy":
-      return s.imuHealthy;
+    case "chan30.bit12.imu-cdu-fail":
+      return !s.imuCduHealthy;
+    case "chan30.bit13.imu-fail":
+      return !s.imuHealthy;
     case "chan33.bit05.lr-range-good":
       return s.landingRadarStatus === "acquired-valid";
     case "chan33.bit06.lr-pos1":
@@ -146,15 +156,22 @@ function logicalLevelFor(
       return s.landingRadarAntenna === "pos2";
     case "chan33.bit08.lr-velocity-good":
       return s.landingRadarStatus === "acquired-valid";
+    case "chan33.bit09.lr-range-low-scale":
+      return s.landingRadarRangeLowScale;
+    case "chan33.bit13.pipa-fail":
+      return !s.pipaHealthy;
     default:
       throw new Error(`unknown mappingId ${mappingId}`);
   }
 }
 
-function encodeOwnedBits(m: MonitorSignalMapping, logical: boolean): number {
-  const asserted = m.polarity === "active-high" ? logical : !logical;
-  return asserted ? m.mask : 0;
+/** Apply bus polarity exactly once. `signalPresent` is the raw Luminary
+ *  signal level; channels 30-33 encode "present" as bit = 0. */
+function encodeOwnedBits(m: MonitorSignalMapping, signalPresent: boolean): number {
+  const busHigh = m.polarity === "active-high" ? signalPresent : !signalPresent;
+  return busHigh ? m.mask : 0;
 }
+
 
 // ---------------------------------------------------------------------------
 // Pure encode
