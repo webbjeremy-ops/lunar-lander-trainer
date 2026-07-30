@@ -102,31 +102,42 @@ const INHINT = 0o00004;
 const RELINT = 0o00003;
 /** TCF <address12> — opcode 1. Used as a one-word "advance"/self-loop. */
 const TCF = (address: number) => 0o10000 | (address & 0o7777);
+/** RESUME == `INDEX BRUPT` == 050017: the canonical ISR exit. */
+const RESUME = 0o50017;
 
 /**
- * Deterministic synthetic program:
+ * Deterministic synthetic program. Interrupt vectors live at 04000 + 4*i for
+ * i in 1..10, so the main program is placed clear of them at 04100.
  *
- *   04000  INHINT              interrupts inhibited from here
- *   04001  TCF 04002           \
- *   ...                         >  NOP_COUNT filler instructions
- *   04020  TCF 04021           /
- *   04021  RELINT              interrupts allowed again
- *   04022  TCF 04022           idle self-loop (main program)
- *   04044  TCF 04044           RADARUPT lead-in: park inside the ISR
+ *   04000        TCF 04100        start (cpu_reset sets Z = 04000)
+ *   04004..04050 RESUME           every vector except RADARUPT returns at once
+ *   04044        TCF 04044        RADARUPT lead-in: park inside the ISR
+ *   04100        INHINT           interrupts inhibited from here
+ *   04101..      TCF chain        NOP_COUNT filler instructions
+ *   ...          RELINT           interrupts allowed again
+ *   ...          TCF self         idle self-loop (main program)
+ *
+ * Note the emulator natively raises DOWNRUPT/T3RUPT/T4RUPT from its own
+ * scaler while this runs; the RESUME vectors let those come and go without
+ * blocking the vector under test.
  */
 const NOP_COUNT = 16;
-const RELINT_ADDRESS = 0o4001 + NOP_COUNT;
+const PROGRAM_BASE = 0o4100;
+const RELINT_ADDRESS = PROGRAM_BASE + 1 + NOP_COUNT;
 const MAIN_IDLE = RELINT_ADDRESS + 1;
 
 function inhibitProgram(): Uint8Array {
   const p = new Map<number, number>();
-  p.set(0o4000, INHINT);
+  p.set(0o4000, TCF(PROGRAM_BASE));
+  for (let i = 1; i <= 10; i++) {
+    p.set(0o4000 + 4 * i, i === RADARUPT_INDEX ? TCF(0o4044) : RESUME);
+  }
+  p.set(PROGRAM_BASE, INHINT);
   for (let i = 0; i < NOP_COUNT; i++) {
-    p.set(0o4001 + i, TCF(0o4002 + i));
+    p.set(PROGRAM_BASE + 1 + i, TCF(PROGRAM_BASE + 2 + i));
   }
   p.set(RELINT_ADDRESS, RELINT);
   p.set(MAIN_IDLE, TCF(MAIN_IDLE));
-  p.set(0o4044, TCF(0o4044)); // RADARUPT vector — self-loop so InIsr persists
   return synthRope(p);
 }
 
@@ -267,22 +278,26 @@ describe("HW-I/O v3 — native inhibit and dispatch are untouched", () => {
     }
 
     // Run past RELINT. The emulator — not us — decides the exact MCT.
+    // Other vectors (natively-raised DOWNRUPT etc.) RESUME immediately; the
+    // RADARUPT lead-in parks, so `in_isr` latches high once index 9 is taken.
     let serviced = false;
-    for (let i = 0; i < 200 && !serviced; i++) {
+    for (let i = 0; i < 5_000 && !serviced; i++) {
       ex.cpu_step(1);
-      if (ex.agc_in_isr() === 1) serviced = true;
+      if (ex.agc_in_isr() === 1 && ex.agc_interrupt_in_service() === RADARUPT_INDEX) {
+        serviced = true;
+      }
     }
     expect(serviced).toBe(true);
-    expect(ex.agc_interrupt_inhibited()).toBe(0 as number | 1);
-    // Vector actually taken is index 9 (04044), and the latch self-cleared.
-    expect(ex.agc_interrupt_in_service()).toBe(RADARUPT_INDEX);
+    expect(ex.agc_interrupt_inhibited()).toBe(0);
     expect(ex.agc_interrupt_request_pending(RADARUPT_INDEX)).toBe(0);
   });
 
-  it("never enters the handler when no request was made", () => {
-    ex.cpu_step(500);
-    expect(ex.agc_in_isr()).toBe(0);
-    expect(ex.agc_interrupt_in_service()).toBe(0);
+  it("never reaches the RADARUPT vector when no request was made", () => {
+    for (let i = 0; i < 5_000; i++) {
+      ex.cpu_step(1);
+      expect(ex.agc_interrupt_in_service()).not.toBe(RADARUPT_INDEX);
+    }
+    expect(ex.agc_interrupt_request_pending(RADARUPT_INDEX)).toBe(0);
   });
 });
 
