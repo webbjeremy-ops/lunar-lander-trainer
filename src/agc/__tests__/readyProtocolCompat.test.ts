@@ -86,8 +86,8 @@ describe("M3.3A2-P4 readiness-protocol compatibility", () => {
     const msg: AgcExtensionReadyMessage = {
       type: "agc:extension-ready",
       hwioVersion: 4,
-      extVersion: "ddc65e7be+apollo-browser-hwio-v3",
-      extensionTag: "apollo-browser-hwio-v3",
+      extVersion: "ddc65e7be+apollo-browser-hwio-v4",
+      extensionTag: "apollo-browser-hwio-v4",
       wasmSha256: "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3",
       traceEnabled: false,
       traceDropped: 0,
