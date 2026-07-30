@@ -284,6 +284,55 @@ export class AgcCoreAdapter {
     }
   }
 
+  /** True when the running artifact exposes the batched host-input ABI. */
+  hwInputSupported(): boolean {
+    return typeof this.exports.agc_hw_input_apply === "function";
+  }
+
+  /**
+   * Apply an ordered batch of unprogrammed counter increments through
+   * `agc_hw_input_apply`. Validation inside the WASM is ATOMIC: on any
+   * error NO record is applied. Opposing pulses are never collapsed here —
+   * the records are transcribed verbatim and applied one pulse at a time so
+   * the CDU FIFO ordering yaAGC models is preserved.
+   */
+  applyHwInput(records: readonly AgcHwInputRecordInput[]): AgcHwInputApplyResult {
+    const apply = this.exports.agc_hw_input_apply;
+    if (!apply || !this.exports.malloc || !this.exports.free) {
+      return { code: AGC_HW_INPUT_RESULT.INTERNAL, ok: false, errorIndex: -1 };
+    }
+    if (records.length === 0) {
+      return { code: AGC_HW_INPUT_RESULT.OK, ok: true, errorIndex: -1 };
+    }
+    if (records.length > AGC_HW_INPUT_MAX_RECORDS) {
+      return { code: AGC_HW_INPUT_RESULT.BATCH_LIMIT, ok: false, errorIndex: -1 };
+    }
+    const ptr = this.exports.malloc(HW_INPUT_RECORD_BYTES * records.length);
+    if (!ptr) {
+      return { code: AGC_HW_INPUT_RESULT.INTERNAL, ok: false, errorIndex: -1 };
+    }
+    try {
+      const view = new DataView(this.mem.buffer, ptr, HW_INPUT_RECORD_BYTES * records.length);
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
+        const o = i * HW_INPUT_RECORD_BYTES;
+        view.setUint16(o + 0, r.counterAddress, true);
+        view.setUint16(o + 2, AGC_INC_TYPE_IDS[r.incType], true);
+        view.setUint32(o + 4, r.pulseCount, true);
+        view.setUint32(o + 8, r.suborder, true);
+      }
+      const code = apply(ptr, records.length);
+      const errorIndex =
+        code === AGC_HW_INPUT_RESULT.OK
+          ? -1
+          : (this.exports.agc_hw_input_last_error_index?.() ?? -1);
+      return { code, ok: code === AGC_HW_INPUT_RESULT.OK, errorIndex };
+    } finally {
+      this.exports.free(ptr);
+      this.memArray = new Uint8Array(this.mem.buffer);
+    }
+  }
+
   /** Fetch a rope image and load it as fixed (rope) memory. */
   async loadRom(url: string): Promise<{ url: string; bytes: number; sha256: string }> {
     const response = await fetch(url);
