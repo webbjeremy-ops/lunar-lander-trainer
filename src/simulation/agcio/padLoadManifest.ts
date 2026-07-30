@@ -71,6 +71,9 @@ export interface AgcScenarioPadLoadManifestV1 {
   readonly runtimeSha256: string;
   /** Major mode the AGC must be in for the bootstrap to be legitimate. P00. */
   readonly requiredMajorMode: number;
+  /** Scenarios this bootstrap is declared for. The fixed-attitude chain is
+   *  only valid for the vertical-descent geometry (docs §8). */
+  readonly allowedScenarioIds: readonly string[];
   readonly records: readonly SourceMappedPadLoadRecord[];
   readonly citations: readonly SourceCitation[];
   readonly notes: readonly string[];
@@ -138,6 +141,7 @@ export const LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1: AgcScenarioPadLoadManifestV
   ropeSha256: REQUIRED_ROPE_SHA256,
   runtimeSha256: CANONICAL_AGC_RUNTIME.sha256,
   requiredMajorMode: 0,
+  allowedScenarioIds: ["apollo11-vertical-descent-v1"],
   records: buildRecords(),
   citations: BOOT.citations,
   notes: [

@@ -1472,6 +1472,14 @@ async function handle(
  * listener never blocks on physics. Runtime state mutations only happen
  * here (enqueue) or inside `runMissionTickPipeline` (apply + advance).
  */
+/** PROG register -> integer major mode. Blank digits read as P00, which is
+ *  what a freshly reset, pre-scenario AGC displays. */
+function decodedProgramNumber(dsky: DecodedDsky): number {
+  const text = dsky.program.digits.map((d) => (d.blank ? "0" : String(d.value ?? 0))).join("");
+  const n = Number.parseInt(text, 10);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function handleSimulationCommand(
   cmd: SimulationCommand,
   requestId?: string,
@@ -1593,7 +1601,7 @@ function handleSimulationCommand(
         agcEpoch: state.sessionEpoch,
         simulationEpoch: epoch,
         installedInAgcEpoch: state.imuBootstrapAgcEpoch,
-        majorMode: state.decodedDsky.majorMode ?? 0,
+        majorMode: decodedProgramNumber(state.decodedDsky),
         scenarioId: runtimeState.scenarioId ?? "",
         allowedScenarioIds: manifest.allowedScenarioIds,
       }, manifest);
