@@ -26,7 +26,14 @@
 +	  --export=agc_out_trace_set_enabled \
 +	  --export=agc_out_trace_enabled \
 +	  --export=agc_ext_version \
-+	  --export=agc_hwio_version
++	  --export=agc_hwio_version \
++	  --export=agc_request_hardware_interrupt \
++	  --export=agc_interrupt_request_pending \
++	  --export=agc_interrupt_inhibited \
++	  --export=agc_in_isr \
++	  --export=agc_interrupt_in_service \
++	  --export=agc_landing_radar_update_size \
++	  --export=agc_landing_radar_update_apply
 +	wasm-opt $@ -Oz -o $@
 +	wasm-strip $@
 +
