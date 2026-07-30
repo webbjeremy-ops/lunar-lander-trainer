@@ -41,6 +41,11 @@ export type LandingRadarStatus =
  * defaulted to a flight-ready condition — the encoder rejects an
  * incomplete state (see `encodeDiscreteSensorTick`).
  *
+ * Fields are expressed in OPERATOR terms (healthy / enabled / acquired).
+ * The registry row decides how each maps onto the raw Luminary signal name
+ * and its bus polarity; channels 30-33 are wholly inverted per
+ * `INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:143-144`.
+ *
  * `landingRadarStatus` names match Luminary LR data-good semantics:
  *   - "not-acquired" → RANGE_GOOD/VEL_GOOD both unasserted
  *   - "acquired-valid" → both asserted (only permitted when the caller has
@@ -53,10 +58,17 @@ export interface LmDiscreteSensorState {
   readonly lgcInControl: boolean;
   readonly issOperate: boolean;
   readonly imuHealthy: boolean;
+  /** ISS/IMU CDU health — drives CHAN30 bit 12 (IMU CDU FAIL). */
+  readonly imuCduHealthy: boolean;
+  /** Accelerometer health — drives CHAN33 bit 13 (PIPA FAIL). */
+  readonly pipaHealthy: boolean;
   readonly landingRadarStatus: LandingRadarStatus;
   /** Antenna position discrete. `"transit"` = neither POS1 nor POS2. */
   readonly landingRadarAntenna: "pos1" | "pos2" | "transit";
+  /** CHAN33 bit 9 — LR RANGE LOW SCALE. */
+  readonly landingRadarRangeLowScale: boolean;
 }
+
 
 // ---------------------------------------------------------------------------
 // Encoder state
