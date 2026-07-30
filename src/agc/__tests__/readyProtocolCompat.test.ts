@@ -88,12 +88,12 @@ describe("M3.3A2-P4 readiness-protocol compatibility", () => {
       hwioVersion: 3,
       extVersion: "ddc65e7be+apollo-browser-hwio-v3",
       extensionTag: "apollo-browser-hwio-v3",
-      wasmSha256: "8cac2dc90d4896caa5f80888d4334616e5357b58f45233f6b27599e68a4b85cf",
+      wasmSha256: "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3",
       traceEnabled: false,
       traceDropped: 0,
     };
     expect(msg.type).toBe("agc:extension-ready");
-    expect(msg.hwioVersion).toBe(2);
+    expect(msg.hwioVersion).toBe(3);
     expect(msg.traceEnabled).toBe(false);
     expect(msg.traceDropped).toBe(0);
   });

@@ -24,6 +24,7 @@ import {
   THRUST_COUNTER_ADDRESS,
   THRUST_DRIVE_ACTIVITY_MASK,
   AGC_CHANNEL_WORD_MASK,
+  THROTTLE_COUNTER_UNITS_PER_CENTISECOND,
 } from "./actuatorRegistry";
 import type {
   AgcActuatorInvalidReason,
@@ -301,6 +302,9 @@ function reduceCounterStream(
       firstValue,
       lastValue,
       operations,
+      counterRateUnitsPerCentisecond: THROTTLE_COUNTER_UNITS_PER_CENTISECOND,
+      physicalForceScaleStatus: "unresolved",
+      interpretation: "lgc-throttle-command-delta-into-deca-summing-junction",
       scaleStatus: "unresolved",
     },
     events: kept,

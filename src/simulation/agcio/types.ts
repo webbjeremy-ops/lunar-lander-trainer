@@ -46,7 +46,23 @@
  *    validator with the corresponding unresolved-source reasons; no partial
  *    activation is permitted.
  */
-export type AgcMonitorProfile = "off" | "discrete-observer-v0" | "descent-monitor-v1";
+/**
+ *  - `landing-radar-observer-v1` (M3.3B2): DIAGNOSTIC INTERFACE ONLY.
+ *      LANDING-RADAR RANGE DIAGNOSTIC ONLY
+ *      NOT A POWERED-DESCENT MONITOR
+ *    Everything `discrete-observer-v0` does, PLUS one authentic serial
+ *    RNRAD (0o46) range transaction per diagnostic cadence delivered through
+ *    the HW-I/O v3 `agc_landing_radar_update_apply` export (serial shift,
+ *    then the native RADARUPT latch — the emulator's own dispatcher decides
+ *    delivery). ALTITUDE/RANGE ONLY: no velocity beams and no PIPA, because
+ *    those scales/sequences are still unresolved. It is therefore NOT a
+ *    descent monitor and MUST NOT be presented as one.
+ */
+export type AgcMonitorProfile =
+  | "off"
+  | "discrete-observer-v0"
+  | "landing-radar-observer-v1"
+  | "descent-monitor-v1";
 
 /** Human-readable, agent-safe labels. Consumers rendering profile state MUST
  *  use these labels verbatim so the diagnostic-only nature of v0 stays
@@ -69,6 +85,13 @@ export const AGC_MONITOR_PROFILE_LABELS: {
     banner: "DISCRETE INTERFACE DIAGNOSTIC ONLY — NOT A POWERED-DESCENT MONITOR",
     description:
       "Injects only source-mapped steady-state discretes (CHAN30/CHAN33) and observes CHAN11/CHAN14 discretes and the THRUST output-counter trace. Not a substitute for LR/PIPA sensing.",
+  },
+  "landing-radar-observer-v1": {
+    title: "Landing-radar range diagnostic",
+    banner:
+      "LANDING-RADAR RANGE DIAGNOSTIC ONLY — NOT A POWERED-DESCENT MONITOR",
+    description:
+      "Discrete-observer behaviour plus one authentic serial RNRAD (0o46) RANGE transaction per diagnostic cadence, delivered with the native RADARUPT latch. Altitude/range only — no velocity beams, no PIPA.",
   },
   "descent-monitor-v1": {
     title: "Descent monitor v1",
@@ -292,20 +315,46 @@ export type AgcActuatorInvalidReason =
 
 export type AgcEngineCommandState = "on" | "off" | "none" | "conflict";
 
-/** NON-PHYSICAL diagnostic view of raw THRUST (0o55) counter activity.
- *  Display header (verbatim):
- *    RAW AGC THRUST COUNTER ACTIVITY
- *    PHYSICAL THROTTLE SCALE NOT YET RESOLVED
- *  `signedDeltaTotal` MUST NOT be presented as thrust, percent, newtons or
- *  pounds-force. */
-export interface ThrustCounterDiagnostic {
+/**
+ * NON-PHYSICAL diagnostic view of the LGC throttle-command counter (THRUST,
+ * 0o55) — corrected in M3.3B2.
+ *
+ * WHAT THIS IS: an INCREMENTAL LGC THROTTLE COMMAND resolved out of the
+ * counter at a source-proven 32 units per centisecond (`FRATE`,
+ * Luminary099/THROTTLE_CONTROL_ROUTINES.agc). The DECA then ANALOG-SUMS that
+ * digital command with the astronaut's TTCA manual command before anything
+ * drives the engine (LMA790-3-LM §2.1.3.1).
+ *
+ * WHAT THIS IS NOT: thrust, thrust percentage, newtons, or pounds-force.
+ * There is no primary-sourced pounds-per-pulse weight
+ * (docs/M3_3B2_SCALE_ARCHAEOLOGY.md §"Still UNRESOLVED", item 3), and the
+ * TTCA term is not observable, so the resulting engine thrust is NOT
+ * derivable from this stream at all.
+ *
+ * Display header (verbatim):
+ *   LGC THROTTLE COMMAND DELTA INTO DECA SUMMING JUNCTION
+ *   NOT THRUST — PHYSICAL FORCE SCALE NOT RESOLVED
+ */
+export interface LgcThrottleCommandDiagnostic {
   readonly eventCount: number;
+  /** Sum of raw counter deltas. Command-delta units, never force. */
   readonly signedDeltaTotal: number;
   readonly firstValue: number | null;
   readonly lastValue: number | null;
   readonly operations: readonly number[];
+  /** The counter's own resolution rate — source-proven. */
+  readonly counterRateUnitsPerCentisecond: 32;
+  /** Physical force per unit: NOT resolved, and not derivable here. */
+  readonly physicalForceScaleStatus: "unresolved";
+  /** What the stream actually represents. */
+  readonly interpretation: "lgc-throttle-command-delta-into-deca-summing-junction";
+  /** Retained for compatibility with P5.c consumers. */
   readonly scaleStatus: "unresolved";
 }
+
+/** @deprecated M3.3B2 renamed this: CH14/THRUST is a DECA command delta,
+ *  not thrust. Use `LgcThrottleCommandDiagnostic`. */
+export type ThrustCounterDiagnostic = LgcThrottleCommandDiagnostic;
 
 /** Decoded AGC-commanded control. DIAGNOSTIC ONLY. This value is intended
  *  to be displayed and logged; it MUST NOT reach `stepLmPhysics()`. The

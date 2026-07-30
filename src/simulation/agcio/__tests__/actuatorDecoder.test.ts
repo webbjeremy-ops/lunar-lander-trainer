@@ -142,8 +142,8 @@ describe("actuator registry", () => {
 
   it("exposes the mandatory non-physical THRUST header", () => {
     expect(THRUST_DIAGNOSTIC_HEADER).toEqual([
-      "RAW AGC THRUST COUNTER ACTIVITY",
-      "PHYSICAL THROTTLE SCALE NOT YET RESOLVED",
+      "LGC THROTTLE COMMAND DELTA INTO DECA SUMMING JUNCTION",
+      "NOT THRUST — PHYSICAL FORCE SCALE NOT RESOLVED",
     ]);
   });
 });

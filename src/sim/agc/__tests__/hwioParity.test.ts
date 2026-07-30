@@ -302,7 +302,7 @@ describe("M3.3A2-P3 frozen-vs-extended behavioural parity", () => {
     cores = await buildCores();
     // Sanity: extended core carries HW-I/O v3 identity and starts dormant.
     const ext = cores.extended.ex as ExtendedExports;
-    expect(ext.agc_hwio_version()).toBe(2);
+    expect(ext.agc_hwio_version()).toBe(3);
     expect(ext.agc_out_trace_enabled()).toBe(0);
     expect(ext.agc_out_trace_dropped()).toBe(0);
   });

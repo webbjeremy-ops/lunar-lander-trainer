@@ -100,7 +100,8 @@ export const ACTUATOR_SIGNAL_REGISTRY: readonly ActuatorSignalMapping[] = [
   {
     id: "chan14.bit04.thrust-drive-activity",
     source: { kind: "channel-bit", channel: 0o14, mask: 1 << 3 },
-    meaning: "THRUST DRIVE ACTIVITY — DPS throttle drive is being pulsed",
+    meaning:
+      "THRUST DRIVE ACTIVITY — the LGC throttle-command counter is being pulsed toward the DECA (activity only; not a thrust level)",
     // Source behavior: written with `WOR CHAN14` around the drive burst
     // (LANDING_ANALOG_DISPLAYS.agc:500). The map documents it as an
     // ACTIVITY indication qualifying the (unresolved) magnitude, not a
@@ -115,11 +116,11 @@ export const ACTUATOR_SIGNAL_REGISTRY: readonly ActuatorSignalMapping[] = [
     id: "counter.055.thrust-raw-operations",
     source: { kind: "output-counter", address: 0o55 },
     meaning:
-      "Raw THRUST output-counter operations (lossless observation only — physical throttle scale NOT resolved)",
+      "LGC throttle COMMAND-delta counter operations, resolved at 32 units/cs into the DECA summing junction (lossless observation only — physical force scale NOT resolved; DECA analog-sums the unobservable TTCA manual command)",
     semantics: "counter-operation",
     status: "mapped",
     sourceCitation:
-      "docs/M3_3_IO_MAP.md#row-17; Luminary099/ERASABLE_ASSIGNMENTS.agc:137; THROTTLE_CONTROL_ROUTINES.agc:127; hwio.c trace ring (docs/M3_3A2_P2.md §5)",
+      "docs/M3_3_IO_MAP.md#row-17; Luminary099/ERASABLE_ASSIGNMENTS.agc:137; THROTTLE_CONTROL_ROUTINES.agc:127 + FRATE (32 units/cs); LMA790-3-LM §2.1.3.1 (DECA analog summing); docs/M3_3B2_SCALE_ARCHAEOLOGY.md; hwio.c trace ring (docs/M3_3A2_P2.md §5)",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
     numericScaleResolved: false,
   },
@@ -127,10 +128,11 @@ export const ACTUATOR_SIGNAL_REGISTRY: readonly ActuatorSignalMapping[] = [
     id: "counter.055.thrust-magnitude-fraction",
     source: { kind: "output-counter", address: 0o55 },
     meaning:
-      "DPS throttle command MAGNITUDE as a physical fraction — pulse-to-thrust scale and accumulation semantics UNRESOLVED",
+      "DPS throttle MAGNITUDE as delivered force — UNRESOLVED and not derivable from CH14/THRUST: no primary pounds-per-pulse weight exists and the DECA-summed TTCA manual term is unobservable",
     semantics: "counter-operation",
     status: "unresolved",
-    sourceCitation: "docs/M3_3_IO_MAP.md#row-17 (status: unresolved)",
+    sourceCitation:
+      "docs/M3_3_IO_MAP.md#row-17 (status: unresolved); docs/M3_3B2_SCALE_ARCHAEOLOGY.md §\"Still UNRESOLVED\" item 3",
     requiredForProfiles: ["descent-monitor-v1"],
     overlapPermittedWith: ["counter.055.thrust-raw-operations"],
     numericScaleResolved: false,
@@ -244,7 +246,27 @@ export const ENGINE_ON_MASK = 1 << 12;
 export const ENGINE_OFF_MASK = 1 << 13;
 export const THRUST_DRIVE_ACTIVITY_MASK = 1 << 3;
 
+/**
+ * LGC throttle-command counter resolution rate — SOURCE-PROVEN.
+ * `FRATE` in Luminary099/THROTTLE_CONTROL_ROUTINES.agc: the LGC resolves its
+ * digital throttle command into the THRUST counter at 32 units per
+ * centisecond (3200 units/s). This is a COUNTER RATE, not a force.
+ *
+ * NB (docs/M3_3B2_SCALE_ARCHAEOLOGY.md, closing warning): the 3200-cps figure
+ * in the AOH power tables is IMU/PIPA excitation power — a different
+ * subsystem. The numeric coincidence is not evidence.
+ */
+export const THROTTLE_COUNTER_UNITS_PER_CENTISECOND = 32 as const;
+
+/**
+ * Verbatim display header for the CH14 / THRUST(0o55) diagnostic.
+ * Corrected in M3.3B2: the pulse train is the LGC's incremental throttle
+ * COMMAND resolved into the DECA summing junction, where it is analog-summed
+ * with the TTCA manual command (LMA790-3-LM §2.1.3.1). It is not thrust, and
+ * thrust is not derivable from it — the TTCA term is unobservable and no
+ * primary pounds-per-pulse weight exists.
+ */
 export const THRUST_DIAGNOSTIC_HEADER = [
-  "RAW AGC THRUST COUNTER ACTIVITY",
-  "PHYSICAL THROTTLE SCALE NOT YET RESOLVED",
+  "LGC THROTTLE COMMAND DELTA INTO DECA SUMMING JUNCTION",
+  "NOT THRUST — PHYSICAL FORCE SCALE NOT RESOLVED",
 ] as const;
