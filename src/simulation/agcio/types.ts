@@ -46,7 +46,23 @@
  *    validator with the corresponding unresolved-source reasons; no partial
  *    activation is permitted.
  */
-export type AgcMonitorProfile = "off" | "discrete-observer-v0" | "descent-monitor-v1";
+/**
+ *  - `landing-radar-observer-v1` (M3.3B2): DIAGNOSTIC INTERFACE ONLY.
+ *      LANDING-RADAR RANGE DIAGNOSTIC ONLY
+ *      NOT A POWERED-DESCENT MONITOR
+ *    Everything `discrete-observer-v0` does, PLUS one authentic serial
+ *    RNRAD (0o46) range transaction per diagnostic cadence delivered through
+ *    the HW-I/O v3 `agc_landing_radar_update_apply` export (serial shift,
+ *    then the native RADARUPT latch — the emulator's own dispatcher decides
+ *    delivery). ALTITUDE/RANGE ONLY: no velocity beams and no PIPA, because
+ *    those scales/sequences are still unresolved. It is therefore NOT a
+ *    descent monitor and MUST NOT be presented as one.
+ */
+export type AgcMonitorProfile =
+  | "off"
+  | "discrete-observer-v0"
+  | "landing-radar-observer-v1"
+  | "descent-monitor-v1";
 
 /** Human-readable, agent-safe labels. Consumers rendering profile state MUST
  *  use these labels verbatim so the diagnostic-only nature of v0 stays
