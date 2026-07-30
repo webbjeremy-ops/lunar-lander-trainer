@@ -53,17 +53,17 @@ export interface MonitorSignalMapping {
 
 /** Single source of truth for every profile-owned AGC input bit. */
 export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
-  // ---------- CHAN30 (input discretes, active-low) ------------------------
+  // ---------- CHAN30 (input discretes, ALL active-low) --------------------
   {
     id: "chan30.bit03.engine-armed",
     status: "mapped",
     channel: 0o30,
     mask: 1 << 2, // bit 3 (1-indexed)
     polarity: "active-low",
-    physicalMeaning: "DPS engine armed by crew",
+    physicalMeaning: "ENGINE ARMED SIGNAL (signal present = DPS armed)",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:152 (bit 3, inverted); BURN_BABY_BURN--MASTER_IGNITION_ROUTINE.agc:916",
-    hardwarePath: "packet_write(0o30, mask) — steady-state discrete",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:150 (bit 3); inversion note :143-144; read at BURN_BABY_BURN--MASTER_IGNITION_ROUTINE.agc:916",
+    hardwarePath: "packet_write(0o30, word) — steady-state discrete",
     validStates: "always valid",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
@@ -73,10 +73,11 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     channel: 0o30,
     mask: 1 << 4, // bit 5
     polarity: "active-low",
-    physicalMeaning: "Computer thrust control enabled (AUTO THROTTLE)",
+    physicalMeaning:
+      "AUTO THROTTLE; COMPUTER CONTROL OF DESCENT ENGINE (signal present = LGC throttle authority)",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:154 (bit 5, inverted)",
-    hardwarePath: "packet_write(0o30, mask)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:152 (bit 5); inversion note :143-144",
+    hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
@@ -86,10 +87,11 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     channel: 0o30,
     mask: 1 << 8, // bit 9
     polarity: "active-low",
-    physicalMeaning: "ISS in OPERATE mode",
+    physicalMeaning:
+      "IMU OPERATE WITH NO MALFUNCTION (signal present = ISS in OPERATE, no malfunction)",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:158 (bit 9, inverted)",
-    hardwarePath: "packet_write(0o30, mask)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:157 (bit 9); inversion note :143-144",
+    hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
@@ -99,40 +101,57 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     channel: 0o30,
     mask: 1 << 9, // bit 10
     polarity: "active-low",
-    physicalMeaning: "LGC-in-control (guidance authority)",
+    physicalMeaning:
+      "LM COMPUTER (NOT AGS) HAS CONTROL OF LM (signal present = LGC in control)",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:159 (bit 10, inverted)",
-    hardwarePath: "packet_write(0o30, mask)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:158 (bit 10); inversion note :143-144",
+    hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
   {
-    id: "chan30.bit13.imu-healthy",
+    id: "chan30.bit12.imu-cdu-fail",
     status: "mapped",
     channel: 0o30,
-    mask: 1 << 12, // bit 13 (IMU FAIL, inverted -> healthy)
+    mask: 1 << 11, // bit 12
     polarity: "active-low",
-    physicalMeaning: "IMU healthy (IMU FAIL discrete de-asserted)",
+    physicalMeaning:
+      "IMU CDU FAIL (signal present = ISS CDU malfunction). Encoded from imuCduHealthy === false.",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:162 (bit 13, inverted)",
-    hardwarePath: "packet_write(0o30, mask)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:160 (bit 12); inversion note :143-144",
+    hardwarePath: "packet_write(0o30, word)",
+    validStates: "always valid",
+    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+  },
+  {
+    id: "chan30.bit13.imu-fail",
+    status: "mapped",
+    channel: 0o30,
+    mask: 1 << 12, // bit 13
+    polarity: "active-low",
+    physicalMeaning:
+      "IMU FAIL (signal present = malfunction of IMU stabilization loops). Encoded from imuHealthy === false.",
+    sourceCitation:
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:161 (bit 13); inversion note :143-144",
+    hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
 
-  // ---------- CHAN33 (LR discretes, active-high) -------------------------
+  // ---------- CHAN33 (LR + PIPA status discretes, ALSO active-low) --------
+  // Corrected in M3.3B: the inversion note at :143-144 covers channels
+  // 30-33 inclusive, so these are NOT active-high.
   {
     id: "chan33.bit05.lr-range-good",
     status: "mapped",
     channel: 0o33,
     mask: 1 << 4, // bit 5
-    polarity: "active-high",
-    physicalMeaning: "Landing-radar RANGE DATA GOOD",
+    polarity: "active-low",
+    physicalMeaning: "LR RANGE DATA GOOD",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:184 (bit 5)",
-    hardwarePath:
-      "packet_write(0o33, mask) — steady-state discrete; word path unresolved (rows 1/2)",
-    validStates: "valid when landing radar is powered and acquired",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:208 (bit 5); inversion note :143-144",
+    hardwarePath: "packet_write(0o33, word) — steady-state discrete",
+    validStates: "valid when landing radar is powered and range has acquired",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
   {
@@ -140,11 +159,11 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     status: "mapped",
     channel: 0o33,
     mask: 1 << 5, // bit 6
-    polarity: "active-high",
-    physicalMeaning: "Landing-radar antenna in POS1",
+    polarity: "active-low",
+    physicalMeaning: "LR POS1 (antenna in descent position 1)",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:185 (bit 6)",
-    hardwarePath: "packet_write(0o33, mask)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:209 (bit 6); inversion note :143-144; gated at THE_LUNAR_LANDING.agc P63SPOT3",
+    hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR powered",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
@@ -153,11 +172,11 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     status: "mapped",
     channel: 0o33,
     mask: 1 << 6, // bit 7
-    polarity: "active-high",
-    physicalMeaning: "Landing-radar antenna in POS2",
+    polarity: "active-low",
+    physicalMeaning: "LR POS2 (antenna in approach position 2)",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:186 (bit 7)",
-    hardwarePath: "packet_write(0o33, mask)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:210 (bit 7); inversion note :143-144",
+    hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR powered",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
@@ -166,15 +185,43 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     status: "mapped",
     channel: 0o33,
     mask: 1 << 7, // bit 8
-    polarity: "active-high",
-    physicalMeaning: "Landing-radar VELOCITY DATA GOOD",
+    polarity: "active-low",
+    physicalMeaning: "LR VEL DATA GOOD",
     sourceCitation:
-      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:187 (bit 8)",
-    hardwarePath:
-      "packet_write(0o33, mask) — steady-state discrete; word path unresolved (row 2)",
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:212 (bit 8); inversion note :143-144",
+    hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR velocity beams have acquired",
     requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
   },
+  {
+    id: "chan33.bit09.lr-range-low-scale",
+    status: "mapped",
+    channel: 0o33,
+    mask: 1 << 8, // bit 9
+    polarity: "active-low",
+    physicalMeaning:
+      "LR RANGE LOW SCALE (signal present = radar reporting on the low range scale)",
+    sourceCitation:
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:213 (bit 9); inversion note :143-144; consumed by SCALECHK in P20-P25.agc",
+    hardwarePath: "packet_write(0o33, word)",
+    validStates: "valid when LR powered",
+    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+  },
+  {
+    id: "chan33.bit13.pipa-fail",
+    status: "mapped",
+    channel: 0o33,
+    mask: 1 << 12, // bit 13
+    polarity: "active-low",
+    physicalMeaning:
+      "PIPA FAIL (signal present = accelerometer failure). Encoded from pipaHealthy === false.",
+    sourceCitation:
+      "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:217 (bit 13); inversion note :143-144",
+    hardwarePath: "packet_write(0o33, word)",
+    validStates: "always valid",
+    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+  },
+
 
   // ---------- Unresolved rows — declared, never encoded ------------------
   {
