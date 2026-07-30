@@ -16,9 +16,12 @@ import type {
 import {
   MONITOR_SIGNAL_REGISTRY,
   mappedSignalsForProfile,
+  unresolvedCountersForProfile,
   unresolvedSignalsForProfile,
+  validateCounterRegistry,
   validateRegistry,
 } from "./sensorRegistry";
+
 
 /** Static snapshot of runtime facts the validator needs to decide whether
  *  a monitor profile can be entered atomically. Every field is derived from
@@ -224,6 +227,23 @@ export function decideMonitorEntry(
         reference: u.sourceCitation,
       });
     }
+    // Counter table (M3.3C): structural integrity + every required counter
+    // must carry a source-proven scale.
+    for (const err of validateCounterRegistry()) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `counter registry: ${err}`,
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+    for (const c of unresolvedCountersForProfile(profile)) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `${c.id}: ${c.physicalMeaning}`,
+        reference: c.sourceCitation,
+      });
+    }
+
     // Fallback: hand-maintained block list is applied in addition, so a
     // policy-level block (e.g. CDU drain budget) can persist even after
     // registry rows are marked mapped.
@@ -270,12 +290,17 @@ export const DESCENT_MONITOR_V1_UNRESOLVED_MAPPINGS: readonly MonitorBlockReason
       "Landing-radar velocity beams (RNRAD via RADARUPT + CHAN13 select bits) — same root cause as row 1.",
     reference: "docs/M3_3_IO_MAP.md#row-2",
   },
+  // PIPA ΔV pulse weight RESOLVED in M3.3C Phase 1 (1 pulse = 1.00 cm/s,
+  // Draper NTRS 19700018941 Fig.4-3 p.66 + Luminary099/SERVICER.agc:192,219).
+  // The remaining PIPA blocker is not the scale but the stable-member axis
+  // bootstrap, recorded below.
   {
     code: "unresolved-sensor-mapping",
     detail:
-      "PIPA increments X/Y/Z (PIPAX/Y/Z counters at 0o37/0o40/0o41 via Pinc/Minc) — CDU drain budget unproven; no hardware-model injection path.",
-    reference: "docs/M3_3_IO_MAP.md#row-3",
+      "Stable-member ↔ LM body axis bootstrap for the golden scenario (REFSMMAT + initial CDU angles) is not source-proven, so PIPA pulses cannot yet be resolved onto the correct AGC axes.",
+    reference: "docs/M3_3C_PRIMARY_SOURCE_RESOLUTION.md#3-still-unresolved-after-phase-1",
   },
+
   {
     code: "cdu-drain-budget-unproven",
     detail:
