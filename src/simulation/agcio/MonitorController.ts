@@ -291,7 +291,7 @@ export class MonitorController {
     if (this.port.hwioVersion() !== 3) {
       reasons.push({
         code: "canonical-hwio-wrong-version",
-        detail: `Running WASM reports HW-I/O version ${this.port.hwioVersion()}; monitor requires 2.`,
+        detail: `Running WASM reports HW-I/O version ${this.port.hwioVersion()}; monitor requires 3.`,
         reference: "docs/M3_3A2_P4.md",
       });
     }
