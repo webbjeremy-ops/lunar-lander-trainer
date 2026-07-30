@@ -162,20 +162,30 @@ level, not end to end.
 
 ## Accurate remaining blockers
 
-* §4 — independent rope-side REFSMMAT consumption proof.
+* §4 — **hard blocker.** Independent rope-side REFSMMAT *consumption* proof is
+  unreachable: the Servicer/READACCS path requires a full powered-descent
+  mission bootstrap (see §4 above). Everything below is gated on it.
 * §5 — live PIPA injection into the Worker (encoder exists, wiring does not).
 * §7 — altitude RNRAD/RADARUPT transaction driven by captured CHAN13 requests.
 * §8 — `landing-radar-observer-v1` profile gating on the above.
 * §9 — diagnostics panel fields for bootstrap, PIPA and radar transactions.
 * §11 — browser acceptance specs for the new paths.
 
+## Next highest-value milestone
+
+Source-derive and prove the **powered-descent mission bootstrap** (state
+vector `RN`/`VN`, `PIPTIME`, integration selection, P63 entry) from primary
+Apollo 11 documents. It is the single prerequisite that unblocks the REFSMMAT
+consumption proof, live PIPA, and every landing-radar transaction at once.
+
 ## Verification totals (this pass)
 
 | Check | Result |
 | --- | --- |
-| Vitest | **494 / 494 passed**, 48 files, 0 skipped |
+| Vitest | **495 / 495 passed**, 49 files, 0 skipped |
 | Typecheck (`tsgo --noEmit`) | clean |
 | Physics firewall | unchanged; golden touchdown `368,279,425 µs` still asserted by the M3.1/M3.2 suites |
 | Closed-loop AGC control | still prohibited and absent |
 
 **M3.3C is not ready to freeze.**
+
