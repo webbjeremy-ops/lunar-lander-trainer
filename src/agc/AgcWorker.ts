@@ -908,7 +908,7 @@ function publishReady(): void {
     const ext = state.extensionIdentity;
     send({
       type: "agc:extension-ready",
-      hwioVersion: 3,
+      hwioVersion: 4,
       extVersion: ext.extVersion,
       extensionTag: ext.extensionTag,
       wasmSha256: state.wasmSha256,
