@@ -58,7 +58,24 @@ interface YaAgcExports {
   agc_hw_input_apply?: (records: number, count: number) => number;
   agc_hw_input_last_error_index?: () => number;
   agc_counter_increment?: (address: number, incType: number) => number;
+  // M3.3B2 (HW-I/O v3): allow-listed hardware interrupt latch + the atomic
+  // landing-radar delivery transaction. See hwio.c "v3" section.
+  agc_request_hardware_interrupt?: (index: number) => number;
+  agc_interrupt_request_pending?: (index: number) => number;
+  agc_interrupt_inhibited?: () => number;
+  agc_in_isr?: () => number;
+  agc_interrupt_in_service?: () => number;
+  agc_landing_radar_update_size?: () => number;
+  agc_landing_radar_update_apply?: (ptr: number) => number;
 }
+
+/** Native interrupt-vector indices. Index i vectors to 04000 + 4*i
+ *  (yaAGC `agc_engine.c` dispatch loop). Only RADARUPT is host-requestable
+ *  — see the v3 allow-list in hwio.c. */
+export const AGC_INTERRUPT_INDEX = {
+  /** 04044 — `RADAR RUPT` in Luminary099/INTERRUPT_LEAD_INS.agc. */
+  RADARUPT: 9,
+} as const;
 
 /** Native `AgcIncType` ids — mirror the `HWIO_INC_*` defines in
  *  `third-party/virtualagc-fork/PATCHES/lovable-hwio/hwio.c`. Values are the
@@ -94,6 +111,9 @@ export const AGC_HW_INPUT_RESULT = {
   INTERNAL: -4,
   BATCH_LIMIT: -5,
   OVERFLOW: -6,
+  INVALID_INTERRUPT: -7,
+  RESERVED_NONZERO: -8,
+  INVALID_BIT_COUNT: -9,
 } as const;
 
 export interface AgcHwInputApplyResult {
@@ -108,7 +128,7 @@ const HW_INPUT_RECORD_BYTES = 12;
 export const AGC_HW_INPUT_MAX_RECORDS = 256;
 
 
-/** One drained HW-I/O v2 output-counter observation, decoded from the
+/** One drained HW-I/O v3 output-counter observation, decoded from the
  *  32-byte `AgcOutputTraceEntry` record. Field order/semantics mirror
  *  `third-party/virtualagc-fork/PATCHES/lovable-hwio/hwio.c`. */
 export interface AgcOutTraceRecord {
@@ -120,6 +140,9 @@ export interface AgcOutTraceRecord {
   valueBefore: number;
   valueAfter: number;
 }
+
+/** `sizeof(AgcLandingRadarUpdate)` in hwio.c. */
+const LR_UPDATE_BYTES = 8;
 
 const TRACE_ENTRY_BYTES = 32;
 const TRACE_DRAIN_MAX = 4096;
@@ -226,7 +249,7 @@ export class AgcCoreAdapter {
     };
   }
 
-  // ---- M3.3A2-P5.d HW-I/O v2 monitor surface ---------------------------
+  // ---- M3.3A2-P5.d HW-I/O v3 monitor surface ---------------------------
   //
   // These wrappers are the ONLY way Worker code touches the trace ABI.
   // They are inert unless explicitly invoked: production boots dormant and
@@ -329,6 +352,73 @@ export class AgcCoreAdapter {
           ? -1
           : (this.exports.agc_hw_input_last_error_index?.() ?? -1);
       return { code, ok: code === AGC_HW_INPUT_RESULT.OK, errorIndex };
+    } finally {
+      this.exports.free(ptr);
+      this.memArray = new Uint8Array(this.mem.buffer);
+    }
+  }
+
+  // ---- M3.3B2 HW-I/O v3 radar surface ---------------------------------
+
+  /** True when the running artifact exposes the v3 radar/interrupt ABI. */
+  radarInterruptSupported(): boolean {
+    return (
+      typeof this.exports.agc_landing_radar_update_apply === "function" &&
+      typeof this.exports.agc_request_hardware_interrupt === "function"
+    );
+  }
+
+  /** Set the native RADARUPT latch (and nothing else). The emulator's own
+   *  dispatcher decides when — or whether — the handler is entered. */
+  requestRadarInterrupt(): number {
+    return this.exports.agc_request_hardware_interrupt?.(AGC_INTERRUPT_INDEX.RADARUPT)
+      ?? AGC_HW_INPUT_RESULT.INTERNAL;
+  }
+
+  /** Read-only: is the given interrupt latch currently set? */
+  interruptRequestPending(index: number): boolean {
+    return (this.exports.agc_interrupt_request_pending?.(index) ?? 0) !== 0;
+  }
+
+  /** Read-only: are interrupts currently inhibited (INHINT active)? */
+  interruptsInhibited(): boolean {
+    return (this.exports.agc_interrupt_inhibited?.() ?? 0) !== 0;
+  }
+
+  /** Read-only: is the AGC currently inside an interrupt service routine? */
+  inIsr(): boolean {
+    return (this.exports.agc_in_isr?.() ?? 0) !== 0;
+  }
+
+  /** Read-only: index of the interrupt being serviced (0 = none). */
+  interruptInService(): number {
+    return this.exports.agc_interrupt_in_service?.() ?? 0;
+  }
+
+  /**
+   * Atomic landing-radar delivery: serially shift `word` into RNRAD (0o46)
+   * MSB-first over `bitCount` SHINC/SHANC pulses, then (optionally) raise
+   * RADARUPT — in that order, inside one host call, so no CPU step can
+   * observe a half-shifted counter with the interrupt already pending.
+   */
+  applyLandingRadarUpdate(
+    word: number,
+    bitCount = 15,
+    raiseRadarupt = true,
+  ): number {
+    const apply = this.exports.agc_landing_radar_update_apply;
+    if (!apply || !this.exports.malloc || !this.exports.free) {
+      return AGC_HW_INPUT_RESULT.INTERNAL;
+    }
+    const ptr = this.exports.malloc(LR_UPDATE_BYTES);
+    if (!ptr) return AGC_HW_INPUT_RESULT.INTERNAL;
+    try {
+      const view = new DataView(this.mem.buffer, ptr, LR_UPDATE_BYTES);
+      view.setUint16(0, word & 0x7fff, true);
+      view.setUint16(2, bitCount, true);
+      view.setUint16(4, raiseRadarupt ? 1 : 0, true);
+      view.setUint16(6, 0, true);
+      return apply(ptr);
     } finally {
       this.exports.free(ptr);
       this.memArray = new Uint8Array(this.mem.buffer);

@@ -55,7 +55,7 @@ export const MONITOR_OWNED_INPUT_CHANNELS: readonly number[] = [0o30, 0o33];
 /** Every emulator touchpoint the monitor needs. Implemented in the Worker
  *  by a thin wrapper over `AgcCoreAdapter`. */
 export interface MonitorHwPort {
-  /** HW-I/O v2 reported by the running WASM (0 when absent). */
+  /** HW-I/O v3 reported by the running WASM (0 when absent). */
   hwioVersion(): number;
   traceEnabled(): boolean;
   setTraceEnabled(enabled: boolean): void;
@@ -288,7 +288,7 @@ export class MonitorController {
         reference: "src/simulation/agcio/actuatorRegistry.ts",
       });
     }
-    if (this.port.hwioVersion() !== 2) {
+    if (this.port.hwioVersion() !== 3) {
       reasons.push({
         code: "canonical-hwio-wrong-version",
         detail: `Running WASM reports HW-I/O version ${this.port.hwioVersion()}; monitor requires 2.`,

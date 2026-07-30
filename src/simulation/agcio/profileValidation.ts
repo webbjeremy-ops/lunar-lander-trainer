@@ -84,7 +84,7 @@ export type MonitorEntryDecision =
  *
  * `off` is always allowed (it is the frozen-M3.2 baseline). Any non-off
  * profile requires the full set of preconditions listed in the P5 spec §2:
- * canonical HW-I/O v2, Luminary099 rope, AGC ready, matching epochs, active
+ * canonical HW-I/O v3, Luminary099 rope, AGC ready, matching epochs, active
  * compatible scenario, trace currently disabled.
  *
  * `descent-monitor-v1` additionally reports the unresolved LR range /
@@ -122,10 +122,10 @@ export function decideMonitorEntry(
       detail: "Canonical yaAGC-ext HW-I/O exports are not present.",
       reference: "docs/M3_3A2_P4.md",
     });
-  } else if (ctx.hwioVersion !== 2) {
+  } else if (ctx.hwioVersion !== 3) {
     reasons.push({
       code: "canonical-hwio-wrong-version",
-      detail: `Canonical HW-I/O version must be 2 (got ${ctx.hwioVersion}).`,
+      detail: `Canonical HW-I/O version must be 3 (got ${ctx.hwioVersion}).`,
       reference: "docs/M3_3A2_P4.md",
     });
   }

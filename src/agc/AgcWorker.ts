@@ -908,7 +908,7 @@ function publishReady(): void {
     const ext = state.extensionIdentity;
     send({
       type: "agc:extension-ready",
-      hwioVersion: 2,
+      hwioVersion: 3,
       extVersion: ext.extVersion,
       extensionTag: ext.extensionTag,
       wasmSha256: state.wasmSha256,
@@ -1070,7 +1070,7 @@ async function handle(
         throw new Error(msg);
       }
       // M3.3A2-P4: production must always instantiate the extended runtime
-      // (`yaAGC-ext.wasm`, HW-I/O v2). The frozen artifact is missing the
+      // (`yaAGC-ext.wasm`, HW-I/O v3). The frozen artifact is missing the
       // extension exports and is a hard-failure in the Worker; the parity
       // harness loads it directly under Vitest, never through this path.
       const extId = a.extensionIdentity();

@@ -116,8 +116,8 @@ function SourcesPage() {
             <a className="text-emerald-400" href="https://github.com/virtualagc/virtualagc">Virtual AGC</a>{" "}
             (yaAGC, © Ron Burkey and contributors). Both are licensed under{" "}
             <strong>GPL-2.0-or-later</strong>. Production loads the canonical
-            extended runtime <code>yaAGC-ext.wasm</code> (HW-I/O v2 —
-            <code> apollo-browser-hwio-v2</code>), a byte-parity-verified build
+            extended runtime <code>yaAGC-ext.wasm</code> (HW-I/O v3 —
+            <code> apollo-browser-hwio-v3</code>), a byte-parity-verified build
             of the pinned upstream <code>virtualagc @ ddc65e7be</code> source
             with the browser hardware-interface patch applied. It is
             behaviourally bit-identical to the frozen <code>yaAGC.wasm</code>{" "}

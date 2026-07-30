@@ -35,6 +35,13 @@ interface ExtExports {
   agc_counter_increment: (address: number, incType: number) => number;
   agc_hw_input_apply: (records: number, count: number) => number;
   agc_hw_input_last_error_index: () => number;
+  agc_request_hardware_interrupt: (index: number) => number;
+  agc_interrupt_request_pending: (index: number) => number;
+  agc_interrupt_inhibited: () => number;
+  agc_in_isr: () => number;
+  agc_interrupt_in_service: () => number;
+  agc_landing_radar_update_size: () => number;
+  agc_landing_radar_update_apply: (ptr: number) => number;
 }
 
 const LEGACY_EXPORTS = [
@@ -49,6 +56,10 @@ const EXTENSION_EXPORTS = [
   "agc_out_trace_set_enabled", "agc_out_trace_enabled",
   "agc_counter_increment", "agc_hw_input_apply",
   "agc_hw_input_last_error_index",
+  // M3.3B2 (HW-I/O v3)
+  "agc_request_hardware_interrupt", "agc_interrupt_request_pending",
+  "agc_interrupt_inhibited", "agc_in_isr", "agc_interrupt_in_service",
+  "agc_landing_radar_update_size", "agc_landing_radar_update_apply",
 ] as const;
 
 async function loadExt(): Promise<{ ex: ExtExports; memory: WebAssembly.Memory }> {
@@ -100,8 +111,8 @@ describe("M3.3A2-P2 extended WASM ABI", () => {
 
   it("preserves upstream ancestry via version() and separates extension identity", () => {
     expect(readCstr(memory, ex.version())).toBe("2020-12-24 ddc65e7be");
-    expect(readCstr(memory, ex.agc_ext_version())).toBe("ddc65e7be+apollo-browser-hwio-v2");
-    expect(ex.agc_hwio_version()).toBe(2);
+    expect(readCstr(memory, ex.agc_ext_version())).toBe("ddc65e7be+apollo-browser-hwio-v3");
+    expect(ex.agc_hwio_version()).toBe(3);
   });
 
   it("output-trace entry is 32 bytes (matches TS layout)", () => {
