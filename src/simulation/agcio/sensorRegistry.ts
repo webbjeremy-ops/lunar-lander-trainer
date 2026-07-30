@@ -249,17 +249,11 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     requiredForProfiles: ["descent-monitor-v1"],
   },
   {
-    id: "unresolved.pipa-increments",
-    status: "unresolved",
-    channel: -1,
-    mask: 0,
-    polarity: "active-high",
-    physicalMeaning: "PIPA X/Y/Z increments via Pinc/Minc",
-    sourceCitation: "docs/M3_3_IO_MAP.md#row-3",
-    hardwarePath: "Pinc/Minc counter pulses at IMU cadence — no host-input API in P5.b",
-    validStates: "unresolved",
-    requiredForProfiles: ["descent-monitor-v1"],
-  },
+  // NOTE: `unresolved.pipa-increments` was REMOVED in M3.3C Phase 2. The
+  // PIPA ΔV pulse weight is now resolved (1 pulse = 1.00 cm/s) and PIPA is
+  // a COUNTER, not a discrete bit, so it lives in MONITOR_COUNTER_REGISTRY
+  // below. See docs/M3_3C_PRIMARY_SOURCE_RESOLUTION.md.
+
   {
     id: "unresolved.cdu-angles",
     status: "unresolved",
