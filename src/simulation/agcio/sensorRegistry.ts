@@ -281,6 +281,201 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
 ] as const;
 
 // ---------------------------------------------------------------------------
+// M3.3C Phase 2 — COUNTER registry (unprogrammed-sequence inputs)
+// ---------------------------------------------------------------------------
+//
+// Counters are a DIFFERENT bus mechanism from discrete channel bits: they are
+// driven by unprogrammed increment sequences (PINC/MINC/PCDU/MCDU/SHINC), not
+// by packet writes, and they carry a PHYSICAL SCALE rather than a polarity.
+// They therefore get their own table with its own gate, so a resolved scale
+// can never be confused with a resolved discrete bit.
+
+export interface MonitorCounterMapping {
+  readonly id: string;
+  readonly status: SignalMappingStatus;
+  /** Erasable counter address (octal in source; decimal here). */
+  readonly counterAddress: number;
+  readonly counterName: string;
+  /** Increment types the HOST may drive for this counter. */
+  readonly incrementTypes: readonly ("PINC" | "MINC" | "PCDU" | "MCDU" | "SHINC")[];
+  /** Physical quantity one pulse represents, in `unit`. `null` = unresolved. */
+  readonly unitPerPulse: number | null;
+  readonly unit: string;
+  readonly physicalMeaning: string;
+  readonly sourceCitation: string;
+  readonly hardwarePath: string;
+  readonly validStates: string;
+  readonly requiredForProfiles: readonly AgcMonitorProfile[];
+}
+
+export const MONITOR_COUNTER_REGISTRY: readonly MonitorCounterMapping[] = [
+  {
+    id: "pipa.x.delta-v-pulse",
+    status: "mapped",
+    counterAddress: 0o37,
+    counterName: "PIPAX",
+    incrementTypes: ["PINC", "MINC"],
+    unitPerPulse: 0.01,
+    unit: "m/s (exactly 1 cm/s)",
+    physicalMeaning:
+      "Stable-member X-axis ΔV increment sensed by the LM PIPA (PINC = +ΔV, MINC = -ΔV).",
+    sourceCitation:
+      "Draper 'Design Survey of the Apollo Inertial Subsystem' (Mar 1970, NTRS 19700018941) Fig.4-3 p.66 'AV LEM 1.0 CM/SEC/PULSE'; Luminary099/SERVICER.agc:192,219; docs/M3_3C_PRIMARY_SOURCE_RESOLUTION.md",
+    hardwarePath: "agc_hw_input_apply — unprogrammed PINC/MINC on 0o37",
+    validStates: "valid whenever the PIPAs are powered and not failed",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+  {
+    id: "pipa.y.delta-v-pulse",
+    status: "mapped",
+    counterAddress: 0o40,
+    counterName: "PIPAY",
+    incrementTypes: ["PINC", "MINC"],
+    unitPerPulse: 0.01,
+    unit: "m/s (exactly 1 cm/s)",
+    physicalMeaning:
+      "Stable-member Y-axis ΔV increment sensed by the LM PIPA.",
+    sourceCitation:
+      "Draper 'Design Survey of the Apollo Inertial Subsystem' (Mar 1970, NTRS 19700018941) Fig.4-3 p.66; Luminary099/SERVICER.agc:192,219",
+    hardwarePath: "agc_hw_input_apply — unprogrammed PINC/MINC on 0o40",
+    validStates: "valid whenever the PIPAs are powered and not failed",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+  {
+    id: "pipa.z.delta-v-pulse",
+    status: "mapped",
+    counterAddress: 0o41,
+    counterName: "PIPAZ",
+    incrementTypes: ["PINC", "MINC"],
+    unitPerPulse: 0.01,
+    unit: "m/s (exactly 1 cm/s)",
+    physicalMeaning:
+      "Stable-member Z-axis ΔV increment sensed by the LM PIPA.",
+    sourceCitation:
+      "Draper 'Design Survey of the Apollo Inertial Subsystem' (Mar 1970, NTRS 19700018941) Fig.4-3 p.66; Luminary099/SERVICER.agc:192,219",
+    hardwarePath: "agc_hw_input_apply — unprogrammed PINC/MINC on 0o41",
+    validStates: "valid whenever the PIPAs are powered and not failed",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+  {
+    id: "lr.range.rnrad-serial-word",
+    status: "mapped",
+    counterAddress: 0o46,
+    counterName: "RNRAD",
+    incrementTypes: ["SHINC"],
+    unitPerPulse: 1.079 * 0.3048,
+    unit: "m per RNRAD bit (HSCAL 1.079 ft/bit)",
+    physicalMeaning:
+      "Landing-radar RANGE (altitude) word shifted serially into RNRAD, answered by RADARUPT.",
+    sourceCitation:
+      "Luminary099/CONTROLLED_CONSTANTS.agc HSCAL; docs/M3_3B2_SCALE_ARCHAEOLOGY.md",
+    hardwarePath: "agc_landing_radar_update_apply — 15 serial bits + RADARUPT",
+    validStates:
+      "valid only when AGC-solicited via CHAN13 select+ACTIVITY; no host-timed cadence is source-supported",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+  {
+    id: "cdu.x.angle",
+    status: "unresolved",
+    counterAddress: 0o32,
+    counterName: "CDUX",
+    incrementTypes: ["PCDU", "MCDU"],
+    unitPerPulse: null,
+    unit: "unresolved",
+    physicalMeaning: "IMU CDU inner-gimbal angle increment.",
+    sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
+    hardwarePath: "agc_hw_input_apply — PCDU/MCDU on 0o32",
+    validStates: "unresolved — CDU drain budget unproven",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+  {
+    id: "cdu.y.angle",
+    status: "unresolved",
+    counterAddress: 0o33,
+    counterName: "CDUY",
+    incrementTypes: ["PCDU", "MCDU"],
+    unitPerPulse: null,
+    unit: "unresolved",
+    physicalMeaning: "IMU CDU middle-gimbal angle increment.",
+    sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
+    hardwarePath: "agc_hw_input_apply — PCDU/MCDU on 0o33",
+    validStates: "unresolved — CDU drain budget unproven",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+  {
+    id: "cdu.z.angle",
+    status: "unresolved",
+    counterAddress: 0o34,
+    counterName: "CDUZ",
+    incrementTypes: ["PCDU", "MCDU"],
+    unitPerPulse: null,
+    unit: "unresolved",
+    physicalMeaning: "IMU CDU outer-gimbal angle increment.",
+    sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
+    hardwarePath: "agc_hw_input_apply — PCDU/MCDU on 0o34",
+    validStates: "unresolved — CDU drain budget unproven",
+    requiredForProfiles: ["descent-monitor-v1"],
+  },
+] as const;
+
+/** Every mapped counter required by `profile`. */
+export function mappedCountersForProfile(
+  profile: AgcMonitorProfile,
+): readonly MonitorCounterMapping[] {
+  return MONITOR_COUNTER_REGISTRY.filter(
+    (c) => c.status === "mapped" && c.requiredForProfiles.includes(profile),
+  );
+}
+
+/** Every unresolved counter required by `profile`. A non-empty result is a
+ *  hard block for that profile. */
+export function unresolvedCountersForProfile(
+  profile: AgcMonitorProfile,
+): readonly MonitorCounterMapping[] {
+  return MONITOR_COUNTER_REGISTRY.filter(
+    (c) => c.status === "unresolved" && c.requiredForProfiles.includes(profile),
+  );
+}
+
+/** Structural validation for the counter table: unique ids, plausible
+ *  erasable addresses, and a positive finite scale on every mapped row. */
+export function validateCounterRegistry(
+  registry: readonly MonitorCounterMapping[] = MONITOR_COUNTER_REGISTRY,
+): readonly string[] {
+  const errors: string[] = [];
+  const seenIds = new Set<string>();
+  const seenAddresses = new Map<number, string>();
+  for (const c of registry) {
+    if (seenIds.has(c.id)) errors.push(`duplicate counter id ${c.id}`);
+    seenIds.add(c.id);
+    if (!Number.isInteger(c.counterAddress) || c.counterAddress < 0o30 || c.counterAddress > 0o60) {
+      errors.push(
+        `counter ${c.id} address 0o${c.counterAddress.toString(8)} outside the AGC counter block 0o30-0o60`,
+      );
+    }
+    const prev = seenAddresses.get(c.counterAddress);
+    if (prev !== undefined && prev !== c.id) {
+      errors.push(
+        `counter address 0o${c.counterAddress.toString(8)} claimed by both ${prev} and ${c.id}`,
+      );
+    }
+    seenAddresses.set(c.counterAddress, c.id);
+    if (c.incrementTypes.length === 0) {
+      errors.push(`counter ${c.id} declares no increment types`);
+    }
+    if (c.status === "mapped") {
+      if (c.unitPerPulse === null || !Number.isFinite(c.unitPerPulse) || c.unitPerPulse <= 0) {
+        errors.push(`mapped counter ${c.id} has no positive finite scale`);
+      }
+    } else if (c.unitPerPulse !== null) {
+      errors.push(`unresolved counter ${c.id} must not declare a scale`);
+    }
+  }
+  return errors;
+}
+
+
+// ---------------------------------------------------------------------------
 // Pure registry helpers
 // ---------------------------------------------------------------------------
 
