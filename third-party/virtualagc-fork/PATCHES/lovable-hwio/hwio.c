@@ -236,12 +236,12 @@ static void trace_sample_all(void) {
 
 export const char *
 agc_ext_version(void) {
-  return "ddc65e7be+apollo-browser-hwio-v3";
+  return "ddc65e7be+apollo-browser-hwio-v4";
 }
 
 export uint32_t
 agc_hwio_version(void) {
-  return 3u;
+  return 4u;
 }
 
 export uint32_t

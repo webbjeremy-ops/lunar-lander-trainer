@@ -9,7 +9,7 @@
  	-L ${WASI_SDK_PATH}/share/wasi-sysroot/lib/wasm32-wasi \
  	-lc \
  	--export=malloc \
-@@ -217,6 +217,29 @@
+@@ -217,6 +217,38 @@
  	wasm-opt $@ -Oz -o $@
  	wasm-strip $@
  
@@ -33,6 +33,15 @@
 +	  --export=agc_interrupt_in_service \
 +	  --export=agc_landing_radar_update_size \
 +	  --export=agc_landing_radar_update_apply
++	  --export=agc_pad_load_record_size \
++	  --export=agc_pad_load_max_records \
++	  --export=agc_pad_load_status \
++	  --export=agc_pad_load_applied_count \
++	  --export=agc_pad_load_last_error_index \
++	  --export=agc_pad_load_window_open \
++	  --export=agc_pad_load_window_close \
++	  --export=agc_erasable_pad_load_apply \
++	  --export=agc_erasable_read_word
 +	wasm-opt $@ -Oz -o $@
 +	wasm-strip $@
 +
