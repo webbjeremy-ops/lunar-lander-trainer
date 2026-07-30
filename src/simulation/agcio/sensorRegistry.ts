@@ -248,11 +248,11 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
     validStates: "unresolved",
     requiredForProfiles: ["descent-monitor-v1"],
   },
-  {
   // NOTE: `unresolved.pipa-increments` was REMOVED in M3.3C Phase 2. The
   // PIPA ΔV pulse weight is now resolved (1 pulse = 1.00 cm/s) and PIPA is
   // a COUNTER, not a discrete bit, so it lives in MONITOR_COUNTER_REGISTRY
   // below. See docs/M3_3C_PRIMARY_SOURCE_RESOLUTION.md.
+
 
   {
     id: "unresolved.cdu-angles",
