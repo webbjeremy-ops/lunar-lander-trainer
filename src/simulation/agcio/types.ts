@@ -110,7 +110,7 @@ export interface MonitorBlockReason {
 // ---------------------------------------------------------------------------
 
 /**
- * yaAGC-ext HW-I/O v2 unprogrammed-increment types. Values MUST match the
+ * yaAGC-ext HW-I/O v3 unprogrammed-increment types. Values MUST match the
  * `AgcIncType` enum in `third-party/virtualagc-fork/PATCHES/lovable-hwio/
  * hwio.c` verbatim (see `docs/M3_3A2_P2.md`); they are exchanged with the
  * WASM as u16 tags in the batched hardware-input path.
@@ -252,7 +252,7 @@ export interface AgcOutputChannelEvent {
   readonly valueBefore: number | null;
 }
 
-/** One losslessly observed output-counter operation from the HW-I/O v2
+/** One losslessly observed output-counter operation from the HW-I/O v3
  *  trace ring (`AgcOutputTraceEntry`). `operation` is the NATIVE identifier
  *  (0 = AGC store/WRITE, otherwise the yaAGC IncType id) — it is preserved
  *  verbatim and never relabelled. */

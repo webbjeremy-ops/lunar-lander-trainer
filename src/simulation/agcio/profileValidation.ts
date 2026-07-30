@@ -84,7 +84,7 @@ export type MonitorEntryDecision =
  *
  * `off` is always allowed (it is the frozen-M3.2 baseline). Any non-off
  * profile requires the full set of preconditions listed in the P5 spec §2:
- * canonical HW-I/O v2, Luminary099 rope, AGC ready, matching epochs, active
+ * canonical HW-I/O v3, Luminary099 rope, AGC ready, matching epochs, active
  * compatible scenario, trace currently disabled.
  *
  * `descent-monitor-v1` additionally reports the unresolved LR range /

@@ -43,7 +43,7 @@ export interface ActuatorSignalMapping {
 /** Channel-word width in the AGC: 15 bits. */
 export const AGC_CHANNEL_WORD_MASK = 0o77777;
 
-/** Output-counter addresses the HW-I/O v2 capability table exposes with
+/** Output-counter addresses the HW-I/O v3 capability table exposes with
  *  ROLE_OBSERVABLE_OUT. P5.c decodes THRUST only. */
 export const OBSERVABLE_OUTPUT_COUNTER_ADDRESSES: readonly number[] = [0o55];
 

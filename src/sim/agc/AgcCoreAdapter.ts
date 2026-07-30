@@ -128,7 +128,7 @@ const HW_INPUT_RECORD_BYTES = 12;
 export const AGC_HW_INPUT_MAX_RECORDS = 256;
 
 
-/** One drained HW-I/O v2 output-counter observation, decoded from the
+/** One drained HW-I/O v3 output-counter observation, decoded from the
  *  32-byte `AgcOutputTraceEntry` record. Field order/semantics mirror
  *  `third-party/virtualagc-fork/PATCHES/lovable-hwio/hwio.c`. */
 export interface AgcOutTraceRecord {
@@ -249,7 +249,7 @@ export class AgcCoreAdapter {
     };
   }
 
-  // ---- M3.3A2-P5.d HW-I/O v2 monitor surface ---------------------------
+  // ---- M3.3A2-P5.d HW-I/O v3 monitor surface ---------------------------
   //
   // These wrappers are the ONLY way Worker code touches the trace ABI.
   // They are inert unless explicitly invoked: production boots dormant and

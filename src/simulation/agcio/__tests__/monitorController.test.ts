@@ -28,7 +28,7 @@ class FakePort implements MonitorHwPort {
   dropped = 0;
   pending: AgcOutputCounterEvent[] = [];
   writes: { channel: number; word: number }[] = [];
-  hwio = 2;
+  hwio = 3;
 
   private rec(name: string, ...args: unknown[]) {
     this.calls.push({ name, args });
@@ -71,7 +71,7 @@ function ctx(over: Partial<MonitorEntryContext> = {}): MonitorEntryContext {
     simulationEpoch: 1,
     agcSessionEpoch: 0,
     agcReady: true,
-    hwioVersion: 2,
+    hwioVersion: 3,
     ropeId: "Luminary099",
     ropeSha256: "a".repeat(64),
     runtimeStatus: "running",
@@ -161,7 +161,7 @@ describe("MonitorController — atomic entry", () => {
     expect(port.enabled).toBe(false);
   });
 
-  it("blocks entry when the runtime is not HW-I/O v2", () => {
+  it("blocks entry when the runtime is not HW-I/O v3", () => {
     port.hwio = 0;
     const r = mc.requestProfile("discrete-observer-v0", ctx({ hwioVersion: 0 }), AVIONICS);
     expect(r.outcome).toBe("blocked");

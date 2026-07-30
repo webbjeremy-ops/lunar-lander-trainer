@@ -8,7 +8,7 @@
 //   * production requests /agc/yaAGC-ext.wasm exactly once;
 //   * production NEVER requests the frozen /agc/yaAGC.wasm;
 //   * exactly one Worker boots for the whole session;
-//   * the extended runtime reports HW-I/O v2 through
+//   * the extended runtime reports HW-I/O v3 through
 //     `agc:extension-ready`, with traceEnabled=false, traceDropped=0;
 //   * navigating /learn → /explore → /sim → /dev/mission-runtime preserves
 //     the same Worker instance (no re-boot, no second WASM fetch);
@@ -41,10 +41,10 @@ interface AgcTestSnapshot {
 }
 
 const CANONICAL_SHA =
-  "aec84b4736b2a8f80709d6a8c8ccceec51f1f3955144a9fad771118c9a21262e";
+  "8cac2dc90d4896caa5f80888d4334616e5357b58f45233f6b27599e68a4b85cf";
 
 test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
-  test("browser fetches ONLY yaAGC-ext.wasm and reports HW-I/O v2 across routes", async ({
+  test("browser fetches ONLY yaAGC-ext.wasm and reports HW-I/O v3 across routes", async ({
     page,
   }) => {
     const wasmRequests: string[] = [];
