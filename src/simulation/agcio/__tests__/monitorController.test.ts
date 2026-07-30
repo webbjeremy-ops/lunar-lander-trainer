@@ -71,7 +71,7 @@ function ctx(over: Partial<MonitorEntryContext> = {}): MonitorEntryContext {
     simulationEpoch: 1,
     agcSessionEpoch: 0,
     agcReady: true,
-    hwioVersion: 3,
+    hwioVersion: 4,
     ropeId: "Luminary099",
     ropeSha256: "a".repeat(64),
     runtimeStatus: "running",
@@ -161,7 +161,7 @@ describe("MonitorController — atomic entry", () => {
     expect(port.enabled).toBe(false);
   });
 
-  it("blocks entry when the runtime is not HW-I/O v3", () => {
+  it("blocks entry when the runtime is not HW-I/O v4", () => {
     port.hwio = 0;
     const r = mc.requestProfile("discrete-observer-v0", ctx({ hwioVersion: 0 }), AVIONICS);
     expect(r.outcome).toBe("blocked");
