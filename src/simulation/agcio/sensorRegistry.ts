@@ -387,7 +387,8 @@ export const MONITOR_COUNTER_REGISTRY: readonly MonitorCounterMapping[] = [
     physicalMeaning: "IMU CDU inner-gimbal angle increment.",
     sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
     hardwarePath: "agc_hw_input_apply — PCDU/MCDU on 0o32",
-    validStates: "unresolved — CDU drain budget unproven",
+    validStates:
+      "Counter word representation PROVEN in M3.3C Phase 4A (15-bit two's complement, 180 deg full scale, 180/2^14 deg per count); a FIXED attitude requires no pulses (SERVICER.agc:570-581 reads without draining). UNRESOLVED: pulse-rate limit and drain budget for a CHANGING attitude.",
     requiredForProfiles: ["descent-monitor-v1"],
   },
   {
@@ -401,7 +402,8 @@ export const MONITOR_COUNTER_REGISTRY: readonly MonitorCounterMapping[] = [
     physicalMeaning: "IMU CDU middle-gimbal angle increment.",
     sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
     hardwarePath: "agc_hw_input_apply — PCDU/MCDU on 0o33",
-    validStates: "unresolved — CDU drain budget unproven",
+    validStates:
+      "Counter word representation PROVEN in M3.3C Phase 4A (15-bit two's complement, 180 deg full scale, 180/2^14 deg per count); a FIXED attitude requires no pulses (SERVICER.agc:570-581 reads without draining). UNRESOLVED: pulse-rate limit and drain budget for a CHANGING attitude.",
     requiredForProfiles: ["descent-monitor-v1"],
   },
   {
@@ -415,7 +417,8 @@ export const MONITOR_COUNTER_REGISTRY: readonly MonitorCounterMapping[] = [
     physicalMeaning: "IMU CDU outer-gimbal angle increment.",
     sourceCitation: "docs/M3_3_IO_MAP.md#row-4",
     hardwarePath: "agc_hw_input_apply — PCDU/MCDU on 0o34",
-    validStates: "unresolved — CDU drain budget unproven",
+    validStates:
+      "Counter word representation PROVEN in M3.3C Phase 4A (15-bit two's complement, 180 deg full scale, 180/2^14 deg per count); a FIXED attitude requires no pulses (SERVICER.agc:570-581 reads without draining). UNRESOLVED: pulse-rate limit and drain budget for a CHANGING attitude.",
     requiredForProfiles: ["descent-monitor-v1"],
   },
 ] as const;
