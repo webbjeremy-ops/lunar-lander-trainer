@@ -227,6 +227,23 @@ export function decideMonitorEntry(
         reference: u.sourceCitation,
       });
     }
+    // Counter table (M3.3C): structural integrity + every required counter
+    // must carry a source-proven scale.
+    for (const err of validateCounterRegistry()) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `counter registry: ${err}`,
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+    for (const c of unresolvedCountersForProfile(profile)) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `${c.id}: ${c.physicalMeaning}`,
+        reference: c.sourceCitation,
+      });
+    }
+
     // Fallback: hand-maintained block list is applied in addition, so a
     // policy-level block (e.g. CDU drain budget) can persist even after
     // registry rows are marked mapped.
