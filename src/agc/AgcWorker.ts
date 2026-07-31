@@ -62,6 +62,7 @@ import {
 import { MonitorController, type MonitorHwPort } from "@/simulation/agcio/MonitorController";
 import { validateSetMonitorProfileCommand } from "@/simulation/agcio/profileValidation";
 import { EXPECTED_ACTUATOR_CHANNELS } from "@/simulation/agcio/actuatorRegistry";
+import { CHAN13_ADDRESS, type Chan13Write } from "@/simulation/agcio/chan13Requests";
 import { MONITOR_TRACE_CAPACITY } from "@/simulation/agcio/monitorTrace";
 import { applyFixedAttitudeImuBootstrapV1 } from "@/simulation/agcio/bootstrapTransaction";
 import { LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1 } from "@/simulation/agcio/padLoadManifest";
@@ -381,6 +382,7 @@ const state: WorkerState = {
   monitorCommandQueue: [],
   imuBootstrapAgcEpoch: null,
   tickChannelEvents: [],
+  tickChan13Writes: [],
   channelObservationSeq: 0,
 };
 
