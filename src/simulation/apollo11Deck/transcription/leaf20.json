@@ -1,0 +1,1459 @@
+{
+ "leaf": 20,
+ "records": [
+  {
+   "seq": 1,
+   "layout": "b",
+   "symbol": {
+    "pass1": "ADIAX",
+    "pass2": "ADIAX",
+    "agreed": true,
+    "final": "ADIAX"
+   },
+   "addressOctal": {
+    "pass1": "001463",
+    "pass2": "001463",
+    "agreed": true,
+    "final": "001463"
+   },
+   "wordOctal": {
+    "pass1": "00404",
+    "pass2": "00404",
+    "agreed": true,
+    "final": "00404"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t0"
+  },
+  {
+   "seq": 2,
+   "layout": "b",
+   "symbol": {
+    "pass1": "ADIAY",
+    "pass2": "ADIAY",
+    "agreed": true,
+    "final": "ADIAY"
+   },
+   "addressOctal": {
+    "pass1": "001464",
+    "pass2": "001464",
+    "agreed": true,
+    "final": "001464"
+   },
+   "wordOctal": {
+    "pass1": "00114",
+    "pass2": "00114",
+    "agreed": true,
+    "final": "00114"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t0"
+  },
+  {
+   "seq": 3,
+   "layout": "b",
+   "symbol": {
+    "pass1": "ADIAZ",
+    "pass2": "ADIAZ",
+    "agreed": true,
+    "final": "ADIAZ"
+   },
+   "addressOctal": {
+    "pass1": "001465",
+    "pass2": "001465",
+    "agreed": true,
+    "final": "001465"
+   },
+   "wordOctal": {
+    "pass1": "77661",
+    "pass2": "77661",
+    "agreed": true,
+    "final": "77661"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t0"
+  },
+  {
+   "seq": 4,
+   "layout": "b",
+   "symbol": {
+    "pass1": "ADSRAX",
+    "pass2": "ADSRAX",
+    "agreed": true,
+    "final": "ADSRAX"
+   },
+   "addressOctal": {
+    "pass1": "001466",
+    "pass2": "001466",
+    "agreed": true,
+    "final": "001466"
+   },
+   "wordOctal": {
+    "pass1": "00234",
+    "pass2": "00234",
+    "agreed": true,
+    "final": "00234"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t0"
+  },
+  {
+   "seq": 5,
+   "layout": "b",
+   "symbol": {
+    "pass1": "ADSRAY",
+    "pass2": "ADSRAY",
+    "agreed": true,
+    "final": "ADSRAY"
+   },
+   "addressOctal": {
+    "pass1": "001467",
+    "pass2": "001467",
+    "agreed": true,
+    "final": "001467"
+   },
+   "wordOctal": {
+    "pass1": "77575",
+    "pass2": "77575",
+    "agreed": true,
+    "final": "77575"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t0"
+  },
+  {
+   "seq": 6,
+   "layout": "b",
+   "symbol": {
+    "pass1": "ADSRAZ",
+    "pass2": "ADSRAZ",
+    "agreed": true,
+    "final": "ADSRAZ"
+   },
+   "addressOctal": {
+    "pass1": "001470",
+    "pass2": "001470",
+    "agreed": true,
+    "final": "001470"
+   },
+   "wordOctal": {
+    "pass1": "77575",
+    "pass2": "77575",
+    "agreed": true,
+    "final": "77575"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t0"
+  },
+  {
+   "seq": 7,
+   "layout": "a",
+   "symbol": {
+    "pass1": "TEPHEM",
+    "pass2": "TEPHEM",
+    "agreed": true,
+    "final": "TEPHEM"
+   },
+   "addressOctal": {
+    "pass1": "001706",
+    "pass2": "001706",
+    "agreed": true,
+    "final": "001706"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "134472000 CS",
+    "pass2": "134472000 CS",
+    "agreed": true,
+    "final": "134472000 CS"
+   },
+   "scaling": {
+    "pass1": "B-42",
+    "pass2": "B-42",
+    "agreed": true,
+    "final": "B-42"
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t0/t1"
+  },
+  {
+   "seq": 8,
+   "layout": "a",
+   "symbol": {
+    "pass1": "TEPHEM+1",
+    "pass2": "TEPHEM+1",
+    "agreed": true,
+    "final": "TEPHEM+1"
+   },
+   "addressOctal": {
+    "pass1": "001707",
+    "pass2": "001707",
+    "agreed": true,
+    "final": "001707"
+   },
+   "wordOctal": {
+    "pass1": "20017",
+    "pass2": "20017",
+    "agreed": true,
+    "final": "20017"
+   },
+   "printedDecoded": {
+    "pass1": "FOR LIFTOFF",
+    "pass2": "FOR LIFTOFF",
+    "agreed": true,
+    "final": "FOR LIFTOFF"
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 9,
+   "layout": "a",
+   "symbol": {
+    "pass1": "TEPHEM+2",
+    "pass2": "TEPHEM+2",
+    "agreed": true,
+    "final": "TEPHEM+2"
+   },
+   "addressOctal": {
+    "pass1": "001710",
+    "pass2": "001710",
+    "agreed": true,
+    "final": "001710"
+   },
+   "wordOctal": {
+    "pass1": "20500",
+    "pass2": "20500",
+    "agreed": true,
+    "final": "20500"
+   },
+   "printedDecoded": {
+    "pass1": "ON JULY 16, 1969",
+    "pass2": "ON JULY 16, 1969",
+    "agreed": true,
+    "final": "ON JULY 16, 1969"
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 10,
+   "layout": "a",
+   "symbol": {
+    "pass1": "AZO",
+    "pass2": "AZO",
+    "agreed": true,
+    "final": "AZO"
+   },
+   "addressOctal": {
+    "pass1": "001711",
+    "pass2": "001711",
+    "agreed": true,
+    "final": "001711"
+   },
+   "wordOctal": {
+    "pass1": "30624",
+    "pass2": "30624",
+    "agreed": true,
+    "final": "30624"
+   },
+   "printedDecoded": {
+    "pass1": "0.7746616521 REV",
+    "pass2": "0.7746616521 REV",
+    "agreed": true,
+    "final": "0.7746616521 REV"
+   },
+   "scaling": {
+    "pass1": "B-00",
+    "pass2": "B-00",
+    "agreed": true,
+    "final": "B-00"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 11,
+   "layout": "a",
+   "symbol": {
+    "pass1": "AZO+1",
+    "pass2": "AZO+1",
+    "agreed": true,
+    "final": "AZO+1"
+   },
+   "addressOctal": {
+    "pass1": "001712",
+    "pass2": "001712",
+    "agreed": true,
+    "final": "001712"
+   },
+   "wordOctal": {
+    "pass1": "01636",
+    "pass2": "01636",
+    "agreed": true,
+    "final": "01636"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 12,
+   "layout": "a",
+   "symbol": {
+    "pass1": "-AYO",
+    "pass2": "-AYO",
+    "agreed": true,
+    "final": "-AYO"
+   },
+   "addressOctal": {
+    "pass1": "001713",
+    "pass2": "001713",
+    "agreed": true,
+    "final": "001713"
+   },
+   "wordOctal": {
+    "pass1": "77777",
+    "pass2": "77777",
+    "agreed": true,
+    "final": "77777"
+   },
+   "printedDecoded": {
+    "pass1": "-.0000395943",
+    "pass2": "-.0000395943",
+    "agreed": true,
+    "final": "-.0000395943"
+   },
+   "scaling": {
+    "pass1": "B+00",
+    "pass2": "B+00",
+    "agreed": true,
+    "final": "B+00"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 13,
+   "layout": "a",
+   "symbol": {
+    "pass1": "-AYO+1",
+    "pass2": "-AYO+1",
+    "agreed": true,
+    "final": "-AYO+1"
+   },
+   "addressOctal": {
+    "pass1": "001714",
+    "pass2": "001714",
+    "agreed": true,
+    "final": "001714"
+   },
+   "wordOctal": {
+    "pass1": "53172",
+    "pass2": "53172",
+    "agreed": true,
+    "final": "53172"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 14,
+   "layout": "a",
+   "symbol": {
+    "pass1": "AXO",
+    "pass2": "AXO",
+    "agreed": true,
+    "final": "AXO"
+   },
+   "addressOctal": {
+    "pass1": "001715",
+    "pass2": "001715",
+    "agreed": true,
+    "final": "001715"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": ".0000421325",
+    "pass2": ".0000421325",
+    "agreed": true,
+    "final": ".0000421325"
+   },
+   "scaling": {
+    "pass1": "B+00",
+    "pass2": "B+00",
+    "agreed": true,
+    "final": "B+00"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 15,
+   "layout": "a",
+   "symbol": {
+    "pass1": "AXO+1",
+    "pass2": "AXO+1",
+    "agreed": true,
+    "final": "AXO+1"
+   },
+   "addressOctal": {
+    "pass1": "001716",
+    "pass2": "001716",
+    "agreed": true,
+    "final": "001716"
+   },
+   "wordOctal": {
+    "pass1": "26056",
+    "pass2": "26056",
+    "agreed": true,
+    "final": "26056"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t1"
+  },
+  {
+   "seq": 16,
+   "layout": "a",
+   "symbol": {
+    "pass1": "505LM",
+    "pass2": "505LM",
+    "agreed": true,
+    "final": "505LM"
+   },
+   "addressOctal": {
+    "pass1": "002012",
+    "pass2": "002012",
+    "agreed": true,
+    "final": "002012"
+   },
+   "wordOctal": {
+    "pass1": "77775",
+    "pass2": "77775",
+    "agreed": true,
+    "final": "77775"
+   },
+   "printedDecoded": {
+    "pass1": "-.17077475786 RAD",
+    "pass2": "-.17077475786 RAD",
+    "agreed": true,
+    "final": "-.17077475786 RAD"
+   },
+   "scaling": {
+    "pass1": "E-3 B+00",
+    "pass2": "E-3 B+00",
+    "agreed": true,
+    "final": "E-3 B+00"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t1/t2"
+  },
+  {
+   "seq": 17,
+   "layout": "a",
+   "symbol": {
+    "pass1": "505LM+1",
+    "pass2": "505LM+1",
+    "agreed": true,
+    "final": "505LM+1"
+   },
+   "addressOctal": {
+    "pass1": "002013",
+    "pass2": "002013",
+    "agreed": true,
+    "final": "002013"
+   },
+   "wordOctal": {
+    "pass1": "46355",
+    "pass2": "46355",
+    "agreed": true,
+    "final": "46355"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 18,
+   "layout": "a",
+   "symbol": {
+    "pass1": "505LM+2",
+    "pass2": "505LM+2",
+    "agreed": true,
+    "final": "505LM+2"
+   },
+   "addressOctal": {
+    "pass1": "002014",
+    "pass2": "002014",
+    "agreed": true,
+    "final": "002014"
+   },
+   "wordOctal": {
+    "pass1": "77766",
+    "pass2": "77766",
+    "agreed": true,
+    "final": "77766"
+   },
+   "printedDecoded": {
+    "pass1": "-.55982545018 RAD",
+    "pass2": "-.55982545018 RAD",
+    "agreed": true,
+    "final": "-.55982545018 RAD"
+   },
+   "scaling": {
+    "pass1": "E-3 B+00",
+    "pass2": "E-3 B+00",
+    "agreed": true,
+    "final": "E-3 B+00"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 19,
+   "layout": "a",
+   "symbol": {
+    "pass1": "505LM+3",
+    "pass2": "505LM+3",
+    "agreed": true,
+    "final": "505LM+3"
+   },
+   "addressOctal": {
+    "pass1": "002015",
+    "pass2": "002015",
+    "agreed": true,
+    "final": "002015"
+   },
+   "wordOctal": {
+    "pass1": "72372",
+    "pass2": "72372",
+    "agreed": true,
+    "final": "72372"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 20,
+   "layout": "a",
+   "symbol": {
+    "pass1": "505LM+4",
+    "pass2": "505LM+4",
+    "agreed": true,
+    "final": "505LM+4"
+   },
+   "addressOctal": {
+    "pass1": "002016",
+    "pass2": "002016",
+    "agreed": true,
+    "final": "002016"
+   },
+   "wordOctal": {
+    "pass1": "77777",
+    "pass2": "77777",
+    "agreed": true,
+    "final": "77777"
+   },
+   "printedDecoded": {
+    "pass1": "-.40609389544RAD",
+    "pass2": "-.40609389544RAD",
+    "agreed": true,
+    "final": "-.40609389544RAD"
+   },
+   "scaling": {
+    "pass1": "E-4 B+00",
+    "pass2": "E-4 B+00",
+    "agreed": true,
+    "final": "E-4 B+00"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 21,
+   "layout": "a",
+   "symbol": {
+    "pass1": "505LM+5",
+    "pass2": "505LM+5",
+    "agreed": true,
+    "final": "505LM+5"
+   },
+   "addressOctal": {
+    "pass1": "002017",
+    "pass2": "002017",
+    "agreed": true,
+    "final": "002017"
+   },
+   "wordOctal": {
+    "pass1": "52552",
+    "pass2": "52552",
+    "agreed": true,
+    "final": "52552"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "other",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 22,
+   "layout": "a",
+   "symbol": {
+    "pass1": "HIASCENT",
+    "pass2": "HIASCENT",
+    "agreed": true,
+    "final": "HIASCENT"
+   },
+   "addressOctal": {
+    "pass1": "003000",
+    "pass2": "003000",
+    "agreed": true,
+    "final": "003000"
+   },
+   "wordOctal": {
+    "pass1": "02350",
+    "pass2": "02350",
+    "agreed": true,
+    "final": "02350"
+   },
+   "printedDecoded": {
+    "pass1": "5023.6 KG",
+    "pass2": "5023.6 KG",
+    "agreed": true,
+    "final": "5023.6 KG"
+   },
+   "scaling": {
+    "pass1": "B-16",
+    "pass2": "B-16",
+    "agreed": true,
+    "final": "B-16"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 23,
+   "layout": "b",
+   "symbol": {
+    "pass1": "FLAGWRD3",
+    "pass2": "FLAGWRD3",
+    "agreed": true,
+    "final": "FLAGWRD3"
+   },
+   "addressOctal": {
+    "pass1": "000077",
+    "pass2": "000077",
+    "agreed": true,
+    "final": "000077"
+   },
+   "wordOctal": {
+    "pass1": "10000",
+    "pass2": "10000",
+    "agreed": true,
+    "final": "10000"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t2"
+  },
+  {
+   "seq": 24,
+   "layout": "b",
+   "symbol": {
+    "pass1": "FLAGWRD8",
+    "pass2": "FLAGWRD8",
+    "agreed": true,
+    "final": "FLAGWRD8"
+   },
+   "addressOctal": {
+    "pass1": "000104",
+    "pass2": "000104",
+    "agreed": true,
+    "final": "000104"
+   },
+   "wordOctal": {
+    "pass1": "06000",
+    "pass2": "06000",
+    "agreed": true,
+    "final": "06000"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t2/t3"
+  },
+  {
+   "seq": 25,
+   "layout": "b",
+   "symbol": {
+    "pass1": "FLGWRD10",
+    "pass2": "FLGWRD10",
+    "agreed": true,
+    "final": "FLGWRD10"
+   },
+   "addressOctal": {
+    "pass1": "000106",
+    "pass2": "000106",
+    "agreed": true,
+    "final": "000106"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 26,
+   "layout": "b",
+   "symbol": {
+    "pass1": "MASS",
+    "pass2": "MASS",
+    "agreed": true,
+    "final": "MASS"
+   },
+   "addressOctal": {
+    "pass1": "001244",
+    "pass2": "001244",
+    "agreed": true,
+    "final": "001244"
+   },
+   "wordOctal": {
+    "pass1": "07313",
+    "pass2": "07313",
+    "agreed": true,
+    "final": "07313"
+   },
+   "printedDecoded": {
+    "pass1": "+15148",
+    "pass2": "+15148",
+    "agreed": true,
+    "final": "+15148"
+   },
+   "scaling": {
+    "pass1": "B-16",
+    "pass2": "B-16",
+    "agreed": true,
+    "final": "B-16"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 27,
+   "layout": "b",
+   "symbol": {
+    "pass1": "LEMMASS",
+    "pass2": "LEMMASS",
+    "agreed": true,
+    "final": "LEMMASS"
+   },
+   "addressOctal": {
+    "pass1": "001331",
+    "pass2": "001331",
+    "agreed": true,
+    "final": "001331"
+   },
+   "wordOctal": {
+    "pass1": "07313",
+    "pass2": "07313",
+    "agreed": true,
+    "final": "07313"
+   },
+   "printedDecoded": {
+    "pass1": "+15148",
+    "pass2": "+15148",
+    "agreed": true,
+    "final": "+15148"
+   },
+   "scaling": {
+    "pass1": "B-16",
+    "pass2": "B-16",
+    "agreed": true,
+    "final": "B-16"
+   },
+   "format": "DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 28,
+   "layout": "b",
+   "symbol": {
+    "pass1": "TLAND",
+    "pass2": "TLAND",
+    "agreed": true,
+    "final": "TLAND"
+   },
+   "addressOctal": {
+    "pass1": "002400",
+    "pass2": "002400",
+    "agreed": true,
+    "final": "002400"
+   },
+   "wordOctal": {
+    "pass1": "04321",
+    "pass2": "04321",
+    "agreed": true,
+    "final": "04321"
+   },
+   "printedDecoded": {
+    "pass1": "+36987400",
+    "pass2": "+36987400",
+    "agreed": true,
+    "final": "+36987400"
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 29,
+   "layout": "b",
+   "symbol": {
+    "pass1": "RLS",
+    "pass2": "RLS",
+    "agreed": true,
+    "final": "RLS"
+   },
+   "addressOctal": {
+    "pass1": "002022",
+    "pass2": "002022",
+    "agreed": true,
+    "final": "002022"
+   },
+   "wordOctal": {
+    "pass1": "00302",
+    "pass2": "00302",
+    "agreed": true,
+    "final": "00302"
+   },
+   "printedDecoded": {
+    "pass1": "1589467",
+    "pass2": "1589467",
+    "agreed": true,
+    "final": "1589467"
+   },
+   "scaling": {
+    "pass1": "B-27",
+    "pass2": "B-27",
+    "agreed": true,
+    "final": "B-27"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 30,
+   "layout": "b",
+   "symbol": {
+    "pass1": "RLS+2",
+    "pass2": "RLS+2",
+    "agreed": true,
+    "final": "RLS+2"
+   },
+   "addressOctal": {
+    "pass1": "002024",
+    "pass2": "002024",
+    "agreed": true,
+    "final": "002024"
+   },
+   "wordOctal": {
+    "pass1": "00125",
+    "pass2": "00125",
+    "agreed": true,
+    "final": "00125"
+   },
+   "printedDecoded": {
+    "pass1": "697810",
+    "pass2": "697810",
+    "agreed": true,
+    "final": "697810"
+   },
+   "scaling": {
+    "pass1": "B-27",
+    "pass2": "B-27",
+    "agreed": true,
+    "final": "B-27"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 31,
+   "layout": "b",
+   "symbol": {
+    "pass1": "RLS+4",
+    "pass2": "RLS+4",
+    "agreed": true,
+    "final": "RLS+4"
+   },
+   "addressOctal": {
+    "pass1": "002026",
+    "pass2": "002026",
+    "agreed": true,
+    "final": "002026"
+   },
+   "wordOctal": {
+    "pass1": "00002",
+    "pass2": "00002",
+    "agreed": true,
+    "final": "00002"
+   },
+   "printedDecoded": {
+    "pass1": "23732",
+    "pass2": "23732",
+    "agreed": true,
+    "final": "23732"
+   },
+   "scaling": {
+    "pass1": "B-27",
+    "pass2": "B-27",
+    "agreed": true,
+    "final": "B-27"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 32,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT",
+    "pass2": "REFSMMAT",
+    "agreed": true,
+    "final": "REFSMMAT"
+   },
+   "addressOctal": {
+    "pass1": "001733",
+    "pass2": "001733",
+    "agreed": true,
+    "final": "001733"
+   },
+   "wordOctal": {
+    "pass1": "14370",
+    "pass2": "14370",
+    "agreed": true,
+    "final": "14370"
+   },
+   "printedDecoded": {
+    "pass1": "+.78031",
+    "pass2": "+.78031",
+    "agreed": true,
+    "final": "+.78031"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 33,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+2",
+    "pass2": "REFSMMAT+2",
+    "agreed": true,
+    "final": "REFSMMAT+2"
+   },
+   "addressOctal": {
+    "pass1": "001735",
+    "pass2": "001735",
+    "agreed": true,
+    "final": "001735"
+   },
+   "wordOctal": {
+    "pass1": "11160",
+    "pass2": "11160",
+    "agreed": true,
+    "final": "11160"
+   },
+   "printedDecoded": {
+    "pass1": "+.57625",
+    "pass2": "+.57625",
+    "agreed": true,
+    "final": "+.57625"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 34,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+4",
+    "pass2": "REFSMMAT+4",
+    "agreed": true,
+    "final": "REFSMMAT+4"
+   },
+   "addressOctal": {
+    "pass1": "001737",
+    "pass2": "001737",
+    "agreed": true,
+    "final": "001737"
+   },
+   "wordOctal": {
+    "pass1": "03706",
+    "pass2": "03706",
+    "agreed": true,
+    "final": "03706"
+   },
+   "printedDecoded": {
+    "pass1": "+.24299",
+    "pass2": "+.24299",
+    "agreed": true,
+    "final": "+.24299"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 35,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+6",
+    "pass2": "REFSMMAT+6",
+    "agreed": true,
+    "final": "REFSMMAT+6"
+   },
+   "addressOctal": {
+    "pass1": "001741",
+    "pass2": "001741",
+    "agreed": true,
+    "final": "001741"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0",
+    "pass2": "0",
+    "agreed": true,
+    "final": "0"
+   },
+   "scaling": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 36,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+8D",
+    "pass2": "REFSMMAT+8D",
+    "agreed": true,
+    "final": "REFSMMAT+8D"
+   },
+   "addressOctal": {
+    "pass1": "001743",
+    "pass2": "001743",
+    "agreed": true,
+    "final": "001743"
+   },
+   "wordOctal": {
+    "pass1": "71546",
+    "pass2": "71546",
+    "agreed": true,
+    "final": "71546"
+   },
+   "printedDecoded": {
+    "pass1": "-.39378",
+    "pass2": "-.39378",
+    "agreed": true,
+    "final": "-.39378"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 37,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+10D",
+    "pass2": "REFSMMAT+10D",
+    "agreed": true,
+    "final": "REFSMMAT+10D"
+   },
+   "addressOctal": {
+    "pass1": "001745",
+    "pass2": "001745",
+    "agreed": true,
+    "final": "001745"
+   },
+   "wordOctal": {
+    "pass1": "16552",
+    "pass2": "16552",
+    "agreed": true,
+    "final": "16552"
+   },
+   "printedDecoded": {
+    "pass1": "+.91919",
+    "pass2": "+.91919",
+    "agreed": true,
+    "final": "+.91919"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 38,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+12D",
+    "pass2": "REFSMMAT+12D",
+    "agreed": true,
+    "final": "REFSMMAT+12D"
+   },
+   "addressOctal": {
+    "pass1": "001747",
+    "pass2": "001747",
+    "agreed": true,
+    "final": "001747"
+   },
+   "wordOctal": {
+    "pass1": "12003",
+    "pass2": "12003",
+    "agreed": true,
+    "final": "12003"
+   },
+   "printedDecoded": {
+    "pass1": "+.62537",
+    "pass2": "+.62537",
+    "agreed": true,
+    "final": "+.62537"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  },
+  {
+   "seq": 39,
+   "layout": "b",
+   "symbol": {
+    "pass1": "REFSMMAT+14D",
+    "pass2": "REFSMMAT+14D",
+    "agreed": true,
+    "final": "REFSMMAT+14D"
+   },
+   "addressOctal": {
+    "pass1": "001751",
+    "pass2": "001751",
+    "agreed": true,
+    "final": "001751"
+   },
+   "wordOctal": {
+    "pass1": "64414",
+    "pass2": "64414",
+    "agreed": true,
+    "final": "64414"
+   },
+   "printedDecoded": {
+    "pass1": "-.71725",
+    "pass2": "-.71725",
+    "agreed": true,
+    "final": "-.71725"
+   },
+   "scaling": {
+    "pass1": "B-1",
+    "pass2": "B-1",
+    "agreed": true,
+    "final": "B-1"
+   },
+   "format": "2DEC",
+   "status": "verified",
+   "tile": "p1_l20_t3"
+  }
+ ],
+ "counts": {
+  "total": 39,
+  "verified": 39,
+  "conflict": 0,
+  "unreadable": 0
+ },
+ "header": {
+  "pass1": "LMY99  AGC  001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   /DUPLICATE LANDING   LAST SNAP   NONE  -- LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 17",
+  "pass2": "LMY99  AGC  001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   /DUPLICATE LANDING   LAST SNAP   NONE  -- LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 17"
+ },
+ "notes": "All records confirmed identical across independent pass1 and pass2 readings of leaf 20 tiles. Layout 'a' records (IMU/AGS calibration terms TEPHEM, AZO, -AYO, AXO, 505LM series, HIASCENT) have symbol printed to the right on the R-line; the R-line's decoded word belongs to the following echo line's address, per instructions. Multi-word constants (TLAND, RLS, REFSMMAT) print only the first word's address/word/seq/count in the rightmost columns though decoded value may span two words; second word octal value captured in 'note' field of source record."
+}

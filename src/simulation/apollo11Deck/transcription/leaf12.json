@@ -1,0 +1,566 @@
+{
+  "leaf": 12,
+  "header": {
+    "pass1": "LRRADAR2.ENVCNTRL 07/23/69   14:43   PAGE   9 / LMY99  AGC  001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   /DUPLICATE LANDING   LAST SNAP  NONE",
+    "pass2": "LRRADAR2.ENVCNTRL 07/23/69   14:43   PAGE   9 / LMY99  AGC  001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   /DUPLICATE LANDING   LAST SNAP  NONE"
+  },
+  "lines": [
+    {
+      "ordinal": 1,
+      "rawLine": {
+        "pass1": "READACCS          CFDUMP                                    6.1  107441              0339     3",
+        "pass2": "READACCS          CFDUMP                                    6.1  107441              0339     3",
+        "agreed": true,
+        "final": "READACCS          CFDUMP                                    6.1  107441              0339     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 2,
+      "rawLine": {
+        "pass1": "READACCS   +1     DUMP     E6,1400         E6,1777          6.2  107442  03000  03377 0340     3",
+        "pass2": "READACCS   +1     DUMP     E6,1400         E6,1777          6.2  107442  03000  03377 0340     3",
+        "agreed": true,
+        "final": "READACCS   +1     DUMP     E6,1400         E6,1777          6.2  107442  03000  03377 0340     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 3,
+      "rawLine": {
+        "pass1": "PIPASR            DUMP                                     10.1  107541  *DUMPS NOTHING* 0341   3",
+        "pass2": "PIPASR            DUMP                                     10.1  107541  *DUMPS NOTHING* 0341   3",
+        "agreed": true,
+        "final": "PIPASR            DUMP                                     10.1  107541  *DUMPS NOTHING* 0341   3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 4,
+      "rawLine": {
+        "pass1": "WARNING4000       DUMP                                     10.2  004000  *DUMPS NOTHING* 0342   3",
+        "pass2": "WARNING4000       DUMP                                     10.2  004000  *DUMPS NOTHING* 0342   3",
+        "agreed": true,
+        "final": "WARNING4000       DUMP                                     10.2  004000  *DUMPS NOTHING* 0342   3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 5,
+      "rawLine": {
+        "pass1": "R          END       BANDIT",
+        "pass2": "R          END       BANDIT",
+        "agreed": true,
+        "final": "R          END       BANDIT"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 6,
+      "rawLine": {
+        "pass1": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "pass2": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "agreed": true,
+        "final": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 7,
+      "rawLine": {
+        "pass1": "R                    INSERT    REALAN",
+        "pass2": "R                    INSERT    REALAN",
+        "agreed": true,
+        "final": "R                    INSERT    REALAN"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 8,
+      "rawLine": {
+        "pass1": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "pass2": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "agreed": true,
+        "final": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 9,
+      "rawLine": {
+        "pass1": "R  CREATED ON 07/22/69 AT 15'46'32",
+        "pass2": "R  CREATED ON 07/22/69 AT 15'46'32",
+        "agreed": true,
+        "final": "R  CREATED ON 07/22/69 AT 15'46'32"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 10,
+      "rawLine": {
+        "pass1": "R          ****************************************************************",
+        "pass2": "R          ****************************************************************",
+        "agreed": true,
+        "final": "R          ****************************************************************"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 11,
+      "rawLine": {
+        "pass1": "R          THE DATA SET TRIES TO MATCH THE LOAD USED IN SPACE",
+        "pass2": "R          THE DATA SET TRIES TO MATCH THE LOAD USED IN SPACE",
+        "agreed": true,
+        "final": "R          THE DATA SET TRIES TO MATCH THE LOAD USED IN SPACE"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 12,
+      "rawLine": {
+        "pass1": "R          ****************************************************************",
+        "pass2": "R          ****************************************************************",
+        "agreed": true,
+        "final": "R          ****************************************************************"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 13,
+      "rawLine": {
+        "pass1": "R          SOME APPROPRIATE ENVIRONMENT CARDS ARE REPRODUCED BELOW",
+        "pass2": "R          SOME APPROPRIATE ENVIRONMENT CARDS ARE REPRODUCED BELOW",
+        "agreed": true,
+        "final": "R          SOME APPROPRIATE ENVIRONMENT CARDS ARE REPRODUCED BELOW"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 14,
+      "rawLine": {
+        "pass1": "R          2, 1, 504, -2029, 0.778, 23.702",
+        "pass2": "R          2, 1, 504, -2029, 0.778, 23.702",
+        "agreed": true,
+        "final": "R          2, 1, 504, -2029, 0.778, 23.702"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 15,
+      "rawLine": {
+        "pass1": "R  UNI1    11, 15.56434836, 2, -1276990, +1148608, +497555.5",
+        "pass2": "R  UNI1    11, 15.56434836, 2, -1276990, +1148608, +497555.5",
+        "agreed": true,
+        "final": "R  UNI1    11, 15.56434836, 2, -1276990, +1148608, +497555.5"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 16,
+      "rawLine": {
+        "pass1": "R  UNI2    11, 368438.00, 0, 1191, 1062, 456",
+        "pass2": "R  UNI2    11, 368438.00, 0, 1191, 1062, 456",
+        "agreed": true,
+        "final": "R  UNI2    11, 368438.00, 0, 1191, 1062, 456"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 17,
+      "rawLine": {
+        "pass1": "R  UNI3    11, 0, 1, 0, 0, 0",
+        "pass2": "R  UNI3    11, 0, 1, 0, 0, 0",
+        "agreed": true,
+        "final": "R  UNI3    11, 0, 1, 0, 0, 0"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 18,
+      "rawLine": {
+        "pass1": "R  IMU3    270, -17.2965784754, +35.1872175359, +118.804440134, 0, 999999999",
+        "pass2": "R  IMU3    270, -17.2965784754, +35.1872175359, +118.804440134, 0, 999999999",
+        "agreed": true,
+        "final": "R  IMU3    270, -17.2965784754, +35.1872175359, +118.804440134, 0, 999999999"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 19,
+      "rawLine": {
+        "pass1": "R  IMU4    270, -1.6, +3.8, +4.4, +10.3, +3.0",
+        "pass2": "R  IMU4    270, -1.6, +3.8, +4.4, +10.3, +3.0",
+        "agreed": true,
+        "final": "R  IMU4    270, -1.6, +3.8, +4.4, +10.3, +3.0"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 20,
+      "rawLine": {
+        "pass1": "R  IMU5    270, -3.0, +5.7, -5.0, -5.0, +.66",
+        "pass2": "R  IMU5    270, -3.0, +5.7, -5.0, -5.0, +.66",
+        "agreed": true,
+        "final": "R  IMU5    270, -3.0, +5.7, -5.0, -5.0, +.66"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 21,
+      "rawLine": {
+        "pass1": "R  IMU6    270, +0.1, +0.2, -267, -1149, -620",
+        "pass2": "R  IMU6    270, +0.1, +0.2, -267, -1149, -620",
+        "agreed": true,
+        "final": "R  IMU6    270, +0.1, +0.2, -267, -1149, -620"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 22,
+      "rawLine": {
+        "pass1": "R          ****************************************************************",
+        "pass2": "R          ****************************************************************",
+        "agreed": true,
+        "final": "R          ****************************************************************"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 23,
+      "rawLine": {
+        "pass1": "                    SNAP      50                                                              1",
+        "pass2": "                    SNAP      50                                                              1",
+        "agreed": true,
+        "final": "                    SNAP      50                                                              1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 24,
+      "rawLine": {
+        "pass1": "                    TLOSS     .1                                                              1",
+        "pass2": "                    TLOSS     .1                                                              1",
+        "agreed": true,
+        "final": "                    TLOSS     .1                                                              1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 25,
+      "rawLine": {
+        "pass1": "R  ACTUAL TLOSS IS THOUGHT TO HAVE BEEN NEAR 15 PERCENT THANKS TO THE RR",
+        "pass2": "R  ACTUAL TLOSS IS THOUGHT TO HAVE BEEN NEAR 15 PERCENT THANKS TO THE RR",
+        "agreed": true,
+        "final": "R  ACTUAL TLOSS IS THOUGHT TO HAVE BEEN NEAR 15 PERCENT THANKS TO THE RR"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 26,
+      "rawLine": {
+        "pass1": "                    RESUMENA                                                                  1",
+        "pass2": "                    RESUMENA                                                                  1",
+        "agreed": true,
+        "final": "                    RESUMENA                                                                  1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 27,
+      "rawLine": {
+        "pass1": "                    TELEM     2                                                               1",
+        "pass2": "                    TELEM     2                                                               1",
+        "agreed": true,
+        "final": "                    TELEM     2                                                               1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 28,
+      "rawLine": {
+        "pass1": "                    RPTLOCK   17                                                              1",
+        "pass2": "                    RPTLOCK   17                                                              1",
+        "agreed": true,
+        "final": "                    RPTLOCK   17                                                              1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 29,
+      "rawLine": {
+        "pass1": "                    ONPRINT   CLOCK                                                           1",
+        "pass2": "                    ONPRINT   CLOCK                                                           1",
+        "agreed": true,
+        "final": "                    ONPRINT   CLOCK                                                           1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 30,
+      "rawLine": {
+        "pass1": "ADVAN             ADVAN    3                               CONDITIONAL       013214           0343  3",
+        "pass2": "ADVAN             ADVAN    3                               CONDITIONAL       013214           0343  3",
+        "agreed": true,
+        "final": "ADVAN             ADVAN    3                               CONDITIONAL       013214           0343  3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 31,
+      "rawLine": {
+        "pass1": "NEWJOB            EQ       77777",
+        "pass2": "NEWJOB            EQ       77777",
+        "agreed": true,
+        "final": "NEWJOB            EQ       77777"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 32,
+      "rawLine": {
+        "pass1": "CDUZ              OCT      0                                                000034  00000     0344  2",
+        "pass2": "CDUZ              OCT      0                                                000034  00000     0344  2",
+        "agreed": true,
+        "final": "CDUZ              OCT      0                                                000034  00000     0344  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 33,
+      "rawLine": {
+        "pass1": "DSPTAB     +11D   OCT      0                                                001036  00000     0345  2",
+        "pass2": "DSPTAB     +11D   OCT      0                                                001036  00000     0345  2",
+        "agreed": true,
+        "final": "DSPTAB     +11D   OCT      0                                                001036  00000     0345  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 34,
+      "rawLine": {
+        "pass1": "R    10000/ENTR/ENTR/*   10000 OCT                                DUMPCNT",
+        "pass2": "R    10000/ENTR/ENTR/*   10000 OCT                                DUMPCNT",
+        "agreed": true,
+        "final": "R    10000/ENTR/ENTR/*   10000 OCT                                DUMPCNT"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 35,
+      "rawLine": {
+        "pass1": "333               OCT      10000                                           000333  10000     0346  2",
+        "pass2": "333               OCT      10000                                           000333  10000     0346  2",
+        "agreed": true,
+        "final": "333               OCT      10000                                           000333  10000     0346  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 36,
+      "rawLine": {
+        "pass1": "R    12160/ENTR/ENTR/*   92.04790479 M/CS  E+15  B-58   E3J22R2M",
+        "pass2": "R    12160/ENTR/ENTR/*   92.04790479 M/CS  E+15  B-58   E3J22R2M",
+        "agreed": true,
+        "final": "R    12160/ENTR/ENTR/*   92.04790479 M/CS  E+15  B-58   E3J22R2M"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 37,
+      "rawLine": {
+        "pass1": "1352              OCT      12160                                           001352  12160     0347  2",
+        "pass2": "1352              OCT      12160                                           001352  12160     0347  2",
+        "agreed": true,
+        "final": "1352              OCT      12160                                           001352  12160     0347  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 38,
+      "rawLine": {
+        "pass1": "R    03363/ENTR/ENTR/*   13.12892560 M/CS  E+22  B-80   E32C31RM",
+        "pass2": "R    03363/ENTR/ENTR/*   13.12892560 M/CS  E+22  B-80   E32C31RM",
+        "agreed": true,
+        "final": "R    03363/ENTR/ENTR/*   13.12892560 M/CS  E+22  B-80   E32C31RM"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 39,
+      "rawLine": {
+        "pass1": "1353              OCT      3363                                            001353  03363     0348  2",
+        "pass2": "1353              OCT      3363                                            001353  03363     0348  2",
+        "agreed": true,
+        "final": "1353              OCT      3363                                            001353  03363     0348  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 40,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*   0.0                        B-21   RADSKAL",
+        "pass2": "R    00000/ENTR/ENTR/*   0.0                        B-21   RADSKAL",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*   0.0                        B-21   RADSKAL"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 41,
+      "rawLine": {
+        "pass1": "1354              OCT      0                                                001354  00000     0349  2",
+        "pass2": "1354              OCT      0                                                001354  00000     0349  2",
+        "agreed": true,
+        "final": "1354              OCT      0                                                001354  00000     0349  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 42,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*                                     RADSKAL+1",
+        "pass2": "R    00000/ENTR/ENTR/*                                     RADSKAL+1",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*                                     RADSKAL+1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 43,
+      "rawLine": {
+        "pass1": "1355              OCT      0                                                001355  00000     0350  2",
+        "pass2": "1355              OCT      0                                                001355  00000     0350  2",
+        "agreed": true,
+        "final": "1355              OCT      0                                                001355  00000     0350  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 44,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*   0.0                        B+00   SKALSKAL",
+        "pass2": "R    00000/ENTR/ENTR/*   0.0                        B+00   SKALSKAL",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*   0.0                        B+00   SKALSKAL"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 45,
+      "rawLine": {
+        "pass1": "1356              OCT      0                                                001356  00000     0351  2",
+        "pass2": "1356              OCT      0                                                001356  00000     0351  2",
+        "agreed": true,
+        "final": "1356              OCT      0                                                001356  00000     0351  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 46,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*   00000 OCT                          GCOMPSW",
+        "pass2": "R    00000/ENTR/ENTR/*   00000 OCT                          GCOMPSW",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*   00000 OCT                          GCOMPSW"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 47,
+      "rawLine": {
+        "pass1": "1477              OCT      0                                                001477  00000     0352  2",
+        "pass2": "1477              OCT      0                                                001477  00000     0352  2",
+        "agreed": true,
+        "final": "1477              OCT      0                                                001477  00000     0352  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 48,
+      "rawLine": {
+        "pass1": "GCOMP             2DEC     0                                                001471  00000  00000 0353 2",
+        "pass2": "GCOMP             2DEC     0                                                001471  00000  00000 0353 2",
+        "agreed": true,
+        "final": "GCOMP             2DEC     0                                                001471  00000  00000 0353 2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 49,
+      "rawLine": {
+        "pass1": "GCOMP      +2     2DEC     0                                                001473  00000  00000 0354 2",
+        "pass2": "GCOMP      +2     2DEC     0                                                001473  00000  00000 0354 2",
+        "agreed": true,
+        "final": "GCOMP      +2     2DEC     0                                                001473  00000  00000 0354 2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 50,
+      "rawLine": {
+        "pass1": "GCOMP      +4     2DEC     0                                                001475  00000  00000 0355 2",
+        "pass2": "GCOMP      +4     2DEC     0                                                001475  00000  00000 0355 2",
+        "agreed": true,
+        "final": "GCOMP      +4     2DEC     0                                                001475  00000  00000 0355 2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 51,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*   0.0 RAD                            X789",
+        "pass2": "R    00000/ENTR/ENTR/*   0.0 RAD                            X789",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*   0.0 RAD                            X789"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 52,
+      "rawLine": {
+        "pass1": "1700              OCT      0                                                001700  00000     0356  2",
+        "pass2": "1700              OCT      0                                                001700  00000     0356  2",
+        "agreed": true,
+        "final": "1700              OCT      0                                                001700  00000     0356  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 53,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*                                     X789+1",
+        "pass2": "R    00000/ENTR/ENTR/*                                     X789+1",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*                                     X789+1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 54,
+      "rawLine": {
+        "pass1": "1701              OCT      0                                                001701  00000     0357  2",
+        "pass2": "1701              OCT      0                                                001701  00000     0357  2",
+        "agreed": true,
+        "final": "1701              OCT      0                                                001701  00000     0357  2"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 55,
+      "rawLine": {
+        "pass1": "R    00000/ENTR/ENTR/*   0.0 RAD                            X789+2",
+        "pass2": "R    00000/ENTR/ENTR/*   0.0 RAD                            X789+2",
+        "agreed": true,
+        "final": "R    00000/ENTR/ENTR/*   0.0 RAD                            X789+2"
+      },
+      "status": "verified"
+    }
+  ],
+  "counts": {
+    "lines": 55,
+    "verified": 55,
+    "conflict": 0,
+    "unreadable": 0
+  },
+  "notes": "Pass1 and pass2 scan tiles for this leaf are identical source imagery (same crop region re-tiled); independent re-reads of both passes produced matching transcriptions for every line, so all lines are verified with no conflicts."
+}

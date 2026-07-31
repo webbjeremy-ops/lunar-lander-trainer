@@ -1,0 +1,233 @@
+{
+ "itemId": "apollo11landingd00miti_0",
+ "title": "Apollo 11 Landing Digital Simulation (1969)",
+ "software": "LMY99 AGC 001 NASA 2021112-061",
+ "run": "LRRADAR2,ENVCNTRL 07/23/69 14:43 \u2014 /EYLES /DUPLICATE LANDING",
+ "marsrotTape": "20414415",
+ "pages": [
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 11,
+   "printedPage": "8",
+   "section": "RUN-ID / SPECIAL REQUESTS / CLOCK CARDS",
+   "sourceImageFilename": "apollo11landingd00miti_0_0012.jp2",
+   "sourceImageSha256": "befa6435dc23eb996e0d18a2345fb9f915d84502d73efb657ce17c4e224efa9c",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 12,
+   "printedPage": "9",
+   "section": "DUMP REQUESTS + START OF AGC ERASABLE INPUT",
+   "sourceImageFilename": "apollo11landingd00miti_0_0013.jp2",
+   "sourceImageSha256": "3c89334aa12b1e6e622e7fe0fd36ee71b7c90bca469ea7b8d91d034ab4e1140c",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 13,
+   "printedPage": "10",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0014.jp2",
+   "sourceImageSha256": "9c18c600dc3e6088a69f3d19abd6e100fb256a7a3c61100ecedcb7a8be342db2",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 14,
+   "printedPage": "11",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0015.jp2",
+   "sourceImageSha256": "a84297519f1266c0613d52c90c68af7653d72abc9a6a884333e914c50a69f2a9",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 15,
+   "printedPage": "12",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0016.jp2",
+   "sourceImageSha256": "45ac9abf29dee296cc19794f7698fc9543972111d2a2aa3054b14a75778b2d4b",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 16,
+   "printedPage": "13",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0017.jp2",
+   "sourceImageSha256": "9ced0a27ed03028b6dad38eb4d00d48a2463518f5391f0e6d13c0600b5d4d416",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 17,
+   "printedPage": "14",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0018.jp2",
+   "sourceImageSha256": "8a9d21ff2cb22fcba055dcf19eddba245fe1d84390c84ff71cef17afc9bc8be3",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 18,
+   "printedPage": "15",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0019.jp2",
+   "sourceImageSha256": "0dcf247583cd321aea2c731200f1d116f55aa23d336153372dba9f42491406ff",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 19,
+   "printedPage": "16",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0020.jp2",
+   "sourceImageSha256": "92dd9223c3fa1f493f589d9bcbb72ef464539940ada07f77d53606b43baf93cd",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 20,
+   "printedPage": "17",
+   "section": "AGC ERASABLE (BLK2) INPUT DATA / IMU COMPENSATION TERMS",
+   "sourceImageFilename": "apollo11landingd00miti_0_0021.jp2",
+   "sourceImageSha256": "569392ac0bec81dc879c8152bdcfb5eecf7ce35fe109f3d8a3ad820aa38567cb",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 21,
+   "printedPage": "18",
+   "section": "PRINTED REFSMMAT + 2DEC RECORDS",
+   "sourceImageFilename": "apollo11landingd00miti_0_0022.jp2",
+   "sourceImageSha256": "d3289638e24075bbab60ec24ea66fb898158ae4694543c7ff10484bc7b528d39",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 22,
+   "printedPage": "19",
+   "section": "CARDS READ BY ASTRONAUT INFLT-PROG 3",
+   "sourceImageFilename": "apollo11landingd00miti_0_0023.jp2",
+   "sourceImageSha256": "8e27b6c3555f2293ae15bdc00c99247fb57638abccb8de56789e6380073acb7d",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 23,
+   "printedPage": "20",
+   "section": "PRELAUNCH-BLK2 INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0024.jp2",
+   "sourceImageSha256": "fc844a44d45ca5dab4df33d27eeab8c92c26054cdd744d27fc194ca158160086",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 24,
+   "printedPage": "21",
+   "section": "IMU-BLK2 INPUT DATA",
+   "sourceImageFilename": "apollo11landingd00miti_0_0025.jp2",
+   "sourceImageSha256": "9c0e49e8a790e5f3d14748ab0d6e51c9a8a492a3d94778a688c9cf29283e3302",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 25,
+   "printedPage": "22",
+   "section": "LEM / RADAR / ENVIRONMENT DATA CARDS",
+   "sourceImageFilename": "apollo11landingd00miti_0_0026.jp2",
+   "sourceImageSha256": "4de4e86359b012b9b7f05acad1a3c183d9708acfb99025c7eaa4d7a2d9743cbc",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  },
+  {
+   "itemId": "apollo11landingd00miti_0",
+   "scanLeaf": 26,
+   "printedPage": null,
+   "section": "BLANK / SECTION BREAK BEFORE FIRST SNAPSHOT",
+   "sourceImageFilename": "apollo11landingd00miti_0_0027.jp2",
+   "sourceImageSha256": "41d42ed912c52e74ffacdf52b7e9c63a9d34bf0e9828aca7eda745c615884bf5",
+   "imagePixels": [
+    2941,
+    2182
+   ],
+   "derivative": "apollo11landingd00miti_0_jp2.zip (Single Page Processed JP2)",
+   "transcriptionStatus": "verified"
+  }
+ ]
+}

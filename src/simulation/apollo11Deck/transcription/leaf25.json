@@ -1,0 +1,71 @@
+{
+ "leaf": 25,
+ "section": {
+  "pass1": "RADAR DATA CARDS (continued from leaf 24)",
+  "pass2": "RADAR DATA CARDS (continued from leaf 24)",
+  "agreed": true,
+  "final": "RADAR DATA CARDS (continued from leaf 24)"
+ },
+ "blocks": [
+  {
+   "ordinal": 1,
+   "headerLine": {
+    "pass1": "L1: ID FAST  S BIAS  T BIAS  RGE BIAS  RDOT BIAS  FAST\nL2: ID BIAS  K(L/R)  V MINSIG  A MINSIG  V BIAS  A BIAS\nL3: ID ALT SIG  VX SIG  VY SIG  VZ SIG  ALT SIG",
+    "pass2": "L1: ID FAST  S BIAS  T BIAS  RGE BIAS  RDOT BIAS  FAST\nL2: ID BIAS  K(L/R)  V MINSIG  A MINSIG  V BIAS  A BIAS\nL3: ID ALT SIG  VX SIG  VY SIG  VZ SIG  ALT SIG",
+    "agreed": true,
+    "final": "L1: ID FAST  S BIAS  T BIAS  RGE BIAS  RDOT BIAS  FAST\nL2: ID BIAS  K(L/R)  V MINSIG  A MINSIG  V BIAS  A BIAS\nL3: ID ALT SIG  VX SIG  VY SIG  VZ SIG  ALT SIG"
+   },
+   "valueLines": [
+    {
+     "pass1": "1.30000000000 01   0.0   0.0   0.0   0.0   0.0",
+     "pass2": "1.30000000000 01   0.0   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "1.30000000000 01   0.0   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "1.30000000000 01   0.0   0.0   0.0   0.0   0.0",
+     "pass2": "1.30000000000 01   0.0   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "1.30000000000 01   0.0   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "1.30000000000 01   0.0   0.0   0.0   1.00000000000 00   0.0",
+     "pass2": "1.30000000000 01   0.0   0.0   0.0   1.00000000000 00   0.0",
+     "agreed": true,
+     "final": "1.30000000000 01   0.0   0.0   0.0   1.00000000000 00   0.0"
+    },
+    {
+     "pass1": "1.30000000000 01   0.0   0.0   0.0   0.0   1.00000000000 00",
+     "pass2": "1.30000000000 01   0.0   0.0   0.0   0.0   1.00000000000 00",
+     "agreed": true,
+     "final": "1.30000000000 01   0.0   0.0   0.0   0.0   1.00000000000 00"
+    },
+    {
+     "pass1": "1.30000000000 01   1.00000000000 00   0.0   0.0   0.0   0.0",
+     "pass2": "1.30000000000 01   1.00000000000 00   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "1.30000000000 01   1.00000000000 00   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "1.30000000000 01   -1.00000000000 00  -1.00000000000 00  -1.00000000000 00  -1.00000000000 00",
+     "pass2": "1.30000000000 01   -1.00000000000 00  -1.00000000000 00  -1.00000000000 00  -1.00000000000 00",
+     "agreed": true,
+     "final": "1.30000000000 01   -1.00000000000 00  -1.00000000000 00  -1.00000000000 00  -1.00000000000 00"
+    }
+   ],
+   "status": "verified"
+  }
+ ],
+ "counts": {
+  "blocks": 1,
+  "valueLines": 6,
+  "verified": 6,
+  "conflict": 0,
+  "unreadable": 0
+ },
+ "header": {
+  "pass1": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 22 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE",
+  "pass2": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 22 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE"
+ },
+ "notes": "Merged pass1/pass2. Pass2 confirmed pass1 readings for all clearly visible cells; leaf24 block1 valueLine[4] leading mantissa resolved to 2.70000000000 via pass2 (was ambiguous in pass1)."
+}
