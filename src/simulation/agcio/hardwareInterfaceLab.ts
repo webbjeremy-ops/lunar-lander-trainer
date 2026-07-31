@@ -138,6 +138,14 @@ export interface HardwareInterfaceLabState {
   readonly syntheticRequestsGenerated: number;
   /** Requests produced by a complete authentic mission run. Always 0 here. */
   readonly authenticMissionRequestsGenerated: number;
+  /** Emulator-side rejections of a prepared radar transaction. */
+  readonly hardwareRejections: number;
+  /**
+   * Set once the emulator refuses a hardware application: the bridge can no
+   * longer be trusted, so the lab is interlocked and stops preparing new
+   * transactions until the profile is re-entered.
+   */
+  readonly interlocked: boolean;
 }
 
 export function createHardwareInterfaceLabState(): HardwareInterfaceLabState {
@@ -151,6 +159,8 @@ export function createHardwareInterfaceLabState(): HardwareInterfaceLabState {
     radarResponsesRefused: 0,
     syntheticRequestsGenerated: 0,
     authenticMissionRequestsGenerated: 0,
+    hardwareRejections: 0,
+    interlocked: false,
   };
 }
 
@@ -223,7 +233,9 @@ export type LabRadarRefusal =
   | "selection-refused"
   | "altitude-unavailable"
   | "range-data-not-good"
-  | "range-count-out-of-counter-width";
+  | "range-count-out-of-counter-width"
+  /** The emulator refused the serial RNRAD/RADARUPT application itself. */
+  | "hardware-application-rejected";
 
 export interface LabRadarResponse {
   readonly action: RadarSerialWordAction;
@@ -246,8 +258,14 @@ export interface LabChan13Inputs {
 export interface LabChan13Result {
   readonly nextState: HardwareInterfaceLabState;
   readonly requests: readonly Chan13RadarRequest[];
-  /** At most ONE response per tick — one solicitation, one answer. */
-  readonly response: LabRadarResponse | null;
+  /**
+   * PHASE 1 of the two-phase radar transaction: at most ONE prepared
+   * candidate per tick. NOTHING is committed here — the outstanding
+   * solicitation is still open and `radarResponsesDelivered` is unchanged.
+   * The caller must attempt the hardware application and then call exactly
+   * one of `labCommitRadarResponse` / `labRejectRadarResponse`.
+   */
+  readonly candidate: LabRadarResponse | null;
   readonly refusals: readonly LabRadarRefusal[];
 }
 
@@ -288,9 +306,11 @@ export function labObserveChan13(
   }
 
   const outstanding = chan13.outstanding;
-  let response: LabRadarResponse | null = null;
+  let candidate: LabRadarResponse | null = null;
 
-  if (outstanding !== null) {
+  if (state.interlocked) {
+    if (outstanding !== null) refusals.push("hardware-application-rejected");
+  } else if (outstanding !== null) {
     if (!inputs.rangeDataGood) {
       refusals.push("range-data-not-good");
     } else if (
@@ -305,7 +325,7 @@ export function labObserveChan13(
         refusals.push("range-count-out-of-counter-width");
       } else {
         const reconstructed = rangeCountToAltitudeMeters(target);
-        response = {
+        candidate = {
           action: {
             kind: "radar-serial-word",
             counterAddress: RNRAD_ADDRESS,
@@ -320,7 +340,8 @@ export function labObserveChan13(
           reconstructedAltitudeMeters: reconstructed,
           residualMeters: reconstructed - inputs.altitudeMeters,
         };
-        chan13 = completeOutstandingRequest(chan13, outstanding.sequence);
+        // NOTE: the outstanding request is deliberately NOT completed here.
+        // Commit happens only after the emulator accepts the transaction.
       }
     }
   } else if (inputs.writes.length === 0) {
@@ -333,22 +354,60 @@ export function labObserveChan13(
   const refusedTotal =
     refused + refusals.filter((r) => r !== "selection-refused" && r !== "no-outstanding-request").length;
 
+  // A refusal that is not merely idle also closes the solicitation, so it is
+  // never silently retried on a later tick.
+  if (candidate === null && outstanding !== null) {
+    chan13 = completeOutstandingRequest(chan13, outstanding.sequence);
+  }
+
   return {
     nextState: {
       ...state,
       chan13,
       chan13RequestsObserved: state.chan13RequestsObserved + observed,
       radarResponsesRefused: state.radarResponsesRefused + refusedTotal,
-
-      radarResponsesDelivered:
-        state.radarResponsesDelivered + (response === null ? 0 : 1),
       syntheticRequestsGenerated: state.syntheticRequestsGenerated + synthetic,
       // Never incremented in this milestone: no authentic mission run exists.
       authenticMissionRequestsGenerated: state.authenticMissionRequestsGenerated,
     },
     requests,
-    response,
+    candidate,
     refusals,
+  };
+}
+
+/**
+ * PHASE 2 (success) — the emulator accepted the serial RNRAD word and the
+ * RADARUPT request. Only now is the solicitation closed and the delivery
+ * counted.
+ */
+export function labCommitRadarResponse(
+  state: HardwareInterfaceLabState,
+  response: LabRadarResponse,
+): HardwareInterfaceLabState {
+  return {
+    ...state,
+    chan13: completeOutstandingRequest(state.chan13, response.answeredSequence),
+    radarResponsesDelivered: state.radarResponsesDelivered + 1,
+  };
+}
+
+/**
+ * PHASE 2 (failure) — the emulator refused the hardware application. Nothing
+ * was delivered: the solicitation is explicitly closed (never silently
+ * retried), the refusal is counted, and the lab interlocks because the
+ * emulator bridge can no longer be trusted.
+ */
+export function labRejectRadarResponse(
+  state: HardwareInterfaceLabState,
+  response: LabRadarResponse,
+): HardwareInterfaceLabState {
+  return {
+    ...state,
+    chan13: completeOutstandingRequest(state.chan13, response.answeredSequence),
+    radarResponsesRefused: state.radarResponsesRefused + 1,
+    hardwareRejections: state.hardwareRejections + 1,
+    interlocked: true,
   };
 }
 
@@ -374,6 +433,10 @@ export interface HardwareInterfaceLabDiagnostic {
   readonly chan13RequestsObserved: number;
   readonly radarResponsesDelivered: number;
   readonly radarResponsesRefused: number;
+  /** Emulator-side rejections of a prepared transaction. */
+  readonly hardwareRejections: number;
+  /** True once a hardware rejection has interlocked the lab. */
+  readonly interlocked: boolean;
   readonly lastRequest: Chan13RadarRequest | null;
   readonly lastResponse: LabRadarResponse | null;
   readonly lastRefusals: readonly LabRadarRefusal[];
@@ -409,6 +472,8 @@ export function labDiagnostic(
     chan13RequestsObserved: state.chan13RequestsObserved,
     radarResponsesDelivered: state.radarResponsesDelivered,
     radarResponsesRefused: state.radarResponsesRefused,
+    hardwareRejections: state.hardwareRejections,
+    interlocked: state.interlocked,
     lastRequest: parts.lastRequest ?? null,
     lastResponse: parts.lastResponse ?? null,
     lastRefusals: parts.lastRefusals ?? [],

@@ -209,3 +209,22 @@ external-acquisition dependency.
 **M3.3C is not ready to freeze.**
 
 
+
+---
+
+## Addendum — superseded by the M3.3E pivot
+
+Deck reconstruction is **not** being resumed. The rope-consumption proof
+(REFSMMAT/PIPA through Average-G) stays open and blocked exactly as recorded
+above; nothing in M3.3E weakens or reinterprets that blocker.
+
+What M3.3E *does* close is the hardware-interface half of M3.3C: live PIPA
+delivery through native PINC/MINC and AGC-solicited RNRAD/RADARUPT
+transactions are now implemented, exercised against the canonical HW-I/O v4
+WASM and frozen. See `docs/M3_3E_HARDWARE_INTERFACE_LAB_FREEZE.md`.
+
+Delivery is never presented as consumption: the lab diagnostics state
+`native PIPA input delivered; rope consumption not active in this scenario`.
+
+Repository verification at the M3.3E freeze: **539 / 539 Vitest**, typecheck
+clean, golden touchdown `368,279,425 µs` unchanged.

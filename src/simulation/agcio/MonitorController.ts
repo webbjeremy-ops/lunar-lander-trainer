@@ -40,7 +40,9 @@ import {
   createHardwareInterfaceLabState,
   labDiagnostic,
   labEncodePipa,
+  labCommitRadarResponse,
   labObserveChan13,
+  labRejectRadarResponse,
   labRecordDeliveredPulses,
   type HardwareInterfaceLabDiagnostic,
   type HardwareInterfaceLabState,
@@ -786,27 +788,38 @@ export class MonitorController {
       rangeDataGood: labInputs?.rangeDataGood ?? false,
       syntheticFixture: labInputs?.syntheticFixture,
     });
-    this.lab = observed.nextState;
+    let lab = observed.nextState;
     this.lastLabRequest = observed.requests[observed.requests.length - 1] ?? this.lastLabRequest;
     this.lastLabRefusals = observed.refusals;
 
-    const response = observed.response;
-    if (response !== null) {
+    // Two-phase transaction: nothing is committed until the emulator has
+    // accepted the serial word AND the RADARUPT request.
+    const candidate = observed.candidate;
+    if (candidate !== null) {
       const ok =
         this.port.applyLandingRadarUpdate?.(
-          response.action.word,
-          response.action.bitCount,
-          response.action.raiseRadarupt,
+          candidate.action.word,
+          candidate.action.bitCount,
+          candidate.action.raiseRadarupt,
         ) ?? false;
 
-      // A refused host call is reported, never retried silently and never
-      // counted as a delivered transaction.
-      this.lastLabResponse = ok ? response : null;
+      if (ok) {
+        lab = labCommitRadarResponse(lab, candidate);
+        this.lastLabResponse = candidate;
+      } else {
+        // Not delivered: no counted response, an explicit refusal, the
+        // solicitation closed (never silently retried) and the lab
+        // interlocked because the bridge is no longer trustworthy.
+        lab = labRejectRadarResponse(lab, candidate);
+        this.lastLabResponse = null;
+        this.lastLabRefusals = [...this.lastLabRefusals, "hardware-application-rejected"];
+      }
     } else {
       this.lastLabResponse = null;
     }
 
-    this.lastLabDiagnostic = labDiagnostic(this.lab, missionTimeUs, {
+    this.lab = lab;
+    this.lastLabDiagnostic = labDiagnostic(lab, missionTimeUs, {
       pipa: this.lastLabPipa,
       stableMemberSpecificForceMps2: this.lastLabStableMemberForce,
       lastRequest: this.lastLabRequest,

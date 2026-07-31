@@ -300,3 +300,61 @@ describe("M3.3E lab — MonitorController integration", () => {
     expect(port.pulseBatches).toHaveLength(before);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Two-phase radar transaction — hardware rejection semantics.
+// ---------------------------------------------------------------------------
+
+describe("M3.3E lab — radar hardware rejection", () => {
+  it("never counts a rejected hardware application as delivered", () => {
+    const port = new FakePort();
+    port.radarAccepted = false;
+    const mc = new MonitorController(port);
+    expect(mc.requestProfile(LAB, ctx(), AVIONICS).outcome).toBe("entered");
+
+    mc.postAgcTick(0, 20_000, [], {
+      chan13Writes: solicitation(0o7),
+      altitudeMeters: 1_000,
+      rangeDataGood: true,
+    });
+
+    // Exactly one hardware attempt, zero delivered, one explicit refusal.
+    expect(port.radarCalls).toHaveLength(1);
+    const diag = mc.labDiagnostics();
+    expect(diag?.radarResponsesDelivered).toBe(0);
+    expect(diag?.radarResponsesRefused).toBe(1);
+    expect(diag?.hardwareRejections).toBe(1);
+    expect(diag?.interlocked).toBe(true);
+    expect(diag?.lastResponse).toBeNull();
+    expect(diag?.lastRefusals).toContain("hardware-application-rejected");
+
+    // No silent retry on the next empty tick.
+    mc.postAgcTick(1, 40_000, [], {
+      chan13Writes: [],
+      altitudeMeters: 1_000,
+      rangeDataGood: true,
+    });
+    expect(port.radarCalls).toHaveLength(1);
+    expect(mc.labDiagnostics()?.radarResponsesDelivered).toBe(0);
+  });
+
+  it("interlocks: a later solicitation is refused, not attempted", () => {
+    const port = new FakePort();
+    port.radarAccepted = false;
+    const mc = new MonitorController(port);
+    mc.requestProfile(LAB, ctx(), AVIONICS);
+    mc.postAgcTick(0, 20_000, [], {
+      chan13Writes: solicitation(0o7),
+      altitudeMeters: 1_000,
+      rangeDataGood: true,
+    });
+    port.radarAccepted = true;
+    mc.postAgcTick(1, 40_000, [], {
+      chan13Writes: solicitation(0o7, 40_000),
+      altitudeMeters: 1_000,
+      rangeDataGood: true,
+    });
+    expect(port.radarCalls).toHaveLength(1);
+    expect(mc.labDiagnostics()?.radarResponsesDelivered).toBe(0);
+  });
+});
