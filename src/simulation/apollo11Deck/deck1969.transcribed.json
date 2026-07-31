@@ -9025,7 +9025,7 @@
   },
   {
    "ordinal": 158,
-   "symbol": "LMKACSN",
+   "symbol": "LMKAOSN",
    "format": "OCT",
    "addressOctal": "003010",
    "address": 1544,
@@ -9036,7 +9036,7 @@
     60
    ],
    "printedDecodedValue": "60",
-   "pinnedSymbolAddress": -1,
+   "pinnedSymbolAddress": 1544,
    "recordClass": "unclassified",
    "scan": {
     "scanLeaf": 18,
@@ -9052,7 +9052,7 @@
      "printedPage": "15",
      "boundingBoxOrColumn": "symbol",
      "ocrLocatorText": null,
-     "finalValue": "LMKACSN",
+     "finalValue": "LMKAOSN",
      "status": "verified"
     },
     {

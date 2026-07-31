@@ -1,1060 +1,1062 @@
 {
-  "leaf": 18,
-  "records": [
-    {
-      "seq": 501,
-      "symbol": {
-        "pass1": "YLIM+1",
-        "pass2": "YLIM+1",
-        "agreed": true,
-        "final": "YLIM+1"
-      },
-      "addressOctal": {
-        "pass1": "002573",
-        "pass2": "002573",
-        "agreed": true,
-        "final": "002573"
-      },
-      "wordOctal": {
-        "pass1": "32446",
-        "pass2": "32446",
-        "agreed": true,
-        "final": "32446"
-      },
-      "printedDecoded": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "scaling": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t0"
-    },
-    {
-      "seq": 502,
-      "symbol": {
-        "pass1": "ABTRDOT",
-        "pass2": "ABTRDOT",
-        "agreed": true,
-        "final": "ABTRDOT"
-      },
-      "addressOctal": {
-        "pass1": "002574",
-        "pass2": "002574",
-        "agreed": true,
-        "final": "002574"
-      },
-      "wordOctal": {
-        "pass1": "00007",
-        "pass2": "00007",
-        "agreed": true,
-        "final": "00007"
-      },
-      "printedDecoded": {
-        "pass1": "0.059436 M/CS",
-        "pass2": "0.059436 M/CS",
-        "agreed": true,
-        "final": "0.059436 M/CS"
-      },
-      "scaling": {
-        "pass1": "B-07",
-        "pass2": "B-07",
-        "agreed": true,
-        "final": "B-07"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t0"
-    },
-    {
-      "seq": 503,
-      "symbol": {
-        "pass1": "ABTRDOT+1",
-        "pass2": "ABTRDOT+1",
-        "agreed": true,
-        "final": "ABTRDOT+1"
-      },
-      "addressOctal": {
-        "pass1": "002575",
-        "pass2": "002575",
-        "agreed": true,
-        "final": "002575"
-      },
-      "wordOctal": {
-        "pass1": "23346",
-        "pass2": "23346",
-        "agreed": true,
-        "final": "23346"
-      },
-      "printedDecoded": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "scaling": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t0"
-    },
-    {
-      "seq": 504,
-      "symbol": {
-        "pass1": "COSTHET1",
-        "pass2": "COSTHET1",
-        "agreed": true,
-        "final": "COSTHET1"
-      },
-      "addressOctal": {
-        "pass1": "002576",
-        "pass2": "002576",
-        "agreed": true,
-        "final": "002576"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0.0",
-        "pass2": "0.0",
-        "agreed": true,
-        "final": "0.0"
-      },
-      "scaling": {
-        "pass1": "B+08",
-        "pass2": "B+08",
-        "agreed": true,
-        "final": "B+08"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t0"
-    },
-    {
-      "seq": 505,
-      "symbol": {
-        "pass1": "COSTHET1+1",
-        "pass2": "COSTHET1+1",
-        "agreed": true,
-        "final": "COSTHET1+1"
-      },
-      "addressOctal": {
-        "pass1": "002577",
-        "pass2": "002577",
-        "agreed": true,
-        "final": "002577"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "scaling": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 506,
-      "symbol": {
-        "pass1": "COSTHET2",
-        "pass2": "COSTHET2",
-        "agreed": true,
-        "final": "COSTHET2"
-      },
-      "addressOctal": {
-        "pass1": "002600",
-        "pass2": "002600",
-        "agreed": true,
-        "final": "002600"
-      },
-      "wordOctal": {
-        "pass1": "06733",
-        "pass2": "06733",
-        "agreed": true,
-        "final": "06733"
-      },
-      "printedDecoded": {
-        "pass1": "0.8660254037",
-        "pass2": "0.8660254037",
-        "agreed": true,
-        "final": "0.8660254037"
-      },
-      "scaling": {
-        "pass1": "B-02",
-        "pass2": "B-02",
-        "agreed": true,
-        "final": "B-02"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 507,
-      "symbol": {
-        "pass1": "COSTHET2+1",
-        "pass2": "COSTHET2+1",
-        "agreed": true,
-        "final": "COSTHET2+1"
-      },
-      "addressOctal": {
-        "pass1": "002601",
-        "pass2": "002601",
-        "agreed": true,
-        "final": "002601"
-      },
-      "wordOctal": {
-        "pass1": "07535",
-        "pass2": "07535",
-        "agreed": true,
-        "final": "07535"
-      },
-      "printedDecoded": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "scaling": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 508,
-      "symbol": {
-        "pass1": "ROLLTIME",
-        "pass2": "ROLLTIME",
-        "agreed": true,
-        "final": "ROLLTIME"
-      },
-      "addressOctal": {
-        "pass1": "003001",
-        "pass2": "003001",
-        "agreed": true,
-        "final": "003001"
-      },
-      "wordOctal": {
-        "pass1": "05556",
-        "pass2": "05556",
-        "agreed": true,
-        "final": "05556"
-      },
-      "printedDecoded": {
-        "pass1": "2926 CS",
-        "pass2": "2926 CS",
-        "agreed": true,
-        "final": "2926 CS"
-      },
-      "scaling": {
-        "pass1": "B-14",
-        "pass2": "B-14",
-        "agreed": true,
-        "final": "B-14"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 509,
-      "symbol": {
-        "pass1": "PITTIME",
-        "pass2": "PITTIME",
-        "agreed": true,
-        "final": "PITTIME"
-      },
-      "addressOctal": {
-        "pass1": "003002",
-        "pass2": "003002",
-        "agreed": true,
-        "final": "003002"
-      },
-      "wordOctal": {
-        "pass1": "04431",
-        "pass2": "04431",
-        "agreed": true,
-        "final": "04431"
-      },
-      "printedDecoded": {
-        "pass1": "2329 CS",
-        "pass2": "2329 CS",
-        "agreed": true,
-        "final": "2329 CS"
-      },
-      "scaling": {
-        "pass1": "B-14",
-        "pass2": "B-14",
-        "agreed": true,
-        "final": "B-14"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 510,
-      "symbol": {
-        "pass1": "DKTRAP",
-        "pass2": "DKTRAP",
-        "agreed": true,
-        "final": "DKTRAP"
-      },
-      "addressOctal": {
-        "pass1": "003003",
-        "pass2": "003003",
-        "agreed": true,
-        "final": "003003"
-      },
-      "wordOctal": {
-        "pass1": "77001",
-        "pass2": "77001",
-        "agreed": true,
-        "final": "77001"
-      },
-      "printedDecoded": {
-        "pass1": "-.0038888888 REV/S",
-        "pass2": "-.0038888888 REV/S",
-        "agreed": true,
-        "final": "-.0038888888 REV/S"
-      },
-      "scaling": {
-        "pass1": "B+3",
-        "pass2": "B+3",
-        "agreed": true,
-        "final": "B+3"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 511,
-      "symbol": {
-        "pass1": "DKOMEGAN",
-        "pass2": "DKOMEGAN",
-        "agreed": true,
-        "final": "DKOMEGAN"
-      },
-      "addressOctal": {
-        "pass1": "003004",
-        "pass2": "003004",
-        "agreed": true,
-        "final": "003004"
-      },
-      "wordOctal": {
-        "pass1": "00012",
-        "pass2": "00012",
-        "agreed": true,
-        "final": "00012"
-      },
-      "printedDecoded": {
-        "pass1": "10",
-        "pass2": "10",
-        "agreed": true,
-        "final": "10"
-      },
-      "scaling": {
-        "pass1": "B-14",
-        "pass2": "B-14",
-        "agreed": true,
-        "final": "B-14"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 512,
-      "symbol": {
-        "pass1": "DKKACSN",
-        "pass2": "DKKACSN",
-        "agreed": true,
-        "final": "DKKACSN"
-      },
-      "addressOctal": {
-        "pass1": "003005",
-        "pass2": "003005",
-        "agreed": true,
-        "final": "003005"
-      },
-      "wordOctal": {
-        "pass1": "00074",
-        "pass2": "00074",
-        "agreed": true,
-        "final": "00074"
-      },
-      "printedDecoded": {
-        "pass1": "60",
-        "pass2": "60",
-        "agreed": true,
-        "final": "60"
-      },
-      "scaling": {
-        "pass1": "B-14",
-        "pass2": "B-14",
-        "agreed": true,
-        "final": "B-14"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t1"
-    },
-    {
-      "seq": 513,
-      "symbol": {
-        "pass1": "LMTRAP",
-        "pass2": "LMTRAP",
-        "agreed": true,
-        "final": "LMTRAP"
-      },
-      "addressOctal": {
-        "pass1": "003006",
-        "pass2": "003006",
-        "agreed": true,
-        "final": "003006"
-      },
-      "wordOctal": {
-        "pass1": "77001",
-        "pass2": "77001",
-        "agreed": true,
-        "final": "77001"
-      },
-      "printedDecoded": {
-        "pass1": "-.0038888888 REV/S",
-        "pass2": "-.0038888888 REV/S",
-        "agreed": true,
-        "final": "-.0038888888 REV/S"
-      },
-      "scaling": {
-        "pass1": "B+3",
-        "pass2": "B+3",
-        "agreed": true,
-        "final": "B+3"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 514,
-      "symbol": {
-        "pass1": "LMOMEGAN",
-        "pass2": "LMOMEGAN",
-        "agreed": true,
-        "final": "LMOMEGAN"
-      },
-      "addressOctal": {
-        "pass1": "003007",
-        "pass2": "003007",
-        "agreed": true,
-        "final": "003007"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0",
-        "pass2": "0",
-        "agreed": true,
-        "final": "0"
-      },
-      "scaling": {
-        "pass1": "B-14",
-        "pass2": "B-14",
-        "agreed": true,
-        "final": "B-14"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 515,
-      "symbol": {
-        "pass1": "LMKACSN",
-        "pass2": "LMKACSN",
-        "agreed": true,
-        "final": "LMKACSN"
-      },
-      "addressOctal": {
-        "pass1": "003010",
-        "pass2": "003010",
-        "agreed": true,
-        "final": "003010"
-      },
-      "wordOctal": {
-        "pass1": "00074",
-        "pass2": "00074",
-        "agreed": true,
-        "final": "00074"
-      },
-      "printedDecoded": {
-        "pass1": "60",
-        "pass2": "60",
-        "agreed": true,
-        "final": "60"
-      },
-      "scaling": {
-        "pass1": "B-14",
-        "pass2": "B-14",
-        "agreed": true,
-        "final": "B-14"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 516,
-      "symbol": {
-        "pass1": "DKDB",
-        "pass2": "DKDB",
-        "agreed": true,
-        "final": "DKDB"
-      },
-      "addressOctal": {
-        "pass1": "003011",
-        "pass2": "003011",
-        "agreed": true,
-        "final": "003011"
-      },
-      "wordOctal": {
-        "pass1": "00200",
-        "pass2": "00200",
-        "agreed": true,
-        "final": "00200"
-      },
-      "printedDecoded": {
-        "pass1": "256.0000000 REV",
-        "pass2": "256.0000000 REV",
-        "agreed": true,
-        "final": "256.0000000 REV"
-      },
-      "scaling": {
-        "pass1": "B-15",
-        "pass2": "B-15",
-        "agreed": true,
-        "final": "B-15"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 517,
-      "symbol": {
-        "pass1": "IGNACSQ",
-        "pass2": "IGNACSQ",
-        "agreed": true,
-        "final": "IGNACSQ"
-      },
-      "addressOctal": {
-        "pass1": "003012",
-        "pass2": "003012",
-        "agreed": true,
-        "final": "003012"
-      },
-      "wordOctal": {
-        "pass1": "02162",
-        "pass2": "02162",
-        "agreed": true,
-        "final": "02162"
-      },
-      "printedDecoded": {
-        "pass1": ".0173611111 REV/S",
-        "pass2": ".0173611111 REV/S",
-        "agreed": true,
-        "final": ".0173611111 REV/S"
-      },
-      "scaling": {
-        "pass1": "B+02",
-        "pass2": "B+02",
-        "agreed": true,
-        "final": "B+02"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 518,
-      "symbol": {
-        "pass1": "IGNACSR",
-        "pass2": "IGNACSR",
-        "agreed": true,
-        "final": "IGNACSR"
-      },
-      "addressOctal": {
-        "pass1": "003013",
-        "pass2": "003013",
-        "agreed": true,
-        "final": "003013"
-      },
-      "wordOctal": {
-        "pass1": "00163",
-        "pass2": "00163",
-        "agreed": true,
-        "final": "00163"
-      },
-      "printedDecoded": {
-        "pass1": ".0017500000 REV/S",
-        "pass2": ".0017500000 REV/S",
-        "agreed": true,
-        "final": ".0017500000 REV/S"
-      },
-      "scaling": {
-        "pass1": "B+02",
-        "pass2": "B+02",
-        "agreed": true,
-        "final": "B+02"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 519,
-      "symbol": {
-        "pass1": "DOWNTORK",
-        "pass2": "DOWNTORK",
-        "agreed": true,
-        "final": "DOWNTORK"
-      },
-      "addressOctal": {
-        "pass1": "003113",
-        "pass2": "003113",
-        "agreed": true,
-        "final": "003113"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0 S",
-        "pass2": "0 S",
-        "agreed": true,
-        "final": "0 S"
-      },
-      "scaling": {
-        "pass1": "B-5",
-        "pass2": "B-5",
-        "agreed": true,
-        "final": "B-5"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 520,
-      "symbol": {
-        "pass1": "DOWNTORK+1",
-        "pass2": "DOWNTORK+1",
-        "agreed": true,
-        "final": "DOWNTORK+1"
-      },
-      "addressOctal": {
-        "pass1": "003114",
-        "pass2": "003114",
-        "agreed": true,
-        "final": "003114"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0 S",
-        "pass2": "0 S",
-        "agreed": true,
-        "final": "0 S"
-      },
-      "scaling": {
-        "pass1": "B-5",
-        "pass2": "B-5",
-        "agreed": true,
-        "final": "B-5"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 521,
-      "symbol": {
-        "pass1": "DOWNTORK+2",
-        "pass2": "DOWNTORK+2",
-        "agreed": true,
-        "final": "DOWNTORK+2"
-      },
-      "addressOctal": {
-        "pass1": "003115",
-        "pass2": "003115",
-        "agreed": true,
-        "final": "003115"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0 S",
-        "pass2": "0 S",
-        "agreed": true,
-        "final": "0 S"
-      },
-      "scaling": {
-        "pass1": "B-5",
-        "pass2": "B-5",
-        "agreed": true,
-        "final": "B-5"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t2"
-    },
-    {
-      "seq": 522,
-      "symbol": {
-        "pass1": "DOWNTORK+3",
-        "pass2": "DOWNTORK+3",
-        "agreed": true,
-        "final": "DOWNTORK+3"
-      },
-      "addressOctal": {
-        "pass1": "003116",
-        "pass2": "003116",
-        "agreed": true,
-        "final": "003116"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0 S",
-        "pass2": "0 S",
-        "agreed": true,
-        "final": "0 S"
-      },
-      "scaling": {
-        "pass1": "B-5",
-        "pass2": "B-5",
-        "agreed": true,
-        "final": "B-5"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 523,
-      "symbol": {
-        "pass1": "DOWNTORK+4",
-        "pass2": "DOWNTORK+4",
-        "agreed": true,
-        "final": "DOWNTORK+4"
-      },
-      "addressOctal": {
-        "pass1": "003117",
-        "pass2": "003117",
-        "agreed": true,
-        "final": "003117"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0 S",
-        "pass2": "0 S",
-        "agreed": true,
-        "final": "0 S"
-      },
-      "scaling": {
-        "pass1": "B-5",
-        "pass2": "B-5",
-        "agreed": true,
-        "final": "B-5"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 524,
-      "symbol": {
-        "pass1": "DOWNTORK+5",
-        "pass2": "DOWNTORK+5",
-        "agreed": true,
-        "final": "DOWNTORK+5"
-      },
-      "addressOctal": {
-        "pass1": "003120",
-        "pass2": "003120",
-        "agreed": true,
-        "final": "003120"
-      },
-      "wordOctal": {
-        "pass1": "00000",
-        "pass2": "00000",
-        "agreed": true,
-        "final": "00000"
-      },
-      "printedDecoded": {
-        "pass1": "0 S",
-        "pass2": "0 S",
-        "agreed": true,
-        "final": "0 S"
-      },
-      "scaling": {
-        "pass1": "B-5",
-        "pass2": "B-5",
-        "agreed": true,
-        "final": "B-5"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 525,
-      "symbol": {
-        "pass1": "ATIGINC",
-        "pass2": "ATIGINC",
-        "agreed": true,
-        "final": "ATIGINC"
-      },
-      "addressOctal": {
-        "pass1": "003400",
-        "pass2": "003400",
-        "agreed": true,
-        "final": "003400"
-      },
-      "wordOctal": {
-        "pass1": "00001",
-        "pass2": "00001",
-        "agreed": true,
-        "final": "00001"
-      },
-      "printedDecoded": {
-        "pass1": "18000 CS",
-        "pass2": "18000 CS",
-        "agreed": true,
-        "final": "18000 CS"
-      },
-      "scaling": {
-        "pass1": "B-28",
-        "pass2": "B-28",
-        "agreed": true,
-        "final": "B-28"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 526,
-      "symbol": {
-        "pass1": "ATIGINC+1",
-        "pass2": "ATIGINC+1",
-        "agreed": true,
-        "final": "ATIGINC+1"
-      },
-      "addressOctal": {
-        "pass1": "003401",
-        "pass2": "003401",
-        "agreed": true,
-        "final": "003401"
-      },
-      "wordOctal": {
-        "pass1": "03120",
-        "pass2": "03120",
-        "agreed": true,
-        "final": "03120"
-      },
-      "printedDecoded": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "scaling": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 527,
-      "symbol": {
-        "pass1": "PTIGINC",
-        "pass2": "PTIGINC",
-        "agreed": true,
-        "final": "PTIGINC"
-      },
-      "addressOctal": {
-        "pass1": "003402",
-        "pass2": "003402",
-        "agreed": true,
-        "final": "003402"
-      },
-      "wordOctal": {
-        "pass1": "00001",
-        "pass2": "00001",
-        "agreed": true,
-        "final": "00001"
-      },
-      "printedDecoded": {
-        "pass1": "18000 CS",
-        "pass2": "18000 CS",
-        "agreed": true,
-        "final": "18000 CS"
-      },
-      "scaling": {
-        "pass1": "B-28",
-        "pass2": "B-28",
-        "agreed": true,
-        "final": "B-28"
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 528,
-      "symbol": {
-        "pass1": "PTIGINC+1",
-        "pass2": "PTIGINC+1",
-        "agreed": true,
-        "final": "PTIGINC+1"
-      },
-      "addressOctal": {
-        "pass1": "003403",
-        "pass2": "003403",
-        "agreed": true,
-        "final": "003403"
-      },
-      "wordOctal": {
-        "pass1": "03120",
-        "pass2": "03120",
-        "agreed": true,
-        "final": "03120"
-      },
-      "printedDecoded": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "scaling": {
-        "pass1": "",
-        "pass2": "",
-        "agreed": true,
-        "final": ""
-      },
-      "format": "OCT",
-      "status": "verified",
-      "tile": "p1_l18_t3"
-    },
-    {
-      "seq": 529,
-      "symbol": {
-        "pass1": "AOTAZ",
-        "pass2": "AOTAZ",
-        "agreed": true,
-        "final": "AOTAZ"
-      },
-      "addressOctal": {
-        "pass1": null,
-        "pass2": null,
-        "agreed": true,
-        "final": null
-      },
-      "wordOctal": {
-        "pass1": "65244",
-        "pass2": "65244",
-        "agreed": true,
-        "final": "65244"
-      },
-      "printedDecoded": {
-        "pass1": "-0.1668666667 REV",
-        "pass2": "-0.1668666667 REV",
-        "agreed": true,
-        "final": "-0.1668666667 REV"
-      },
-      "scaling": {
-        "pass1": "B+01",
-        "pass2": "B+01",
-        "agreed": true,
-        "final": "B+01"
-      },
-      "format": "OCT",
-      "status": "unreadable",
-      "tile": "p1_l18_t3"
-    }
-  ],
-  "counts": {
-    "total": 29,
-    "verified": 28,
-    "conflict": 0,
-    "unreadable": 1
+ "leaf": 18,
+ "records": [
+  {
+   "seq": 501,
+   "symbol": {
+    "pass1": "YLIM+1",
+    "pass2": "YLIM+1",
+    "agreed": true,
+    "final": "YLIM+1"
+   },
+   "addressOctal": {
+    "pass1": "002573",
+    "pass2": "002573",
+    "agreed": true,
+    "final": "002573"
+   },
+   "wordOctal": {
+    "pass1": "32446",
+    "pass2": "32446",
+    "agreed": true,
+    "final": "32446"
+   },
+   "printedDecoded": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "scaling": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t0"
   },
-  "header": {
-    "pass1": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 15 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE",
-    "pass2": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 15 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE"
+  {
+   "seq": 502,
+   "symbol": {
+    "pass1": "ABTRDOT",
+    "pass2": "ABTRDOT",
+    "agreed": true,
+    "final": "ABTRDOT"
+   },
+   "addressOctal": {
+    "pass1": "002574",
+    "pass2": "002574",
+    "agreed": true,
+    "final": "002574"
+   },
+   "wordOctal": {
+    "pass1": "00007",
+    "pass2": "00007",
+    "agreed": true,
+    "final": "00007"
+   },
+   "printedDecoded": {
+    "pass1": "0.059436 M/CS",
+    "pass2": "0.059436 M/CS",
+    "agreed": true,
+    "final": "0.059436 M/CS"
+   },
+   "scaling": {
+    "pass1": "B-07",
+    "pass2": "B-07",
+    "agreed": true,
+    "final": "B-07"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t0"
   },
-  "notes": "Record seq 529 (AOTAZ) has its echo/OCT line and address cut off at the bottom edge of the last tile in both pass 1 (p1_l18_t3) and pass 2 (p2_l18_t2); word/symbol/decoded value are legible and agree between passes, but address is unreadable. All other 28 records agree fully between independent pass 1 and pass 2 transcriptions."
+  {
+   "seq": 503,
+   "symbol": {
+    "pass1": "ABTRDOT+1",
+    "pass2": "ABTRDOT+1",
+    "agreed": true,
+    "final": "ABTRDOT+1"
+   },
+   "addressOctal": {
+    "pass1": "002575",
+    "pass2": "002575",
+    "agreed": true,
+    "final": "002575"
+   },
+   "wordOctal": {
+    "pass1": "23346",
+    "pass2": "23346",
+    "agreed": true,
+    "final": "23346"
+   },
+   "printedDecoded": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "scaling": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t0"
+  },
+  {
+   "seq": 504,
+   "symbol": {
+    "pass1": "COSTHET1",
+    "pass2": "COSTHET1",
+    "agreed": true,
+    "final": "COSTHET1"
+   },
+   "addressOctal": {
+    "pass1": "002576",
+    "pass2": "002576",
+    "agreed": true,
+    "final": "002576"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0.0",
+    "pass2": "0.0",
+    "agreed": true,
+    "final": "0.0"
+   },
+   "scaling": {
+    "pass1": "B+08",
+    "pass2": "B+08",
+    "agreed": true,
+    "final": "B+08"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t0"
+  },
+  {
+   "seq": 505,
+   "symbol": {
+    "pass1": "COSTHET1+1",
+    "pass2": "COSTHET1+1",
+    "agreed": true,
+    "final": "COSTHET1+1"
+   },
+   "addressOctal": {
+    "pass1": "002577",
+    "pass2": "002577",
+    "agreed": true,
+    "final": "002577"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "scaling": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 506,
+   "symbol": {
+    "pass1": "COSTHET2",
+    "pass2": "COSTHET2",
+    "agreed": true,
+    "final": "COSTHET2"
+   },
+   "addressOctal": {
+    "pass1": "002600",
+    "pass2": "002600",
+    "agreed": true,
+    "final": "002600"
+   },
+   "wordOctal": {
+    "pass1": "06733",
+    "pass2": "06733",
+    "agreed": true,
+    "final": "06733"
+   },
+   "printedDecoded": {
+    "pass1": "0.8660254037",
+    "pass2": "0.8660254037",
+    "agreed": true,
+    "final": "0.8660254037"
+   },
+   "scaling": {
+    "pass1": "B-02",
+    "pass2": "B-02",
+    "agreed": true,
+    "final": "B-02"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 507,
+   "symbol": {
+    "pass1": "COSTHET2+1",
+    "pass2": "COSTHET2+1",
+    "agreed": true,
+    "final": "COSTHET2+1"
+   },
+   "addressOctal": {
+    "pass1": "002601",
+    "pass2": "002601",
+    "agreed": true,
+    "final": "002601"
+   },
+   "wordOctal": {
+    "pass1": "07535",
+    "pass2": "07535",
+    "agreed": true,
+    "final": "07535"
+   },
+   "printedDecoded": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "scaling": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 508,
+   "symbol": {
+    "pass1": "ROLLTIME",
+    "pass2": "ROLLTIME",
+    "agreed": true,
+    "final": "ROLLTIME"
+   },
+   "addressOctal": {
+    "pass1": "003001",
+    "pass2": "003001",
+    "agreed": true,
+    "final": "003001"
+   },
+   "wordOctal": {
+    "pass1": "05556",
+    "pass2": "05556",
+    "agreed": true,
+    "final": "05556"
+   },
+   "printedDecoded": {
+    "pass1": "2926 CS",
+    "pass2": "2926 CS",
+    "agreed": true,
+    "final": "2926 CS"
+   },
+   "scaling": {
+    "pass1": "B-14",
+    "pass2": "B-14",
+    "agreed": true,
+    "final": "B-14"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 509,
+   "symbol": {
+    "pass1": "PITTIME",
+    "pass2": "PITTIME",
+    "agreed": true,
+    "final": "PITTIME"
+   },
+   "addressOctal": {
+    "pass1": "003002",
+    "pass2": "003002",
+    "agreed": true,
+    "final": "003002"
+   },
+   "wordOctal": {
+    "pass1": "04431",
+    "pass2": "04431",
+    "agreed": true,
+    "final": "04431"
+   },
+   "printedDecoded": {
+    "pass1": "2329 CS",
+    "pass2": "2329 CS",
+    "agreed": true,
+    "final": "2329 CS"
+   },
+   "scaling": {
+    "pass1": "B-14",
+    "pass2": "B-14",
+    "agreed": true,
+    "final": "B-14"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 510,
+   "symbol": {
+    "pass1": "DKTRAP",
+    "pass2": "DKTRAP",
+    "agreed": true,
+    "final": "DKTRAP"
+   },
+   "addressOctal": {
+    "pass1": "003003",
+    "pass2": "003003",
+    "agreed": true,
+    "final": "003003"
+   },
+   "wordOctal": {
+    "pass1": "77001",
+    "pass2": "77001",
+    "agreed": true,
+    "final": "77001"
+   },
+   "printedDecoded": {
+    "pass1": "-.0038888888 REV/S",
+    "pass2": "-.0038888888 REV/S",
+    "agreed": true,
+    "final": "-.0038888888 REV/S"
+   },
+   "scaling": {
+    "pass1": "B+3",
+    "pass2": "B+3",
+    "agreed": true,
+    "final": "B+3"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 511,
+   "symbol": {
+    "pass1": "DKOMEGAN",
+    "pass2": "DKOMEGAN",
+    "agreed": true,
+    "final": "DKOMEGAN"
+   },
+   "addressOctal": {
+    "pass1": "003004",
+    "pass2": "003004",
+    "agreed": true,
+    "final": "003004"
+   },
+   "wordOctal": {
+    "pass1": "00012",
+    "pass2": "00012",
+    "agreed": true,
+    "final": "00012"
+   },
+   "printedDecoded": {
+    "pass1": "10",
+    "pass2": "10",
+    "agreed": true,
+    "final": "10"
+   },
+   "scaling": {
+    "pass1": "B-14",
+    "pass2": "B-14",
+    "agreed": true,
+    "final": "B-14"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 512,
+   "symbol": {
+    "pass1": "DKKACSN",
+    "pass2": "DKKACSN",
+    "agreed": true,
+    "final": "DKKACSN"
+   },
+   "addressOctal": {
+    "pass1": "003005",
+    "pass2": "003005",
+    "agreed": true,
+    "final": "003005"
+   },
+   "wordOctal": {
+    "pass1": "00074",
+    "pass2": "00074",
+    "agreed": true,
+    "final": "00074"
+   },
+   "printedDecoded": {
+    "pass1": "60",
+    "pass2": "60",
+    "agreed": true,
+    "final": "60"
+   },
+   "scaling": {
+    "pass1": "B-14",
+    "pass2": "B-14",
+    "agreed": true,
+    "final": "B-14"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t1"
+  },
+  {
+   "seq": 513,
+   "symbol": {
+    "pass1": "LMTRAP",
+    "pass2": "LMTRAP",
+    "agreed": true,
+    "final": "LMTRAP"
+   },
+   "addressOctal": {
+    "pass1": "003006",
+    "pass2": "003006",
+    "agreed": true,
+    "final": "003006"
+   },
+   "wordOctal": {
+    "pass1": "77001",
+    "pass2": "77001",
+    "agreed": true,
+    "final": "77001"
+   },
+   "printedDecoded": {
+    "pass1": "-.0038888888 REV/S",
+    "pass2": "-.0038888888 REV/S",
+    "agreed": true,
+    "final": "-.0038888888 REV/S"
+   },
+   "scaling": {
+    "pass1": "B+3",
+    "pass2": "B+3",
+    "agreed": true,
+    "final": "B+3"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 514,
+   "symbol": {
+    "pass1": "LMOMEGAN",
+    "pass2": "LMOMEGAN",
+    "agreed": true,
+    "final": "LMOMEGAN"
+   },
+   "addressOctal": {
+    "pass1": "003007",
+    "pass2": "003007",
+    "agreed": true,
+    "final": "003007"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0",
+    "pass2": "0",
+    "agreed": true,
+    "final": "0"
+   },
+   "scaling": {
+    "pass1": "B-14",
+    "pass2": "B-14",
+    "agreed": true,
+    "final": "B-14"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 515,
+   "symbol": {
+    "pass1": "LMKACSN",
+    "pass2": "LMKACSN",
+    "agreed": true,
+    "final": "LMKAOSN",
+    "pass3": "LMKAOSN",
+    "thirdPassNote": "Third independent visual pass (2026 re-read): glyph 6 is a closed round O, matching the O in DKOMEGAN/LMOMEGAN on the same page. Passes 1-2 read C."
+   },
+   "addressOctal": {
+    "pass1": "003010",
+    "pass2": "003010",
+    "agreed": true,
+    "final": "003010"
+   },
+   "wordOctal": {
+    "pass1": "00074",
+    "pass2": "00074",
+    "agreed": true,
+    "final": "00074"
+   },
+   "printedDecoded": {
+    "pass1": "60",
+    "pass2": "60",
+    "agreed": true,
+    "final": "60"
+   },
+   "scaling": {
+    "pass1": "B-14",
+    "pass2": "B-14",
+    "agreed": true,
+    "final": "B-14"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 516,
+   "symbol": {
+    "pass1": "DKDB",
+    "pass2": "DKDB",
+    "agreed": true,
+    "final": "DKDB"
+   },
+   "addressOctal": {
+    "pass1": "003011",
+    "pass2": "003011",
+    "agreed": true,
+    "final": "003011"
+   },
+   "wordOctal": {
+    "pass1": "00200",
+    "pass2": "00200",
+    "agreed": true,
+    "final": "00200"
+   },
+   "printedDecoded": {
+    "pass1": "256.0000000 REV",
+    "pass2": "256.0000000 REV",
+    "agreed": true,
+    "final": "256.0000000 REV"
+   },
+   "scaling": {
+    "pass1": "B-15",
+    "pass2": "B-15",
+    "agreed": true,
+    "final": "B-15"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 517,
+   "symbol": {
+    "pass1": "IGNACSQ",
+    "pass2": "IGNACSQ",
+    "agreed": true,
+    "final": "IGNACSQ"
+   },
+   "addressOctal": {
+    "pass1": "003012",
+    "pass2": "003012",
+    "agreed": true,
+    "final": "003012"
+   },
+   "wordOctal": {
+    "pass1": "02162",
+    "pass2": "02162",
+    "agreed": true,
+    "final": "02162"
+   },
+   "printedDecoded": {
+    "pass1": ".0173611111 REV/S",
+    "pass2": ".0173611111 REV/S",
+    "agreed": true,
+    "final": ".0173611111 REV/S"
+   },
+   "scaling": {
+    "pass1": "B+02",
+    "pass2": "B+02",
+    "agreed": true,
+    "final": "B+02"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 518,
+   "symbol": {
+    "pass1": "IGNACSR",
+    "pass2": "IGNACSR",
+    "agreed": true,
+    "final": "IGNACSR"
+   },
+   "addressOctal": {
+    "pass1": "003013",
+    "pass2": "003013",
+    "agreed": true,
+    "final": "003013"
+   },
+   "wordOctal": {
+    "pass1": "00163",
+    "pass2": "00163",
+    "agreed": true,
+    "final": "00163"
+   },
+   "printedDecoded": {
+    "pass1": ".0017500000 REV/S",
+    "pass2": ".0017500000 REV/S",
+    "agreed": true,
+    "final": ".0017500000 REV/S"
+   },
+   "scaling": {
+    "pass1": "B+02",
+    "pass2": "B+02",
+    "agreed": true,
+    "final": "B+02"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 519,
+   "symbol": {
+    "pass1": "DOWNTORK",
+    "pass2": "DOWNTORK",
+    "agreed": true,
+    "final": "DOWNTORK"
+   },
+   "addressOctal": {
+    "pass1": "003113",
+    "pass2": "003113",
+    "agreed": true,
+    "final": "003113"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0 S",
+    "pass2": "0 S",
+    "agreed": true,
+    "final": "0 S"
+   },
+   "scaling": {
+    "pass1": "B-5",
+    "pass2": "B-5",
+    "agreed": true,
+    "final": "B-5"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 520,
+   "symbol": {
+    "pass1": "DOWNTORK+1",
+    "pass2": "DOWNTORK+1",
+    "agreed": true,
+    "final": "DOWNTORK+1"
+   },
+   "addressOctal": {
+    "pass1": "003114",
+    "pass2": "003114",
+    "agreed": true,
+    "final": "003114"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0 S",
+    "pass2": "0 S",
+    "agreed": true,
+    "final": "0 S"
+   },
+   "scaling": {
+    "pass1": "B-5",
+    "pass2": "B-5",
+    "agreed": true,
+    "final": "B-5"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 521,
+   "symbol": {
+    "pass1": "DOWNTORK+2",
+    "pass2": "DOWNTORK+2",
+    "agreed": true,
+    "final": "DOWNTORK+2"
+   },
+   "addressOctal": {
+    "pass1": "003115",
+    "pass2": "003115",
+    "agreed": true,
+    "final": "003115"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0 S",
+    "pass2": "0 S",
+    "agreed": true,
+    "final": "0 S"
+   },
+   "scaling": {
+    "pass1": "B-5",
+    "pass2": "B-5",
+    "agreed": true,
+    "final": "B-5"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t2"
+  },
+  {
+   "seq": 522,
+   "symbol": {
+    "pass1": "DOWNTORK+3",
+    "pass2": "DOWNTORK+3",
+    "agreed": true,
+    "final": "DOWNTORK+3"
+   },
+   "addressOctal": {
+    "pass1": "003116",
+    "pass2": "003116",
+    "agreed": true,
+    "final": "003116"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0 S",
+    "pass2": "0 S",
+    "agreed": true,
+    "final": "0 S"
+   },
+   "scaling": {
+    "pass1": "B-5",
+    "pass2": "B-5",
+    "agreed": true,
+    "final": "B-5"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 523,
+   "symbol": {
+    "pass1": "DOWNTORK+4",
+    "pass2": "DOWNTORK+4",
+    "agreed": true,
+    "final": "DOWNTORK+4"
+   },
+   "addressOctal": {
+    "pass1": "003117",
+    "pass2": "003117",
+    "agreed": true,
+    "final": "003117"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0 S",
+    "pass2": "0 S",
+    "agreed": true,
+    "final": "0 S"
+   },
+   "scaling": {
+    "pass1": "B-5",
+    "pass2": "B-5",
+    "agreed": true,
+    "final": "B-5"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 524,
+   "symbol": {
+    "pass1": "DOWNTORK+5",
+    "pass2": "DOWNTORK+5",
+    "agreed": true,
+    "final": "DOWNTORK+5"
+   },
+   "addressOctal": {
+    "pass1": "003120",
+    "pass2": "003120",
+    "agreed": true,
+    "final": "003120"
+   },
+   "wordOctal": {
+    "pass1": "00000",
+    "pass2": "00000",
+    "agreed": true,
+    "final": "00000"
+   },
+   "printedDecoded": {
+    "pass1": "0 S",
+    "pass2": "0 S",
+    "agreed": true,
+    "final": "0 S"
+   },
+   "scaling": {
+    "pass1": "B-5",
+    "pass2": "B-5",
+    "agreed": true,
+    "final": "B-5"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 525,
+   "symbol": {
+    "pass1": "ATIGINC",
+    "pass2": "ATIGINC",
+    "agreed": true,
+    "final": "ATIGINC"
+   },
+   "addressOctal": {
+    "pass1": "003400",
+    "pass2": "003400",
+    "agreed": true,
+    "final": "003400"
+   },
+   "wordOctal": {
+    "pass1": "00001",
+    "pass2": "00001",
+    "agreed": true,
+    "final": "00001"
+   },
+   "printedDecoded": {
+    "pass1": "18000 CS",
+    "pass2": "18000 CS",
+    "agreed": true,
+    "final": "18000 CS"
+   },
+   "scaling": {
+    "pass1": "B-28",
+    "pass2": "B-28",
+    "agreed": true,
+    "final": "B-28"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 526,
+   "symbol": {
+    "pass1": "ATIGINC+1",
+    "pass2": "ATIGINC+1",
+    "agreed": true,
+    "final": "ATIGINC+1"
+   },
+   "addressOctal": {
+    "pass1": "003401",
+    "pass2": "003401",
+    "agreed": true,
+    "final": "003401"
+   },
+   "wordOctal": {
+    "pass1": "03120",
+    "pass2": "03120",
+    "agreed": true,
+    "final": "03120"
+   },
+   "printedDecoded": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "scaling": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 527,
+   "symbol": {
+    "pass1": "PTIGINC",
+    "pass2": "PTIGINC",
+    "agreed": true,
+    "final": "PTIGINC"
+   },
+   "addressOctal": {
+    "pass1": "003402",
+    "pass2": "003402",
+    "agreed": true,
+    "final": "003402"
+   },
+   "wordOctal": {
+    "pass1": "00001",
+    "pass2": "00001",
+    "agreed": true,
+    "final": "00001"
+   },
+   "printedDecoded": {
+    "pass1": "18000 CS",
+    "pass2": "18000 CS",
+    "agreed": true,
+    "final": "18000 CS"
+   },
+   "scaling": {
+    "pass1": "B-28",
+    "pass2": "B-28",
+    "agreed": true,
+    "final": "B-28"
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 528,
+   "symbol": {
+    "pass1": "PTIGINC+1",
+    "pass2": "PTIGINC+1",
+    "agreed": true,
+    "final": "PTIGINC+1"
+   },
+   "addressOctal": {
+    "pass1": "003403",
+    "pass2": "003403",
+    "agreed": true,
+    "final": "003403"
+   },
+   "wordOctal": {
+    "pass1": "03120",
+    "pass2": "03120",
+    "agreed": true,
+    "final": "03120"
+   },
+   "printedDecoded": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "scaling": {
+    "pass1": "",
+    "pass2": "",
+    "agreed": true,
+    "final": ""
+   },
+   "format": "OCT",
+   "status": "verified",
+   "tile": "p1_l18_t3"
+  },
+  {
+   "seq": 529,
+   "symbol": {
+    "pass1": "AOTAZ",
+    "pass2": "AOTAZ",
+    "agreed": true,
+    "final": "AOTAZ"
+   },
+   "addressOctal": {
+    "pass1": null,
+    "pass2": null,
+    "agreed": true,
+    "final": null
+   },
+   "wordOctal": {
+    "pass1": "65244",
+    "pass2": "65244",
+    "agreed": true,
+    "final": "65244"
+   },
+   "printedDecoded": {
+    "pass1": "-0.1668666667 REV",
+    "pass2": "-0.1668666667 REV",
+    "agreed": true,
+    "final": "-0.1668666667 REV"
+   },
+   "scaling": {
+    "pass1": "B+01",
+    "pass2": "B+01",
+    "agreed": true,
+    "final": "B+01"
+   },
+   "format": "OCT",
+   "status": "unreadable",
+   "tile": "p1_l18_t3"
+  }
+ ],
+ "counts": {
+  "total": 29,
+  "verified": 28,
+  "conflict": 0,
+  "unreadable": 1
+ },
+ "header": {
+  "pass1": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 15 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE",
+  "pass2": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 15 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE"
+ },
+ "notes": "Record seq 529 (AOTAZ) has its echo/OCT line and address cut off at the bottom edge of the last tile in both pass 1 (p1_l18_t3) and pass 2 (p2_l18_t2); word/symbol/decoded value are legible and agree between passes, but address is unreadable. All other 28 records agree fully between independent pass 1 and pass 2 transcriptions."
 }
