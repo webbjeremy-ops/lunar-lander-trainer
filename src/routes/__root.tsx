@@ -129,6 +129,8 @@ function RootComponent() {
           className="flex gap-4 border-b border-neutral-900 bg-neutral-950/60 px-4 py-2 text-xs font-mono uppercase tracking-widest text-neutral-500"
         >
           <Link to="/" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Home</Link>
+          <Link to="/play" data-testid="nav-play" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Fly</Link>
+
           <Link to="/learn" data-testid="nav-learn" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Learn</Link>
           <Link to="/explore" data-testid="nav-explore" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Explore</Link>
           <Link to="/dev/mission-runtime" data-testid="nav-mission-runtime" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Mission runtime</Link>
