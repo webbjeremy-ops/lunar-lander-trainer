@@ -641,7 +641,10 @@ function runMissionTickPipeline(steps: number): void {
     monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents, {
       chan13Writes: state.tickChan13Writes,
       altitudeMeters: state.missionRuntime.getAltitudeMeters(),
-      rangeDataGood: state.avionics?.landingRadarRangeDataGood ?? false,
+      // RANGE DATA GOOD is derived from the SAME operator-declared discrete
+      // that drives the CHAN33 radar bits — never independently invented.
+      rangeDataGood: state.avionics?.landingRadarStatus === "acquired-valid",
+
     });
     state.tickChannelEvents = [];
     state.tickChan13Writes = [];
