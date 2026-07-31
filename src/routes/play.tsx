@@ -11,7 +11,7 @@
 // never writes to the AGC.
 
 import { createFileRoute, ClientOnly, Link } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dsky } from "@/ui/dsky/Dsky";
 import { useAgcSession } from "@/agc/AgcSession";
 import { LunarScene } from "@/ui/play/LunarScene";
@@ -22,12 +22,18 @@ import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
 import {
+  decodeChallengeRequest,
+  publishChallengeResult,
+  type ChallengeRequest,
+} from "@/learning/handoff";
+import {
   LANDING_LIMITS,
   MISSIONS,
   type AssistanceLevel,
   type ControlModeId,
   type MissionId,
 } from "@/game/play";
+
 
 export const Route = createFileRoute("/play")({
   head: () => ({
@@ -73,9 +79,23 @@ function PlayPage() {
 }
 
 function PlayClient() {
-  const [missionId, setMissionId] = useState<MissionId>("landing-fundamentals");
-  const [controlMode, setControlMode] = useState<ControlModeId>("quick-manual");
-  const [assistance, setAssistance] = useState<AssistanceLevel>("instructor");
+  // M4.2 — an incoming lesson challenge preselects and auto-starts the flight.
+  const challenge = useMemo<ChallengeRequest | null>(() => {
+    if (typeof window === "undefined") return null;
+    const req = decodeChallengeRequest(window.location.search);
+    if (!req) return null;
+    return req.missionId in MISSIONS ? req : null;
+  }, []);
+
+  const [missionId, setMissionId] = useState<MissionId>(
+    (challenge?.missionId as MissionId) ?? "landing-fundamentals",
+  );
+  const [controlMode, setControlMode] = useState<ControlModeId>(
+    (challenge?.controlMode as ControlModeId) ?? "quick-manual",
+  );
+  const [assistance, setAssistance] = useState<AssistanceLevel>(
+    (challenge?.assistance as AssistanceLevel) ?? "instructor",
+  );
   const [started, setStarted] = useState(false);
 
   const mission = MISSIONS[missionId];
@@ -86,9 +106,53 @@ function PlayClient() {
   const onDskyKey = session.actions.onDskyKey;
   const handleKey = useCallback((code: number | "PRO") => onDskyKey(code), [onDskyKey]);
 
+  // Publish the flight result back to the originating lesson exactly once.
+  const publishedRef = useRef(false);
+  const { summary, score } = session;
+  useEffect(() => {
+    if (!challenge || publishedRef.current) return;
+    if (!summary || !score) return;
+    publishedRef.current = true;
+    const s = summary.finalState;
+    const r = Math.hypot(s.positionM[0], s.positionM[1]) || 1;
+    const ur: [number, number] = [s.positionM[0] / r, s.positionM[1] / r];
+    const vertical = s.velocityMps[0] * ur[0] + s.velocityMps[1] * ur[1];
+    const horizontal = s.velocityMps[0] * -ur[1] + s.velocityMps[1] * ur[0];
+    publishChallengeResult({
+      version: 1,
+      lessonId: challenge.lessonId,
+      stepId: challenge.stepId,
+      missionId: challenge.missionId,
+      difficulty: assistance,
+      score: score.total,
+      maxScore: score.maxTotal,
+      grade: score.grade,
+      outcome: score.outcome,
+      passed: score.total >= challenge.passingScore && score.outcome === "landed",
+      flight: {
+        verticalSpeedMps: summary.finalState.touchdown?.verticalSpeedMps ?? vertical,
+        horizontalSpeedMps: summary.finalState.touchdown?.horizontalSpeedMps ?? horizontal,
+        propellantRemainingKg: summary.descentPropellantRemainingKg,
+        landingZoneErrorM: summary.landingZoneErrorM,
+        missionTimeS: s.missionTimeUs / 1_000_000,
+      },
+      atMs: Date.now(),
+    });
+  }, [challenge, summary, score, assistance]);
+
   if (!started) {
     return (
       <section className="mx-auto max-w-6xl px-4 py-6">
+        {challenge && (
+          <div
+            className="mb-4 rounded border border-emerald-700 bg-emerald-950/30 px-3 py-2 text-xs text-emerald-200"
+            data-testid="challenge-briefing"
+          >
+            Lesson challenge — fly {mission.title} at {assistance} and score at
+            least {challenge.passingScore} to complete the lesson.
+          </div>
+        )}
+
         <MissionSelect
           missionId={missionId}
           controlMode={controlMode}
@@ -224,14 +288,29 @@ function PlayClient() {
       </div>
 
       {session.summary && session.score && (
-        <DebriefPanel
-          mission={mission}
-          summary={session.summary}
-          score={session.score}
-          onRestart={() => session.actions.restart()}
-          onChangeMission={() => setStarted(false)}
-        />
+        <>
+          <DebriefPanel
+            mission={mission}
+            summary={session.summary}
+            score={session.score}
+            onRestart={() => {
+              publishedRef.current = false;
+              session.actions.restart();
+            }}
+            onChangeMission={() => setStarted(false)}
+          />
+          {challenge && (
+            <Link
+              to="/learn"
+              data-testid="return-to-lesson"
+              className="inline-block rounded border border-emerald-600 bg-emerald-950/40 px-3 py-2 font-mono text-xs uppercase tracking-widest text-emerald-300 hover:bg-emerald-900/40"
+            >
+              Return to the lesson with this result
+            </Link>
+          )}
+        </>
       )}
+
 
       <p className="text-[10px] leading-snug text-neutral-600">
         The Apollo Guidance Computer shown here runs authentic Luminary 099 and

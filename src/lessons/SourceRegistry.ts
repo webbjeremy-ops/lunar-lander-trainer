@@ -86,7 +86,50 @@ export const SOURCE_REGISTRY: Readonly<Record<string, SourceEntry>> = {
     note:
       "Secondary reconstruction. Combines NASA primary sources, Luminary material, air-to-ground transcript, Computer Words telemetry, secondary literature, and author inference. Used only for timeline markers, narration, scoring context, and debrief comparison. Its summarized Verb/Noun dictionary (including N60–N64) and rope-cadence claims are NOT imported.",
   },
+  "nasa-sp-4029": {
+    id: "nasa-sp-4029",
+    title: "NASA SP-4029 — Apollo by the Numbers: A Statistical Reference",
+    kind: "nasa",
+    note:
+      "Mission-level reference for lunar environment figures and Apollo flight statistics used by the M4.0 constants registry.",
+  },
+  "apollo-11-mission-report": {
+    id: "apollo-11-mission-report",
+    title: "Apollo 11 Mission Report (NASA SP-238 / MSC-00171)",
+    kind: "nasa",
+    note:
+      "Primary flight report: descent performance, propellant margins, and landing-gear contact criteria.",
+  },
+  "lm-familiarization-manual": {
+    id: "lm-familiarization-manual",
+    title: "Grumman LM Familiarization Manual / Apollo Operations Handbook (LM)",
+    kind: "documentation",
+    note:
+      "Vehicle-level source for descent and ascent propulsion ratings, throttle band, and stage masses.",
+  },
+  "lunar2d-jpl-de-lunar-gm": {
+    id: "lunar2d-jpl-de-lunar-gm",
+    title: "JPL DE-series lunar gravitational parameter (GM) and mean radius",
+    kind: "nasa",
+    note:
+      "Source of μ = 4.9028e12 m^3/s^2 and mean radius 1,737.4 km used by the M4.0 inverse-square field.",
+  },
+  "m4-0-kernel": {
+    id: "m4-0-kernel",
+    title: "AGC — Tranquility M4.0 deterministic planar lunar-flight kernel",
+    kind: "documentation",
+    note:
+      "This project's own physics kernel and its constants registry (src/simulation/lunar2d). Values derived here are labelled source-derived; tuning choices are labelled gameplay-tuned.",
+  },
+  "m3-3e-hardware-lab": {
+    id: "m3-3e-hardware-lab",
+    title: "AGC — Tranquility M3.3E Synthetic Hardware-Interface Laboratory (frozen)",
+    kind: "documentation",
+    note:
+      "Frozen HW-I/O v4 lab: PIPA PINC/MINC delivery, Channel 13 radar request decoding, and two-phase RNRAD/RADARUPT transactions, proven against real WASM. Synthetic fixture — not Apollo 11 telemetry.",
+  },
 } as const;
+
 
 export function sourcesForLesson(ids: readonly string[]): SourceEntry[] {
   const out: SourceEntry[] = [];

@@ -128,9 +128,10 @@ export function stepLesson(
       ropeSha256: action.observation.provenance.ropeSha256,
       emulatorCommit: action.observation.provenance.emulatorCommit,
       decoderSchemaVersion: action.observation.provenance.decoderSchemaVersion,
-      classification: step.classification === "educational-visualization"
-        ? "educational-visualization"
-        : "historically-grounded",
+      // Reading steps carry their own provenance classification through
+      // to evidence (M4.2 widened the union). Reading steps can never be
+      // "authentic-emulator" — that is enforced by the type.
+      classification: step.classification,
       educationalInteractionOnly: true,
     };
     return withCompletedStep(prev, def, step, evidence);
