@@ -89,6 +89,50 @@ export function DebriefPanel({
         </div>
       )}
 
+      <div
+        className="mt-3 rounded border border-sky-900/70 bg-sky-950/20 px-2 py-2"
+        data-testid="debrief-historical"
+      >
+        <div className="text-[10px] uppercase tracking-widest text-sky-300">
+          Apollo 11 comparison
+        </div>
+        <div className="mt-1 font-mono text-[10px] leading-tight text-neutral-500">
+          {RECONSTRUCTION_DISCLAIMER}
+        </div>
+        <table className="mt-2 w-full font-mono text-[11px]">
+          <thead>
+            <tr className="text-neutral-500">
+              <th className="text-left font-normal">measure</th>
+              <th className="text-right font-normal">Apollo 11</th>
+              <th className="text-right font-normal">you</th>
+            </tr>
+          </thead>
+          <tbody>
+            {buildContactComparison({
+              descentRateMps: td?.verticalSpeedMps ?? 0,
+              horizontalSpeedMps: td?.horizontalSpeedMps ?? 0,
+              altitudeM: summary.takeover?.altitudeM,
+            }).map((r) => (
+              <tr key={r.id} className="text-neutral-300">
+                <td className="py-0.5">{r.label}</td>
+                <td className="py-0.5 text-right text-sky-200">{r.historical}</td>
+                <td className="py-0.5 text-right text-neutral-100">{r.player}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div className="mt-2 grid gap-1 md:grid-cols-2">
+          {APOLLO11_DESCENT_PHASE_ANCHORS.map((a) => (
+            <div key={a.id} className="font-mono text-[10px] text-neutral-500">
+              GET {a.get} · {a.label}
+              {a.altitudeFt !== undefined ? ` · ${a.altitudeFt.toLocaleString()} ft` : ""}
+            </div>
+          ))}
+        </div>
+      </div>
+
+
+
       <ul className="mt-3 space-y-1 text-xs text-neutral-300">
         {score.notes.map((n, i) => (
           <li key={i} className="flex gap-2">
