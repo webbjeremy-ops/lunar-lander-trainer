@@ -52,7 +52,7 @@ const steps: LessonStep[] = [
     title: "A reconstruction, not a flight tape",
     body: `The numbers in this lesson come from a secondary reconstruction workbook that merges NASA sources, transcript, and Computer Words telemetry. ${RECONSTRUCTION_DISCLAIMER}. The simulator's physics is never forced through these points — they are teaching markers and comparison targets only.`,
     sources: WORKBOOK,
-    classification: "approximation",
+    classification: "educational-visualization",
   },
   {
     id: "phase-anchors",
@@ -60,7 +60,7 @@ const steps: LessonStep[] = [
     title: "Five anchors of the descent",
     body: anchorLine(),
     sources: WORKBOOK,
-    classification: "approximation",
+    classification: "educational-visualization",
   },
   {
     id: "progression",
@@ -76,7 +76,7 @@ const steps: LessonStep[] = [
     title: "Event by event",
     body: eventsLine(),
     sources: WORKBOOK,
-    classification: "approximation",
+    classification: "educational-visualization",
   },
   {
     id: "alarms",
