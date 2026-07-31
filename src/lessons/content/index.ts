@@ -5,6 +5,7 @@ export { LESSON_03_V35_LAMP_TEST } from "./lesson03";
 export { LESSON_04_V16_N65 } from "./lesson04";
 export { LESSON_05_DECODING_CH010 } from "./lesson05";
 export { LESSON_06_ANNUNCIATORS } from "./lesson06";
+export { LESSON_07_POWERED_DESCENT_TIMELINE } from "./lesson07";
 
 import type { LessonDefinition } from "../types";
 import { LESSON_01_MEET_THE_AGC } from "./lesson01";
@@ -13,6 +14,7 @@ import { LESSON_03_V35_LAMP_TEST } from "./lesson03";
 import { LESSON_04_V16_N65 } from "./lesson04";
 import { LESSON_05_DECODING_CH010 } from "./lesson05";
 import { LESSON_06_ANNUNCIATORS } from "./lesson06";
+import { LESSON_07_POWERED_DESCENT_TIMELINE } from "./lesson07";
 
 export const ALL_LESSONS: readonly LessonDefinition[] = [
   LESSON_01_MEET_THE_AGC,
@@ -21,4 +23,5 @@ export const ALL_LESSONS: readonly LessonDefinition[] = [
   LESSON_04_V16_N65,
   LESSON_05_DECODING_CH010,
   LESSON_06_ANNUNCIATORS,
+  LESSON_07_POWERED_DESCENT_TIMELINE,
 ];
