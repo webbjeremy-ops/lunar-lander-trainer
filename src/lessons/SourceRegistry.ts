@@ -5,7 +5,13 @@
 export interface SourceEntry {
   id: string;
   title: string;
-  kind: "primary-source" | "pinned-source" | "documentation" | "nasa" | "mit";
+  kind:
+    | "primary-source"
+    | "pinned-source"
+    | "documentation"
+    | "nasa"
+    | "mit"
+    | "secondary-reconstruction";
   url?: string;
   pinnedCommit?: string;
   note?: string;
