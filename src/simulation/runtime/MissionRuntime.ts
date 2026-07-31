@@ -158,6 +158,35 @@ export class MissionRuntime {
     return terminal;
   }
 
+  /**
+   * M3.3E — body-axis specific force for the synthetic hardware-interface
+   * lab: engine thrust ÷ current total mass, in m/s², along +X (thrust
+   * axis). Lunar gravity is DELIBERATELY EXCLUDED: an accelerometer is in
+   * free fall under gravity and senses only non-gravitational force.
+   *
+   * Read-only derivation from scenario state — this never feeds the kernel,
+   * so the physics firewall is untouched.
+   */
+  getBodySpecificForceMps2(): readonly [number, number, number] | null {
+    const lm = this.state.lm;
+    if (this.state.status !== "running" || lm === null) return null;
+    const mass = lm.dryMassKg + lm.propellantMassKg;
+    if (!(mass > 0)) return null;
+    const thrustN = lm.engineEnabled
+      ? this.params.vehicle.maxThrustN.value * lm.throttle
+      : 0;
+
+    return [thrustN / mass, 0, 0];
+  }
+
+  /** M3.3E — current scenario altitude (metres) or null when idle. */
+  getAltitudeMeters(): number | null {
+    const lm = this.state.lm;
+    if (this.state.status !== "running" || lm === null) return null;
+    return lm.altitudeM;
+  }
+
+
   /** Move the runtime into `interlocked` when the AGC session epoch changes
    *  while a scenario is active. Idempotent; does nothing when no scenario
    *  is running (idle/landed/crashed are terminal or empty). */

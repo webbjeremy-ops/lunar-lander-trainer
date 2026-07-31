@@ -58,11 +58,21 @@
  *    those scales/sequences are still unresolved. It is therefore NOT a
  *    descent monitor and MUST NOT be presented as one.
  */
+/**
+ *  - `agc-hardware-interface-lab-v1` (M3.3E): SYNTHETIC AGC HARDWARE-INTERFACE
+ *    LAB. Everything `discrete-observer-v0` does, PLUS live PIPA ΔV pulses
+ *    (native PINC/MINC) and request-driven landing-radar ALTITUDE
+ *    transactions answered ONLY when Luminary itself solicits them on CHAN13.
+ *    It is explicitly NOT an Apollo 11 mission-state reconstruction and NOT
+ *    a complete P63 descent; AGC output stays diagnostic only.
+ */
 export type AgcMonitorProfile =
   | "off"
   | "discrete-observer-v0"
   | "landing-radar-observer-v1"
+  | "agc-hardware-interface-lab-v1"
   | "descent-monitor-v1";
+
 
 /** Human-readable, agent-safe labels. Consumers rendering profile state MUST
  *  use these labels verbatim so the diagnostic-only nature of v0 stays
@@ -93,7 +103,15 @@ export const AGC_MONITOR_PROFILE_LABELS: {
     description:
       "Would add one authentic serial RNRAD (0o46) RANGE transaction plus native RADARUPT to discrete-observer behaviour. BLOCKED: the authentic read is AGC-solicited through CHAN13 (P20-P25.agc INITREAD/RADAREAD) and scheduled by READACCS/SERVICER (SERVICER.agc LRHTASK), which depends on the unresolved PIPA ΔV scale. No host-side cadence is source-supported, so the profile never enters.",
   },
+  "agc-hardware-interface-lab-v1": {
+    title: "Synthetic AGC hardware-interface lab",
+    banner:
+      "SYNTHETIC HARDWARE-INTERFACE LAB — PIPA AND LANDING-RADAR ALTITUDE TRANSACTIONS — NOT A COMPLETE POWERED-DESCENT PROGRAM — AGC OUTPUT IS DIAGNOSTIC ONLY",
+    description:
+      "Deliberately synthetic plumbing milestone: source-derived fixed-attitude bootstrap, live PIPA ΔV pulses (native PINC/MINC, no lunar gravity), lossless CHAN13 capture, and request-driven RNRAD altitude transactions with native RADARUPT. NOT an Apollo 11 mission-state reconstruction, NOT a complete P63 descent, and never closed-loop: AGC output remains diagnostic only.",
+  },
   "descent-monitor-v1": {
+
     title: "Descent monitor v1",
     banner: "AGC MONITOR ONLY — COMMAND NOT APPLIED TO SPACECRAFT",
     description:
@@ -415,6 +433,10 @@ export interface AgcMonitorSnapshot {
   /** Owned input channels (CHAN 030 / 033) with their COMPLETE current
    *  words, so the harness can render authentic octal values. */
   readonly inputChannels: readonly MonitorInputChannelView[];
+  /** M3.3E SYNTHETIC HARDWARE-INTERFACE LAB diagnostics. Null for every
+   *  other profile, so frozen M3.2/P5 snapshot shapes are unaffected. */
+  readonly lab?: import("./hardwareInterfaceLab").HardwareInterfaceLabDiagnostic | null;
+
 }
 
 

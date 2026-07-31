@@ -35,6 +35,20 @@ import { mappedSignalsForProfile, validateRegistry } from "./sensorRegistry";
 import { decideMonitorEntry, type MonitorEntryContext } from "./profileValidation";
 import { AgcInputChannelShadow } from "./inputShadow";
 import { MonitorTraceRing, type MonitorTraceWindow } from "./monitorTrace";
+import {
+  HARDWARE_INTERFACE_LAB_PROFILE,
+  createHardwareInterfaceLabState,
+  labDiagnostic,
+  labEncodePipa,
+  labObserveChan13,
+  labRecordDeliveredPulses,
+  type HardwareInterfaceLabDiagnostic,
+  type HardwareInterfaceLabState,
+  type LabRadarRefusal,
+  type LabRadarResponse,
+} from "./hardwareInterfaceLab";
+import type { Chan13RadarRequest, Chan13Write } from "./chan13Requests";
+import type { Vec3 } from "./imuBootstrap";
 import type {
   AgcCommandedControl,
   AgcMonitorProfile,
@@ -42,12 +56,14 @@ import type {
   AgcMonitorStatus,
   AgcOutputChannelEvent,
   AgcOutputCounterEvent,
+  AgcSensorAction,
   ChannelMaskUpdateAction,
   EncodedSensorDiagnostics,
   MonitorBlockReason,
   MonitorInputChannelView,
   ThrustCounterDiagnostic,
 } from "./types";
+
 
 /** Input channels any monitor profile may own (CHAN 030 / 033). */
 export const MONITOR_OWNED_INPUT_CHANNELS: readonly number[] = [0o30, 0o33];
@@ -68,6 +84,22 @@ export interface MonitorHwPort {
   /** Transmit a COMPLETE input-channel word through the frozen
    *  `packet_write` path. */
   writeInputChannel(channel: number, word: number): void;
+  // ---- M3.3E synthetic hardware-interface lab -------------------------
+  /** Apply ordered unprogrammed counter pulses (native PINC/MINC) through
+   *  `agc_hw_input_apply`. Returns true only when the WHOLE batch applied;
+   *  the WASM validates atomically. Optional so existing test doubles that
+   *  never enter the lab profile keep compiling. */
+  applyCounterPulses?(
+    records: readonly {
+      readonly counterAddress: number;
+      readonly incType: string;
+      readonly pulseCount: number;
+      readonly suborder: number;
+    }[],
+  ): boolean;
+  /** Serially shift one RNRAD word and raise the native RADARUPT latch, in
+   *  one atomic host call. Returns true on success. */
+  applyLandingRadarUpdate?(word: number, bitCount: number, raiseRadarupt: boolean): boolean;
 }
 
 export type MonitorInterlockReason =
@@ -84,7 +116,26 @@ export interface MonitorTickInputs {
   readonly missionTick: number;
   readonly missionTimeUs: number;
   readonly avionics: LmDiscreteSensorState | null;
+  /**
+   * M3.3E only. Body-axis specific force (m/s², thrust ÷ tick-start mass,
+   * NO lunar gravity) for the synthetic lab profile. Ignored by every other
+   * profile; `null` means no scenario force is defined.
+   */
+  readonly bodySpecificForceMps2?: Vec3 | null;
+  /** Tick length in µs; required by the PIPA integrator. */
+  readonly dtUs?: number;
 }
+
+/** Post-AGC inputs the synthetic lab needs. Absent for every other profile. */
+export interface MonitorLabOutputInputs {
+  /** Lossless, ordered CHAN13 output writes from THIS AGC interval. */
+  readonly chan13Writes: readonly Chan13Write[];
+  readonly altitudeMeters: number | null;
+  readonly rangeDataGood: boolean;
+  /** True only when the writes came from the clearly labelled test fixture. */
+  readonly syntheticFixture?: boolean;
+}
+
 
 export interface MonitorPreAgcResult {
   readonly actionsEmitted: number;
@@ -142,6 +193,16 @@ export class MonitorController {
   private lastOutputChannelEvents: readonly AgcOutputChannelEvent[] = [];
   private lastOutputCounterEvents: readonly AgcOutputCounterEvent[] = [];
   private lastMissionTick = -1;
+
+  // ---- M3.3E synthetic hardware-interface lab --------------------------
+  private lab: HardwareInterfaceLabState | null = null;
+  private lastLabDiagnostic: HardwareInterfaceLabDiagnostic | null = null;
+  private lastLabStableMemberForce: Vec3 | null = null;
+  private lastLabPipa: ReturnType<typeof labEncodePipa>["diagnostic"] | null = null;
+  private lastLabRequest: Chan13RadarRequest | null = null;
+  private lastLabResponse: LabRadarResponse | null = null;
+  private lastLabRefusals: readonly LabRadarRefusal[] = [];
+
 
   private traceDrainCount = 0;
   private sensorSampleTicks = 0;
@@ -211,8 +272,20 @@ export class MonitorController {
       traceDropped: this.ring.droppedCount() + this.port.traceDropped(),
       blockReasons: this.blockReasons,
       inputChannels: this.ownedInputChannels(),
+      lab: this.lastLabDiagnostic,
     };
   }
+
+  /** M3.3E lab diagnostic for the most recent tick (null when inactive). */
+  labDiagnostics(): HardwareInterfaceLabDiagnostic | null {
+    return this.lastLabDiagnostic;
+  }
+
+  /** M3.3E lab state (tests + acceptance reporting). */
+  labState(): HardwareInterfaceLabState | null {
+    return this.lab;
+  }
+
 
   /** Owned input channels + their COMPLETE current shadow words. The owned
    *  mask is derived from the registry for the ACTIVE profile; when the
@@ -346,7 +419,15 @@ export class MonitorController {
 
     this.encoder = createDiscreteEncoderState(profile);
     this.decoder = INITIAL_ACTUATOR_DECODER_STATE;
+    // M3.3E: a fresh lab state per entry — residual carry, CHAN13 retained
+    // level and every counter start from zero. Entry never inherits state.
+    this.lab =
+      profile === HARDWARE_INTERFACE_LAB_PROFILE
+        ? createHardwareInterfaceLabState()
+        : null;
+    this.clearLabDiagnostics();
     this.ring.clear();
+
     this.lastSensorDiagnostics = null;
     this.lastSignalDiagnostics = [];
     this.lastActions = [];
@@ -366,6 +447,17 @@ export class MonitorController {
     return { outcome: "entered", profile, status: this.status, reasons: [] };
   }
 
+  /** Drop every retained lab diagnostic. Called on entry and on any exit so
+   *  residuals and radar transaction state can never survive a reset. */
+  private clearLabDiagnostics(): void {
+    this.lastLabDiagnostic = null;
+    this.lastLabStableMemberForce = null;
+    this.lastLabPipa = null;
+    this.lastLabRequest = null;
+    this.lastLabResponse = null;
+    this.lastLabRefusals = [];
+  }
+
   /** Explicit exit: disable trace → reset trace → clear retained trace →
    *  clear encoder/decoder → off. Never re-arms automatically. */
   exitToOff(interlock: MonitorInterlockReason | null): void {
@@ -374,6 +466,8 @@ export class MonitorController {
     this.ring.clear();
     this.encoder = null;
     this.decoder = INITIAL_ACTUATOR_DECODER_STATE;
+    this.lab = null;
+    this.clearLabDiagnostics();
     this.lastSensorDiagnostics = null;
     this.lastSignalDiagnostics = [];
     this.lastActions = [];
@@ -386,6 +480,7 @@ export class MonitorController {
     this.blockReasons = [];
     this.interlockReason = interlock;
   }
+
 
   /** Interlock: monitoring stops and CANNOT be re-armed implicitly. */
   interlock(reason: MonitorInterlockReason): void {
@@ -546,13 +641,74 @@ export class MonitorController {
 
     this.encoder = encoded.nextState;
     this.lastActions = merged.map((m) => m.action);
+
+    // ---- M3.3E: live PIPA ΔV pulses (native PINC/MINC) ------------------
+    const pipaPulses = this.applyLabPipa(inputs);
+
     return {
-      actionsEmitted: actions.length,
-      actionsApplied: merged.length,
+      actionsEmitted: actions.length + pipaPulses.actionsEmitted,
+      actionsApplied: merged.length + pipaPulses.actionsApplied,
       rejected: false,
       reasons: [],
     };
   }
+
+  /**
+   * M3.3E — encode and deliver this tick's PIPA pulses.
+   *
+   * Inert unless the synthetic lab profile is active. Atomic: a refused
+   * encode delivers nothing, and a rejected WASM batch leaves the residual
+   * state untouched so no ΔV is silently lost.
+   */
+  private applyLabPipa(inputs: MonitorTickInputs): {
+    actionsEmitted: number;
+    actionsApplied: number;
+  } {
+    if (this.profile !== HARDWARE_INTERFACE_LAB_PROFILE || this.lab === null) {
+      return { actionsEmitted: 0, actionsApplied: 0 };
+    }
+    const dtUs = inputs.dtUs ?? 20_000;
+    const result = labEncodePipa(this.lab, {
+      missionTimeUs: inputs.missionTimeUs,
+      dtUs,
+      bodySpecificForceMps2: inputs.bodySpecificForceMps2 ?? null,
+      // The encoder consumes the SAME operator-declared discrete the CHAN33
+      // PIPA FAIL bit is derived from — never a separate invented value.
+      pipaHealthy: inputs.avionics?.pipaHealthy ?? false,
+    });
+
+    this.lastLabStableMemberForce = result.stableMemberSpecificForceMps2;
+    this.lastLabPipa = result.diagnostic;
+
+    if (result.blockedPrerequisites.length > 0 || result.actions.length === 0) {
+      // Nothing emitted. Residual state still advances only via nextState,
+      // which for a refusal is the unchanged state.
+      this.lab = result.nextState;
+      return { actionsEmitted: 0, actionsApplied: 0 };
+    }
+
+    const records = result.actions
+      .filter((a): a is Extract<AgcSensorAction, { kind: "counter-pulses" }> =>
+        a.kind === "counter-pulses")
+      .map((a) => ({
+        counterAddress: a.counterAddress,
+        incType: a.incType,
+        pulseCount: a.pulseCount,
+        suborder: a.suborder,
+      }));
+
+    const ok = this.port.applyCounterPulses?.(records) ?? false;
+    if (!ok) {
+      // The batch was refused by the emulator. Do NOT advance the residual
+      // state: the ΔV has not been delivered and must not be discarded.
+      return { actionsEmitted: records.length, actionsApplied: 0 };
+    }
+
+    const pulses = records.reduce((n, r) => n + r.pulseCount, 0);
+    this.lab = labRecordDeliveredPulses(result.nextState, pulses);
+    return { actionsEmitted: records.length, actionsApplied: records.length };
+  }
+
 
   /**
    * Phases 7–10: drain the WASM output-counter ring EXACTLY ONCE, combine
@@ -563,8 +719,10 @@ export class MonitorController {
     missionTick: number,
     missionTimeUs: number,
     channelEvents: readonly AgcOutputChannelEvent[],
+    labInputs?: MonitorLabOutputInputs,
   ): void {
     if (!this.isActive()) return;
+
 
     const counterEvents = this.port.drainTrace();
     this.traceDrainCount += 1;
@@ -608,7 +766,55 @@ export class MonitorController {
         valueAfter: e.valueAfter,
       });
     }
+
+    // ---- M3.3E: request-driven landing-radar ALTITUDE transaction --------
+    this.applyLabRadar(missionTimeUs, labInputs);
   }
+
+  /**
+   * M3.3E — answer at most ONE Luminary-solicited altitude request per tick.
+   *
+   * There is no host timer here: if the rope never writes CHAN13, nothing is
+   * ever shifted into RNRAD and RADARUPT is never raised.
+   */
+  private applyLabRadar(missionTimeUs: number, labInputs?: MonitorLabOutputInputs): void {
+    if (this.profile !== HARDWARE_INTERFACE_LAB_PROFILE || this.lab === null) return;
+
+    const observed = labObserveChan13(this.lab, {
+      writes: labInputs?.chan13Writes ?? [],
+      altitudeMeters: labInputs?.altitudeMeters ?? null,
+      rangeDataGood: labInputs?.rangeDataGood ?? false,
+      syntheticFixture: labInputs?.syntheticFixture,
+    });
+    this.lab = observed.nextState;
+    this.lastLabRequest = observed.requests[observed.requests.length - 1] ?? this.lastLabRequest;
+    this.lastLabRefusals = observed.refusals;
+
+    const response = observed.response;
+    if (response !== null) {
+      const ok =
+        this.port.applyLandingRadarUpdate?.(
+          response.action.word,
+          response.action.bitCount,
+          response.action.raiseRadarupt,
+        ) ?? false;
+
+      // A refused host call is reported, never retried silently and never
+      // counted as a delivered transaction.
+      this.lastLabResponse = ok ? response : null;
+    } else {
+      this.lastLabResponse = null;
+    }
+
+    this.lastLabDiagnostic = labDiagnostic(this.lab, missionTimeUs, {
+      pipa: this.lastLabPipa,
+      stableMemberSpecificForceMps2: this.lastLabStableMemberForce,
+      lastRequest: this.lastLabRequest,
+      lastResponse: this.lastLabResponse,
+      lastRefusals: this.lastLabRefusals,
+    });
+  }
+
 
   lastDrainEmpty(): boolean {
     return this.lastDrainWasEmpty;

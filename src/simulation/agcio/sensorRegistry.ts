@@ -65,7 +65,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:150 (bit 3); inversion note :143-144; read at BURN_BABY_BURN--MASTER_IGNITION_ROUTINE.agc:916",
     hardwarePath: "packet_write(0o30, word) — steady-state discrete",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan30.bit05.auto-throttle",
@@ -79,7 +79,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:152 (bit 5); inversion note :143-144",
     hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan30.bit09.iss-operate",
@@ -93,7 +93,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:157 (bit 9); inversion note :143-144",
     hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan30.bit10.lgc-in-control",
@@ -107,7 +107,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:158 (bit 10); inversion note :143-144",
     hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan30.bit12.imu-cdu-fail",
@@ -121,7 +121,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:160 (bit 12); inversion note :143-144",
     hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan30.bit13.imu-fail",
@@ -135,7 +135,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:161 (bit 13); inversion note :143-144",
     hardwarePath: "packet_write(0o30, word)",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
 
   // ---------- CHAN33 (LR + PIPA status discretes, ALSO active-low) --------
@@ -152,7 +152,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:208 (bit 5); inversion note :143-144",
     hardwarePath: "packet_write(0o33, word) — steady-state discrete",
     validStates: "valid when landing radar is powered and range has acquired",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan33.bit06.lr-pos1",
@@ -165,7 +165,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:209 (bit 6); inversion note :143-144; gated at THE_LUNAR_LANDING.agc P63SPOT3",
     hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR powered",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan33.bit07.lr-pos2",
@@ -178,7 +178,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:210 (bit 7); inversion note :143-144",
     hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR powered",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan33.bit08.lr-velocity-good",
@@ -191,7 +191,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:212 (bit 8); inversion note :143-144",
     hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR velocity beams have acquired",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan33.bit09.lr-range-low-scale",
@@ -205,7 +205,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:213 (bit 9); inversion note :143-144; consumed by SCALECHK in P20-P25.agc",
     hardwarePath: "packet_write(0o33, word)",
     validStates: "valid when LR powered",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
   {
     id: "chan33.bit13.pipa-fail",
@@ -219,7 +219,7 @@ export const MONITOR_SIGNAL_REGISTRY: readonly MonitorSignalMapping[] = [
       "Luminary099/INPUT_OUTPUT_CHANNEL_BIT_DESCRIPTIONS.agc:217 (bit 13); inversion note :143-144",
     hardwarePath: "packet_write(0o33, word)",
     validStates: "always valid",
-    requiredForProfiles: ["discrete-observer-v0", "descent-monitor-v1"],
+    requiredForProfiles: ["discrete-observer-v0", "agc-hardware-interface-lab-v1", "descent-monitor-v1"],
   },
 
 

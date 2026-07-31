@@ -37,8 +37,10 @@ export const SIMULATION_PROTOCOL_VERSION = 2 as const;
 export const SUPPORTED_MONITOR_PROFILES: readonly AgcMonitorProfile[] = [
   "off",
   "discrete-observer-v0",
+  "agc-hardware-interface-lab-v1",
   "descent-monitor-v1",
 ];
+
 
 /** Epoch-bound, tick-aligned monitor profile command (P5.a shape). */
 export interface SetMonitorProfileCommand {

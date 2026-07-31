@@ -9,7 +9,7 @@
 
 /// <reference lib="webworker" />
 
-import { AgcCoreAdapter } from "@/sim/agc/AgcCoreAdapter";
+import { AgcCoreAdapter, type AgcIncTypeName } from "@/sim/agc/AgcCoreAdapter";
 import { CANONICAL_AGC_RUNTIME } from "./AgcRuntimeManifest";
 import { MissionClock, TICK_MICROS } from "./MissionClock";
 const SCHEDULER_TICK_MICROS = Number(TICK_MICROS);
@@ -62,6 +62,7 @@ import {
 import { MonitorController, type MonitorHwPort } from "@/simulation/agcio/MonitorController";
 import { validateSetMonitorProfileCommand } from "@/simulation/agcio/profileValidation";
 import { EXPECTED_ACTUATOR_CHANNELS } from "@/simulation/agcio/actuatorRegistry";
+import { CHAN13, type Chan13Write } from "@/simulation/agcio/chan13Requests";
 import { MONITOR_TRACE_CAPACITY } from "@/simulation/agcio/monitorTrace";
 import { applyFixedAttitudeImuBootstrapV1 } from "@/simulation/agcio/bootstrapTransaction";
 import { LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1 } from "@/simulation/agcio/padLoadManifest";
@@ -233,6 +234,11 @@ interface WorkerState {
   /** Lossless CHAN11/CHAN14 output events captured during the CURRENT AGC
    *  interval. Cleared at the start of every mission tick. */
   tickChannelEvents: AgcOutputChannelEvent[];
+  /** M3.3E: lossless CHAN13 output writes captured during the CURRENT AGC
+   *  interval. These are the ONLY trigger for a landing-radar transaction —
+   *  there is no host-side radar timer anywhere in the lab. */
+  tickChan13Writes: Chan13Write[];
+
   /** Monotonic pseudo-sequence for lossless channel observations. The
    *  packet path exposes no AGC cycle counter, so ordering (not absolute
    *  cycle) is what is preserved — documented in docs/M3_3A2_P5.md. */
@@ -376,6 +382,7 @@ const state: WorkerState = {
   monitorCommandQueue: [],
   imuBootstrapAgcEpoch: null,
   tickChannelEvents: [],
+  tickChan13Writes: [],
   channelObservationSeq: 0,
 };
 
@@ -406,8 +413,29 @@ function makeMonitorPort(): MonitorHwPort {
       // Authentic frozen host-input path — a COMPLETE word, never a mask.
       state.adapter?.writeIo(channel, word);
     },
+    // ---- M3.3E synthetic hardware-interface lab -------------------------
+    applyCounterPulses: (records) => {
+      const adapter = state.adapter;
+      if (!adapter || !adapter.hwInputSupported() || records.length === 0) return false;
+      const result = adapter.applyHwInput(
+        records.map((r) => ({
+          counterAddress: r.counterAddress,
+          incType: r.incType as AgcIncTypeName,
+          pulseCount: r.pulseCount,
+          suborder: r.suborder,
+        })),
+      );
+      return result.ok;
+    },
+
+    applyLandingRadarUpdate: (word, bitCount, raiseRadarupt) => {
+      const adapter = state.adapter;
+      if (!adapter) return false;
+      return adapter.applyLandingRadarUpdate(word, bitCount, raiseRadarupt) === 0;
+    },
   };
 }
+
 
 /** Record a host input write in the authoritative shadow. Called for EVERY
  *  accepted host→AGC packet (DSKY keys, PROCEED, monitor discretes) so the
@@ -593,10 +621,14 @@ function runMissionTickPipeline(steps: number): void {
   // ---- Phases 2-5: sample -> encode -> validate -> apply ---------------
   if (monitor?.isActive()) {
     state.tickChannelEvents = [];
+    state.tickChan13Writes = [];
     monitor.preAgcTick({
       missionTick: tickIndex,
       missionTimeUs: tickStartUs,
       avionics: state.avionics,
+      // Scenario-derived specific force (thrust / mass, NO lunar gravity).
+      bodySpecificForceMps2: state.missionRuntime.getBodySpecificForceMps2(),
+      dtUs: MISSION_TICK_US,
     });
   }
 
@@ -606,8 +638,16 @@ function runMissionTickPipeline(steps: number): void {
 
   // ---- Phases 7-10: drain once, decode, retain bounded diagnostics -----
   if (monitor?.isActive()) {
-    monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents);
+    monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents, {
+      chan13Writes: state.tickChan13Writes,
+      altitudeMeters: state.missionRuntime.getAltitudeMeters(),
+      // RANGE DATA GOOD is derived from the SAME operator-declared discrete
+      // that drives the CHAN33 radar bits — never independently invented.
+      rangeDataGood: state.avionics?.landingRadarStatus === "acquired-valid",
+
+    });
     state.tickChannelEvents = [];
+    state.tickChan13Writes = [];
   }
 
   // ---- Phases 11 + 12: physics (branded control only) + terminal -------
@@ -1011,6 +1051,18 @@ async function handle(
         // repeated writes of the same value which onChannelUpdate filters.
         onChannelPacket: (ch, val, before) => {
           if (!state.monitor?.isActive()) return;
+          if (ch === CHAN13) {
+            // M3.3E: every CHAN13 write is retained losslessly, including
+            // repeats of the same word — INITREAD's clear-then-set pair is
+            // only distinguishable if nothing is filtered here.
+            state.tickChan13Writes.push({
+              channel: ch,
+              word: val,
+              agcCycle: ++state.channelObservationSeq,
+              missionTimeUs: Number(state.clock.getMissionTimeUs()),
+            });
+            return;
+          }
           if (!EXPECTED_ACTUATOR_CHANNELS.includes(ch)) return;
           const seq = ++state.channelObservationSeq;
           state.tickChannelEvents.push({
@@ -1236,6 +1288,7 @@ async function handle(
       state.avionics = null;
       state.monitorCommandQueue.length = 0;
       state.tickChannelEvents.length = 0;
+      state.tickChan13Writes.length = 0;
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
