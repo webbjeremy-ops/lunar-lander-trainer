@@ -230,6 +230,40 @@ export function MonitorPanel() {
         <br />
         COMMAND NOT APPLIED TO SPACECRAFT
       </p>
+
+      {monitor?.lab ? (
+        <div className="mt-4 rounded border border-amber-700/60 p-3" data-testid="mon-lab">
+          <p className="text-xs font-semibold tracking-wide text-amber-400">
+            {monitor.lab.banner.map((line) => (
+              <span key={line} className="block">{line}</span>
+            ))}
+          </p>
+          <p className="mt-2 text-xs text-neutral-400">{monitor.lab.scopeNotice}</p>
+          <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs">
+            <span className="text-neutral-500">Hardware input delivered (pulses)</span>
+            <span data-testid="mon-lab-pulses">{monitor.lab.hardwareInputDelivered}</span>
+            <span className="text-neutral-500">Rope input consumed</span>
+            <span data-testid="mon-lab-rope">
+              NO — {monitor.lab.ropeConsumptionNote}
+            </span>
+            <span className="text-neutral-500">Synthetic requests generated</span>
+            <span data-testid="mon-lab-synthetic">{monitor.lab.syntheticRequestGenerated}</span>
+            <span className="text-neutral-500">Authentic mission requests</span>
+            <span data-testid="mon-lab-authentic">{monitor.lab.authenticMissionRequestGenerated}</span>
+            <span className="text-neutral-500">CHAN13 solicitations observed</span>
+            <span data-testid="mon-lab-chan13">{monitor.lab.chan13RequestsObserved}</span>
+            <span className="text-neutral-500">Radar answers delivered / refused</span>
+            <span data-testid="mon-lab-radar">
+              {monitor.lab.radarResponsesDelivered} / {monitor.lab.radarResponsesRefused}
+            </span>
+            <span className="text-neutral-500">Host radar timer</span>
+            <span data-testid="mon-lab-timer">
+              NONE — every transaction is AGC-solicited
+            </span>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs" data-testid="mon-radar">
         <span className="text-neutral-500">Profile state</span>
         <span data-testid="mon-radar-state">
