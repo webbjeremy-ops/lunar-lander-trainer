@@ -1,0 +1,1552 @@
+{
+  "leaf": 21,
+  "records": [
+    {
+      "seq": 601,
+      "layout": "a",
+      "symbol": {
+        "pass1": "REFSMMAT",
+        "pass2": "REFSMMAT",
+        "agreed": true,
+        "final": "REFSMMAT"
+      },
+      "offset": "+16D",
+      "addressOctal": {
+        "pass1": "001753",
+        "pass2": "001753",
+        "agreed": true,
+        "final": "001753"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "73052",
+          "73006"
+        ],
+        "pass2": [
+          "73052",
+          "73006"
+        ],
+        "agreed": true,
+        "final": [
+          "73052",
+          "73006"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "-.30727",
+        "pass2": "-.30727",
+        "agreed": true,
+        "final": "-.30727"
+      },
+      "scaling": {
+        "pass1": "B-1",
+        "pass2": "B-1",
+        "agreed": true,
+        "final": "B-1"
+      },
+      "downlink": "DOWNLINK 101'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 602,
+      "layout": "a",
+      "symbol": {
+        "pass1": "TIME2",
+        "pass2": "TIME2",
+        "agreed": true,
+        "final": "TIME2"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "000024",
+        "pass2": "000024",
+        "agreed": true,
+        "final": "000024"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "04304",
+          "10320"
+        ],
+        "pass2": [
+          "04304",
+          "10320"
+        ],
+        "agreed": true,
+        "final": [
+          "04304",
+          "10320"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+36770000",
+        "pass2": "+36770000",
+        "agreed": true,
+        "final": "+36770000"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 603,
+      "layout": "a",
+      "symbol": {
+        "pass1": "TETLEM",
+        "pass2": "TETLEM",
+        "agreed": true,
+        "final": "TETLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001642",
+        "pass2": "001642",
+        "agreed": true,
+        "final": "001642"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "04304",
+          "10320"
+        ],
+        "pass2": [
+          "04304",
+          "10320"
+        ],
+        "agreed": true,
+        "final": [
+          "04304",
+          "10320"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+36770000",
+        "pass2": "+36770000",
+        "agreed": true,
+        "final": "+36770000"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 604,
+      "layout": "a",
+      "symbol": {
+        "pass1": "TETCSM",
+        "pass2": "TETCSM",
+        "agreed": true,
+        "final": "TETCSM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001570",
+        "pass2": "001570",
+        "agreed": true,
+        "final": "001570"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "04304",
+          "10320"
+        ],
+        "pass2": [
+          "04304",
+          "10320"
+        ],
+        "agreed": true,
+        "final": [
+          "04304",
+          "10320"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+36770000",
+        "pass2": "+36770000",
+        "agreed": true,
+        "final": "+36770000"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 605,
+      "layout": "a",
+      "symbol": {
+        "pass1": "RCVLEM",
+        "pass2": "RCVLEM",
+        "agreed": true,
+        "final": "RCVLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001660",
+        "pass2": "001660",
+        "agreed": true,
+        "final": "001660"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "77544",
+          "43603"
+        ],
+        "pass2": [
+          "77544",
+          "43603"
+        ],
+        "agreed": true,
+        "final": [
+          "77544",
+          "43603"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "-1276990.0",
+        "pass2": "-1276990.0",
+        "agreed": true,
+        "final": "-1276990.0"
+      },
+      "scaling": {
+        "pass1": "B-27",
+        "pass2": "B-27",
+        "agreed": true,
+        "final": "B-27"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 606,
+      "layout": "a",
+      "symbol": {
+        "pass1": "RCVLEM",
+        "pass2": "RCVLEM",
+        "agreed": true,
+        "final": "RCVLEM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001662",
+        "pass2": "001662",
+        "agreed": true,
+        "final": "001662"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00214",
+          "06600"
+        ],
+        "pass2": [
+          "00214",
+          "06600"
+        ],
+        "agreed": true,
+        "final": [
+          "00214",
+          "06600"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+1148608.0",
+        "pass2": "+1148608.0",
+        "agreed": true,
+        "final": "+1148608.0"
+      },
+      "scaling": {
+        "pass1": "B-27",
+        "pass2": "B-27",
+        "agreed": true,
+        "final": "B-27"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 607,
+      "layout": "a",
+      "symbol": {
+        "pass1": "RCVLEM",
+        "pass2": "RCVLEM",
+        "agreed": true,
+        "final": "RCVLEM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001664",
+        "pass2": "001664",
+        "agreed": true,
+        "final": "001664"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00074",
+          "27447"
+        ],
+        "pass2": [
+          "00074",
+          "27447"
+        ],
+        "agreed": true,
+        "final": [
+          "00074",
+          "27447"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+497555.50",
+        "pass2": "+497555.50",
+        "agreed": true,
+        "final": "+497555.50"
+      },
+      "scaling": {
+        "pass1": "B-27",
+        "pass2": "B-27",
+        "agreed": true,
+        "final": "B-27"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 608,
+      "layout": "a",
+      "symbol": {
+        "pass1": "RRECTLEM",
+        "pass2": "RRECTLEM",
+        "agreed": true,
+        "final": "RRECTLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001626",
+        "pass2": "001626",
+        "agreed": true,
+        "final": "001626"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "77544",
+          "43603"
+        ],
+        "pass2": [
+          "77544",
+          "43603"
+        ],
+        "agreed": true,
+        "final": [
+          "77544",
+          "43603"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "-1276990.0",
+        "pass2": "-1276990.0",
+        "agreed": true,
+        "final": "-1276990.0"
+      },
+      "scaling": {
+        "pass1": "B-27",
+        "pass2": "B-27",
+        "agreed": true,
+        "final": "B-27"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 609,
+      "layout": "a",
+      "symbol": {
+        "pass1": "RRECTLEM",
+        "pass2": "RRECTLEM",
+        "agreed": true,
+        "final": "RRECTLEM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001630",
+        "pass2": "001630",
+        "agreed": true,
+        "final": "001630"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00214",
+          "06600"
+        ],
+        "pass2": [
+          "00214",
+          "06600"
+        ],
+        "agreed": true,
+        "final": [
+          "00214",
+          "06600"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+1148608.0",
+        "pass2": "+1148608.0",
+        "agreed": true,
+        "final": "+1148608.0"
+      },
+      "scaling": {
+        "pass1": "B-27",
+        "pass2": "B-27",
+        "agreed": true,
+        "final": "B-27"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 610,
+      "layout": "a",
+      "symbol": {
+        "pass1": "RRECTLEM",
+        "pass2": "RRECTLEM",
+        "agreed": true,
+        "final": "RRECTLEM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001632",
+        "pass2": "001632",
+        "agreed": true,
+        "final": "001632"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00074",
+          "27447"
+        ],
+        "pass2": [
+          "00074",
+          "27447"
+        ],
+        "agreed": true,
+        "final": [
+          "00074",
+          "27447"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+497555.50",
+        "pass2": "+497555.50",
+        "agreed": true,
+        "final": "+497555.50"
+      },
+      "scaling": {
+        "pass1": "B-27",
+        "pass2": "B-27",
+        "agreed": true,
+        "final": "B-27"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t0"
+    },
+    {
+      "seq": 611,
+      "layout": "a",
+      "symbol": {
+        "pass1": "VCVLEM",
+        "pass2": "VCVLEM",
+        "agreed": true,
+        "final": "VCVLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001666",
+        "pass2": "001666",
+        "agreed": true,
+        "final": "001666"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "13721",
+          "35341"
+        ],
+        "pass2": [
+          "13721",
+          "35341"
+        ],
+        "agreed": true,
+        "final": [
+          "13721",
+          "35341"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+11.91",
+        "pass2": "+11.91",
+        "agreed": true,
+        "final": "+11.91"
+      },
+      "scaling": {
+        "pass1": "B-5",
+        "pass2": "B-5",
+        "agreed": true,
+        "final": "B-5"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 612,
+      "layout": "a",
+      "symbol": {
+        "pass1": "VCVLEM",
+        "pass2": "VCVLEM",
+        "agreed": true,
+        "final": "VCVLEM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001670",
+        "pass2": "001670",
+        "agreed": true,
+        "final": "001670"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "12475",
+          "16051"
+        ],
+        "pass2": [
+          "12475",
+          "16051"
+        ],
+        "agreed": true,
+        "final": [
+          "12475",
+          "16051"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+10.62",
+        "pass2": "+10.62",
+        "agreed": true,
+        "final": "+10.62"
+      },
+      "scaling": {
+        "pass1": "B-5",
+        "pass2": "B-5",
+        "agreed": true,
+        "final": "B-5"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 613,
+      "layout": "a",
+      "symbol": {
+        "pass1": "VCVLEM",
+        "pass2": "VCVLEM",
+        "agreed": true,
+        "final": "VCVLEM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001672",
+        "pass2": "001672",
+        "agreed": true,
+        "final": "001672"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "04436",
+          "27024"
+        ],
+        "pass2": [
+          "04436",
+          "27024"
+        ],
+        "agreed": true,
+        "final": [
+          "04436",
+          "27024"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+4.560",
+        "pass2": "+4.560",
+        "agreed": true,
+        "final": "+4.560"
+      },
+      "scaling": {
+        "pass1": "B-5",
+        "pass2": "B-5",
+        "agreed": true,
+        "final": "B-5"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 614,
+      "layout": "a",
+      "symbol": {
+        "pass1": "VRECTLEM",
+        "pass2": "VRECTLEM",
+        "agreed": true,
+        "final": "VRECTLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001634",
+        "pass2": "001634",
+        "agreed": true,
+        "final": "001634"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "13721",
+          "35341"
+        ],
+        "pass2": [
+          "13721",
+          "35341"
+        ],
+        "agreed": true,
+        "final": [
+          "13721",
+          "35341"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+11.91",
+        "pass2": "+11.91",
+        "agreed": true,
+        "final": "+11.91"
+      },
+      "scaling": {
+        "pass1": "B-5",
+        "pass2": "B-5",
+        "agreed": true,
+        "final": "B-5"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 615,
+      "layout": "a",
+      "symbol": {
+        "pass1": "VRECTLEM",
+        "pass2": "VRECTLEM",
+        "agreed": true,
+        "final": "VRECTLEM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001636",
+        "pass2": "001636",
+        "agreed": true,
+        "final": "001636"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "12475",
+          "16051"
+        ],
+        "pass2": [
+          "12475",
+          "16051"
+        ],
+        "agreed": true,
+        "final": [
+          "12475",
+          "16051"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+10.62",
+        "pass2": "+10.62",
+        "agreed": true,
+        "final": "+10.62"
+      },
+      "scaling": {
+        "pass1": "B-5",
+        "pass2": "B-5",
+        "agreed": true,
+        "final": "B-5"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 616,
+      "layout": "a",
+      "symbol": {
+        "pass1": "VRECTLEM",
+        "pass2": "VRECTLEM",
+        "agreed": true,
+        "final": "VRECTLEM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001640",
+        "pass2": "001640",
+        "agreed": true,
+        "final": "001640"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "04436",
+          "27024"
+        ],
+        "pass2": [
+          "04436",
+          "27024"
+        ],
+        "agreed": true,
+        "final": [
+          "04436",
+          "27024"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "+4.560",
+        "pass2": "+4.560",
+        "agreed": true,
+        "final": "+4.560"
+      },
+      "scaling": {
+        "pass1": "B-5",
+        "pass2": "B-5",
+        "agreed": true,
+        "final": "B-5"
+      },
+      "downlink": "DOWNLINK 102'20",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 617,
+      "layout": "a",
+      "symbol": {
+        "pass1": "DELTACSM",
+        "pass2": "DELTACSM",
+        "agreed": true,
+        "final": "DELTACSM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001572",
+        "pass2": "001572",
+        "agreed": true,
+        "final": "001572"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 618,
+      "layout": "a",
+      "symbol": {
+        "pass1": "DELTACSM",
+        "pass2": "DELTACSM",
+        "agreed": true,
+        "final": "DELTACSM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001574",
+        "pass2": "001574",
+        "agreed": true,
+        "final": "001574"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 619,
+      "layout": "a",
+      "symbol": {
+        "pass1": "DELTACSM",
+        "pass2": "DELTACSM",
+        "agreed": true,
+        "final": "DELTACSM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001576",
+        "pass2": "001576",
+        "agreed": true,
+        "final": "001576"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 620,
+      "layout": "a",
+      "symbol": {
+        "pass1": "NUVCSM",
+        "pass2": "NUVCSM",
+        "agreed": true,
+        "final": "NUVCSM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001600",
+        "pass2": "001600",
+        "agreed": true,
+        "final": "001600"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 621,
+      "layout": "a",
+      "symbol": {
+        "pass1": "NUVCSM",
+        "pass2": "NUVCSM",
+        "agreed": true,
+        "final": "NUVCSM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001602",
+        "pass2": "001602",
+        "agreed": true,
+        "final": "001602"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 622,
+      "layout": "a",
+      "symbol": {
+        "pass1": "NUVCSM",
+        "pass2": "NUVCSM",
+        "agreed": true,
+        "final": "NUVCSM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001604",
+        "pass2": "001604",
+        "agreed": true,
+        "final": "001604"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 623,
+      "layout": "a",
+      "symbol": {
+        "pass1": "TCCSM",
+        "pass2": "TCCSM",
+        "agreed": true,
+        "final": "TCCSM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001622",
+        "pass2": "001622",
+        "agreed": true,
+        "final": "001622"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 624,
+      "layout": "a",
+      "symbol": {
+        "pass1": "XKEPCSM",
+        "pass2": "XKEPCSM",
+        "agreed": true,
+        "final": "XKEPCSM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001624",
+        "pass2": "001624",
+        "agreed": true,
+        "final": "001624"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 625,
+      "layout": "a",
+      "symbol": {
+        "pass1": "DELTALEM",
+        "pass2": "DELTALEM",
+        "agreed": true,
+        "final": "DELTALEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001644",
+        "pass2": "001644",
+        "agreed": true,
+        "final": "001644"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t1"
+    },
+    {
+      "seq": 626,
+      "layout": "a",
+      "symbol": {
+        "pass1": "DELTALEM",
+        "pass2": "DELTALEM",
+        "agreed": true,
+        "final": "DELTALEM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001646",
+        "pass2": "001646",
+        "agreed": true,
+        "final": "001646"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    },
+    {
+      "seq": 627,
+      "layout": "a",
+      "symbol": {
+        "pass1": "DELTALEM",
+        "pass2": "DELTALEM",
+        "agreed": true,
+        "final": "DELTALEM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001650",
+        "pass2": "001650",
+        "agreed": true,
+        "final": "001650"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    },
+    {
+      "seq": 628,
+      "layout": "a",
+      "symbol": {
+        "pass1": "NUVLEM",
+        "pass2": "NUVLEM",
+        "agreed": true,
+        "final": "NUVLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001652",
+        "pass2": "001652",
+        "agreed": true,
+        "final": "001652"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    },
+    {
+      "seq": 629,
+      "layout": "a",
+      "symbol": {
+        "pass1": "NUVLEM",
+        "pass2": "NUVLEM",
+        "agreed": true,
+        "final": "NUVLEM"
+      },
+      "offset": "+2",
+      "addressOctal": {
+        "pass1": "001654",
+        "pass2": "001654",
+        "agreed": true,
+        "final": "001654"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    },
+    {
+      "seq": 630,
+      "layout": "a",
+      "symbol": {
+        "pass1": "NUVLEM",
+        "pass2": "NUVLEM",
+        "agreed": true,
+        "final": "NUVLEM"
+      },
+      "offset": "+4",
+      "addressOctal": {
+        "pass1": "001656",
+        "pass2": "001656",
+        "agreed": true,
+        "final": "001656"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    },
+    {
+      "seq": 631,
+      "layout": "a",
+      "symbol": {
+        "pass1": "TCLEM",
+        "pass2": "TCLEM",
+        "agreed": true,
+        "final": "TCLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001674",
+        "pass2": "001674",
+        "agreed": true,
+        "final": "001674"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    },
+    {
+      "seq": 632,
+      "layout": "a",
+      "symbol": {
+        "pass1": "XKEPLEM",
+        "pass2": "XKEPLEM",
+        "agreed": true,
+        "final": "XKEPLEM"
+      },
+      "offset": "",
+      "addressOctal": {
+        "pass1": "001676",
+        "pass2": "001676",
+        "agreed": true,
+        "final": "001676"
+      },
+      "wordsOctal": {
+        "pass1": [
+          "00000",
+          "00000"
+        ],
+        "pass2": [
+          "00000",
+          "00000"
+        ],
+        "agreed": true,
+        "final": [
+          "00000",
+          "00000"
+        ]
+      },
+      "printedDecoded": {
+        "pass1": "0",
+        "pass2": "0",
+        "agreed": true,
+        "final": "0"
+      },
+      "scaling": {
+        "pass1": "",
+        "pass2": "",
+        "agreed": true,
+        "final": ""
+      },
+      "downlink": "",
+      "format": "2DEC",
+      "status": "verified",
+      "tile": "p1_l21_t2"
+    }
+  ],
+  "counts": {
+    "total": 32,
+    "verified": 32,
+    "conflict": 0,
+    "unreadable": 0
+  },
+  "header": {
+    "pass1": "LMY99  AGC   001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 18   /DUPLICATE LANDING  LAST SNAP  NONE",
+    "pass2": "LMY99  AGC   001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 18   /DUPLICATE LANDING  LAST SNAP  NONE"
+  },
+  "notes": "This leaf (LRRADAR2.ENVCNTRL page 18, sequence block 0601-0632) contains only ONE REFSMMAT element line, 'REFSMMAT +16D 2DEC -.30727 B-1' (seq 0601). The remaining REFSMMAT elements (+0D through +14D, and the matrix rows before +16D) are not present on this scan leaf; they must appear on the preceding leaf. All other records are single-value 2DEC entries (TIME2, TETLEM, TETCSM, RCVLEM/RRECTLEM position triads, VCVLEM/VRECTLEM velocity triads, DELTACSM/DELTALEM, NUVCSM/NUVLEM, TCCSM/TCLEM, XKEPCSM/XKEPLEM), all layout 'a'. No layout 'b' (R/ENTR card-image) records with actual data words appear on this leaf; only three bare footer 'R' lines (R / R END REALAN / R ++++...+++) mark end-of-block, with no associated echo/address line, so they are not transcribed as data records. Pass 1 and Pass 2 transcriptions of all 32 records agree exactly (independent reads, no discrepancies found)."
+}

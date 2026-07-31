@@ -1,0 +1,586 @@
+{
+  "leaf": 11,
+  "header": {
+    "pass1": "LRRADAR2.ENVCNTRL 07/23/69   14:43   PAGE   8 / LMY99  AGC  001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   /DUPLICATE LANDING   LAST SNAP  NONE",
+    "pass2": "LRRADAR2.ENVCNTRL 07/23/69   14:43   PAGE   8 / LMY99  AGC  001 NASA 2021112-061 NEW SIMULATION   MARSROT 20414415 /EYLES   /DUPLICATE LANDING   LAST SNAP  NONE"
+  },
+  "lines": [
+    {
+      "ordinal": 1,
+      "rawLine": {
+        "pass1": "IGNITE            CLOCK                                          105102              0287     3",
+        "pass2": "IGNITE            CLOCK                                          105102              0287     3",
+        "agreed": true,
+        "final": "IGNITE            CLOCK                                          105102              0287     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 2,
+      "rawLine": {
+        "pass1": "INTEGRVS          CLOCK                                          037107              0288     3",
+        "pass2": "INTEGRVS          CLOCK                                          037107              0288     3",
+        "agreed": true,
+        "final": "INTEGRVS          CLOCK                                          037107              0288     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 3,
+      "rawLine": {
+        "pass1": "GUIDSUB           CLOCK                                          072460              0289     3",
+        "pass2": "GUIDSUB           CLOCK                                          072460              0289     3",
+        "agreed": true,
+        "final": "GUIDSUB           CLOCK                                          072460              0289     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 4,
+      "rawLine": {
+        "pass1": "DDUMCALC          CLOCK                                          075102              0290     3",
+        "pass2": "DDUMCALC          CLOCK                                          075102              0290     3",
+        "agreed": true,
+        "final": "DDUMCALC          CLOCK                                          075102              0290     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 5,
+      "rawLine": {
+        "pass1": "DDUMGOOD          CLOCK                                          075163              0291     3",
+        "pass2": "DDUMGOOD          CLOCK                                          075163              0291     3",
+        "agreed": true,
+        "final": "DDUMGOOD          CLOCK                                          075163              0291     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 6,
+      "rawLine": {
+        "pass1": "EXOVFLOW          CLOCK                                          073441              0292     3",
+        "pass2": "EXOVFLOW          CLOCK                                          073441              0292     3",
+        "agreed": true,
+        "final": "EXOVFLOW          CLOCK                                          073441              0292     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 7,
+      "rawLine": {
+        "pass1": "EXGSUB            CLOCK                                          073331              0293     3",
+        "pass2": "EXGSUB            CLOCK                                          073331              0293     3",
+        "agreed": true,
+        "final": "EXGSUB            CLOCK                                          073331              0293     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 8,
+      "rawLine": {
+        "pass1": "ULLGTASK          CLOCK                                          104346              0294     3",
+        "pass2": "ULLGTASK          CLOCK                                          104346              0294     3",
+        "agreed": true,
+        "final": "ULLGTASK          CLOCK                                          104346              0294     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 9,
+      "rawLine": {
+        "pass1": "BURNBABY          CLOCK                                          104126              0295     3",
+        "pass2": "BURNBABY          CLOCK                                          104126              0295     3",
+        "agreed": true,
+        "final": "BURNBABY          CLOCK                                          104126              0295     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 10,
+      "rawLine": {
+        "pass1": "R60LEM            CLOCK                                          064123              0296     3",
+        "pass2": "R60LEM            CLOCK                                          064123              0296     3",
+        "agreed": true,
+        "final": "R60LEM            CLOCK                                          064123              0296     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 11,
+      "rawLine": {
+        "pass1": "DISPCHNG          CLOCK                                          104376              0297     3",
+        "pass2": "DISPCHNG          CLOCK                                          104376              0297     3",
+        "agreed": true,
+        "final": "DISPCHNG          CLOCK                                          104376              0297     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 12,
+      "rawLine": {
+        "pass1": "WAITABIT          CLOCK                                          104563              0298     3",
+        "pass2": "WAITABIT          CLOCK                                          104563              0298     3",
+        "agreed": true,
+        "final": "WAITABIT          CLOCK                                          104563              0298     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 13,
+      "rawLine": {
+        "pass1": "SETPOS1           CLOCK                                          077721              0299     3",
+        "pass2": "SETPOS1           CLOCK                                          077721              0299     3",
+        "agreed": true,
+        "final": "SETPOS1           CLOCK                                          077721              0299     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 14,
+      "rawLine": {
+        "pass1": "P63LM             CLOCK                                          074776              0300     3",
+        "pass2": "P63LM             CLOCK                                          074776              0300     3",
+        "agreed": true,
+        "final": "P63LM             CLOCK                                          074776              0300     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 15,
+      "rawLine": {
+        "pass1": "IGNALG            CLOCK                                          075031              0301     3",
+        "pass2": "IGNALG            CLOCK                                          075031              0301     3",
+        "agreed": true,
+        "final": "IGNALG            CLOCK                                          075031              0301     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 16,
+      "rawLine": {
+        "pass1": "IGNALGRT          CLOCK                                          075202              0302     3",
+        "pass2": "IGNALGRT          CLOCK                                          075202              0302     3",
+        "agreed": true,
+        "final": "IGNALGRT          CLOCK                                          075202              0302     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 17,
+      "rawLine": {
+        "pass1": "P63SPOT2          CLOCK                                          075215              0303     3",
+        "pass2": "P63SPOT2          CLOCK                                          075215              0303     3",
+        "agreed": true,
+        "final": "P63SPOT2          CLOCK                                          075215              0303     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 18,
+      "rawLine": {
+        "pass1": "P63SPOT3          CLOCK                                          075235              0304     3",
+        "pass2": "P63SPOT3          CLOCK                                          075235              0304     3",
+        "agreed": true,
+        "final": "P63SPOT3          CLOCK                                          075235              0304     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 19,
+      "rawLine": {
+        "pass1": "P63SPOT4          CLOCK                                          075247              0305     3",
+        "pass2": "P63SPOT4          CLOCK                                          075247              0305     3",
+        "agreed": true,
+        "final": "P63SPOT4          CLOCK                                          075247              0305     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 20,
+      "rawLine": {
+        "pass1": "THROTTLE          CLOCK                                          072216              0306     3",
+        "pass2": "THROTTLE          CLOCK                                          072216              0306     3",
+        "agreed": true,
+        "final": "THROTTLE          CLOCK                                          072216              0306     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 21,
+      "rawLine": {
+        "pass1": "ZOOM              CLOCK                                          046022              0307     3",
+        "pass2": "ZOOM              CLOCK                                          046022              0307     3",
+        "agreed": true,
+        "final": "ZOOM              CLOCK                                          046022              0307     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 22,
+      "rawLine": {
+        "pass1": "P63DISPS          CLOCK                                          073473              0308     3",
+        "pass2": "P63DISPS          CLOCK                                          073473              0308     3",
+        "agreed": true,
+        "final": "P63DISPS          CLOCK                                          073473              0308     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 23,
+      "rawLine": {
+        "pass1": "FINDCDUW          CLOCK                                          071113              0309     3",
+        "pass2": "FINDCDUW          CLOCK                                          071113              0309     3",
+        "agreed": true,
+        "final": "FINDCDUW          CLOCK                                          071113              0309     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 24,
+      "rawLine": {
+        "pass1": "P64DISPS          CLOCK                                          073477              0310     3",
+        "pass2": "P64DISPS          CLOCK                                          073477              0310     3",
+        "agreed": true,
+        "final": "P64DISPS          CLOCK                                          073477              0310     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 25,
+      "rawLine": {
+        "pass1": "QUADGUID          CLOCK                                          073121              0311     3",
+        "pass2": "QUADGUID          CLOCK                                          073121              0311     3",
+        "agreed": true,
+        "final": "QUADGUID          CLOCK                                          073121              0311     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 26,
+      "rawLine": {
+        "pass1": "VERTGUID          CLOCK                                          073531              0312     3",
+        "pass2": "VERTGUID          CLOCK                                          073531              0312     3",
+        "agreed": true,
+        "final": "VERTGUID          CLOCK                                          073531              0312     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 27,
+      "rawLine": {
+        "pass1": "ENDLLJOB          CLOCK                                          073476              0313     3",
+        "pass2": "ENDLLJOB          CLOCK                                          073476              0313     3",
+        "agreed": true,
+        "final": "ENDLLJOB          CLOCK                                          073476              0313     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 28,
+      "rawLine": {
+        "pass1": "STARTP66          CLOCK                                          072477              0314     3",
+        "pass2": "STARTP66          CLOCK                                          072477              0314     3",
+        "agreed": true,
+        "final": "STARTP66          CLOCK                                          072477              0314     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 29,
+      "rawLine": {
+        "pass1": "STARTP67          CLOCK                                          072551              0315     3",
+        "pass2": "STARTP67          CLOCK                                          072551              0315     3",
+        "agreed": true,
+        "final": "STARTP67          CLOCK                                          072551              0315     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 30,
+      "rawLine": {
+        "pass1": "LANDJUNK          CLOCK                                          072144              0316     3",
+        "pass2": "LANDJUNK          CLOCK                                          072144              0316     3",
+        "agreed": true,
+        "final": "LANDJUNK          CLOCK                                          072144              0316     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 31,
+      "rawLine": {
+        "pass1": "R          END       LNDSR1",
+        "pass2": "R          END       LNDSR1",
+        "agreed": true,
+        "final": "R          END       LNDSR1"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 32,
+      "rawLine": {
+        "pass1": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "pass2": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "agreed": true,
+        "final": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 33,
+      "rawLine": {
+        "pass1": "R                    TEDIT     BANDIT",
+        "pass2": "R                    TEDIT     BANDIT",
+        "agreed": true,
+        "final": "R                    TEDIT     BANDIT"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 34,
+      "rawLine": {
+        "pass1": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "pass2": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",
+        "agreed": true,
+        "final": "R          ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 35,
+      "rawLine": {
+        "pass1": "R  CREATED ON 06/27/69 AT 11'03'12",
+        "pass2": "R  CREATED ON 06/27/69 AT 11'03'12",
+        "agreed": true,
+        "final": "R  CREATED ON 06/27/69 AT 11'03'12"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 36,
+      "rawLine": {
+        "pass1": "-AZ               CLOCK                                          032351              0317     3",
+        "pass2": "-AZ               CLOCK                                          032351              0317     3",
+        "agreed": true,
+        "final": "-AZ               CLOCK                                          032351              0317     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 37,
+      "rawLine": {
+        "pass1": "+AZ               CLOCK                                          032356              0318     3",
+        "pass2": "+AZ               CLOCK                                          032356              0318     3",
+        "agreed": true,
+        "final": "+AZ               CLOCK                                          032356              0318     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 38,
+      "rawLine": {
+        "pass1": "-EL               CLOCK                                          032363              0319     3",
+        "pass2": "-EL               CLOCK                                          032363              0319     3",
+        "agreed": true,
+        "final": "-EL               CLOCK                                          032363              0319     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 39,
+      "rawLine": {
+        "pass1": "+EL               CLOCK                                          032370              0320     3",
+        "pass2": "+EL               CLOCK                                          032370              0320     3",
+        "agreed": true,
+        "final": "+EL               CLOCK                                          032370              0320     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 40,
+      "rawLine": {
+        "pass1": "PREREAD           CFDUMP                                    2.1  107410              0321     3",
+        "pass2": "PREREAD           CFDUMP                                    2.1  107410              0321     3",
+        "agreed": true,
+        "final": "PREREAD           CFDUMP                                    2.1  107410              0321     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 41,
+      "rawLine": {
+        "pass1": "READACCS          CFDUMP                                    2.1  107441              0322     3",
+        "pass2": "READACCS          CFDUMP                                    2.1  107441              0322     3",
+        "agreed": true,
+        "final": "READACCS          CFDUMP                                    2.1  107441              0322     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 42,
+      "rawLine": {
+        "pass1": "SERVOUT           DUMP     A               E7,1777          2.2  076400  00000  03777 0323     3",
+        "pass2": "SERVOUT           DUMP     A               E7,1777          2.2  076400  00000  03777 0323     3",
+        "agreed": true,
+        "final": "SERVOUT           DUMP     A               E7,1777          2.2  076400  00000  03777 0323     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 43,
+      "rawLine": {
+        "pass1": "IGNITION          CFDUMP                                    2.3  104426              0324     3",
+        "pass2": "IGNITION          CFDUMP                                    2.3  104426              0324     3",
+        "agreed": true,
+        "final": "IGNITION          CFDUMP                                    2.3  104426              0324     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 44,
+      "rawLine": {
+        "pass1": "IGNITION   +1     DUMP     REFSMMAT        REFSMMAT +17D    2.4  104427  01733  01754 0325     3",
+        "pass2": "IGNITION   +1     DUMP     REFSMMAT        REFSMMAT +17D    2.4  104427  01733  01754 0325     3",
+        "agreed": true,
+        "final": "IGNITION   +1     DUMP     REFSMMAT        REFSMMAT +17D    2.4  104427  01733  01754 0325     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 45,
+      "rawLine": {
+        "pass1": "EXGSUB            DUMP     A               E7,1777          3.1  073331  00000  03777 0326     3",
+        "pass2": "EXGSUB            DUMP     A               E7,1777          3.1  073331  00000  03777 0326     3",
+        "agreed": true,
+        "final": "EXGSUB            DUMP     A               E7,1777          3.1  073331  00000  03777 0326     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 46,
+      "rawLine": {
+        "pass1": "GDUMP1            DUMP     A               E7,1777          3.1  073453  00000  03777 0327     3",
+        "pass2": "GDUMP1            DUMP     A               E7,1777          3.1  073453  00000  03777 0327     3",
+        "agreed": true,
+        "final": "GDUMP1            DUMP     A               E7,1777          3.1  073453  00000  03777 0327     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 47,
+      "rawLine": {
+        "pass1": "WHATEXIT   -1     DUMP     MODREG                           3.2  072440  01011         0328     3",
+        "pass2": "WHATEXIT   -1     DUMP     MODREG                           3.2  072440  01011         0328     3",
+        "agreed": true,
+        "final": "WHATEXIT   -1     DUMP     MODREG                           3.2  072440  01011         0328     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 48,
+      "rawLine": {
+        "pass1": "WHATEXIT          DUMP     MODREG                           3.3  072441  01011         0329     3",
+        "pass2": "WHATEXIT          DUMP     MODREG                           3.3  072441  01011         0329     3",
+        "agreed": true,
+        "final": "WHATEXIT          DUMP     MODREG                           3.3  072441  01011         0329     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 49,
+      "rawLine": {
+        "pass1": "WHATEXIT   +1     DUMP     MODREG                           3.6  072442  01011         0330     3",
+        "pass2": "WHATEXIT   +1     DUMP     MODREG                           3.6  072442  01011         0330     3",
+        "agreed": true,
+        "final": "WHATEXIT   +1     DUMP     MODREG                           3.6  072442  01011         0330     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 50,
+      "rawLine": {
+        "pass1": "AFTRGUID   +2     DUMP     MODREG                           3.9  072437  01011         0331     3",
+        "pass2": "AFTRGUID   +2     DUMP     MODREG                           3.9  072437  01011         0331     3",
+        "agreed": true,
+        "final": "AFTRGUID   +2     DUMP     MODREG                           3.9  072437  01011         0331     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 51,
+      "rawLine": {
+        "pass1": "ENDLLJOB          DUMP     A               E7,1777          4.1  073476  00000  03777 0332     3",
+        "pass2": "ENDLLJOB          DUMP     A               E7,1777          4.1  073476  00000  03777 0332     3",
+        "agreed": true,
+        "final": "ENDLLJOB          DUMP     A               E7,1777          4.1  073476  00000  03777 0332     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 52,
+      "rawLine": {
+        "pass1": "THDUMP            DUMP     A               E7,1777          5.1  072367  00000  03777 0333     3",
+        "pass2": "THDUMP            DUMP     A               E7,1777          5.1  072367  00000  03777 0333     3",
+        "agreed": true,
+        "final": "THDUMP            DUMP     A               E7,1777          5.1  072367  00000  03777 0333     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 53,
+      "rawLine": {
+        "pass1": "AFDUMP            DUMP     A               L                5.2  072223  00000  00001 0334     3",
+        "pass2": "AFDUMP            DUMP     A               L                5.2  072223  00000  00001 0334     3",
+        "agreed": true,
+        "final": "AFDUMP            DUMP     A               L                5.2  072223  00000  00001 0334     3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 54,
+      "rawLine": {
+        "pass1": "+AZ               DUMP                                          032356  *DUMPS NOTHING* 0335   3",
+        "pass2": "+AZ               DUMP                                          032356  *DUMPS NOTHING* 0335   3",
+        "agreed": true,
+        "final": "+AZ               DUMP                                          032356  *DUMPS NOTHING* 0335   3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 55,
+      "rawLine": {
+        "pass1": "-AZ               DUMP                                          032351  *DUMPS NOTHING* 0336   3",
+        "pass2": "-AZ               DUMP                                          032351  *DUMPS NOTHING* 0336   3",
+        "agreed": true,
+        "final": "-AZ               DUMP                                          032351  *DUMPS NOTHING* 0336   3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 56,
+      "rawLine": {
+        "pass1": "-EL               DUMP                                          032363  *DUMPS NOTHING* 0337   3",
+        "pass2": "-EL               DUMP                                          032363  *DUMPS NOTHING* 0337   3",
+        "agreed": true,
+        "final": "-EL               DUMP                                          032363  *DUMPS NOTHING* 0337   3"
+      },
+      "status": "verified"
+    },
+    {
+      "ordinal": 57,
+      "rawLine": {
+        "pass1": "+EL               DUMP                                          032370  *DUMPS NOTHING* 0338   3",
+        "pass2": "+EL               DUMP                                          032370  *DUMPS NOTHING* 0338   3",
+        "agreed": true,
+        "final": "+EL               DUMP                                          032370  *DUMPS NOTHING* 0338   3"
+      },
+      "status": "verified"
+    }
+  ],
+  "counts": {
+    "lines": 57,
+    "verified": 57,
+    "conflict": 0,
+    "unreadable": 0
+  },
+  "notes": "Pass1 and pass2 scan tiles for this leaf are identical source imagery (same crop region re-tiled); independent re-reads of both passes produced matching transcriptions for every line, so all lines are verified with no conflicts."
+}

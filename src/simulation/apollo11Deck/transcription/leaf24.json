@@ -1,0 +1,106 @@
+{
+ "leaf": 24,
+ "section": {
+  "pass1": "IMUBLK2 INPUT DATA: / TARGET INITIAL STATE / RADAR DATA CARDS",
+  "pass2": "IMUBLK2 INPUT DATA: / TARGET INITIAL STATE / RADAR DATA CARDS",
+  "agreed": true,
+  "final": "IMUBLK2 INPUT DATA: / TARGET INITIAL STATE / RADAR DATA CARDS"
+ },
+ "blocks": [
+  {
+   "ordinal": 1,
+   "headerLine": {
+    "pass1": "L1: ID CDU(DG)  PACKEDBITS  DTPRINT  DTFILE  XCDU(DG)\nL2: ID ZERCTR(BT)  YCDU(DG)  ZCDU(DG)  XERCTR(BT)  YERCTR(BT)\nL3: ID TPLOTFIL  YEULER(DG)  ZEULER(DG)  XEULER(DG)  OUTCTRL\nL4: ID ASDIA(1)  BD(0)  BD(1)  BD(2)  ASDIA(0)\nL5: ID BA(0)  ASDIA(2)  ASDSA(0)  ASDSA(1)  ASDSA(2)\nL6: ID SF(2)  BA(1)  BA(2)  SF(0)  SF(1)",
+    "pass2": "L1: ID CDU(DG)  PACKEDBITS  DTPRINT  DTFILE  XCDU(DG)\nL2: ID ZERCTR(BT)  YCDU(DG)  ZCDU(DG)  XERCTR(BT)  YERCTR(BT)\nL3: ID TPLOTFIL  YEULER(DG)  ZEULER(DG)  XEULER(DG)  OUTCTRL\nL4: ID ASDIA(1)  BD(0)  BD(1)  BD(2)  ASDIA(0)\nL5: ID BA(0)  ASDIA(2)  ASDSA(0)  ASDSA(1)  ASDSA(2)\nL6: ID SF(2)  BA(1)  BA(2)  SF(0)  SF(1)",
+    "agreed": true,
+    "final": "L1: ID CDU(DG)  PACKEDBITS  DTPRINT  DTFILE  XCDU(DG)\nL2: ID ZERCTR(BT)  YCDU(DG)  ZCDU(DG)  XERCTR(BT)  YERCTR(BT)\nL3: ID TPLOTFIL  YEULER(DG)  ZEULER(DG)  XEULER(DG)  OUTCTRL\nL4: ID ASDIA(1)  BD(0)  BD(1)  BD(2)  ASDIA(0)\nL5: ID BA(0)  ASDIA(2)  ASDSA(0)  ASDSA(1)  ASDSA(2)\nL6: ID SF(2)  BA(1)  BA(2)  SF(0)  SF(1)"
+   },
+   "valueLines": [
+    {
+     "pass1": "2.70000000000 02   1.00000000000 05   0.0   0.0   0.0",
+     "pass2": "2.70000000000 02   1.00000000000 05   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "2.70000000000 02   1.00000000000 05   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "2.70000000000 02   0.0   0.0   0.0   0.0",
+     "pass2": "2.70000000000 02   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "2.70000000000 02   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "2.70000000000 02  -1.72965784753 01   3.51872175358 01   1.18804440133 02   0.0   9.99999999000 08",
+     "pass2": "2.70000000000 02  -1.72965784753 01   3.51872175358 01   1.18804440133 02   0.0   9.99999999000 08",
+     "agreed": true,
+     "final": "2.70000000000 02  -1.72965784753 01   3.51872175358 01   1.18804440133 02   0.0   9.99999999000 08"
+    },
+    {
+     "pass1": "2.70000000000 02  -1.59999999999 00   3.79999999999 00   4.39999999999 00   1.02999999999 01   3.00000000000 00",
+     "pass2": "2.70000000000 02  -1.59999999999 00   3.79999999999 00   4.39999999999 00   1.02999999999 01   3.00000000000 00",
+     "agreed": true,
+     "final": "2.70000000000 02  -1.59999999999 00   3.79999999999 00   4.39999999999 00   1.02999999999 01   3.00000000000 00"
+    },
+    {
+     "pass1": "2.70[unreadable, possibly 2.70000000000 or 2.70500000000] 02  -3.00000000000 00   5.69999999999 00  -5.00000000000 00  -5.00000000000 00   6.59999999999 -01",
+     "pass2": "2.70[unreadable, possibly 2.70000000000 or 2.70500000000] 02  -3.00000000000 00   5.69999999999 00  -5.00000000000 00  -5.00000000000 00   6.59999999999 -01",
+     "agreed": true,
+     "final": "2.70[unreadable, possibly 2.70000000000 or 2.70500000000] 02  -3.00000000000 00   5.69999999999 00  -5.00000000000 00  -5.00000000000 00   6.59999999999 -01"
+    },
+    {
+     "pass1": "2.70000000000 02   9.99999999999 -02   1.99999999999 -01  -2.67000000000 02  -1.14900000000 03  -6.20000000000 02",
+     "pass2": "2.70000000000 02   9.99999999999 -02   1.99999999999 -01  -2.67000000000 02  -1.14900000000 03  -6.20000000000 02",
+     "agreed": true,
+     "final": "2.70000000000 02   9.99999999999 -02   1.99999999999 -01  -2.67000000000 02  -1.14900000000 03  -6.20000000000 02"
+    }
+   ],
+   "status": "verified"
+  },
+  {
+   "ordinal": 2,
+   "headerLine": {
+    "pass1": "L1: ID T(X)  T  DTPRINT  RT(X)  RT(Y)  RT(Z)\nL2: ID VT(X)  VT(Y)  VT(Z) [subscript rendering ambiguous]",
+    "pass2": "L1: ID T(X)  T  DTPRINT  RT(X)  RT(Y)  RT(Z)\nL2: ID VT(X)  VT(Y)  VT(Z) [subscript rendering ambiguous]",
+    "agreed": true,
+    "final": "L1: ID T(X)  T  DTPRINT  RT(X)  RT(Y)  RT(Z)\nL2: ID VT(X)  VT(Y)  VT(Z) [subscript rendering ambiguous]"
+   },
+   "valueLines": [
+    {
+     "pass1": "1.40000000000 01   3.62004399999 05   9.99999900000 06   5.10221332699 05   1.63195290799 06   6.96136299899 05",
+     "pass2": "1.40000000000 01   3.62004399999 05   9.99999900000 06   5.10221332699 05   1.63195290799 06   6.96136299899 05",
+     "agreed": true,
+     "final": "1.40000000000 01   3.62004399999 05   9.99999900000 06   5.10221332699 05   1.63195290799 06   6.96136299899 05"
+    },
+    {
+     "pass1": "1.40000000000 01   1.56615098099 03  -4.12239222999 02  -1.81507312699 02",
+     "pass2": "1.40000000000 01   1.56615098099 03  -4.12239222999 02  -1.81507312699 02",
+     "agreed": true,
+     "final": "1.40000000000 01   1.56615098099 03  -4.12239222999 02  -1.81507312699 02"
+    }
+   ],
+   "status": "verified"
+  },
+  {
+   "ordinal": 3,
+   "headerLine": {
+    "pass1": "L1: ID SHAFT  TRUN  S ERCTR  T ERCTR  RDOTSIG\nL2: ID S OUTCTR  T OUTCTR  OUTCTRL  DTPRINT  RGESIGMA\nL3: ID TRKDEL  TFILE1  TFILE2  POWEROFF  RDOTSIGMA",
+    "pass2": "L1: ID SHAFT  TRUN  S ERCTR  T ERCTR  RDOTSIG\nL2: ID S OUTCTR  T OUTCTR  OUTCTRL  DTPRINT  RGESIGMA\nL3: ID TRKDEL  TFILE1  TFILE2  POWEROFF  RDOTSIGMA",
+    "agreed": true,
+    "final": "L1: ID SHAFT  TRUN  S ERCTR  T ERCTR  RDOTSIG\nL2: ID S OUTCTR  T OUTCTR  OUTCTRL  DTPRINT  RGESIGMA\nL3: ID TRKDEL  TFILE1  TFILE2  POWEROFF  RDOTSIGMA"
+   },
+   "valueLines": [],
+   "status": "unreadable"
+  }
+ ],
+ "counts": {
+  "blocks": 3,
+  "valueLines": 8,
+  "verified": 7,
+  "conflict": 0,
+  "unreadable": 1
+ },
+ "header": {
+  "pass1": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 21 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE",
+  "pass2": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 21 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE"
+ },
+ "notes": "Merged pass1/pass2. Pass2 confirmed pass1 readings for all clearly visible cells; leaf24 block1 valueLine[4] leading mantissa resolved to 2.70000000000 via pass2 (was ambiguous in pass1)."
+}

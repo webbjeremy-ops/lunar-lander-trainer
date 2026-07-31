@@ -1,0 +1,95 @@
+{
+ "leaf": 23,
+ "section": {
+  "pass1": "PRELAUNCHBLK2 INPUT DATA: / LEM DATA CARDS:",
+  "pass2": "PRELAUNCHBLK2 INPUT DATA: / LEM DATA CARDS:",
+  "agreed": true,
+  "final": "PRELAUNCHBLK2 INPUT DATA: / LEM DATA CARDS:"
+ },
+ "blocks": [
+  {
+   "ordinal": 1,
+   "headerLine": {
+    "pass1": "L1: ID  XXX  XXX  XXX  XXX\nL2: ID  WEST TIP  SOUTH TIP  XXX  METHOD\nL3: ID  PRNTCTRL",
+    "pass2": "L1: ID  XXX  XXX  XXX  XXX\nL2: ID  WEST TIP  SOUTH TIP  XXX  METHOD\nL3: ID  PRNTCTRL",
+    "agreed": true,
+    "final": "L1: ID  XXX  XXX  XXX  XXX\nL2: ID  WEST TIP  SOUTH TIP  XXX  METHOD\nL3: ID  PRNTCTRL"
+   },
+   "valueLines": [
+    {
+     "pass1": "2.08000000000 02   0.0   0.0   0.0   0.0",
+     "pass2": "2.08000000000 02   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "2.08000000000 02   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "2.08000000000 02   0.0   0.0   0.0   1.00000000000 00   0.0",
+     "pass2": "2.08000000000 02   0.0   0.0   0.0   1.00000000000 00   0.0",
+     "agreed": true,
+     "final": "2.08000000000 02   0.0   0.0   0.0   1.00000000000 00   0.0"
+    },
+    {
+     "pass1": "2.08000000000 02   0.0",
+     "pass2": "2.08000000000 02   0.0",
+     "agreed": true,
+     "final": "2.08000000000 02   0.0"
+    }
+   ],
+   "status": "verified"
+  },
+  {
+   "ordinal": 2,
+   "headerLine": {
+    "pass1": "L1: ID THBITS  PRNTCTRL  DTPRINT  STAGE  THRUST  THBITS\nL2: ID  PITCH  YAW  ROLL  WVX  WVY\nL3: ID  WVZ  MODEL  DEBITS  AEBITS  RCSBITS1\nL4: ID  RCSBITS2  RCSBITS3  RCSBITS4  JPY  JPZ\nL5: ID  DFUELL  AFUELL  CFUELL  CGOFFSET  RFUELL",
+    "pass2": "L1: ID THBITS  PRNTCTRL  DTPRINT  STAGE  THRUST  THBITS\nL2: ID  PITCH  YAW  ROLL  WVX  WVY\nL3: ID  WVZ  MODEL  DEBITS  AEBITS  RCSBITS1\nL4: ID  RCSBITS2  RCSBITS3  RCSBITS4  JPY  JPZ\nL5: ID  DFUELL  AFUELL  CFUELL  CGOFFSET  RFUELL",
+    "agreed": true,
+    "final": "L1: ID THBITS  PRNTCTRL  DTPRINT  STAGE  THRUST  THBITS\nL2: ID  PITCH  YAW  ROLL  WVX  WVY\nL3: ID  WVZ  MODEL  DEBITS  AEBITS  RCSBITS1\nL4: ID  RCSBITS2  RCSBITS3  RCSBITS4  JPY  JPZ\nL5: ID  DFUELL  AFUELL  CFUELL  CGOFFSET  RFUELL"
+   },
+   "valueLines": [
+    {
+     "pass1": "2.80000000000 02   0.0   2.00000000000 00   1.00000000000 00   0.0   0.0",
+     "pass2": "2.80000000000 02   0.0   2.00000000000 00   1.00000000000 00   0.0   0.0",
+     "agreed": true,
+     "final": "2.80000000000 02   0.0   2.00000000000 00   1.00000000000 00   0.0   0.0"
+    },
+    {
+     "pass1": "2.80000000000 02  -1.70000000000 02   0.0   0.0   0.0   0.0",
+     "pass2": "2.80000000000 02  -1.70000000000 02   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "2.80000000000 02  -1.70000000000 02   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "2.80000000000 02   0.0   0.0   0.0   0.0",
+     "pass2": "2.80000000000 02   0.0   0.0   0.0   0.0",
+     "agreed": true,
+     "final": "2.80000000000 02   0.0   0.0   0.0   0.0"
+    },
+    {
+     "pass1": "2.80000000000 02   0.0  [line cut off at tile boundary, unreadable remainder]",
+     "pass2": "2.80000000000 02   0.0  [line cut off at tile boundary, unreadable remainder]",
+     "agreed": true,
+     "final": "2.80000000000 02   0.0  [line cut off at tile boundary, unreadable remainder]"
+    },
+    {
+     "pass1": "2.80000000000 02   9.85809999999 -01   1.00000000000 00   1.00000000000 00   9.99999999999 -02   9.06479999999 -01",
+     "pass2": "2.80000000000 02   9.85809999999 -01   1.00000000000 00   1.00000000000 00   9.99999999999 -02   9.06479999999 -01",
+     "agreed": true,
+     "final": "2.80000000000 02   9.85809999999 -01   1.00000000000 00   1.00000000000 00   9.99999999999 -02   9.06479999999 -01"
+    }
+   ],
+   "status": "verified"
+  }
+ ],
+ "counts": {
+  "blocks": 2,
+  "valueLines": 8,
+  "verified": 7,
+  "conflict": 0,
+  "unreadable": 1
+ },
+ "header": {
+  "pass1": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 20 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE",
+  "pass2": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 20 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE"
+ },
+ "notes": "Merged pass1/pass2. Pass2 confirmed pass1 readings for all clearly visible cells; leaf24 block1 valueLine[4] leading mantissa resolved to 2.70000000000 via pass2 (was ambiguous in pass1)."
+}

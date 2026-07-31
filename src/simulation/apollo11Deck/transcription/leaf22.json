@@ -1,0 +1,285 @@
+{
+  "leaf": 22,
+  "cards": [
+    {
+      "ordinal": 1,
+      "rawLine": {
+        "pass1": "A        PRINT OFF",
+        "pass2": "A        PRINT OFF",
+        "agreed": true,
+        "final": "A        PRINT OFF"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t0"
+    },
+    {
+      "ordinal": 2,
+      "rawLine": {
+        "pass1": "A        WAIT 12 V 37 E 00 E",
+        "pass2": "A        WAIT 12 V 37 E 00 E",
+        "agreed": true,
+        "final": "A        WAIT 12 V 37 E 00 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t0"
+    },
+    {
+      "ordinal": 3,
+      "rawLine": {
+        "pass1": "A        VERIFY WITHIN 20 MODE 00 THEN WAIT 2 V 48 E",
+        "pass2": "A        VERIFY WITHIN 20 MODE 00 THEN WAIT 2 V 48 E",
+        "agreed": true,
+        "final": "A        VERIFY WITHIN 20 MODE 00 THEN WAIT 2 V 48 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t0"
+    },
+    {
+      "ordinal": 4,
+      "rawLine": {
+        "pass1": "A        IF V 01 N 46 THEN WAIT 1 V 21 E  21112 E WAIT 3 PROCEED",
+        "pass2": "A        IF V 01 N 46 THEN WAIT 1 V 21 E  21112 E WAIT 3 PROCEED",
+        "agreed": true,
+        "final": "A        IF V 01 N 46 THEN WAIT 1 V 21 E  21112 E WAIT 3 PROCEED"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t0"
+    },
+    {
+      "ordinal": 5,
+      "rawLine": {
+        "pass1": "A        IF V 06 N 47 THEN WAIT 1 V 21 E +33380 E WAIT 1 PROCEED",
+        "pass2": "A        IF V 06 N 47 THEN WAIT 1 V 21 E +33380 E WAIT 1 PROCEED",
+        "agreed": true,
+        "final": "A        IF V 06 N 47 THEN WAIT 1 V 21 E +33380 E WAIT 1 PROCEED"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 6,
+      "rawLine": {
+        "pass1": "A        IF V 06 N 48 THEN WAIT 1 V 34 E",
+        "pass2": "A        IF V 06 N 48 THEN WAIT 1 V 34 E",
+        "agreed": true,
+        "final": "A        IF V 06 N 48 THEN WAIT 1 V 34 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 7,
+      "rawLine": {
+        "pass1": "A        V 37 E 63 E",
+        "pass2": "A        V 37 E 63 E",
+        "agreed": true,
+        "final": "A        V 37 E 63 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 8,
+      "rawLine": {
+        "pass1": "A         DISPLAY INERTIAL DATA ON",
+        "pass2": "A         DISPLAY INERTIAL DATA ON",
+        "agreed": true,
+        "final": "A         DISPLAY INERTIAL DATA ON"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 9,
+      "rawLine": {
+        "pass1": "A        IF V 06 N 61 THEN WAIT 2 PROCEED WAIT 2",
+        "pass2": "A        IF V 06 N 61 THEN WAIT 2 PROCEED WAIT 2",
+        "agreed": true,
+        "final": "A        IF V 06 N 61 THEN WAIT 2 PROCEED WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 10,
+      "rawLine": {
+        "pass1": "A        IF V 50 N 25 R1 00014 THEN WAIT 2 ENTER WAIT 2",
+        "pass2": "A        IF V 50 N 25 R1 00014 THEN WAIT 2 ENTER WAIT 2",
+        "agreed": true,
+        "final": "A        IF V 50 N 25 R1 00014 THEN WAIT 2 ENTER WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 11,
+      "rawLine": {
+        "pass1": "A        IF V 50 N 18 THEN GUIDEMODE PRIMARY SCSMODE AUTO WAIT 2 PROCEED",
+        "pass2": "A        IF V 50 N 18 THEN GUIDEMODE PRIMARY SCSMODE AUTO WAIT 2 PROCEED",
+        "agreed": true,
+        "final": "A        IF V 50 N 18 THEN GUIDEMODE PRIMARY SCSMODE AUTO WAIT 2 PROCEED"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 12,
+      "rawLine": {
+        "pass1": "A        IF V 50 N 18 THEN WAIT 2 ENTER",
+        "pass2": "A        IF V 50 N 18 THEN WAIT 2 ENTER",
+        "agreed": true,
+        "final": "A        IF V 50 N 18 THEN WAIT 2 ENTER"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 13,
+      "rawLine": {
+        "pass1": "A        WAIT 20 V 47 E WAIT 2",
+        "pass2": "A        WAIT 20 V 47 E WAIT 2",
+        "agreed": true,
+        "final": "A        WAIT 20 V 47 E WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 14,
+      "rawLine": {
+        "pass1": "A        IF V 06 N 16 THEN WAIT 2 PROCEED WAIT 2",
+        "pass2": "A        IF V 06 N 16 THEN WAIT 2 PROCEED WAIT 2",
+        "agreed": true,
+        "final": "A        IF V 06 N 16 THEN WAIT 2 PROCEED WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 15,
+      "rawLine": {
+        "pass1": "A        IF V 50 N 16 THEN WAIT 2 PROCEED WAIT 2",
+        "pass2": "A        IF V 50 N 16 THEN WAIT 2 PROCEED WAIT 2",
+        "agreed": true,
+        "final": "A        IF V 50 N 16 THEN WAIT 2 PROCEED WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 16,
+      "rawLine": {
+        "pass1": "A        IF V 99 N 62 THEN DCENGARM ON  LEMTHROT 10 WAIT 2 PROCEED",
+        "pass2": "A        IF V 99 N 62 THEN DCENGARM ON  LEMTHROT 10 WAIT 2 PROCEED",
+        "agreed": true,
+        "final": "A        IF V 99 N 62 THEN DCENGARM ON  LEMTHROT 10 WAIT 2 PROCEED"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 17,
+      "rawLine": {
+        "pass1": "A        WAIT 120 V 16 N 68 E WAIT 2",
+        "pass2": "A        WAIT 120 V 16 N 68 E WAIT 2",
+        "agreed": true,
+        "final": "A        WAIT 120 V 16 N 68 E WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 18,
+      "rawLine": {
+        "pass1": "A        VERIFY WITHIN 600 V 16 N 68 R3  UNEQ +99999 THEN WAIT 10 V 57 E",
+        "pass2": "A        VERIFY WITHIN 600 V 16 N 68 R3  UNEQ +99999 THEN WAIT 10 V 57 E",
+        "agreed": true,
+        "final": "A        VERIFY WITHIN 600 V 16 N 68 R3  UNEQ +99999 THEN WAIT 10 V 57 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 19,
+      "rawLine": {
+        "pass1": "A        WAIT 2 V 16 N 68 E WAIT 60 KR",
+        "pass2": "A        WAIT 2 V 16 N 68 E WAIT 60 KR",
+        "agreed": true,
+        "final": "A        WAIT 2 V 16 N 68 E WAIT 60 KR"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 20,
+      "rawLine": {
+        "pass1": "A        IF V 06 N 64 THEN WAIT 20 PROCEED WAIT 2",
+        "pass2": "A        IF V 06 N 64 THEN WAIT 20 PROCEED WAIT 2",
+        "agreed": true,
+        "final": "A        IF V 06 N 64 THEN WAIT 20 PROCEED WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t1"
+    },
+    {
+      "ordinal": 21,
+      "rawLine": {
+        "pass1": "A        SUBPROGRAM 71 MOON RADIUS 1736061.000 HOLD CARDS",
+        "pass2": "A        SUBPROGRAM 71 MOON RADIUS 1736061.000 HOLD CARDS",
+        "agreed": true,
+        "final": "A        SUBPROGRAM 71 MOON RADIUS 1736061.000 HOLD CARDS"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t2"
+    },
+    {
+      "ordinal": 22,
+      "rawLine": {
+        "pass1": "A        SCSMODE OFF WAIT 20 V 37 E 68 E",
+        "pass2": "A        SCSMODE OFF WAIT 20 V 37 E 68 E",
+        "agreed": true,
+        "final": "A        SCSMODE OFF WAIT 20 V 37 E 68 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t2"
+    },
+    {
+      "ordinal": 23,
+      "rawLine": {
+        "pass1": "A        IF V 06 N 43 THEN WAIT 2 PROCEED WAIT 2",
+        "pass2": "A        IF V 06 N 43 THEN WAIT 2 PROCEED WAIT 2",
+        "agreed": true,
+        "final": "A        IF V 06 N 43 THEN WAIT 2 PROCEED WAIT 2"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t2"
+    },
+    {
+      "ordinal": 24,
+      "rawLine": {
+        "pass1": "A        WAIT 10 V 69 E",
+        "pass2": "A        WAIT 10 V 69 E",
+        "agreed": true,
+        "final": "A        WAIT 10 V 69 E"
+      },
+      "status": "verified",
+      "tile": "p1_l22_t2"
+    }
+  ],
+  "counts": {
+    "cards": 24,
+    "verified": 24,
+    "conflict": 0,
+    "unreadable": 0
+  },
+  "header": {
+    "pass1": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 19 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE",
+    "pass2": "LRRADAR2.ENVCNTRL 07/23/69 14:43 PAGE 19 / LMY99 AGC 001 NASA 2021112-061 NEW SIMULATION MARSROT 20414415 /EYLES /DUPLICATE LANDING LAST SNAP NONE"
+  },
+  "otherLines": [
+    "BACKGROUND = 71225",
+    "END OF ASTRONAUT INPUT CARDS."
+  ],
+  "sectionHeader": "CARDS READ BY ASTRONAUT INPUT-PROG 3 :",
+  "notes": "Pass1 and pass2 fully agree on all 24 cards of the CARDS READ BY ASTRONAUT INPUT-PROG 3 section. Printed section header reads 'INPUT-PROG 3' (not 'INFLT-PROG 3'). V37 E 63 E card is present at ordinal 7."
+}
