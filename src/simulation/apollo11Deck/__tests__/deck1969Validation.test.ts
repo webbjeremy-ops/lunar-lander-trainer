@@ -109,8 +109,29 @@ describe("1969 MIT input deck — cross-check against pinned Luminary099", () =>
   });
 
   it("resolves the overwhelming majority of printed symbols in the rope", () => {
+    // 10 of 265 printed symbols do not appear in pinned Luminary099. Each one
+    // sits at the exact address of a near-identical rope symbol (DKKACSN vs
+    // DKKAOSN, 505LM vs 504LM), i.e. they are suspected glyph reads awaiting a
+    // third visual pass. They are NOT corrected here: the deck records what the
+    // page shows, and the validator reports them as `unknown-symbol`.
     const resolved = named.filter((r) => resolvePinnedSymbol(r.symbol) !== null);
-    expect(resolved.length / named.length).toBeGreaterThan(0.97);
+    expect(resolved.length / named.length).toBeGreaterThan(0.96);
+
+    const unknown = named
+      .filter((r) => resolvePinnedSymbol(r.symbol) === null)
+      .map((r) => r.symbol);
+    expect(unknown).toEqual([
+      "DKKACSN",
+      "LMKACSN",
+      "IGNACSQ",
+      "IGNACSR",
+      "505LM",
+      "505LM+1",
+      "505LM+2",
+      "505LM+3",
+      "505LM+4",
+      "505LM+5",
+    ]);
   });
 
   it("never host-authors a prohibited runtime mechanism", () => {
