@@ -14,6 +14,12 @@ import { ropeById } from "@/sim/agc/roms";
 import { useAgcSession } from "@/agc/AgcSession";
 import type { EventBoundaryPayload, StateSnapshot } from "@/agc/protocol";
 import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
+import { LessonDiagram } from "@/ui/learn/diagrams";
+import { ChallengeLauncher, ChallengeResultCard } from "@/ui/learn/ChallengeLauncher";
+import { ProgressPanel } from "@/ui/learn/ProgressPanel";
+import { useLearningProgress } from "@/ui/learn/useLearningProgress";
+import { drainChallengeResult, type ChallengeResult } from "@/learning/handoff";
+import { LEARNING_TRACKS, recommendNextLesson } from "@/learning/tracks";
 
 export const Route = createFileRoute("/learn")({
   head: () => ({
@@ -151,6 +157,34 @@ function LearnPage() {
     return init;
   });
 
+  // ---- M4.2 learning campaign: local progress + lesson⇄game handoff.
+  const progressApi = useLearningProgress();
+  const [pendingResult, setPendingResult] = useState<ChallengeResult | null>(null);
+  const drainedRef = useRef(false);
+
+  useEffect(() => {
+    if (drainedRef.current) return;
+    drainedRef.current = true;
+    const result = drainChallengeResult();
+    if (!result) return;
+    setPendingResult(result);
+    setSelectedId(result.lessonId);
+    progressApi.dispatch({
+      kind: "challengeResult",
+      missionId: result.missionId,
+      difficulty:
+        result.difficulty === "pilot" || result.difficulty === "commander"
+          ? result.difficulty
+          : "instructor",
+      score: result.score,
+      grade: result.grade,
+      outcome: result.outcome,
+      atMs: result.atMs || Date.now(),
+    });
+  }, [progressApi]);
+
+
+
   // Stable, lesson-agnostic state committer. Routes writes by the state's own
   // lessonId (NOT by a captured `lesson.id` closure), so a listener wired up
   // on a prior render cannot stomp a completed state into the wrong bucket.
@@ -207,6 +241,34 @@ function LearnPage() {
   const step = lesson.steps[state.currentStepIndex] ?? null;
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
+
+  // M4.2 — mirror lesson completion into local progress storage.
+  useEffect(() => {
+    if (state.status === "completed") progressApi.completeLesson(lesson.id);
+  }, [state.status, lesson.id, progressApi]);
+
+  // M4.2 — a returning challenge result acknowledges its own lesson step.
+  useEffect(() => {
+    if (!pendingResult) return;
+    if (pendingResult.lessonId !== lesson.id) return;
+    if (!step || step.kind !== "reading" || step.id !== pendingResult.stepId) return;
+    if (isComplete) return;
+    setStates((s) => {
+      const cur = s[lesson.id];
+      if (!cur) return s;
+      const next = stepLesson(lesson, cur, {
+        kind: "acknowledgeStep",
+        observation: inertObservation(cur.lastObservationTick + 1),
+      });
+      return { ...s, [lesson.id]: next };
+    });
+  }, [pendingResult, lesson, step, isComplete]);
+
+  const nextLessonId = useMemo(
+    () => recommendNextLesson(lesson.id, progressApi.progress.completedLessons),
+    [lesson.id, progressApi.progress.completedLessons],
+  );
+
 
 
 
@@ -466,44 +528,58 @@ function LearnPage() {
       </header>
 
       <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-[minmax(260px,320px)_1fr]">
-        <aside aria-label="Lesson list">
-          <h2 className="mb-2 font-mono text-[11px] uppercase tracking-widest text-neutral-500">
-            Lessons
-          </h2>
-          <ol className="space-y-1">
-            {ALL_LESSONS.map((l, i) => {
-              const st = states[l.id];
-              const done = st?.status === "completed";
-              const active = l.id === selectedId;
-              return (
-                <li key={l.id}>
-                  <button
-                    type="button"
-                    onClick={() => setSelectedId(l.id)}
-                    aria-current={active ? "true" : undefined}
-                    className={`w-full rounded border px-3 py-2 text-left text-sm transition-colors ${
-                      active
-                        ? "border-emerald-600 bg-emerald-950/40"
-                        : "border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-[10px] text-neutral-500">
-                        {String(i + 1).padStart(2, "0")}
-                      </span>
-                      {done && (
-                        <span className="rounded-sm border border-emerald-600 px-1 py-[1px] font-mono text-[9px] uppercase text-emerald-400">
-                          done
-                        </span>
-                      )}
-                    </div>
-                    <div className="mt-1 text-neutral-100">{l.title}</div>
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
+        <aside aria-label="Lesson list" className="space-y-4">
+          <ProgressPanel api={progressApi} totalLessons={ALL_LESSONS.length} />
+          {LEARNING_TRACKS.map((track, ti) => (
+            <nav key={track.id} aria-label={track.title}>
+              <h2 className="mb-1 font-mono text-[11px] uppercase tracking-widest text-neutral-500">
+                {track.title}
+              </h2>
+              <p className="mb-2 text-[11px] text-neutral-600">{track.blurb}</p>
+
+              <ol className="space-y-1">
+                {track.lessonIds.map((lessonId, i) => {
+                  const l = ALL_LESSONS.find((x) => x.id === lessonId);
+                  if (!l) return null;
+                  const st = states[l.id];
+                  const done = st?.status === "completed";
+                  const active = l.id === selectedId;
+                  return (
+                    <li key={l.id}>
+                      <button
+                        type="button"
+                        data-testid={`lesson-nav-${l.id}`}
+                        onClick={() => {
+                          setSelectedId(l.id);
+                          progressApi.visitLesson(l.id);
+                        }}
+                        aria-current={active ? "true" : undefined}
+                        className={`w-full rounded border px-3 py-2 text-left text-sm transition-colors ${
+                          active
+                            ? "border-emerald-600 bg-emerald-950/40"
+                            : "border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-mono text-[10px] text-neutral-500">
+                            T{ti + 1}.{String(i + 1).padStart(2, "0")}
+                          </span>
+                          {done && (
+                            <span className="rounded-sm border border-emerald-600 px-1 py-[1px] font-mono text-[9px] uppercase text-emerald-400">
+                              done
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 text-neutral-100">{l.title}</div>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </nav>
+          ))}
         </aside>
+
 
         <section aria-label="Current lesson" className="min-w-0">
           <div className="mb-4">
@@ -536,11 +612,28 @@ function LearnPage() {
           </div>
 
           {isComplete && (
-            <div className="mb-4 rounded border border-emerald-700 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200">
+            <div
+              className="mb-4 rounded border border-emerald-700 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-200"
+              data-testid="lesson-complete-banner"
+            >
               Lesson complete. Every step recorded structured evidence — inspect it
               in the recorded evidence panel below or pick another lesson.
+              {nextLessonId && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    data-testid="lesson-next"
+                    onClick={() => setSelectedId(nextLessonId)}
+                    className="mt-2 block rounded border border-emerald-600 px-3 py-1 font-mono text-[11px] uppercase tracking-widest text-emerald-300 hover:bg-emerald-900/40"
+                  >
+                    Next: {ALL_LESSONS.find((l) => l.id === nextLessonId)?.title ?? nextLessonId}
+                  </button>
+                </>
+              )}
             </div>
           )}
+
 
           {step ? (
             <article className="rounded border border-neutral-800 bg-neutral-900/40 p-5">
@@ -581,16 +674,34 @@ function LearnPage() {
                 </ul>
               </div>
 
+              {step.kind === "reading" && step.diagramId && (
+                <LessonDiagram id={step.diagramId} />
+              )}
+
+              {pendingResult && pendingResult.lessonId === lesson.id && (
+                <ChallengeResultCard result={pendingResult} />
+              )}
+
               <div className="mt-5 flex flex-wrap items-center gap-3">
-                {step.kind === "reading" && !isComplete && (
+                {step.kind === "reading" && step.challenge && !isComplete && (
+                  <ChallengeLauncher
+                    lessonId={lesson.id}
+                    stepId={step.id}
+                    challenge={step.challenge}
+                    label={step.ackLabel ?? "Fly this challenge"}
+                  />
+                )}
+                {step.kind === "reading" && !step.challenge && !isComplete && (
                   <button
                     type="button"
+                    data-testid="lesson-ack"
                     onClick={ackCurrent}
                     className="rounded border border-emerald-600 bg-emerald-950/40 px-3 py-2 font-mono text-xs uppercase tracking-widest text-emerald-300 hover:bg-emerald-900/40"
                   >
                     {step.ackLabel ?? "I've read this — continue"}
                   </button>
                 )}
+
                 {isInteractive && (
                   <div className="flex w-full flex-col gap-3">
                     <p

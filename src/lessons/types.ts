@@ -62,8 +62,10 @@ export interface LessonObservation {
 
 export type LessonClassification =
   | "authentic-emulator"
+  | "source-derived"
   | "historically-grounded"
   | "educational-visualization"
+  | "gameplay-tuned"
   | "approximation";
 
 export interface LessonSourceRef {
@@ -132,8 +134,32 @@ export interface LessonReadingStep {
   body: string;
   ackLabel?: string;
   sources: readonly LessonSourceRef[];
-  classification: "historically-grounded" | "educational-visualization";
+  classification: Exclude<LessonClassification, "authentic-emulator">;
+  /**
+   * M4.2 — optional pure interactive diagram rendered above the ack button.
+   * The id resolves through src/ui/learn/diagrams. Diagrams are always
+   * "educational-visualization" regardless of the step classification.
+   */
+  diagramId?: string;
+  /**
+   * M4.2 — optional handoff into a configured /play scenario. When present
+   * the /learn UI shows a "Fly it" launcher instead of a plain ack button;
+   * the step is acknowledged when a flight result returns for this lesson.
+   */
+  challenge?: LessonChallengeSpec;
 }
+
+export interface LessonChallengeSpec {
+  /** MissionId from src/game/play — kept as a string to avoid a game import. */
+  readonly missionId: string;
+  /** AssistanceLevel from src/game/play. */
+  readonly assistance: string;
+  /** ControlModeId from src/game/play. */
+  readonly controlMode: string;
+  /** Minimum mission score (points) that marks the challenge as passed. */
+  readonly passingScore: number;
+}
+
 
 export interface LessonInteractiveStep {
   id: string;
