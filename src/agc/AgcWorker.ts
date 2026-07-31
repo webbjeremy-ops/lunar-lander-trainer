@@ -62,7 +62,7 @@ import {
 import { MonitorController, type MonitorHwPort } from "@/simulation/agcio/MonitorController";
 import { validateSetMonitorProfileCommand } from "@/simulation/agcio/profileValidation";
 import { EXPECTED_ACTUATOR_CHANNELS } from "@/simulation/agcio/actuatorRegistry";
-import { CHAN13_ADDRESS, type Chan13Write } from "@/simulation/agcio/chan13Requests";
+import { CHAN13, type Chan13Write } from "@/simulation/agcio/chan13Requests";
 import { MONITOR_TRACE_CAPACITY } from "@/simulation/agcio/monitorTrace";
 import { applyFixedAttitudeImuBootstrapV1 } from "@/simulation/agcio/bootstrapTransaction";
 import { LUMINARY099_FIXED_ATTITUDE_PAD_LOAD_V1 } from "@/simulation/agcio/padLoadManifest";
@@ -621,10 +621,14 @@ function runMissionTickPipeline(steps: number): void {
   // ---- Phases 2-5: sample -> encode -> validate -> apply ---------------
   if (monitor?.isActive()) {
     state.tickChannelEvents = [];
+    state.tickChan13Writes = [];
     monitor.preAgcTick({
       missionTick: tickIndex,
       missionTimeUs: tickStartUs,
       avionics: state.avionics,
+      // Scenario-derived specific force (thrust / mass, NO lunar gravity).
+      bodySpecificForceMps2: state.missionRuntime.getBodySpecificForceMps2(),
+      dtUs: MISSION_TICK_US,
     });
   }
 
@@ -634,8 +638,13 @@ function runMissionTickPipeline(steps: number): void {
 
   // ---- Phases 7-10: drain once, decode, retain bounded diagnostics -----
   if (monitor?.isActive()) {
-    monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents);
+    monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents, {
+      chan13Writes: state.tickChan13Writes,
+      altitudeMeters: state.missionRuntime.getAltitudeMeters(),
+      rangeDataGood: state.avionics?.landingRadarRangeDataGood ?? false,
+    });
     state.tickChannelEvents = [];
+    state.tickChan13Writes = [];
   }
 
   // ---- Phases 11 + 12: physics (branded control only) + terminal -------
@@ -1039,6 +1048,18 @@ async function handle(
         // repeated writes of the same value which onChannelUpdate filters.
         onChannelPacket: (ch, val, before) => {
           if (!state.monitor?.isActive()) return;
+          if (ch === CHAN13) {
+            // M3.3E: every CHAN13 write is retained losslessly, including
+            // repeats of the same word — INITREAD's clear-then-set pair is
+            // only distinguishable if nothing is filtered here.
+            state.tickChan13Writes.push({
+              channel: ch,
+              word: val,
+              agcCycle: ++state.channelObservationSeq,
+              missionTimeUs: Number(state.clock.getMissionTimeUs()),
+            });
+            return;
+          }
           if (!EXPECTED_ACTUATOR_CHANNELS.includes(ch)) return;
           const seq = ++state.channelObservationSeq;
           state.tickChannelEvents.push({
@@ -1264,6 +1285,7 @@ async function handle(
       state.avionics = null;
       state.monitorCommandQueue.length = 0;
       state.tickChannelEvents.length = 0;
+      state.tickChan13Writes.length = 0;
       state.clock.reset();
       state.events = new EventLog(state.events.snapshot().seed);
       state.decodedDsky = makeEmptyDecodedDsky();
