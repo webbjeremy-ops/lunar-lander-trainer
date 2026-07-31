@@ -16,7 +16,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const CANONICAL_SHA =
-  "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3";
+  "2e7c28ec75be794da991c49a5842ba3db6140f8936892f1c84f25883040a6abc";
 
 async function waitForSimReady(page: Page): Promise<void> {
   await expect(page.getByTestId("sim-ready")).toBeVisible({ timeout: 30_000 });
@@ -70,9 +70,9 @@ test.describe("M3.3B2 landing-radar observer", () => {
     });
 
     expect(snap.workerBoots).toBe(1);
-    expect(snap.extensionReady?.hwioVersion).toBe(3);
+    expect(snap.extensionReady?.hwioVersion).toBe(4);
     expect(snap.extensionReady?.extVersion).toBe(
-      "ddc65e7be+apollo-browser-hwio-v3",
+      "ddc65e7be+apollo-browser-hwio-v4",
     );
     expect(snap.extensionReady?.wasmSha256).toBe(CANONICAL_SHA);
     expect(snap.extensionReady?.traceEnabled).toBe(false);

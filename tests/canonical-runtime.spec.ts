@@ -41,7 +41,7 @@ interface AgcTestSnapshot {
 }
 
 const CANONICAL_SHA =
-  "12ac2797971ea56e5d7583d659ddbaae809f721d7549441229e580e110a65bc3";
+  "2e7c28ec75be794da991c49a5842ba3db6140f8936892f1c84f25883040a6abc";
 
 test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
   test("browser fetches ONLY yaAGC-ext.wasm and reports HW-I/O v3 across routes", async ({
@@ -80,7 +80,7 @@ test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
 
     // 2. Extension-ready contract.
     expect(snap1.extensionReady?.type).toBe("agc:extension-ready");
-    expect(snap1.extensionReady?.hwioVersion).toBe(3);
+    expect(snap1.extensionReady?.hwioVersion).toBe(4);
     expect(snap1.extensionReady?.traceEnabled).toBe(false);
     expect(snap1.extensionReady?.traceDropped).toBe(0);
     expect(snap1.extensionReady?.wasmSha256).toBe(CANONICAL_SHA);
@@ -129,7 +129,7 @@ test.describe("M3.3A2-P4 canonical runtime — Wrangler acceptance", () => {
       return JSON.parse(JSON.stringify(w.__agcTest?.diagnostics ?? {}));
     });
     if (diag && diag.extensionIdentity) {
-      expect(diag.extensionIdentity.hwioVersion).toBe(3);
+      expect(diag.extensionIdentity.hwioVersion).toBe(4);
       expect(diag.extensionIdentity.traceEnabled).toBe(0);
       expect(diag.extensionIdentity.traceDropped).toBe(0);
     }
