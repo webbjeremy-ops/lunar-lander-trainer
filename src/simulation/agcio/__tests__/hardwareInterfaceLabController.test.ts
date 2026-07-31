@@ -229,6 +229,7 @@ describe("M3.3E lab — MonitorController integration", () => {
     expect(port.radarCalls[0].raise).toBe(true);
     expect(port.radarCalls[0].bitCount).toBe(15);
     expect(port.radarCalls[0].word).toBeGreaterThan(0);
+    expect(mc.labDiagnostics()?.lastResponse?.action.counterAddress).toBe(RNRAD_ADDRESS);
 
     // A tick with no new solicitation answers nothing.
     mc.postAgcTick(1, 40_000, [], {
@@ -238,7 +239,8 @@ describe("M3.3E lab — MonitorController integration", () => {
     });
     expect(port.radarCalls).toHaveLength(1);
     expect(mc.labDiagnostics()?.radarResponsesDelivered).toBe(1);
-    expect(mc.labDiagnostics()?.lastResponse?.action.counterAddress).toBe(RNRAD_ADDRESS);
+    // "last response" is per-tick: a tick that answered nothing reports null.
+    expect(mc.labDiagnostics()?.lastResponse).toBeNull();
   });
 
   it("refuses to answer when RANGE DATA GOOD is not declared", () => {
