@@ -327,12 +327,19 @@ export function labObserveChan13(
     refusals.push("no-outstanding-request");
   }
 
+  // Every refusal EXCEPT the idle "nothing was asked" note is a genuine
+  // refused transaction and is counted as such — a solicitation the host
+  // could not answer must never look like silence.
+  const refusedTotal =
+    refused + refusals.filter((r) => r !== "selection-refused" && r !== "no-outstanding-request").length;
+
   return {
     nextState: {
       ...state,
       chan13,
       chan13RequestsObserved: state.chan13RequestsObserved + observed,
-      radarResponsesRefused: state.radarResponsesRefused + refused,
+      radarResponsesRefused: state.radarResponsesRefused + refusedTotal,
+
       radarResponsesDelivered:
         state.radarResponsesDelivered + (response === null ? 0 : 1),
       syntheticRequestsGenerated: state.syntheticRequestsGenerated + synthetic,
