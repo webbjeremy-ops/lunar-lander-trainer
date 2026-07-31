@@ -43,7 +43,15 @@ import {
   type TakeoverRecord,
 } from "@/game/play";
 
+import {
+  DESCENT_ENGINE,
+  LUNAR_ENVIRONMENT,
+} from "@/simulation/lunar2d/LunarMissionConstants";
+
+const MU_M3S2 = LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value;
+const MAX_DPS_THRUST_N = DESCENT_ENGINE.maxThrustN.value;
 const STEP_US = 20_000;
+
 const STEP_S = STEP_US / 1_000_000;
 const MAX_CATCHUP_STEPS = 25;
 /** Rate-of-descent trim increment: 1 ft/s, as in the real P66 ROD switch. */
