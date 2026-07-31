@@ -233,6 +233,11 @@ interface WorkerState {
   /** Lossless CHAN11/CHAN14 output events captured during the CURRENT AGC
    *  interval. Cleared at the start of every mission tick. */
   tickChannelEvents: AgcOutputChannelEvent[];
+  /** M3.3E: lossless CHAN13 output writes captured during the CURRENT AGC
+   *  interval. These are the ONLY trigger for a landing-radar transaction —
+   *  there is no host-side radar timer anywhere in the lab. */
+  tickChan13Writes: Chan13Write[];
+
   /** Monotonic pseudo-sequence for lossless channel observations. The
    *  packet path exposes no AGC cycle counter, so ordering (not absolute
    *  cycle) is what is preserved — documented in docs/M3_3A2_P5.md. */
