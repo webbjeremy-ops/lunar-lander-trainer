@@ -168,3 +168,15 @@ simulator's own restore semantics to be documented before it could be used.
 
 **M3.3C cannot be frozen.** M3.3D is blocked on external archival acquisition,
 and its original premise requires the correction recorded in §1.
+
+---
+
+## Addendum — M3.3D archived as BLOCKED BY INCOMPLETE PRIMARY SOURCE
+
+Per the M3.3E pivot, input-deck transcription and archival reconstruction are
+**stopped**. The transcription artifacts, page manifest, parser and validator
+remain in the repository as an auditable archive; no runtime path depends on
+them, and no adopted field is used to drive the AGC.
+
+Work continues instead in the synthetic hardware-interface laboratory, which
+makes no historical claim: `docs/M3_3E_HARDWARE_INTERFACE_LAB_FREEZE.md`.
