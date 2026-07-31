@@ -28,7 +28,10 @@ export default defineConfig({
   webServer: {
     // Requires a prior `bun run build`. We do NOT rebuild here; CI/dev flows
     // must call build before playwright.
-    command: `bunx wrangler dev -c dist/server/wrangler.json --port ${PORT} --ip 127.0.0.1`,
+    // The generated wrangler.json pins today's compatibility date, which can be
+    // newer than the installed workerd binary supports; clamp it before serving.
+    command: `node -e "const f='dist/server/wrangler.json',fs=require('fs'),c=JSON.parse(fs.readFileSync(f,'utf8'));const max=process.env.PW_COMPAT_DATE||'2026-07-29';if(c.compatibility_date>max){c.compatibility_date=max;fs.writeFileSync(f,JSON.stringify(c,null,2));}" && bunx wrangler dev -c dist/server/wrangler.json --port ${PORT} --ip 127.0.0.1`,
+
     url: `http://127.0.0.1:${PORT}/learn`,
     reuseExistingServer: true,
     timeout: 60_000,

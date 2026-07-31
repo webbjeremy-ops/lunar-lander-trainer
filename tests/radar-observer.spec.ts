@@ -70,9 +70,9 @@ test.describe("M3.3B2 landing-radar observer", () => {
     });
 
     expect(snap.workerBoots).toBe(1);
-    expect(snap.extensionReady?.hwioVersion).toBe(3);
+    expect(snap.extensionReady?.hwioVersion).toBe(4);
     expect(snap.extensionReady?.extVersion).toBe(
-      "ddc65e7be+apollo-browser-hwio-v3",
+      "ddc65e7be+apollo-browser-hwio-v4",
     );
     expect(snap.extensionReady?.wasmSha256).toBe(CANONICAL_SHA);
     expect(snap.extensionReady?.traceEnabled).toBe(false);
