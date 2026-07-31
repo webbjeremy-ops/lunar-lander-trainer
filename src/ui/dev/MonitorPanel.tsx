@@ -124,6 +124,13 @@ export function MonitorPanel() {
           disabled={!client || !simReady}
         >Enter discrete-observer-v0</button>
         <button
+          data-testid="mon-enter-lab"
+          className="rounded border border-neutral-700 px-3 py-1 hover:bg-neutral-800 disabled:opacity-40"
+          onClick={() => requestProfile("agc-hardware-interface-lab-v1")}
+          disabled={!client || !simReady}
+        >Enter agc-hardware-interface-lab-v1 (synthetic)</button>
+
+        <button
           data-testid="mon-enter-descent"
           className="rounded border border-neutral-700 px-3 py-1 hover:bg-neutral-800 disabled:opacity-40"
           onClick={() => requestProfile("descent-monitor-v1")}
