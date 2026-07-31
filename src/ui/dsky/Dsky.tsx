@@ -326,7 +326,15 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
   const erasableView = snapshot?.erasableWindow ?? [];
 
   return (
-    <div ref={dskyRootRef} className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]" data-testid="agc-dsky">
+    <div
+      ref={dskyRootRef}
+      className={
+        compact
+          ? "grid gap-3"
+          : "grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]"
+      }
+      data-testid="agc-dsky"
+    >
       <div className="rounded border border-neutral-800 bg-neutral-950 p-3 shadow-inner">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-xs uppercase tracking-widest text-neutral-500">DSKY</h3>
