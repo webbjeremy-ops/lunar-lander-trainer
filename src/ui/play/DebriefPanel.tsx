@@ -3,6 +3,11 @@
 // M4.1 — Post-flight debrief (presentation only).
 
 import type { FlightSummary, MissionScore, MissionDefinition } from "@/game/play";
+import {
+  APOLLO11_DESCENT_PHASE_ANCHORS,
+  RECONSTRUCTION_DISCLAIMER,
+  buildContactComparison,
+} from "@/content/apollo11PoweredDescentReference";
 
 export function DebriefPanel({
   mission,
