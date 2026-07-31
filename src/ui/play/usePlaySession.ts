@@ -247,12 +247,19 @@ export function usePlaySession(
         attitudeRef.current = att;
         throttleRef.current = clamp01(throttleRef.current);
 
-        // P66 rate-of-descent trim: throttle is servoed to the ROD target.
-        if (procedureRef.current.manualControlUnlocked && held.size === 0 && !pad) {
-          const cue = computeReferenceGuidance(state);
-          const err = rodTargetRef.current - cue.altitudeM * 0; // no-op guard
-          void err;
+        // P66 rate-of-descent: with no direct thrust input, the throttle is
+        // servoed onto the ROD target (as the real ROD switch trimmed it).
+        const noThrustInput =
+          !held.has("ArrowUp") && !held.has("ArrowDown") && (!pad || pad.throttle === null);
+        if (noThrustInput && engineRef.current) {
+          const o = computeOrbitalValues(state);
+          const mass = totalMassKg(state);
+          const localG = MU_M3S2 / (o.radiusM * o.radiusM);
+          const aNeeded = localG + (rodTargetRef.current - o.radialSpeedMps) / 3;
+          const cosTilt = Math.max(0.2, Math.cos(state.attitudeRad));
+          throttleRef.current = clamp01((aNeeded * mass) / (MAX_DPS_THRUST_N * cosTilt));
         }
+
         throttle = throttleRef.current;
         attitudeCommand = attitudeRef.current;
       } else {
