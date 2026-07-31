@@ -60,7 +60,7 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null }: {
+export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null, onKeyPress, compact = false }: {
   rope: RopeImage;
   onClient?: (client: AgcWorkerClient | null) => void;
   onSnapshot?: (snap: StateSnapshot) => void;
@@ -78,7 +78,15 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
    *  external ready payload so the phase can settle immediately. */
   sharedClient?: AgcWorkerClient | null;
   sharedReady?: ReadyPayload | null;
+  /** Observer for accepted key presses. Fires AFTER the key has been handed
+   *  to the AGC worker, so observers can never alter what the AGC sees.
+   *  Used by /play to drive the DSKY procedure state machine. */
+  onKeyPress?: (code: number | "PRO") => void;
+  /** Hide the laboratory diagnostics (channel watch, erasable dump, event
+   *  log, provenance) and leave only the DSKY face + keypad. */
+  compact?: boolean;
 }) {
+
   const clientRef = useRef<AgcWorkerClient | null>(null);
   const [snapshot, setSnapshot] = useState<StateSnapshot | null>(null);
   const [lamps, setLamps] = useState(0);
@@ -249,6 +257,9 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
   }, [decoded]);
 
 
+  const onKeyPressRef = useRef(onKeyPress);
+  useEffect(() => { onKeyPressRef.current = onKeyPress; }, [onKeyPress]);
+
   const sendKey = useCallback((code: number | "PRO") => {
     const c = clientRef.current;
     if (!c) return;
@@ -258,7 +269,10 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
     } else {
       c.dskyKeyDown(code);
     }
+    // Observers run only after the AGC has the keystroke.
+    onKeyPressRef.current?.(code);
   }, []);
+
 
   const disabledRef = useRef(disabled);
   useEffect(() => { disabledRef.current = disabled; }, [disabled]);
@@ -312,7 +326,15 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
   const erasableView = snapshot?.erasableWindow ?? [];
 
   return (
-    <div ref={dskyRootRef} className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]" data-testid="agc-dsky">
+    <div
+      ref={dskyRootRef}
+      className={
+        compact
+          ? "grid gap-3"
+          : "grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]"
+      }
+      data-testid="agc-dsky"
+    >
       <div className="rounded border border-neutral-800 bg-neutral-950 p-3 shadow-inner">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-xs uppercase tracking-widest text-neutral-500">DSKY</h3>
@@ -375,7 +397,9 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
 
         <RegistersPanel decoded={decoded} />
 
+        <div className={compact ? "hidden" : undefined}>
         <div className="mt-3 flex flex-wrap items-center gap-1">
+
           {[
             { label: "Run", onClick: controls.run, testid: "ctl-run" },
             { label: "Pause", onClick: controls.pause, testid: "ctl-pause" },
@@ -498,9 +522,11 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
             </>
           )}
         </div>
+        </div>
       </div>
 
-      <div className="rounded border border-neutral-800 bg-neutral-950 p-3">
+
+      <div className="rounded border border-neutral-800 bg-neutral-950 p-3" data-testid="dsky-keypad">
         <div className="grid w-64 grid-cols-4 gap-1" onPointerLeave={releaseAll} onBlur={releaseAll}>
           {KEY_LAYOUT.map(({ label, code }) => (
             <button
