@@ -24,7 +24,7 @@ import {
   CHAN13_RADAR_ACTIVITY_BIT,
   type Chan13Write,
 } from "../chan13Requests";
-import { PIPA_ADDRESSES } from "../pipaEncoder";
+import { PIPA_AXIS_ADDRESS } from "../pipaEncoder";
 import { RNRAD_ADDRESS } from "../radarObserver";
 
 const LAB = "agc-hardware-interface-lab-v1" as const;
@@ -163,7 +163,7 @@ describe("M3.3E lab — MonitorController integration", () => {
     });
     expect(port.pulseBatches).toHaveLength(1);
     const batch = port.pulseBatches[0];
-    expect(batch.every((r) => PIPA_ADDRESSES.includes(r.counterAddress))).toBe(true);
+    expect(batch.every((r) => Object.values(PIPA_AXIS_ADDRESS).includes(r.counterAddress))).toBe(true);
     expect(batch.every((r) => r.incType === "PINC" || r.incType === "MINC")).toBe(true);
     expect(port.totalPulses()).toBeGreaterThan(0);
     expect(mc.labState()?.hardwareInputPulsesDelivered).toBe(port.totalPulses());
