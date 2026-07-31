@@ -9,7 +9,7 @@
 
 /// <reference lib="webworker" />
 
-import { AgcCoreAdapter } from "@/sim/agc/AgcCoreAdapter";
+import { AgcCoreAdapter, type AgcIncTypeName } from "@/sim/agc/AgcCoreAdapter";
 import { CANONICAL_AGC_RUNTIME } from "./AgcRuntimeManifest";
 import { MissionClock, TICK_MICROS } from "./MissionClock";
 const SCHEDULER_TICK_MICROS = Number(TICK_MICROS);
@@ -406,8 +406,29 @@ function makeMonitorPort(): MonitorHwPort {
       // Authentic frozen host-input path — a COMPLETE word, never a mask.
       state.adapter?.writeIo(channel, word);
     },
+    // ---- M3.3E synthetic hardware-interface lab -------------------------
+    applyCounterPulses: (records) => {
+      const adapter = state.adapter;
+      if (!adapter || !adapter.hwInputSupported() || records.length === 0) return false;
+      const result = adapter.applyHwInput(
+        records.map((r) => ({
+          counterAddress: r.counterAddress,
+          incType: r.incType as AgcIncTypeName,
+          pulseCount: r.pulseCount,
+          suborder: r.suborder,
+        })),
+      );
+      return result.ok;
+    },
+
+    applyLandingRadarUpdate: (word, bitCount, raiseRadarupt) => {
+      const adapter = state.adapter;
+      if (!adapter) return false;
+      return adapter.applyLandingRadarUpdate(word, bitCount, raiseRadarupt) === 0;
+    },
   };
 }
+
 
 /** Record a host input write in the authoritative shadow. Called for EVERY
  *  accepted host→AGC packet (DSKY keys, PROCEED, monitor discretes) so the

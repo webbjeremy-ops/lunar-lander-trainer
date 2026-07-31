@@ -65,8 +65,10 @@ export const SUPPORTED_MONITOR_PROFILES: readonly AgcMonitorProfile[] = [
   "off",
   "discrete-observer-v0",
   "landing-radar-observer-v1",
+  "agc-hardware-interface-lab-v1",
   "descent-monitor-v1",
 ] as const;
+
 
 /**
  * Policy-level block for `landing-radar-observer-v1`.
@@ -193,6 +195,30 @@ export function decideMonitorEntry(
     });
   }
 
+  if (profile === "agc-hardware-interface-lab-v1") {
+    // M3.3E — SYNTHETIC AGC HARDWARE-INTERFACE LAB.
+    //
+    // This profile makes NO historical claim, so it is NOT gated on the
+    // unresolved Apollo 11 mission-state material that blocks
+    // descent-monitor-v1. It IS gated on structural registry integrity plus
+    // every runtime prerequisite above (HW-I/O v4, Luminary099, AGC ready,
+    // active scenario, trace disabled).
+    for (const err of validateRegistry()) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: `registry: ${err.message}`,
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+    if (mappedSignalsForProfile(profile).length === 0) {
+      reasons.push({
+        code: "unresolved-sensor-mapping",
+        detail: "agc-hardware-interface-lab-v1 has no mapped discrete signals in registry",
+        reference: "src/simulation/agcio/sensorRegistry.ts",
+      });
+    }
+  }
+
   if (profile === "landing-radar-observer-v1") {
     // Registry integrity is a hard gate here too.
     for (const err of validateRegistry()) {
@@ -206,6 +232,7 @@ export function decideMonitorEntry(
       reasons.push(reason);
     }
   }
+
 
   if (profile === "descent-monitor-v1") {
     // Registry structural integrity is a HARD gate — a malformed registry
