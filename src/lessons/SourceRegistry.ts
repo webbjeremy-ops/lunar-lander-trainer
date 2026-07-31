@@ -78,6 +78,14 @@ export const SOURCE_REGISTRY: Readonly<Record<string, SourceEntry>> = {
     note:
       "Cited in Lesson 1 to contrast the LVDC — which flew the Saturn V launch — with the AGC.",
   },
+  "apollo11-powered-descent-technical-reconstruction-workbook-v1": {
+    id: "apollo11-powered-descent-technical-reconstruction-workbook-v1",
+    title:
+      "Apollo 11 Powered Descent — A Technical Reconstruction (ENG workbook), v1",
+    kind: "secondary-reconstruction",
+    note:
+      "Secondary reconstruction. Combines NASA primary sources, Luminary material, air-to-ground transcript, Computer Words telemetry, secondary literature, and author inference. Used only for timeline markers, narration, scoring context, and debrief comparison. Its summarized Verb/Noun dictionary (including N60–N64) and rope-cadence claims are NOT imported.",
+  },
 } as const;
 
 export function sourcesForLesson(ids: readonly string[]): SourceEntry[] {
