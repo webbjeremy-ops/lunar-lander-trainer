@@ -381,6 +381,7 @@ export function usePlaySession(
           descentClockRef.current = ignitionRef.current.sinceIgnitionUs;
         } else if (
           state.mainEngine !== "off" ||
+          ignitionRef.current.phase === "aborted" ||
           ignitionRef.current.tigOffsetUs <= 0 ||
           descentClockRef.current > 0
         ) {
