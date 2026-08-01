@@ -17,6 +17,7 @@ import type {
   LunarFlightState,
 } from "@/simulation/lunar2d/types";
 import { deriveOrbitalElements, wrapTwoPi } from "./OrbitalElements";
+import { PASSIVE_TARGET_PARAMETERS } from "./OrbitVehicles";
 import type { OrbitalElements } from "./types";
 
 export const COAST_CONTROL: LunarControlInput = {
@@ -33,7 +34,7 @@ export const COAST_CONTROL: LunarControlInput = {
 export function propagatePassive(
   state: Readonly<LunarFlightState>,
   dtUs: number,
-  parameters: Readonly<LunarFlightParameters> = DEFAULT_LUNAR_FLIGHT_PARAMETERS,
+  parameters: Readonly<LunarFlightParameters> = PASSIVE_TARGET_PARAMETERS,
 ): LunarFlightState {
   return stepLunarFlight(state, COAST_CONTROL, dtUs, parameters);
 }

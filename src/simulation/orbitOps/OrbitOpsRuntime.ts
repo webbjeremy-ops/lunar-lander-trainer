@@ -28,6 +28,7 @@ import {
 import { totalMassKg } from "@/simulation/lunar2d/physics";
 import { relativeState } from "./RelativeMotion";
 import {
+  PASSIVE_TARGET_PARAMETERS,
   createOrbitVehicleState,
   parametersForPropulsion,
 } from "./OrbitVehicles";
@@ -92,7 +93,7 @@ export function createOrbitOpsState(
           scenario.targetVehicleState,
           0,
           0,
-          DEFAULT_LUNAR_FLIGHT_PARAMETERS,
+          PASSIVE_TARGET_PARAMETERS,
         );
 
   return {
@@ -243,7 +244,7 @@ export function stepOrbitOps(
         target,
         COAST_CONTROL,
         substepUs,
-        DEFAULT_LUNAR_FLIGHT_PARAMETERS,
+        PASSIVE_TARGET_PARAMETERS,
       );
       const range = Math.hypot(
         target.positionM[0] - lm.positionM[0],

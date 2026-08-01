@@ -92,6 +92,19 @@ export function parametersForPropulsion(
 }
 
 /**
+ * Parameters for a passive body (the Command Module target). Identical to the
+ * default kernel parameters except that the ascent-stage "orbit-achieved"
+ * latch is disabled: a passive target must keep integrating forever.
+ */
+export const PASSIVE_TARGET_PARAMETERS: LunarFlightParameters = {
+  ...DEFAULT_LUNAR_FLIGHT_PARAMETERS,
+  integration: {
+    ...DEFAULT_LUNAR_FLIGHT_PARAMETERS.integration,
+    orbitPeriapsisAltitudeM: Number.POSITIVE_INFINITY,
+  },
+};
+
+/**
  * Build an ascent-stage state on the orbit described by `seed`, positioned at
  * one of its apsides. Pure and deterministic.
  */
