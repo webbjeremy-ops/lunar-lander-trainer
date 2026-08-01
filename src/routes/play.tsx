@@ -360,10 +360,15 @@ function PlayClient() {
             step={session.step}
             manual={session.manualUnlocked}
           />
+          <HoustonOverlay
+            call={session.houston}
+            onAcknowledge={session.actions.acknowledgeHouston}
+          />
           <CalloutOverlay
             callout={session.callout}
             onAcknowledge={session.actions.acknowledgeCallout}
           />
+
           <LunarScene
             flight={session.flight}
             orbit={session.orbit}
