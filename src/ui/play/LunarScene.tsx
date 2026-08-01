@@ -102,6 +102,11 @@ export function LunarScene({
   );
 }
 
+interface TrailPoint {
+  rangeM: number;
+  altitudeM: number;
+}
+
 interface DrawArgs {
   flight: LunarFlightState;
   orbit: LunarOrbitalValues;
@@ -109,6 +114,7 @@ interface DrawArgs {
   mission: MissionDefinition;
   limits: LandingLimits;
   manual: boolean;
+  trail: readonly TrailPoint[];
 }
 
 function draw(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawArgs) {
