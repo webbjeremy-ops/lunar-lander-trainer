@@ -312,6 +312,26 @@ function PlayClient() {
         >
           {session.descentClockLabel} · {session.descentClockStatus}
         </span>
+        <span
+          data-testid="landing-clearance"
+          data-clear={session.landingClearance.clear ? "yes" : "no"}
+          title={session.landingClearance.reasons.join(" · ") || "No standing deviations."}
+          className={`rounded border px-2 py-1 font-mono text-[10px] uppercase tracking-widest ${
+            session.landingClearance.clear
+              ? "border-emerald-700 bg-emerald-950/40 text-emerald-300"
+              : "border-red-700 bg-red-950/50 text-red-300"
+          }`}
+        >
+          {session.landingClearance.label}
+        </span>
+        <button
+          onClick={() => session.actions.abortStage()}
+          disabled={session.aborted || session.flight.terminalState !== null}
+          data-testid="play-abort"
+          className="rounded border-2 border-red-600 bg-red-950/60 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-200 hover:bg-red-900/70 disabled:opacity-40"
+        >
+          {session.aborted ? "Aborted" : "Abort stage"}
+        </button>
         <button
           onClick={() => session.actions.restart()}
           data-testid="play-restart"
@@ -320,6 +340,7 @@ function PlayClient() {
           Restart
         </button>
       </div>
+
 
       {!session.flightLockReleased && (
         <div
