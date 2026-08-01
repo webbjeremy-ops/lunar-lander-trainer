@@ -133,7 +133,7 @@ export function targetSinkRate(altitudeM: number): number {
   // schedule: Apollo 11 took ~110 s to fly the last 500 ft. Cap the sink so a
   // guided descent settles at a crew-plausible rate instead of dropping.
   const schedule = Math.max(0.6, 0.7 * Math.sqrt(altitudeM));
-  const lowGate = altitudeM < 160 ? Math.max(0.6, altitudeM / 45 + 0.5) : Infinity;
+  const lowGate = altitudeM < 450 ? Math.max(0.6, altitudeM / 45 + 0.5) : Infinity;
   const magnitude = Math.min(45, schedule, lowGate);
   return -magnitude;
 }
