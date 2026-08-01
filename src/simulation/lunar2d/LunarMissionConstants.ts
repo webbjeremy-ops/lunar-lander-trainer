@@ -277,14 +277,15 @@ export interface AttitudeControlConstants {
 
 export const ATTITUDE_CONTROL: AttitudeControlConstants = {
   maxAngularAccelRadPerSec2: {
-    value: 0.12,
+    value: 0.35,
     unit: "rad/s^2",
     classification: "gameplay-tuned",
     sourceId: null,
     rationale:
-      "Single-axis stand-in for the 16-thruster RCS. Chosen so a full-scale " +
-      "command reorients the vehicle on a timescale comparable to the real " +
-      "vehicle without modelling jet geometry or inertia tensors.",
+      "Single-axis stand-in for the 16-thruster RCS. M4.10 raised this so a " +
+      "pilot input bites within about a tenth of a second and a released " +
+      "control nulls the rate promptly, matching the feel of the digital " +
+      "autopilot without modelling jet geometry or inertia tensors.",
   },
   maxAngularRateRadPerSec: {
     value: 0.35,
@@ -293,6 +294,7 @@ export const ATTITUDE_CONTROL: AttitudeControlConstants = {
     sourceId: null,
     rationale: "Hard rate limit (~20 deg/s) so attitude cannot run away.",
   },
+
   rcsMassFlowKgPerSec: {
     value: 0.4,
     unit: "kg/s",
