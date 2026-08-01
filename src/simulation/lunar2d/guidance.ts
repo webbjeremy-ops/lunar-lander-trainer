@@ -63,6 +63,14 @@ export interface BrakingTarget {
   readonly targetAltitudeM: number;
   /** Range at which the braking phase hands over to the approach phase. */
   readonly handoverRangeM: number;
+  /**
+   * Throttle the engine is pinned to by the DPS profile (the 92.5 % fixed
+   * throttle point). When set, guidance cannot use thrust magnitude as a
+   * control: it steers the FIXED thrust vector instead, choosing the pitch
+   * whose vertical component meets the profile — exactly how the braking
+   * phase was flown.
+   */
+  readonly fixedThrottle?: number | null;
 }
 
 /**
@@ -136,22 +144,36 @@ export function computeReferenceGuidance(
 
   const radialError = orbit.radialSpeedMps - targetRadial;
 
-  let attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
-  if (attitude > tiltLimit) attitude = tiltLimit;
-  if (attitude < -tiltLimit) attitude = -tiltLimit;
-
-  const requiredAccel = Math.hypot(aRadial, aHorizontal);
   const maxThrust =
     state.configuration === "ascent-stage"
       ? parameters.ascentEngine.thrustN.value
       : parameters.descentEngine.maxThrustN.value;
-  const rawThrottle = maxThrust > 0 ? (requiredAccel * mass) / maxThrust : 0;
-  const recommendedThrottle =
-    state.configuration === "ascent-stage"
-      ? rawThrottle > 0
-        ? 1
-        : 0
-      : snapDescentThrottle(Math.min(1, Math.max(0, rawThrottle)), parameters);
+
+  const fixed = braking?.fixedThrottle ?? null;
+  let attitude: number;
+  let recommendedThrottle: number;
+
+  if (fixed !== null && fixed > 0 && state.configuration !== "ascent-stage") {
+    // Thrust magnitude is pinned: pitch is the only vertical control left.
+    const aTotal = (maxThrust * fixed) / mass;
+    const cosTilt = Math.max(-1, Math.min(1, aRadial / aTotal));
+    const magnitude = Math.acos(cosTilt);
+    const sign = aHorizontal < 0 ? -1 : 1;
+    attitude = sign * magnitude;
+    recommendedThrottle = fixed;
+  } else {
+    attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
+    const requiredAccel = Math.hypot(aRadial, aHorizontal);
+    const rawThrottle = maxThrust > 0 ? (requiredAccel * mass) / maxThrust : 0;
+    recommendedThrottle =
+      state.configuration === "ascent-stage"
+        ? rawThrottle > 0
+          ? 1
+          : 0
+        : snapDescentThrottle(Math.min(1, Math.max(0, rawThrottle)), parameters);
+  }
+  if (attitude > tiltLimit) attitude = tiltLimit;
+  if (attitude < -tiltLimit) attitude = -tiltLimit;
 
   let advisory: string;
   if (state.terminalState !== null) {

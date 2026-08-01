@@ -16,9 +16,10 @@ it("guided full descent", () => {
   for (let i=0;i<45000 && s.terminalState===null;i++){
     const o=computeOrbitalValues(s);
     const range=downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
+    const env0=dpsThrottleEnvelope(t);
+    const env=env0;
     const useProfile=o.altitudeM>60;
-    const cue=computeReferenceGuidance(s,undefined,useProfile?{rangeToLandingZoneM:range,targetAltitudeM:nominalAltitudeForRangeM(Math.abs(range)),handoverRangeM:HIGH_GATE_RANGE_M}:null);
-    const env=dpsThrottleEnvelope(t);
+    const cue=computeReferenceGuidance(s,undefined,useProfile?{rangeToLandingZoneM:range,targetAltitudeM:nominalAltitudeForRangeM(Math.abs(range)),handoverRangeM:HIGH_GATE_RANGE_M,fixedThrottle: env.min===env.max?env.min:null}:null);
     let throttle=Math.min(cue.recommendedThrottle, env.max);
     if (throttle>0 && throttle<env.min) throttle=env.min;
     const err=cue.recommendedAttitudeRad - s.attitudeRad;
