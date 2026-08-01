@@ -141,3 +141,16 @@ export function chordForStep(step: number, melodyArp: number): Chord {
   const idx = Math.floor(Math.max(0, step) / per) % CHORD_PROGRESSION.length;
   return CHORD_PROGRESSION[idx]!;
 }
+
+/**
+ * "In the zone": the last stretch before touchdown, when the crew stops
+ * talking and flies. Everything but the heartbeat gets muffled.
+ * 500 ft (152 m) is the low-gate / P66 manual-takeover neighbourhood.
+ */
+export const ZONE_ALTITUDE_M = 152;
+
+export function inTheZone(input: TensionInput): boolean {
+  if (input.terminal || input.crewAborted) return false;
+  if (input.houstonStage === "abort") return false;
+  return input.altitudeM > 0 && input.altitudeM < ZONE_ALTITUDE_M;
+}
