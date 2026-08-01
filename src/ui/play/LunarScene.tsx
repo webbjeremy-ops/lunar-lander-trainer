@@ -18,6 +18,7 @@ export function LunarScene({
   mission,
   limits,
   manual,
+  rollDeg = 0,
 }: {
   flight: LunarFlightState;
   orbit: LunarOrbitalValues;
@@ -25,6 +26,8 @@ export function LunarScene({
   mission: MissionDefinition;
   limits: LandingLimits;
   manual: boolean;
+  /** M4.8 cockpit roll: 180 = windows-down (PDI attitude), 0 = windows-up. */
+  rollDeg?: number;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
@@ -51,10 +54,10 @@ export function LunarScene({
   // a ref and painting happens once per animation frame, so the picture tracks
   // the vehicle instead of trailing React's render work.
   const propsRef = useRef<DrawArgs>({
-    flight, orbit, downrangeM, mission, limits, manual, trail: trailRef.current,
+    flight, orbit, downrangeM, mission, limits, manual, rollDeg, trail: trailRef.current,
   });
   propsRef.current = {
-    flight, orbit, downrangeM, mission, limits, manual, trail: trailRef.current,
+    flight, orbit, downrangeM, mission, limits, manual, rollDeg, trail: trailRef.current,
   };
 
   useEffect(() => {
@@ -114,6 +117,7 @@ interface DrawArgs {
   mission: MissionDefinition;
   limits: LandingLimits;
   manual: boolean;
+  rollDeg: number;
   trail: readonly TrailPoint[];
 }
 
@@ -324,7 +328,7 @@ function drawProfile(
   y0: number,
   w: number,
   h: number,
-  { flight, orbit, downrangeM, mission, limits, trail }: DrawArgs,
+  { flight, orbit, downrangeM, mission, limits, trail, rollDeg }: DrawArgs,
 ) {
   ctx.save();
   ctx.translate(x0, y0);
@@ -432,8 +436,19 @@ function drawProfile(
   ctx.save();
   ctx.translate(vx, vy);
   ctx.rotate(flight.attitudeRad);
+  // M4.8 — roll about the thrust axis. cos(roll) = +1 windows-up (crew and
+  // landing radar looking at the surface), -1 windows-down (the PDI attitude
+  // Eagle flew before the windows-up roll).
+  const rollRad = (rollDeg * Math.PI) / 180;
+  const cw = Math.cos(rollRad);
   ctx.fillStyle = "#d6d3d1";
   ctx.fillRect(-7, -6, 14, 10);
+  // Crew window band and the landing-radar antenna sit on opposite faces, so
+  // the silhouette reads the roll state directly.
+  ctx.fillStyle = cw > 0 ? "#7dd3fc" : "#1f2937";
+  ctx.fillRect(-6, 1.5 * cw - 1, 12, 2.2);
+  ctx.fillStyle = cw > 0 ? "#1f2937" : "#7dd3fc";
+  ctx.fillRect(-4, -1.5 * cw - 1, 8, 2.2);
   ctx.fillStyle = "#a8a29e";
   ctx.fillRect(-5, 4, 10, 5);
   ctx.strokeStyle = "#a8a29e";
