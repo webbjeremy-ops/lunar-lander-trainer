@@ -252,9 +252,11 @@ describe("M4.3 — insertion, determinism and failure modes", () => {
 
   it("impacts the surface when the vehicle never pitches over", () => {
     const m = ASCENT_MISSIONS["liftoff-fundamentals"];
+    // Straight up, then cut off: the vehicle has no horizontal speed at all,
+    // so the coast can only end on the surface.
     const r = runAscentProfile(m, {
       fixedPitchRad: 0,
-      burnToDepletion: true,
+      forcedCutoffSeconds: 60,
       coastSeconds: 4_000,
       maxSeconds: 900,
     });
