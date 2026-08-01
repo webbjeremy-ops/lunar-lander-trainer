@@ -274,6 +274,12 @@ export function usePlaySession(
   const alarmsRef = useRef(alarms);
   alarmsRef.current = alarms;
 
+  // M4.27 — P63 is a computer-flown program. Even in quick-manual the crew
+  // does not hand-fly the braking burn: guidance keeps the vehicle on the
+  // range/altitude/speed profile (including the throttle trim after throttle
+  // recovery) until the approach phase, when the crew takes the vehicle.
+  const crewHasVehicleRef = useRef(false);
+
   const dispatchIgnition = useCallback(
     (event: Parameters<typeof reduceIgnition>[1]) => {
       const next = reduceIgnition(ignitionRef.current, event);
@@ -523,7 +529,22 @@ export function usePlaySession(
           stageSeparation: !staged,
         };
       }
-      const manual = procedureRef.current.manualControlUnlocked;
+      // Hand the vehicle to the crew at the approach phase (high gate), or
+      // whenever they explicitly take over. Above that, on the Apollo 11
+      // timeline, the computer flies P63 exactly as it did in 1969 — which is
+      // what keeps the burn on range instead of sailing past the site.
+      const autoBrakingMission = apollo11Timeline && mission.id === "full-descent";
+      if (!crewHasVehicleRef.current) {
+        const o = computeOrbitalValues(state);
+        const braking =
+          autoBrakingMission &&
+          o.altitudeM > PHASE_HIGH_GATE_M &&
+          (isBurning(ignitionRef.current) ||
+            descentClockRef.current.mode === "running");
+        if (!braking) crewHasVehicleRef.current = true;
+      }
+      const manual =
+        procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
 
       let throttle: number;
       let attitudeCommand: number;
@@ -843,6 +864,7 @@ export function usePlaySession(
           return next;
         });
         const o = computeOrbitalValues(flightRef.current);
+        crewHasVehicleRef.current = true;
         recordTakeover(o.altitudeM > 300);
         setRunning(true);
       },
