@@ -26,6 +26,8 @@ import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
 import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
 import { useDescentSfx } from "@/ui/play/useDescentSfx";
+import eagleLandedAudio from "@/assets/eagle-has-landed.mp3.asset.json";
+
 
 
 import { CautionWarningPanel } from "@/ui/play/CautionWarningPanel";
@@ -158,6 +160,28 @@ function PlayClient() {
     running: session.running,
   });
   const agc = useAgcSession();
+
+  // "The Eagle has landed" — plays once on a successful touchdown.
+  const landedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const landedPlayedRef = useRef(false);
+  const landed = session.flight.terminalState === "landed";
+  useEffect(() => {
+    if (!landed || landedPlayedRef.current || !musicScore.enabled) return;
+    landedPlayedRef.current = true;
+    const el = landedAudioRef.current ?? new Audio(eagleLandedAudio.url);
+    landedAudioRef.current = el;
+    el.volume = 0.85;
+    void el.play().catch(() => undefined);
+  }, [landed, musicScore.enabled]);
+  useEffect(
+    () => () => {
+      landedAudioRef.current?.pause();
+      landedAudioRef.current = null;
+    },
+    [],
+  );
+
+
 
 
   const onDskyKey = session.actions.onDskyKey;
