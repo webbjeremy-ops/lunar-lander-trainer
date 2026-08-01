@@ -8,21 +8,23 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MISSIONS } from "@/game/play";
 import { ASCENT_MISSIONS, ASCENT_MISSION_IDS } from "@/game/ascent/missions";
+import { ORBIT_SCENARIOS } from "@/simulation/orbitOps";
 import { AccuracyLegend } from "@/ui/shell/AccuracyLegend";
 
 export const Route = createFileRoute("/missions")({
   head: () => ({
     meta: [
-      { title: "Missions — lunar descent and lunar ascent · Tranquility" },
+      { title: "Missions — lunar descent, ascent and orbital operations · Tranquility" },
       {
         name: "description",
         content:
-          "Nine flyable missions: five lunar-descent scenarios from Landing Fundamentals to the Apollo 11 Challenge, and four lunar-ascent scenarios up to the Orbit Sandbox.",
+          "Fifteen flyable exercises: five lunar-descent scenarios, four lunar-ascent scenarios, and six orbital-operations exercises from Orbit Fundamentals to the Apollo 11 Orbital Operations Challenge.",
       },
       { property: "og:title", content: "Missions · Tranquility" },
       {
         property: "og:description",
-        content: "Pick a lunar descent or a lunar liftoff and fly it with the real AGC beside you.",
+        content:
+          "Fly a lunar descent, a lunar liftoff, or plan orbital manoeuvres — with the real AGC beside you.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -35,6 +37,8 @@ const DESCENT_ORDER = Object.values(MISSIONS).sort((a, b) => a.order - b.order);
 const ASCENT_ORDER = ASCENT_MISSION_IDS.map((id) => ASCENT_MISSIONS[id]).sort(
   (a, b) => a.order - b.order,
 );
+const ORBIT_ORDER = Object.values(ORBIT_SCENARIOS).sort((a, b) => a.order - b.order);
+
 
 function MissionsPage() {
   return (
