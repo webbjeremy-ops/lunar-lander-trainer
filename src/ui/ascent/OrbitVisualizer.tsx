@@ -8,7 +8,7 @@
 
 import { useMemo } from "react";
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
-import { MOON_MEAN_RADIUS_M } from "@/simulation/lunar2d/LunarMissionConstants";
+import { FLAT_TERRAIN } from "@/simulation/lunar2d/LunarMissionConstants";
 import type { ConicSample, TargetOrbit } from "@/game/ascent";
 
 const SIZE = 460;
@@ -28,7 +28,7 @@ export function OrbitVisualizer({
   recommendedPitchRad: number;
   showCue: boolean;
 }) {
-  const R = MOON_MEAN_RADIUS_M;
+  const R = FLAT_TERRAIN.meanRadiusM;
 
   // World extent: whatever is largest of the target orbit, the coast conic and
   // the current radius, with a small margin.
