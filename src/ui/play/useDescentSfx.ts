@@ -19,6 +19,8 @@ export interface DescentSfxInput {
   /** Footpad probes have touched. */
   readonly contact: boolean;
   readonly running: boolean;
+  /** 0..1 master multiplier; drops while a mission recording is playing. */
+  readonly duck?: number;
 }
 
 export function useDescentSfx(input: DescentSfxInput): void {
