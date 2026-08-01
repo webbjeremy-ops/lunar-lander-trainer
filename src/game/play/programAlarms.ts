@@ -175,7 +175,12 @@ export function reduceProgramAlarms(
     case "tick": {
       const def = timeline[state.nextIndex];
       if (def === undefined) return state;
-      if (event.sinceIgnitionUs < def.atSinceIgnitionSec * S) return state;
+      const dueByTime = event.sinceIgnitionUs >= def.atSinceIgnitionSec * S;
+      const dueByAltitude =
+        def.belowAltitudeFt !== undefined &&
+        event.altitudeFt !== undefined &&
+        event.altitudeFt <= def.belowAltitudeFt;
+      if (!dueByTime && !dueByAltitude) return state;
 
       // A new alarm supersedes an unanswered one; the unanswered alarm is
       // recorded as such.
