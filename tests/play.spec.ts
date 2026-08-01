@@ -225,7 +225,7 @@ test.describe("M4.1 acceptance", () => {
     });
     expect((await readDiag(page)).workerBoots).toBe(1);
 
-    await page.getByRole("link", { name: /learn the dsky/i }).first().click();
+    await page.getByRole("link", { name: "Learn", exact: true }).first().click();
     await expect(page).toHaveURL(/\/learn/);
     await page.goBack();
     await expect(page.getByTestId("mission-select")).toBeVisible();

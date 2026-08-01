@@ -214,7 +214,7 @@ async function waitUntilLessonComplete(page: Page, lessonId: string, timeoutMs =
 }
 
 async function selectLessonByIndex(page: Page, oneBasedIndex: number) {
-  const buttons = page.locator('aside[aria-label="Lesson list"] button');
+  const buttons = page.locator('aside[aria-label="Lesson list"] ol button');
   const btn = buttons.nth(oneBasedIndex - 1);
   await btn.click();
   await expect(btn).toHaveAttribute("aria-current", "true", { timeout: 5_000 });
