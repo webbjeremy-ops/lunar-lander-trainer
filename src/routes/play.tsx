@@ -23,6 +23,8 @@ import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
 import { AttitudePanel } from "@/ui/play/AttitudePanel";
 import { FdaiBall } from "@/ui/play/FdaiBall";
 import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
+import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
+
 import { CautionWarningPanel } from "@/ui/play/CautionWarningPanel";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
