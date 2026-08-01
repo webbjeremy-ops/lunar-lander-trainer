@@ -586,8 +586,9 @@ export function usePlaySession(
         // The DPS throttle envelope is a hardware fact, so guidance has to know
         // about it: during fixed-throttle position the computer steers the
         // thrust vector instead of modulating it.
-        const guidanceSinceIgnitionUs = isBurning(ign)
-          ? ign.sinceIgnitionUs
+        const guidanceIgn = ignitionRef.current;
+        const guidanceSinceIgnitionUs = isBurning(guidanceIgn)
+          ? guidanceIgn.sinceIgnitionUs
           : apollo11Timeline && descentClockRef.current.mode === "running"
             ? descentClockRef.current.sinceIgnitionUs
             : null;
