@@ -9,7 +9,7 @@
 // already playing is never talked over — the later beat is dropped rather than
 // doubled, exactly as the loop would have sounded on the comm channel.
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import ignitionClip from "@/assets/a11-ignition-throttle-up.mp3.asset.json";
 import alarm1202Clip from "@/assets/a11-1202-alarm.mp3.asset.json";
 import goForLandingClip from "@/assets/a11-go-for-landing-1201.mp3.asset.json";
@@ -115,5 +115,4 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
   }, [enabled]);
 
   return { speaking, duck: speaking ? MISSION_AUDIO_DUCK : 1 };
-}
 }
