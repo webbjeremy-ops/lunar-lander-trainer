@@ -1083,6 +1083,10 @@ export function usePlaySession(
   );
 
 
+  useEffect(() => {
+    acceptProgramRef.current = acceptProgram;
+  }, [acceptProgram]);
+
   const actions = useMemo(
     () => ({
       setRunning,
@@ -1155,7 +1159,7 @@ export function usePlaySession(
         setRunning(true);
       },
     }),
-    [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
+    [onDskyKey, acceptProgram, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
 
 
