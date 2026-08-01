@@ -53,6 +53,19 @@ export function AscentHud({
       : 0;
   const periSafe = orbit.periapsisAltitudeM >= mission.safePeriapsisAltitudeM;
 
+  // Presentation-only unit selection (Settings → Units). The model stays SI.
+  const units = useAppSettings().units;
+  const apollo = units === "apollo";
+  const altUnit = apollo ? "nmi" : "km";
+  const speedUnit = speedUnitLabel(units);
+  const massUnit = massUnitLabel(units);
+  const alt = (m: number) => (apollo ? (m / M_PER_NMI).toFixed(2) : km(m));
+  const spd = (mps: number, digits = 1) =>
+    (apollo ? mps / M_PER_FT : mps).toFixed(digits);
+  const mass = (kg: number) => (apollo ? kg / KG_PER_LB : kg).toFixed(0);
+
+
+
   return (
     <div
       className="rounded border border-neutral-800 bg-neutral-950 p-3"
