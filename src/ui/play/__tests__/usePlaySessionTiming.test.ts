@@ -12,8 +12,9 @@ describe("Full Descent pre-TIG physics gate", () => {
   it("starts physical integration at ignition", () => {
     let ignition = reduceIgnition(createIgnitionState(), { kind: "start" });
     ignition = reduceIgnition(ignition, { kind: "arm", on: true });
+    ignition = reduceIgnition(ignition, { kind: "tick", dtUs: 25_000_000 });
     ignition = reduceIgnition(ignition, { kind: "proceed" });
-    ignition = reduceIgnition(ignition, { kind: "tick", dtUs: 60_000_000 });
+    ignition = reduceIgnition(ignition, { kind: "tick", dtUs: 35_000_000 });
     expect(shouldAdvanceFlightPhysics("full-descent", ignition, false)).toBe(true);
   });
 
