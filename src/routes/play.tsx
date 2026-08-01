@@ -159,6 +159,28 @@ function PlayClient() {
   });
   const agc = useAgcSession();
 
+  // "The Eagle has landed" — plays once on a successful touchdown.
+  const landedAudioRef = useRef<HTMLAudioElement | null>(null);
+  const landedPlayedRef = useRef(false);
+  const landed = session.flight.terminalState === "landed";
+  useEffect(() => {
+    if (!landed || landedPlayedRef.current || !musicScore.enabled) return;
+    landedPlayedRef.current = true;
+    const el = landedAudioRef.current ?? new Audio(eagleLandedAudio.url);
+    landedAudioRef.current = el;
+    el.volume = 0.85;
+    void el.play().catch(() => undefined);
+  }, [landed, musicScore.enabled]);
+  useEffect(
+    () => () => {
+      landedAudioRef.current?.pause();
+      landedAudioRef.current = null;
+    },
+    [],
+  );
+
+
+
 
   const onDskyKey = session.actions.onDskyKey;
   const handleKey = useCallback((code: number | "PRO") => onDskyKey(code), [onDskyKey]);
