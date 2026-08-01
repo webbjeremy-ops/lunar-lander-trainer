@@ -540,7 +540,7 @@ function drawProfile(
   const deviation = orbit.altitudeM - refAlt;
   ctx.fillStyle = "#9ca3af";
   ctx.font = "10px ui-monospace, monospace";
-  ctx.fillText("DESCENT PROFILE", 10, 14);
+  ctx.fillText(`DESCENT PROFILE · ${descentPhaseFor(orbit.altitudeM).label}`, 10, 14);
   ctx.fillStyle = "#e5e7eb";
   ctx.fillText(`ALT ${metresLabel(orbit.altitudeM)}`, 10, 26);
   ctx.fillStyle = Math.abs(deviation) < altSpan * 0.12 ? "#41e08a" : "#fbbf24";
