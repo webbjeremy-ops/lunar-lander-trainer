@@ -100,7 +100,9 @@ export const MISSIONS: Readonly<Record<MissionId, MissionDefinition>> = {
     initial: {
       altitudeM: DESCENT_LANDMARKS.poweredDescentInitiationM,
       radialSpeedMps: -3,
-      tangentialSpeedMps: 1_620,
+      // Apollo 11 crossed PDI at about 5,570 ft/s inertial, 259 nmi of ground
+      // track still to run to the aim point.
+      tangentialSpeedMps: 1_698,
       attitudeRad: -1.35,
       descentPropellantKg: 8_200,
       rangeToLandingZoneM: 480_000,
