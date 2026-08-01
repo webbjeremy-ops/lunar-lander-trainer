@@ -452,19 +452,21 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
             <div
               data-testid="dsky-bridged-request"
               data-variant={bridgedRequest.variant ?? "request"}
-              className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded bg-background/85 backdrop-blur-[1px] ring-1 ${
-                bridgedRequest.variant === "alarm" ? "ring-red-500/70" : "ring-amber-400/70"
+              className={`pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded px-2 py-1 text-center ring-2 ${
+                bridgedRequest.variant === "alarm"
+                  ? "bg-[#180404] ring-red-500"
+                  : "bg-[#141207] ring-amber-400/80"
               }`}
             >
               <span
-                className={`text-[9px] uppercase tracking-[0.18em] ${
-                  bridgedRequest.variant === "alarm" ? "text-red-400/90" : "text-amber-400/90"
+                className={`text-[8px] uppercase leading-none tracking-[0.16em] ${
+                  bridgedRequest.variant === "alarm" ? "text-red-400/80" : "text-amber-400/80"
                 }`}
               >
                 Bridged overlay — not rope output
               </span>
               <span
-                className={`font-mono text-2xl tabular-nums ${
+                className={`font-mono text-xl leading-none tabular-nums ${
                   bridgedRequest.variant === "alarm" ? "text-red-300" : "text-amber-300"
                 } ${bridgedRequest.flashing ? "animate-pulse" : ""}`}
               >
@@ -473,20 +475,21 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
               {bridgedRequest.code !== undefined && (
                 <span
                   data-testid="dsky-alarm-code"
-                  className="font-mono text-3xl tabular-nums text-red-200"
+                  className="font-mono text-2xl leading-none tabular-nums text-red-100"
                 >
                   {bridgedRequest.code}
                 </span>
               )}
               <span
-                className={`text-[10px] uppercase tracking-[0.14em] ${
-                  bridgedRequest.variant === "alarm" ? "text-red-200/85" : "text-amber-200/80"
+                className={`text-[9px] uppercase leading-tight tracking-[0.12em] ${
+                  bridgedRequest.variant === "alarm" ? "text-red-100" : "text-amber-100"
                 }`}
               >
                 {bridgedRequest.label}
               </span>
             </div>
           )}
+
         </div>
 
         <div className={compact ? "hidden" : undefined}>
