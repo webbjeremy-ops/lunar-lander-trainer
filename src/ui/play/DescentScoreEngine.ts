@@ -420,30 +420,4 @@ export class DescentScoreEngine {
       osc2.stop(t2 + 0.36);
     }
   }
-
-  /** Chord root under the melody: a long, swelling low note on each change. */
-  private tickBass(hz: number, notesPerChord: number): void {
-    const ctx = this.ctx;
-    const bus = this.melodyGain;
-    if (!ctx || !bus) return;
-    const now = ctx.currentTime;
-    const dur = Math.max(1.2, this.layers.melodyNoteSec * notesPerChord);
-    const level = 0.2 * this.layers.melody;
-    for (const [mult, weight, type] of [
-      [1, 1, "sine"],
-      [2, 0.3, "sine"],
-      [3, 0.1, "triangle"],
-    ] as const) {
-      const osc = ctx.createOscillator();
-      osc.type = type;
-      osc.frequency.value = hz * mult;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.linearRampToValueAtTime(level * weight, now + 0.5);
-      g.gain.setTargetAtTime(0.0001, now + dur * 0.6, dur * 0.3);
-      osc.connect(g).connect(bus);
-      osc.start(now);
-      osc.stop(now + dur + 1.0);
-    }
-  }
 }
