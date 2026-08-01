@@ -67,6 +67,9 @@ import {
   scriptFor,
   summarizeAlarms,
   throttleCeiling,
+  throttleCeilingForSinceIgnition,
+  nominalAltitudeForRangeM,
+  HIGH_GATE_RANGE_M,
   usesApollo11Timeline,
   type AssistanceLevel,
   type BridgedAlarmOverlay,
@@ -573,7 +576,15 @@ export function usePlaySession(
         throttle = throttleRef.current;
         attitudeCommand = attitudeRef.current;
       } else {
-        const cue = computeReferenceGuidance(state);
+        const o = computeOrbitalValues(state);
+        const rangeM = Math.abs(
+          downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD),
+        );
+        const cue = computeReferenceGuidance(state, undefined, {
+          rangeToLandingZoneM: rangeM,
+          targetAltitudeM: nominalAltitudeForRangeM(rangeM),
+          handoverRangeM: HIGH_GATE_RANGE_M,
+        });
         throttle = cue.recommendedThrottle;
         // Simple proportional attitude autopilot onto the advisory angle.
         const err = cue.recommendedAttitudeRad - state.attitudeRad;
@@ -588,6 +599,16 @@ export function usePlaySession(
       // 10 % fixed-throttle point for 26 s before throttle-up. While the
       // countdown is armed this ceiling overrides player and guidance alike.
       const ign = ignitionRef.current;
+      // Apollo 11 always flies the DPS start profile, even if the player
+      // reached the burn without the countdown ritual: the transcript says
+      // "ignition, ten percent", so the engine must actually be at 10 %.
+      const clockCeiling =
+        apollo11Timeline && ign.phase === "standby" && descentClockRef.current.mode === "running"
+          ? throttleCeilingForSinceIgnition(descentClockRef.current.sinceIgnitionUs)
+          : null;
+      if (clockCeiling !== null && throttle > clockCeiling) {
+        throttle = clockCeiling;
+      }
       if (ign.phase !== "standby") {
         const ceiling = throttleCeiling(ign);
         if (ceiling <= 0) {
@@ -735,6 +756,7 @@ export function usePlaySession(
         engineArmed: ignitionRef.current.engineArmed,
         windowsUp: radarAvailable(rollRef.current),
         alarmActive: alarmsRef.current.active !== null,
+        sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
       };
       setProcedure((prev) => {
         const next = reduceProcedure(script, prev, {
