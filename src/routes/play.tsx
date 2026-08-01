@@ -42,6 +42,7 @@ import {
 import {
   LANDING_LIMITS,
   MISSIONS,
+  milestoneSec,
   type AssistanceLevel,
   type ControlModeId,
   type MissionId,
