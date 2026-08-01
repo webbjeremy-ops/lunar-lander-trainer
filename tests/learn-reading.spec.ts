@@ -12,7 +12,7 @@ import {
   expectNoRelevantErrors,
   readAgc,
   readLearn,
-  selectLessonByIndex,
+  selectLesson,
   waitForReady,
   type LearnRecorder,
 } from "./support/learn";
@@ -27,11 +27,11 @@ test.describe("/learn reading lessons", () => {
   });
 
   test("reading lessons complete by acknowledgement alone", async ({ page }) => {
-    await selectLessonByIndex(page, 1);
+    await selectLesson(page, "lesson-01-meet-the-agc");
     await ackUntilSettled(page);
     expect((await readLearn(page)).state.status).toBe("completed");
 
-    await selectLessonByIndex(page, 2);
+    await selectLesson(page, "lesson-02-reading-the-dsky");
     await ackUntilSettled(page);
     expect((await readLearn(page)).state.status).toBe("completed");
   });
@@ -39,9 +39,9 @@ test.describe("/learn reading lessons", () => {
   test("navigating lessons never restarts the AGC or rewinds mission time", async ({ page }) => {
     const baseline = (await readAgc(page)).snapshot!;
 
-    await selectLessonByIndex(page, 1);
+    await selectLesson(page, "lesson-01-meet-the-agc");
     await ackUntilSettled(page);
-    await selectLessonByIndex(page, 2);
+    await selectLesson(page, "lesson-02-reading-the-dsky");
     await ackUntilSettled(page);
 
     const after = await readAgc(page);

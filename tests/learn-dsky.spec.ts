@@ -18,7 +18,7 @@ import {
   expectNoRelevantErrors,
   readAgc,
   readLearn,
-  selectLessonByIndex,
+  selectLesson,
   tapSequence,
   waitForReady,
   waitUntilLessonComplete,
@@ -38,7 +38,7 @@ test.describe("/learn interactive DSKY lessons", () => {
   });
 
   test("Lesson 3 — V35E lamp test completes from authentic emulator output", async ({ page }) => {
-    await selectLessonByIndex(page, 3);
+    await selectLesson(page, "lesson-03-v35-lamp-test");
     const start = await advanceToInteractive(page, L3);
 
     const attempt = start.state.attempt!;
@@ -73,7 +73,7 @@ test.describe("/learn interactive DSKY lessons", () => {
   });
 
   test("Lesson 3 — visible DSKY always describes one published snapshot", async ({ page }) => {
-    await selectLessonByIndex(page, 3);
+    await selectLesson(page, "lesson-03-v35-lamp-test");
     await advanceToInteractive(page, L3);
     await tapSequence(page, ["dsky-key-VERB", "dsky-key-3", "dsky-key-5", "dsky-key-ENTR"]);
     await waitUntilLessonComplete(page, L3);
@@ -136,7 +136,7 @@ test.describe("/learn interactive DSKY lessons", () => {
   test("Lesson 4 — V16 N65 completes on a fresh barrier without a Worker restart", async ({ page }) => {
     const bootsBefore = (await readAgc(page)).workerBoots;
 
-    await selectLessonByIndex(page, 4);
+    await selectLesson(page, "lesson-04-v16-n65-mission-time");
     const start = await advanceToInteractive(page, L4);
     expect((await readAgc(page)).workerBoots).toBe(bootsBefore);
     expect(rec.agcWorkers().length).toBe(1);
