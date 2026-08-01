@@ -291,6 +291,8 @@ function PlayClient() {
         </div>
 
         <div className="space-y-3">
+          <CautionWarningPanel lamps={cautionLamps} />
+
           <FdaiBall
             pitchDeg={(session.flight.attitudeRad * 180) / Math.PI}
             rollDeg={session.roll.rollDeg}
