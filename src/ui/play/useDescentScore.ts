@@ -85,7 +85,7 @@ export function useDescentScore(input: DescentScoreInput): DescentScoreApi {
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine || !enabled) return;
-    engine.setVolume(input.running ? 0.7 : 0.25);
+    engine.setVolume(input.running ? 0.9 : 0.35);
     engine.setTension(tension);
   }, [enabled, tension, input.running]);
 
