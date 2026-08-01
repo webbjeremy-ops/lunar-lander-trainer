@@ -577,12 +577,11 @@ export function usePlaySession(
         attitudeCommand = attitudeRef.current;
       } else {
         const o = computeOrbitalValues(state);
-        const rangeM = Math.abs(
-          downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD),
-        );
+        // Signed: positive means the site is still ahead of the vehicle.
+        const rangeM = downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
         const cue = computeReferenceGuidance(state, undefined, {
           rangeToLandingZoneM: rangeM,
-          targetAltitudeM: nominalAltitudeForRangeM(rangeM),
+          targetAltitudeM: nominalAltitudeForRangeM(Math.abs(rangeM)),
           handoverRangeM: HIGH_GATE_RANGE_M,
         });
         throttle = cue.recommendedThrottle;
