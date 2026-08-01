@@ -222,15 +222,16 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
  * Reference: Apollo Operations Handbook LM-5, main panels 1-4 (NASA, 1969).
  * ------------------------------------------------------------------------ */
 :root {
-  --lm-panel: #6c7168;
-  --lm-panel-dark: #565b53;
-  --lm-panel-light: #7d8278;
-  --lm-legend: #f2f3ee;
-  --lm-face: #0b0d0b;
-  --lm-bezel: #1a1c19;
+  --lm-panel: #1b1d1c;
+  --lm-panel-dark: #121413;
+  --lm-panel-light: #262928;
+  --lm-legend: #e8eae6;
+  --lm-face: #050605;
+  --lm-bezel: #0a0b0a;
   --lm-el: #5df2a3;
   --lm-caution: #f5b323;
 }
+
 
 /* The cabin structure behind the panels: painted aluminium. */
 .lm-bay {
