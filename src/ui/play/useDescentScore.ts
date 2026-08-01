@@ -91,14 +91,16 @@ export function useDescentScore(input: DescentScoreInput): DescentScoreApi {
   }, [enabled, startEngine]);
 
 
-  // Feed tension continuously; duck the score while the sim is paused.
+  // Feed tension continuously; duck the score while the sim is paused, and
+  // again while a mission recording is on the comm loop.
+  const duck = input.duck ?? 1;
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine || !enabled) return;
-    engine.setVolume(input.running ? 0.9 : 0.35);
+    engine.setVolume((input.running ? 0.9 : 0.35) * duck);
     engine.setTension(tension);
     engine.setZone(zone && input.running);
-  }, [enabled, tension, zone, input.running]);
+  }, [enabled, tension, zone, input.running, duck]);
 
   useEffect(() => () => engineRef.current?.stop(), []);
 
