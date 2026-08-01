@@ -758,6 +758,7 @@ export function usePlaySession(
     radarAvailable: radarAvailable(roll),
     alarms,
     bridgedAlarm: apollo11Timeline ? bridgedAlarmFor(alarms) : null,
+    callout,
     actions,
   };
 }
