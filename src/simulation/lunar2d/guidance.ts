@@ -54,8 +54,6 @@ const BRAKING_MAX_SINK_MPS = 55;
  * braking, and it takes priority over the nominal speed profile, m/s².
  */
 const BRAKING_STOP_OVERRIDE_MPS2 = 2.8;
-/** Braking-phase downrange velocity loop time constant, seconds. */
-const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
 /** Schedule catch-up trim: time constant and authority limit. */
