@@ -367,7 +367,9 @@ function drawProfile(
   y0: number,
   w: number,
   h: number,
-  { flight, orbit, downrangeM, mission, limits, trail, rollDeg, manual }: DrawArgs,
+  {
+    flight, orbit, downrangeM, mission, limits, trail, rollDeg, manual, p64Selected,
+  }: DrawArgs,
 ) {
   ctx.save();
   ctx.translate(x0, y0);
