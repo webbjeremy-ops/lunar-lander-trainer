@@ -136,6 +136,8 @@ export interface PlaySessionApi {
     readonly setEngine: (on: boolean) => void;
     readonly trimRod: (steps: number) => void;
     readonly setEngineArm: (on: boolean) => void;
+    /** M4.12 — arm the PDI countdown directly (T-60) from the cockpit. */
+    readonly startIgnitionCountdown: () => void;
     /** Hold to roll the vehicle toward windows-up (M4.8). */
     readonly setRollCommand: (active: boolean) => void;
   };
