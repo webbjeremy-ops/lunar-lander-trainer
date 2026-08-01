@@ -454,8 +454,6 @@ export function usePlaySession(
       // and fly the fixed-thrust ascent engine up and downrange.
       if (abortedRef.current) {
         const staged = state.configuration !== "complete-lm";
-        const target = state.altitudeAboveSurfaceHint ?? 0;
-        void target;
         const desired = 1.2; // rad from local vertical — pitch over for orbit
         const err = desired - state.attitudeRad;
         const cmd = clampSigned(err * 3 - state.angularRateRadPerSec * 2.5);
