@@ -128,11 +128,23 @@ export async function tapSequence(page: Page, testIds: string[], gapMs = 90): Pr
   }
 }
 
-export async function selectLessonByIndex(page: Page, oneBasedIndex: number): Promise<void> {
-  const buttons = page.locator('aside[aria-label="Lesson list"] ol button');
-  const btn = buttons.nth(oneBasedIndex - 1);
+/**
+ * Select a lesson by its stable lesson id.
+ *
+ * The sidebar is grouped into learning tracks (M4.2), so ordinal position is
+ * NOT stable — an ordinal selector silently picks a different lesson whenever
+ * tracks are re-ordered. Always address the lesson by id.
+ */
+export async function selectLesson(page: Page, lessonId: string): Promise<void> {
+  const btn = page.getByTestId(`lesson-nav-${lessonId}`);
+  await btn.scrollIntoViewIfNeeded();
   await btn.click();
   await expect(btn).toHaveAttribute("aria-current", "true", { timeout: 10_000 });
+  await page.waitForFunction(
+    (lid) => (window as unknown as { __learnTest?: { lessonId?: string } }).__learnTest?.lessonId === lid,
+    lessonId,
+    { timeout: 10_000 },
+  );
 }
 
 export async function ackReading(page: Page): Promise<void> {

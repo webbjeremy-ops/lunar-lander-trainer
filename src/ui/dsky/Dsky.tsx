@@ -511,19 +511,28 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
             />
             <span className="text-neutral-600">(TIME1=0o25, TIME2=0o24)</span>
           </div>
+          {/* M4.5 — cold start must not reflow. Every diagnostic block below
+              reserves its final footprint while the emulator boots: the
+              erasable window renders placeholder cells, the event log has a
+              fixed height, and the provenance block keeps its five rows. */}
           <div className="grid grid-cols-8 gap-x-2 gap-y-0.5">
-            {erasableView.map((w, i) => (
-              <div key={i}>
-                <span className="text-neutral-600">0{(erasableBase + i).toString(8).padStart(4, "0")}</span>{" "}
-                <span className="text-emerald-400">0{w.toString(8).padStart(5, "0")}</span>
-              </div>
-            ))}
+            {Array.from({ length: 16 }, (_, i) => {
+              const w = erasableView[i];
+              return (
+                <div key={i}>
+                  <span className="text-neutral-600">0{(erasableBase + i).toString(8).padStart(4, "0")}</span>{" "}
+                  <span className={w === undefined ? "text-neutral-700" : "text-emerald-400"}>
+                    {w === undefined ? "0·····" : `0${w.toString(8).padStart(5, "0")}`}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         <div className="mt-3 rounded border border-neutral-800 bg-black/50 p-2 font-mono text-[11px]">
           <div className="mb-1 text-neutral-500 uppercase tracking-widest">Recent channel events</div>
-          <div className="max-h-32 overflow-auto">
+          <div className="h-32 overflow-auto">
             {events.map((e) => (
               <div key={e.seq} className={e.channel === selectedChannel ? "text-emerald-300" : "text-neutral-500"}>
                 #{e.seq.toString().padStart(6, "0")} · 0{e.channel.toString(8)} ← 0{e.value.toString(8).padStart(5, "0")}
@@ -533,15 +542,23 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           </div>
         </div>
 
+        {/* Provenance rows are single-line in BOTH states (`truncate`), so the
+            block occupies exactly five rows during boot and after ready. */}
         <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
-          {ready && (
-            <>
-              <div>emulator: <span className="text-neutral-300">{ready.emulatorRepo}@{ready.emulatorCommit.slice(0, 10)}</span> ({ready.emulatorVersionString || "no version"})</div>
-              <div>rope: {ready.ropeId} ({ready.ropeByteLength.toLocaleString()} bytes)</div>
-              <div>rope source commit: <span className="text-neutral-400">{ready.ropeSourceCommit.slice(0, 10) || "unknown"}</span></div>
-              <div>rope SHA-256: <span className="text-emerald-400">match</span> <span className="ml-2 text-neutral-600">{ready.ropeSha256.slice(0, 16)}…</span></div>
-              <div data-testid="agc-met">MET µs: <span className="text-neutral-300">{snapshot?.missionTimeUs ?? 0}</span> · steps: {(snapshot?.totalAgcSteps ?? 0).toLocaleString()} · scale: {snapshot?.timeScale ?? 1}× · {snapshot?.running ? "running" : "paused"}</div>
-            </>
+          {ready ? (
+            <div className="space-y-1">
+              <div className="truncate">emulator: <span className="text-neutral-300">{ready.emulatorRepo}@{ready.emulatorCommit.slice(0, 10)}</span> ({ready.emulatorVersionString || "no version"})</div>
+              <div className="truncate">rope: {ready.ropeId} ({ready.ropeByteLength.toLocaleString()} bytes)</div>
+              <div className="truncate">rope source commit: <span className="text-neutral-400">{ready.ropeSourceCommit.slice(0, 10) || "unknown"}</span></div>
+              <div className="truncate">rope SHA-256: <span className="text-emerald-400">match</span> <span className="ml-2 text-neutral-600">{ready.ropeSha256.slice(0, 16)}…</span></div>
+              <div data-testid="agc-met" className="truncate">MET µs: <span className="text-neutral-300">{snapshot?.missionTimeUs ?? 0}</span> · steps: {(snapshot?.totalAgcSteps ?? 0).toLocaleString()} · scale: {snapshot?.timeScale ?? 1}× · {snapshot?.running ? "running" : "paused"}</div>
+            </div>
+          ) : (
+            <div aria-hidden="true" className="space-y-1">
+              {["emulator", "rope", "rope source commit", "rope SHA-256", "MET µs"].map((label) => (
+                <div key={label} className="truncate text-neutral-700">{label}: …</div>
+              ))}
+            </div>
           )}
         </div>
         </div>

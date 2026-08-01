@@ -15,7 +15,7 @@ import {
   expectNoRelevantErrors,
   readAgc,
   readLearn,
-  selectLessonByIndex,
+  selectLesson,
   waitForAttemptReady,
   waitForReady,
   type LearnRecorder,
@@ -34,7 +34,7 @@ test.describe("/learn shared session", () => {
   });
 
   test("snapshot listeners do not accumulate over the session", async ({ page }) => {
-    await selectLessonByIndex(page, 3);
+    await selectLesson(page, "lesson-03-v35-lamp-test");
     await advanceToInteractive(page, L3);
 
     const before = (await readAgc(page)).snapshots ?? 0;
@@ -45,7 +45,7 @@ test.describe("/learn shared session", () => {
   });
 
   test("restarting an attempt clears evidence and does not auto-complete", async ({ page }) => {
-    await selectLessonByIndex(page, 3);
+    await selectLesson(page, "lesson-03-v35-lamp-test");
     await advanceToInteractive(page, L3);
 
     await page.getByTestId("ctl-restart-attempt").click();
@@ -72,9 +72,9 @@ test.describe("/learn shared session", () => {
     // the intermittent /learn timeout. Bouncing between lessons exercises
     // that ordering repeatedly.
     for (let round = 0; round < 3; round++) {
-      await selectLessonByIndex(page, 3);
-      await selectLessonByIndex(page, 4);
-      await selectLessonByIndex(page, 3);
+      await selectLesson(page, "lesson-03-v35-lamp-test");
+      await selectLesson(page, "lesson-04-v16-n65-mission-time");
+      await selectLesson(page, "lesson-03-v35-lamp-test");
       const st = await advanceToInteractive(page, L3);
       expect(st.attemptReady!.lessonId, `round=${round} diag=${await diagnostics(page)}`).toBe(L3);
       expect(st.attemptReady!.agcEpoch).toBe(st.agcEpoch);
