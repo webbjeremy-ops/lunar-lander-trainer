@@ -263,17 +263,26 @@ export function usePlaySession(
         k === "ArrowRight" || k === " "
       ) {
         e.preventDefault();
+        // OS key-repeat must never re-trigger edge actions (it made the
+        // engine toggle flicker and delayed the felt response).
+        if (e.repeat) return;
         heldRef.current.add(k);
         if (k === " ") engineRef.current = !engineRef.current;
+        // Immediate throttle nudge on press so the first frame already moves,
+        // instead of waiting for the ramp integrator to build up.
+        if (k === "ArrowUp") throttleRef.current = clamp01(throttleRef.current + 0.03);
+        if (k === "ArrowDown") throttleRef.current = clamp01(throttleRef.current - 0.03);
       } else if (k === "," || k === ".") {
         e.preventDefault();
         rodTargetRef.current += (k === "," ? -1 : 1) * ROD_INCREMENT_MPS;
       } else if (k === "r" || k === "R") {
         // M4.8 — hold R to roll toward windows-up.
         e.preventDefault();
+        if (e.repeat) return;
         dispatchRoll({ kind: "roll", active: true });
       }
     };
+
     const up = (e: KeyboardEvent) => {
       heldRef.current.delete(e.key);
       if (e.key === "r" || e.key === "R") dispatchRoll({ kind: "roll", active: false });
