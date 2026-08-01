@@ -221,6 +221,9 @@ export function usePlaySession(
 
   const throttleRef = useRef(0);
   const attitudeRef = useRef(0);
+  /** One-shot rate kick consumed by the attitude controller on key press. */
+  const attitudeKickRef = useRef(0);
+
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
   const roughnessRef = useRef(0);
