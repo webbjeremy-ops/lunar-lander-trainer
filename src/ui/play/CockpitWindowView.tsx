@@ -185,9 +185,9 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   ctx.fillRect(0, 0, w, h);
   const top = Math.max(-h, Math.min(h, hy));
   const grad = ctx.createLinearGradient(0, top, 0, h);
-  grad.addColorStop(0, "#8a8072");
-  grad.addColorStop(0.55, "#6a6154");
-  grad.addColorStop(1, "#4a4438");
+  grad.addColorStop(0, "#8d8b85");
+  grad.addColorStop(0.55, "#6c6a64");
+  grad.addColorStop(1, "#4c4a45");
   ctx.fillStyle = grad;
   ctx.fillRect(0, top, w, h - top);
 
@@ -346,7 +346,7 @@ function drawLandmark(
     return;
   }
   // Crater: shadowed far wall, lit near rim.
-  ctx.fillStyle = `rgba(30,27,22,${0.45 + mark.albedo * 0.4})`;
+  ctx.fillStyle = `rgba(28,28,26,${0.3 + mark.albedo * 0.3})`;
   ctx.beginPath();
   ctx.ellipse(x, y, r, r * flat, 0, 0, Math.PI * 2);
   ctx.fill();
