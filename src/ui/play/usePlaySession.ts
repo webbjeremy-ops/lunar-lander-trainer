@@ -742,7 +742,7 @@ export function usePlaySession(
         : null,
     [
       apollo11Timeline,
-      ignition.sinceIgnitionUs,
+      descentClockUs,
       orbit.altitudeM,
       flight.mainEngine,
       acknowledgedCallouts,
