@@ -15,7 +15,7 @@
 // Yaw is not modelled, so its needle is parked at zero and labelled as such
 // rather than being animated with invented data.
 
-const R = 92;
+const R = 78;
 
 function clamp(v: number, lo: number, hi: number) {
   return v < lo ? lo : v > hi ? hi : v;
@@ -154,7 +154,7 @@ export function FdaiBall({
       </header>
 
       <svg
-        viewBox="0 0 250 250"
+        viewBox="0 0 260 262"
         className="mx-auto block w-full max-w-[280px]"
         role="img"
         aria-label={`Pitch ${pitch.toFixed(0)} degrees from vertical, roll ${roll.toFixed(0)} degrees`}
@@ -172,21 +172,21 @@ export function FdaiBall({
 
         {/* Instrument case */}
         <polygon
-          points="35,4 215,4 246,35 246,215 215,246 35,246 4,215 4,35"
+          points="36,4 224,4 256,36 256,226 224,258 36,258 4,226 4,36"
           className="fill-neutral-900 stroke-neutral-700"
           strokeWidth="1.5"
         />
         {[
           [22, 22],
-          [228, 22],
-          [22, 228],
-          [228, 228],
+          [238, 22],
+          [22, 240],
+          [238, 240],
         ].map(([cx, cy]) => (
           <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="3.5" className="fill-neutral-700" />
         ))}
-        <circle cx="125" cy="125" r={R + 12} className="fill-black stroke-neutral-800" strokeWidth="2" />
+        <circle cx="130" cy="133" r={R + 12} className="fill-black stroke-neutral-800" strokeWidth="2" />
 
-        <g transform="translate(125 125)">
+        <g transform="translate(130 133)">
           <g clipPath="url(#fdai-ball-clip)">
             <circle cx="0" cy="0" r={R} className="fill-neutral-200" />
             <g transform={`rotate(${-roll})`}>
@@ -292,7 +292,7 @@ export function FdaiBall({
         </g>
 
         {/* Rate needles: roll (top), pitch (right), yaw (bottom, unmodelled) */}
-        <g transform="translate(50 12)">
+        <g transform="translate(55 24)">
           <RateTape
             orientation="horizontal"
             value={rollRateDegPerSec}
@@ -301,7 +301,7 @@ export function FdaiBall({
             testid="fdai-roll-rate"
           />
         </g>
-        <g transform="translate(222 50)">
+        <g transform="translate(226 58)">
           <RateTape
             orientation="vertical"
             value={-pitchRateDegPerSec}
@@ -310,7 +310,7 @@ export function FdaiBall({
             testid="fdai-pitch-rate"
           />
         </g>
-        <g transform="translate(50 222)">
+        <g transform="translate(55 224)">
           <RateTape
             orientation="horizontal"
             value={0}
@@ -321,7 +321,7 @@ export function FdaiBall({
           />
         </g>
 
-        <text x="125" y="9" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#8b8b8b">
+        <text x="130" y="18" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#8b8b8b">
           ROLL RATE
         </text>
         <text
@@ -331,11 +331,11 @@ export function FdaiBall({
           fontSize="7"
           fontFamily="ui-monospace, monospace"
           fill="#8b8b8b"
-          transform="rotate(90 243 125)"
+          transform="rotate(90 250 133)"
         >
           PITCH RATE
         </text>
-        <text x="125" y="245" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#5f5f5f">
+        <text x="130" y="252" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#5f5f5f">
           YAW RATE
         </text>
       </svg>
@@ -360,7 +360,7 @@ export function FdaiBall({
 function Field({ label, value, testid }: { label: string; value: string; testid: string }) {
   return (
     <div className="rounded border border-neutral-800 bg-black/50 px-1.5 py-1">
-      <div className="text-[9px] uppercase tracking-widest text-neutral-500">{label}</div>
+      <div className="text-[9px] uppercase tracking-widest text-neutral-400">{label}</div>
       <div className="font-mono text-sm tabular-nums text-neutral-100" data-testid={testid}>
         {value}
       </div>
