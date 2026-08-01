@@ -66,6 +66,7 @@ function PlayPage() {
         </h1>
         <p className="mt-1 text-xs text-neutral-400">
           Fly the descent with the real Apollo Guidance Computer beside you.{" "}
+          <Link className="text-emerald-400" to="/play/ascent">Lunar ascent</Link> ·{" "}
           <Link className="text-emerald-400" to="/sim">Laboratory</Link> ·{" "}
           <Link className="text-emerald-400" to="/learn">Learn the DSKY</Link> ·{" "}
           <Link className="text-emerald-400" to="/sources">Sources</Link>
