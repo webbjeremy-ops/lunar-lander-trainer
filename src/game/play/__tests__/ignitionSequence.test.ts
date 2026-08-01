@@ -77,6 +77,7 @@ describe("ignition sequence", () => {
     expect(s.sinceIgnitionUs).toBeLessThan(FIXED_THROTTLE_DURATION_US);
 
     s = tick(s, 30);
+    // Kernel throttle 1.0 IS the fixed throttle point (92.5 % of rated thrust).
     expect(throttleCeiling(s)).toBe(1);
   });
 

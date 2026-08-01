@@ -41,9 +41,16 @@ const MAX_ADVISORY_TILT_RAD = 1.05; // ~60 degrees
  */
 const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
 /** Vertical error is flown out on this time constant during braking, seconds. */
-const BRAKING_ALTITUDE_TAU_S = 30;
+const BRAKING_ALTITUDE_TAU_S = 90;
 /** Sink-rate authority during braking, m/s. */
 const BRAKING_MAX_SINK_MPS = 45;
+/**
+ * Once the stopping law needs more than this deceleration the vehicle is late
+ * braking, and it takes priority over the nominal speed profile, m/s².
+ */
+const BRAKING_STOP_OVERRIDE_MPS2 = 2.8;
+/** Braking-phase downrange velocity loop time constant, seconds. */
+const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
 /** Time constant for the approach-phase downrange velocity loop, seconds. */
@@ -63,6 +70,20 @@ export interface BrakingTarget {
   readonly targetAltitudeM: number;
   /** Range at which the braking phase hands over to the approach phase. */
   readonly handoverRangeM: number;
+  /**
+   * Throttle the engine is pinned to by the DPS profile (the 92.5 % fixed
+   * throttle point). When set, guidance cannot use thrust magnitude as a
+   * control: it steers the FIXED thrust vector instead, choosing the pitch
+   * whose vertical component meets the profile — exactly how the braking
+   * phase was flown.
+   */
+  readonly fixedThrottle?: number | null;
+  /**
+   * Downrange closing speed the canonical profile wants at this range, m/s.
+   * Guidance brakes onto it rather than simply nulling velocity, so the burn
+   * stays on the 13-minute clock. Positive = closing on the site.
+   */
+  readonly targetDownrangeSpeedMps?: number | null;
 }
 
 /**
@@ -104,7 +125,20 @@ export function computeReferenceGuidance(
       // Deceleration that brings the downrange velocity to the approach-phase
       // hand-over inside the range that is actually left to run.
       const runoutM = Math.max(500, signedRange - braking.handoverRangeM);
-      aHorizontal = -Math.sign(v) * ((v * v) / (2 * runoutM));
+      // Safety law: constant deceleration that stops the downrange motion by
+      // high gate. Never brake less than this.
+      const stopping = -Math.sign(v) * ((v * v) / (2 * runoutM));
+      const profileSpeed = braking.targetDownrangeSpeedMps ?? null;
+      if (profileSpeed !== null) {
+        const desired = Math.sign(signedRange || 1) * Math.abs(profileSpeed);
+        const onProfile = (desired - v) / BRAKING_SPEED_TAU_S;
+        // Fly the profile speed; only fall back on the stopping law when the
+        // vehicle is genuinely late braking and needs more than the profile.
+        aHorizontal =
+          Math.abs(stopping) > BRAKING_STOP_OVERRIDE_MPS2 ? stopping : onProfile;
+      } else {
+        aHorizontal = stopping;
+      }
       tiltLimit = MAX_BRAKING_TILT_RAD;
     } else {
       // Approach: close the last kilometres to the site and arrive with the
@@ -136,22 +170,38 @@ export function computeReferenceGuidance(
 
   const radialError = orbit.radialSpeedMps - targetRadial;
 
-  let attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
-  if (attitude > tiltLimit) attitude = tiltLimit;
-  if (attitude < -tiltLimit) attitude = -tiltLimit;
-
-  const requiredAccel = Math.hypot(aRadial, aHorizontal);
   const maxThrust =
     state.configuration === "ascent-stage"
       ? parameters.ascentEngine.thrustN.value
       : parameters.descentEngine.maxThrustN.value;
-  const rawThrottle = maxThrust > 0 ? (requiredAccel * mass) / maxThrust : 0;
-  const recommendedThrottle =
-    state.configuration === "ascent-stage"
-      ? rawThrottle > 0
-        ? 1
-        : 0
-      : snapDescentThrottle(Math.min(1, Math.max(0, rawThrottle)), parameters);
+
+  const fixed = braking?.fixedThrottle ?? null;
+  let attitude: number;
+  let recommendedThrottle: number;
+
+  if (fixed !== null && fixed > 0 && state.configuration !== "ascent-stage") {
+    // Thrust magnitude is pinned: pitch is the only vertical control left.
+    const aTotal = (maxThrust * fixed) / mass;
+    // Pitch splits the fixed thrust vector. Tilt far enough to make the
+    // downrange deceleration the profile asks for, but never so far that the
+    // vertical component falls below what the altitude profile needs.
+    const magnitude = Math.acos(Math.max(-1, Math.min(1, aRadial / aTotal)));
+    const sign = aHorizontal < 0 ? -1 : 1;
+    attitude = sign * magnitude;
+    recommendedThrottle = fixed;
+  } else {
+    attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
+    const requiredAccel = Math.hypot(aRadial, aHorizontal);
+    const rawThrottle = maxThrust > 0 ? (requiredAccel * mass) / maxThrust : 0;
+    recommendedThrottle =
+      state.configuration === "ascent-stage"
+        ? rawThrottle > 0
+          ? 1
+          : 0
+        : snapDescentThrottle(Math.min(1, Math.max(0, rawThrottle)), parameters);
+  }
+  if (attitude > tiltLimit) attitude = tiltLimit;
+  if (attitude < -tiltLimit) attitude = -tiltLimit;
 
   let advisory: string;
   if (state.terminalState !== null) {
