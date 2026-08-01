@@ -19,7 +19,7 @@ export function CautionWarningPanel({ lamps }: { lamps: readonly CautionLamp[] }
     <section
       data-testid="caution-warning"
       aria-label="Caution and warning array"
-      className="rounded border border-neutral-700 bg-neutral-800/70 p-2 shadow-inner"
+      className="rounded border border-neutral-800 bg-neutral-950 p-2 shadow-inner"
     >
       <div className="mb-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-neutral-400">
         Caution / warning
@@ -32,7 +32,7 @@ export function CautionWarningPanel({ lamps }: { lamps: readonly CautionLamp[] }
             data-on={lamp.on ? "1" : "0"}
             title={lamp.title}
             className={`rounded-sm border px-1 py-2 text-center font-mono text-[9px] font-bold uppercase leading-tight tracking-wider ${
-              lamp.on ? lampOnClass(lamp.tone) : "border-neutral-700 bg-neutral-900 text-neutral-600"
+              lamp.on ? lampOnClass(lamp.tone) : "border-neutral-700 bg-neutral-900 text-neutral-400/70"
             }`}
           >
             {lamp.legend}

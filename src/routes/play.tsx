@@ -69,17 +69,17 @@ export const Route = createFileRoute("/play")({
 function PlayPage() {
   return (
     <main className="min-h-screen lm-bay text-neutral-100">
-      <header className="border-b border-neutral-800 px-4 py-3">
-        <h1 className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
+      <header className="lm-placard lm-rivets px-4 py-3">
+        <h1 className="lm-legend text-sm font-semibold uppercase">
           Lunar descent · fly the landing
         </h1>
-        <p className="mt-1 text-xs text-neutral-400">
+        <p className="mt-1 text-xs text-neutral-200/80">
           Fly the descent with the real Apollo Guidance Computer beside you.{" "}
-          <Link className="text-emerald-400" to="/missions">All missions</Link> ·{" "}
-          <Link className="text-emerald-400" to="/play/ascent">Lunar ascent</Link> ·{" "}
-          <Link className="text-emerald-400" to="/sim">AGC Lab</Link> ·{" "}
-          <Link className="text-emerald-400" to="/learn">Learn</Link> ·{" "}
-          <Link className="text-emerald-400" to="/sources">Sources</Link>
+          <Link className="text-emerald-200 underline underline-offset-2" to="/missions">All missions</Link> ·{" "}
+          <Link className="text-emerald-200 underline underline-offset-2" to="/play/ascent">Lunar ascent</Link> ·{" "}
+          <Link className="text-emerald-200 underline underline-offset-2" to="/sim">AGC Lab</Link> ·{" "}
+          <Link className="text-emerald-200 underline underline-offset-2" to="/learn">Learn</Link> ·{" "}
+          <Link className="text-emerald-200 underline underline-offset-2" to="/sources">Sources</Link>
         </p>
       </header>
       <p className="orientation-hint border-b border-amber-900/60 bg-amber-950/30 px-4 py-2 text-xs text-amber-200">
@@ -261,7 +261,7 @@ function PlayClient() {
       className="cockpit-metal mx-auto max-w-[1400px] space-y-4 px-4 py-4"
       data-testid="play-cockpit"
     >
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="cockpit-strip flex flex-wrap items-center gap-2">
         <button
           onClick={() => setStarted(false)}
           data-testid="play-back"

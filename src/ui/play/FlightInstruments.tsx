@@ -145,7 +145,7 @@ export function FlightInstruments({
         )}
       </div>
 
-      <div className="rounded border border-neutral-800 bg-black/40 px-2 py-1.5 text-[10px] text-neutral-500">
+      <div className="rounded border border-neutral-800 bg-black/40 px-2 py-1.5 text-[10px] text-neutral-400">
         Gear limits ({assistance}): ≤ {conv(limits.verticalSpeedMps).toFixed(1)} {speedUnit}{" "}
         vertical, ≤ {conv(limits.horizontalSpeedMps).toFixed(1)} {speedUnit} lateral, ≤{" "}
         {((limits.tiltRad * 180) / Math.PI).toFixed(0)}° tilt.

@@ -213,86 +213,168 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
 }
 
 /* ---------------------------------------------------------------------------
- * M4.16 — LM cockpit surfaces.
- * Brushed-aluminium instrument panels with bevelled edges and screw heads,
- * matching the Apollo LM main panel: cool grey metal, engraved labels.
+ * M4.17 — Apollo LM cabin surfaces.
+ *
+ * Historically grounded: the LM cabin panels were painted a flat grey-green
+ * ("LM grey"), silkscreened with white legends, fastened with rows of visible
+ * hex screws, and carried BLACK instrument faces recessed behind glass. The
+ * caution and warning array is amber/white on black; the DSKY is EL green.
+ * Reference: Apollo Operations Handbook LM-5, main panels 1-4 (NASA, 1969).
  * ------------------------------------------------------------------------ */
-.lm-bay {
-  background-color: #2b2e2c;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.028) 0px,
-      rgba(255, 255, 255, 0.028) 1px,
-      rgba(0, 0, 0, 0.03) 1px,
-      rgba(0, 0, 0, 0.03) 3px
-    ),
-    radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.55));
+:root {
+  --lm-panel: #6c7168;
+  --lm-panel-dark: #565b53;
+  --lm-panel-light: #7d8278;
+  --lm-legend: #f2f3ee;
+  --lm-face: #0b0d0b;
+  --lm-bezel: #1a1c19;
+  --lm-el: #5df2a3;
+  --lm-caution: #f5b323;
 }
 
+/* The cabin structure behind the panels: painted aluminium. */
+.lm-bay {
+  background-color: var(--lm-panel);
+  background-image:
+    repeating-linear-gradient(
+      112deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      rgba(0, 0, 0, 0.024) 1px,
+      rgba(0, 0, 0, 0.024) 2px
+    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.18) 55%, rgba(0, 0, 0, 0.3));
+}
+
+/* Fastener rows along the structural seams of a bay. */
+.lm-rivets {
+  background-image:
+    radial-gradient(circle at 6px 6px, rgba(255, 255, 255, 0.35) 0.7px, rgba(0, 0, 0, 0.45) 1.5px, transparent 2px);
+  background-size: 18px 100%;
+  background-repeat: repeat-x;
+}
+
+/* A painted panel section: flat grey-green with a machined edge. */
 .lm-panel {
   position: relative;
-  background-color: #34383a;
+  background-color: var(--lm-panel);
   background-image:
     repeating-linear-gradient(
-      90deg,
-      rgba(255, 255, 255, 0.022) 0px,
-      rgba(255, 255, 255, 0.022) 1px,
-      rgba(0, 0, 0, 0.028) 1px,
-      rgba(0, 0, 0, 0.028) 3px
+      112deg,
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      rgba(0, 0, 0, 0.024) 1px,
+      rgba(0, 0, 0, 0.024) 2px
     ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(0, 0, 0, 0.35));
-  border: 1px solid #14161700;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.24));
+  border: 1px solid var(--lm-panel-dark);
+  border-radius: 3px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.6),
-    0 1px 0 rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
     0 6px 14px rgba(0, 0, 0, 0.45);
-  color: #e8eae8;
+  color: var(--lm-legend);
 }
 
-/* Four screw heads at the panel corners. */
+/* Hex fasteners at the panel corners. */
 .lm-panel::before,
 .lm-panel::after {
   content: "";
   position: absolute;
-  top: 5px;
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: radial-gradient(circle at 35% 30%, #9aa0a0, #3d4142 65%, #202323);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.7);
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  background: linear-gradient(160deg, #c9ccc2, #6b6f66 55%, #3a3d37);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
   pointer-events: none;
 }
-.lm-panel::before { left: 5px; }
-.lm-panel::after { right: 5px; }
+.lm-panel::before { left: 6px; }
+.lm-panel::after { right: 6px; }
 
-.lm-screen {
-  background: radial-gradient(120% 100% at 50% 0%, #0b0f0c, #050706 70%);
-  box-shadow:
-    inset 0 0 0 1px rgba(0, 0, 0, 0.9),
-    inset 0 2px 12px rgba(0, 0, 0, 0.9),
-    0 0 0 3px #1b1e1f,
-    0 0 0 4px rgba(255, 255, 255, 0.06);
-}
-
+/* Silkscreened legend text. */
 .lm-legend {
-  font-variant: small-caps;
   letter-spacing: 0.24em;
-  color: #cfd4d1;
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.8);
+  color: var(--lm-legend);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
 }
 
-/* Cockpit bays: give the existing dark instrument cards a metal bezel. */
-.cockpit-metal :where(div, section)[class*="border-neutral-8"][class*="bg-neutral-95"] {
-  border-color: #1b1e1f;
-  background-color: #24282a;
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.4));
+/* ---------------------------------------------------------------------------
+ * Cockpit bays: every dark card in /play becomes a black instrument face,
+ * recessed behind glass into the grey panel.
+ * ------------------------------------------------------------------------ */
+.cockpit-metal {
+  --tw-prose-invert: initial;
+  padding-block: 1.25rem;
+}
+
+.cockpit-metal :where(div, section)[class*="border-neutral-8"][class*="bg-neutral-95"],
+.cockpit-metal :where(div, section)[class*="border-neutral-8"][class*="bg-black"] {
+  position: relative;
+  border-color: var(--lm-bezel);
+  border-radius: 3px;
+  background-color: var(--lm-face);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(0, 0, 0, 0.55));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.55),
-    0 4px 10px rgba(0, 0, 0, 0.45);
+    /* glass */
+    inset 0 1px 10px rgba(0, 0, 0, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    /* machined bezel ring sitting on the grey panel */
+    0 0 0 3px var(--lm-panel),
+    0 0 0 4px var(--lm-panel-dark),
+    0 6px 12px rgba(0, 0, 0, 0.5);
 }
-.cockpit-metal .text-\[10px\].uppercase.tracking-widest {
-  color: #c8cecb;
+
+/* The control strip rides on the grey paint, so give it its own dark rail. */
+.cockpit-strip {
+  border: 1px solid #2f322c;
+  border-radius: 3px;
+  background-color: #23261f;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.4));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 8px rgba(0, 0, 0, 0.4);
+  padding: 0.45rem 0.6rem;
 }
+
+/* Panel legends inside the bays: white silkscreen, not muted grey. */
+.cockpit-metal .uppercase.tracking-widest,
+.cockpit-metal .uppercase.tracking-\[0\.3em\],
+.cockpit-metal .uppercase.tracking-\[0\.28em\] {
+  color: #dfe2d9;
+}
+
+/* EL-lit readouts keep the DSKY green rather than a modern emerald. */
+.cockpit-metal .text-emerald-300,
+.cockpit-metal .text-emerald-400 {
+  color: var(--lm-el);
+  text-shadow: 0 0 6px color-mix(in oklab, var(--lm-el) 45%, transparent);
+}
+
+/* Caution and warning lamps read as amber legend tiles. */
+.cockpit-metal .text-amber-200,
+.cockpit-metal .text-amber-300 {
+  color: var(--lm-caution);
+}
+
+/* Push-buttons and switch legends on the grey panel. */
+.cockpit-metal button[class*="bg-neutral-9"] {
+  border-color: #23261f;
+  background-color: #2b2e28;
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.4));
+  color: #e6e8e0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.5),
+    0 1px 2px rgba(0, 0, 0, 0.5);
+}
+.cockpit-metal button[class*="bg-neutral-9"]:active {
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.7);
+}
+
+/* Header strip above the cockpit: stencilled panel placard. */
+.lm-placard {
+  background-color: var(--lm-panel-dark);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.32));
+  border-bottom: 2px solid #2f322c;
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+}
+
