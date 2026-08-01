@@ -386,7 +386,6 @@ export function usePlaySession(
               altitudeFt: computeOrbitalValues(state).altitudeM / 0.3048,
             });
           }
-          if (sinceIgnitionUs !== descentClockView) setDescentClockView(sinceIgnitionUs);
         }
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
