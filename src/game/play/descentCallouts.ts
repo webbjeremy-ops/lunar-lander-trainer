@@ -249,11 +249,12 @@ export const CALLOUT_GEOMETRY_GRACE_SEC = 45;
 /**
  * Every callout whose trigger condition has been met, in flight order.
  *
- * M4.21 — the transcript follows the canonical timeline exactly:
- *  • calls fire in table order and never out of sequence;
- *  • the ignition-relative clock is the primary trigger;
- *  • the telemetry altitude is a secondary gate — a call waits (up to
- *    CALLOUT_GEOMETRY_GRACE_SEC) for the vehicle to be where it was made.
+ * M4.28 — cue synchronisation. The ignition-relative descent clock is the ONLY
+ * trigger for scripted calls, and it is the same clock that gates the DSKY
+ * procedure recommendation and the coach pop-up for that phase. Altitude is
+ * kept on the record for display, but it can neither delay nor advance a call,
+ * so transcript, recommendation and pop-up always fire together. Only
+ * geometry-primary events (contact) trigger on altitude.
  */
 export function triggeredCallouts(
   input: CalloutInput,
@@ -267,16 +268,14 @@ export function triggeredCallouts(
       call.belowAltitudeM !== null && input.altitudeM <= call.belowAltitudeM;
     const fired = ALTITUDE_PRIMARY_IDS.includes(call.id)
       ? atAltitude
-      : t >= call.atSinceIgnitionSec &&
-        (call.belowAltitudeM === null ||
-          atAltitude ||
-          t >= call.atSinceIgnitionSec + CALLOUT_GEOMETRY_GRACE_SEC);
+      : t >= call.atSinceIgnitionSec;
     // Strict order: a later call can never overtake an earlier one.
     if (!fired) break;
     out.push(call);
   }
   return out;
 }
+
 
 
 /**
@@ -298,4 +297,16 @@ export function activeCallout(
 
 export function calloutById(id: string): DescentCallout | null {
   return APOLLO11_DESCENT_CALLOUTS.find((c) => c.id === id) ?? null;
+}
+
+/**
+ * M4.28 — the single source of truth for when a scripted phase cue is due.
+ * The procedure engine and the coach gate their DSKY recommendation on this
+ * exact time, so the crew call, the pop-up and the recommendation appear
+ * together.
+ */
+export function calloutSec(id: string): number {
+  const call = calloutById(id);
+  if (!call) throw new Error(`Unknown descent callout: ${id}`);
+  return call.atSinceIgnitionSec;
 }

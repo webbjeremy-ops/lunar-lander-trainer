@@ -25,7 +25,7 @@
 // actually drove onto channel 010.
 
 import { AGC_KEY, digitKey } from "@/lessons/keyCodes";
-import { milestoneSec } from "./descentTimeline";
+import { calloutSec } from "./descentCallouts";
 import type { ControlModeId, MissionId, PlayPhase } from "./types";
 
 export type ProcedureKey = number;
@@ -199,6 +199,7 @@ const POWERED_DESCENT_STEPS: readonly DskyProcedureStep[] = [
     hint: "VERB · 0 · 6 · NOUN · 6 · 4 · ENTR.",
     citation: GSOP,
     bridged: true,
+    notBeforeSinceIgnitionSec: calloutSec("high-gate"),
   },
   {
     id: "p66-takeover",
@@ -215,6 +216,7 @@ const POWERED_DESCENT_STEPS: readonly DskyProcedureStep[] = [
     bridged: true,
     unlocksManualControl: true,
     releasesFlightLock: true,
+    notBeforeSinceIgnitionSec: calloutSec("low-gate"),
   },
 ];
 
@@ -237,7 +239,7 @@ const APOLLO11_EXTRA_STEPS: readonly DskyProcedureStep[] = [
     citation: FLIGHT_PLAN,
     bridged: true,
     requiresWindowsUp: true,
-    notBeforeSinceIgnitionSec: milestoneSec("yaw-around"),
+    notBeforeSinceIgnitionSec: calloutSec("roll-windows-up"),
   },
   {
     id: "lr-accept",
@@ -253,7 +255,7 @@ const APOLLO11_EXTRA_STEPS: readonly DskyProcedureStep[] = [
     citation: FLIGHT_PLAN,
     bridged: true,
     requiresWindowsUp: true,
-    notBeforeSinceIgnitionSec: milestoneSec("radar-lock"),
+    notBeforeSinceIgnitionSec: calloutSec("lr-accept"),
   },
   {
     id: "alarm-response",
@@ -285,9 +287,12 @@ const TERMINAL_STEPS: readonly DskyProcedureStep[] = [
   { ...POWERED_DESCENT_STEPS[1]!, startsIgnitionCountdown: false },
   {
     ...POWERED_DESCENT_STEPS[4]!,
+    // Terminal descent starts at low gate, so the timeline gate does not apply.
+    notBeforeSinceIgnitionSec: undefined,
     instruction:
       "You are already in the low-gate region. Take P66 and fly it down.",
   },
+
 ];
 
 export const POWERED_DESCENT_SCRIPT: DskyProcedureScript = {

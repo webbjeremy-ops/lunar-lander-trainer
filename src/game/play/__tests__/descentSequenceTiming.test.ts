@@ -25,7 +25,17 @@ describe("descent sequence timing", () => {
     const step = APOLLO11_DESCENT_SCRIPT.steps.find((s) => s.id === "roll-windows-up")!;
     expect(step.notBeforeSinceIgnitionSec).toBe(milestoneSec("yaw-around"));
     const radar = APOLLO11_DESCENT_SCRIPT.steps.find((s) => s.id === "lr-accept")!;
-    expect(radar.notBeforeSinceIgnitionSec).toBe(milestoneSec("radar-lock"));
+    const radarCall = APOLLO11_DESCENT_CALLOUTS.find((c) => c.id === "lr-accept")!;
+    expect(radar.notBeforeSinceIgnitionSec).toBe(radarCall.atSinceIgnitionSec);
+
+    // M4.28 — every timeline-gated step fires with its crew call.
+    for (const id of ["roll-windows-up", "lr-accept", "p64-monitor", "p66-takeover"]) {
+      const step = APOLLO11_DESCENT_SCRIPT.steps.find((s) => s.id === id)!;
+      const callId =
+        id === "p64-monitor" ? "high-gate" : id === "p66-takeover" ? "low-gate" : id;
+      const c = APOLLO11_DESCENT_CALLOUTS.find((x) => x.id === callId)!;
+      expect(step.notBeforeSinceIgnitionSec).toBe(c.atSinceIgnitionSec);
+    }
   });
 
   it("flies the historical DPS throttle profile", () => {
