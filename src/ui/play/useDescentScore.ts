@@ -6,7 +6,7 @@
 // autoplay policy), and feeds it the tension derived from the live flight.
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { descentTension, type ScoreStage } from "@/game/play";
+import { descentTension, inTheZone, type ScoreStage } from "@/game/play";
 import { DescentScoreEngine } from "./DescentScoreEngine";
 
 export interface DescentScoreInput {
@@ -23,6 +23,8 @@ export interface DescentScoreInput {
 export interface DescentScoreApi {
   readonly enabled: boolean;
   readonly tension: number;
+  /** Final seconds before contact: muffled score, heartbeat up front. */
+  readonly zone: boolean;
   readonly toggle: () => void;
 }
 
@@ -32,14 +34,16 @@ export function useDescentScore(input: DescentScoreInput): DescentScoreApi {
   // may sound, so the engine is armed and started on the first interaction.
   const [enabled, setEnabled] = useState(true);
 
-  const tension = descentTension({
+  const tensionInput = {
     sinceIgnitionSec: input.sinceIgnitionSec,
     altitudeM: input.altitudeM,
     propellantFraction: input.propellantFraction,
     houstonStage: input.houstonStage,
     crewAborted: input.crewAborted,
     terminal: input.terminal,
-  });
+  } as const;
+  const tension = descentTension(tensionInput);
+  const zone = inTheZone(tensionInput);
 
   const startEngine = useCallback(() => {
     const engine = engineRef.current ?? new DescentScoreEngine();
@@ -87,9 +91,10 @@ export function useDescentScore(input: DescentScoreInput): DescentScoreApi {
     if (!engine || !enabled) return;
     engine.setVolume(input.running ? 0.9 : 0.35);
     engine.setTension(tension);
-  }, [enabled, tension, input.running]);
+    engine.setZone(zone && input.running);
+  }, [enabled, tension, zone, input.running]);
 
   useEffect(() => () => engineRef.current?.stop(), []);
 
-  return { enabled, tension, toggle };
+  return { enabled, tension, zone, toggle };
 }
