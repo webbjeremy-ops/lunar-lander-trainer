@@ -13,5 +13,8 @@ export * from "./descentTimeline";
 export * from "./descentMonitor";
 export * from "./descentCallouts";
 export * from "./houstonAdvisory";
+export * from "./houstonEscalation";
+export * from "./descentScore";
+
 export * from "./programAlarms";
 export * from "./scoring";

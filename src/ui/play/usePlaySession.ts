@@ -29,6 +29,12 @@ import {
   activeCallout,
   activeHoustonCall,
   isOffScript,
+  houstonDeviations,
+  createHoustonEscalationState,
+  reduceHoustonEscalation,
+  escalatedCall,
+  secondsToAbort,
+  type HoustonEscalationState,
   landingClearance,
   HOUSTON_ABORT_CALL,
   type HoustonCall,
@@ -147,6 +153,15 @@ export interface PlaySessionApi {
   /** M4.18 — improvised Houston call when the flight goes off-script. */
   readonly houston: HoustonCall | null;
   readonly landingClearance: LandingClearance;
+  /** M4.21 — Houston's escalation ladder (correct → last call → abort). */
+  readonly escalation: HoustonEscalationState;
+  /** Simulated seconds left to correct before Houston directs an abort. */
+  readonly secondsToAbort: number;
+  /**
+   * True once the flight has left the flown profile for good: the remaining
+   * Apollo 11 transcript and procedure steps are not played.
+   */
+  readonly scriptTerminated: boolean;
   readonly aborted: boolean;
   readonly actions: {
 
@@ -216,6 +231,16 @@ export function usePlaySession(
   /** M4.18 — ABORT STAGE latched by the crew. */
   const [aborted, setAborted] = useState(false);
   const abortedRef = useRef(false);
+  /**
+   * M4.21 — Houston's escalation ladder. Deviations are watched, a correction
+   * is called, and only if it does not take within the correction window does
+   * Houston direct an abort — at which point the remaining transcript and the
+   * remaining procedure steps are abandoned.
+   */
+  const escalationRef = useRef<HoustonEscalationState>(createHoustonEscalationState());
+  const [escalation, setEscalation] = useState<HoustonEscalationState>(
+    createHoustonEscalationState,
+  );
 
   /**
    * M4.13B — Ignition-relative descent clock, owned by a pure state machine
@@ -328,6 +353,8 @@ export function usePlaySession(
 
     descentClockRef.current = createDescentClockState();
     setDescentClock(descentClockRef.current);
+    escalationRef.current = createHoustonEscalationState();
+    setEscalation(escalationRef.current);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -438,6 +465,30 @@ export function usePlaySession(
             });
           }
         }
+        // M4.21 — escalation ladder runs on the same fixed step as the
+        // physics, so the correction window is simulated time, not wall time.
+        if (sinceIgnitionUs > 0 || state.mainEngine !== "off") {
+          const o = computeOrbitalValues(state);
+          escalationRef.current = reduceHoustonEscalation(escalationRef.current, {
+            deviations: houstonDeviations({
+              altitudeM: o.altitudeM,
+              radialSpeedMps: o.radialSpeedMps,
+              horizontalSpeedMps: o.tangentialSpeedMps,
+              attitudeRad: state.attitudeRad,
+              angularRateRadPerSec: state.angularRateRadPerSec,
+              propellantFraction:
+                mission.initial.descentPropellantKg > 0
+                  ? state.descentPropellantKg / mission.initial.descentPropellantKg
+                  : 0,
+              windowsUp: radarAvailable(rollRef.current),
+              engineBurning: state.mainEngine !== "off",
+              terminal: state.terminalState !== null,
+            }),
+            stepUs: STEP_US,
+            terminal: state.terminalState !== null,
+            crewAborted: abortedRef.current,
+          });
+        }
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
       }
@@ -445,6 +496,7 @@ export function usePlaySession(
         flightRef.current = state;
         setFlight(state);
         setDescentClock(descentClockRef.current);
+        setEscalation(escalationRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
     };
@@ -581,7 +633,10 @@ export function usePlaySession(
       cancelAnimationFrame(raf);
       window.clearInterval(publish);
     };
-  }, [running, timeScale, apollo11Timeline, dispatchIgnition, dispatchRoll, dispatchAlarm]);
+  }, [
+    running, timeScale, apollo11Timeline, mission,
+    dispatchIgnition, dispatchRoll, dispatchAlarm,
+  ]);
 
   // --- Tab recovery ---------------------------------------------------------
   // A hidden tab throttles requestAnimationFrame, so the accumulator would
@@ -819,22 +874,29 @@ export function usePlaySession(
     [orbit, flight, mission, roll],
   );
 
-  const offScript = aborted || isOffScript(deviation);
+  const scriptTerminated = escalation.scriptTerminated || aborted;
+  const offScript = scriptTerminated || isOffScript(deviation);
 
   const houston = useMemo(
     () =>
       aborted
         ? HOUSTON_ABORT_CALL
-        : activeHoustonCall(deviation, acknowledgedHouston),
-    [aborted, deviation, acknowledgedHouston],
+        : escalatedCall(escalation, activeHoustonCall(deviation, acknowledgedHouston)),
+    [aborted, deviation, acknowledgedHouston, escalation],
   );
 
   const clearance = useMemo(
     () =>
       aborted
         ? { clear: false, reasons: [HOUSTON_ABORT_CALL.guidance], label: "ABORT — NO LANDING" }
-        : landingClearance(deviation),
-    [aborted, deviation],
+        : escalation.abortDirected
+          ? {
+              clear: false,
+              reasons: ["Houston has directed an abort — hit ABORT STAGE."],
+              label: "ABORT DIRECTED",
+            }
+          : landingClearance(deviation),
+    [aborted, deviation, escalation.abortDirected],
   );
 
   const callout = useMemo(
@@ -893,6 +955,9 @@ export function usePlaySession(
     callout,
     houston,
     landingClearance: clearance,
+    escalation,
+    secondsToAbort: secondsToAbort(escalation),
+    scriptTerminated,
     aborted,
     actions,
 
