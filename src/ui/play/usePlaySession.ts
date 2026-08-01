@@ -579,7 +579,10 @@ export function usePlaySession(
         const o = computeOrbitalValues(state);
         // Signed: positive means the site is still ahead of the vehicle.
         const rangeM = downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
-        const cue = computeReferenceGuidance(state, undefined, {
+        // Below the last few tens of metres the profile is spent: hand back to
+        // the terminal sink-rate law so the vehicle settles onto the surface.
+        const useProfile = o.altitudeM > 60;
+        const cue = computeReferenceGuidance(state, undefined, !useProfile ? null : {
           rangeToLandingZoneM: rangeM,
           targetAltitudeM: nominalAltitudeForRangeM(Math.abs(rangeM)),
           handoverRangeM: HIGH_GATE_RANGE_M,
