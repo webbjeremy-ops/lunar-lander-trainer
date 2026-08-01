@@ -322,6 +322,10 @@ export function usePlaySession(
     alarmsRef.current = a;
     setAlarms(a);
     setAcknowledgedCallouts([]);
+    setAcknowledgedHouston([]);
+    setAborted(false);
+    abortedRef.current = false;
+
     descentClockRef.current = createDescentClockState();
     setDescentClock(descentClockRef.current);
   }, [makeInitial, script, generation]);
