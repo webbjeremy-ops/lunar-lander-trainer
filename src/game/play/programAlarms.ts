@@ -32,6 +32,12 @@ export interface ProgramAlarmDefinition {
   readonly code: ProgramAlarmCode;
   /** Seconds after ignition (PDI) at which the alarm is raised. */
   readonly atSinceIgnitionSec: number;
+  /**
+   * …or the telemetry-derived altitude (feet) the alarm was taken at. The
+   * game's planar trajectory does not run at exactly the flown timeline, so
+   * whichever condition is met first raises the alarm.
+   */
+  readonly belowAltitudeFt?: number;
   readonly label: string;
   readonly teaching: string;
 }
