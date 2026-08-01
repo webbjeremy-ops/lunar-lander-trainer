@@ -14,7 +14,9 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AgcSessionProvider } from "@/agc/AgcSession";
 import { SettingsProvider } from "@/settings/SettingsProvider";
 import { AppNav } from "@/ui/shell/AppNav";
+import { AppFooter } from "@/ui/shell/AppFooter";
 import { AgcBootBanner, RecoverableError } from "@/ui/shell/Reliability";
+
 
 
 function NotFoundComponent() {
