@@ -113,22 +113,22 @@ function RootComponent() {
       {/* Shared AGC Worker session — one emulator instance persists across
           route changes (/learn ↔ /explore). See src/agc/AgcSession.tsx. */}
       <AgcSessionProvider>
-        <nav
-          aria-label="Primary"
-          data-testid="app-nav"
-          className="flex gap-4 border-b border-neutral-900 bg-neutral-950/60 px-4 py-2 text-xs font-mono uppercase tracking-widest text-neutral-500"
-        >
-          <Link to="/" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Home</Link>
-          <Link to="/play" data-testid="nav-play" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Fly</Link>
-          <Link to="/play/ascent" data-testid="nav-ascent" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Ascent</Link>
-
-          <Link to="/learn" data-testid="nav-learn" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Learn</Link>
-          <Link to="/explore" data-testid="nav-explore" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Explore</Link>
-          <Link to="/dev/mission-runtime" data-testid="nav-mission-runtime" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Mission runtime</Link>
-        </nav>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
+        <SettingsProvider>
+          <a
+            href="#main-content"
+            className="sr-only rounded bg-emerald-500 px-3 py-2 font-mono text-xs uppercase tracking-widest text-neutral-950 focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50"
+          >
+            Skip to content
+          </a>
+          <AppNav />
+          <AgcBootBanner />
+          <div id="main-content">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </div>
+        </SettingsProvider>
       </AgcSessionProvider>
     </QueryClientProvider>
   );
 }
+
