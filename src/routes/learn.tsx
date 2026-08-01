@@ -853,7 +853,15 @@ function LearnPage() {
           {/* Persistent AGC session — mounted for the full /learn lifetime.
               Stable key: ONLY changes on explicit "Reset AGC" (agcEpoch) or
               rope swap. Lesson navigation does NOT remount this. */}
-          <div className="mt-6 rounded border border-neutral-800 bg-neutral-950/60 p-3" data-testid="learn-dsky-panel">
+          <div
+            className={
+              lessonUsesDsky
+                ? "mt-6 rounded border border-neutral-800 bg-neutral-950/60 p-3"
+                : "hidden"
+            }
+            aria-hidden={lessonUsesDsky ? undefined : true}
+            data-testid="learn-dsky-panel"
+          >
             <div className="mb-2 flex items-center justify-between">
               <h3 className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
                 AGC Session (persistent)
