@@ -114,6 +114,20 @@ export const ROD_INCREMENT_MPS = 0.3048;
 
 export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
 
+/** Full Descent's configured state is the TIG state, not a pre-TIG state. */
+export function shouldAdvanceFlightPhysics(
+  missionId: MissionDefinition["id"],
+  ignitionState: IgnitionSequenceState,
+  aborted: boolean,
+): boolean {
+  return !(
+    missionId === "full-descent" &&
+    ignitionState.phase !== "standby" &&
+    !isBurning(ignitionState) &&
+    !aborted
+  );
+}
+
 export interface PlayControlsView {
   readonly throttle: number;
   readonly attitudeCommand: number;
@@ -511,12 +525,13 @@ export function usePlaySession(
             crewAborted: abortedRef.current,
           });
         }
-        const holdPdiState =
-          mission.id === "full-descent" &&
-          ignitionRef.current.phase !== "standby" &&
-          !isBurning(ignitionRef.current) &&
-          !abortedRef.current;
-        if (!holdPdiState) {
+        if (
+          shouldAdvanceFlightPhysics(
+            mission.id,
+            ignitionRef.current,
+            abortedRef.current,
+          )
+        ) {
           const input = resolveInput(state);
           state = stepLunarFlight(state, input, STEP_US);
         }
