@@ -82,10 +82,11 @@ export function computeReferenceGuidance(
   const mu = parameters.environment.gravitationalParameterM3S2.value;
   const localG = mu / (orbit.radiusM * orbit.radiusM);
 
-  // Braking phase: fly the canonical range/altitude profile.
+  // Braking / approach phases: fly the canonical range/altitude profile.
+  const signedRange = braking?.rangeToLandingZoneM ?? 0;
   const inBraking =
     braking !== null &&
-    braking.rangeToLandingZoneM > braking.handoverRangeM &&
+    signedRange > braking.handoverRangeM &&
     Math.abs(orbit.tangentialSpeedMps) > 5;
 
   let targetRadial: number;
@@ -93,21 +94,33 @@ export function computeReferenceGuidance(
   let aHorizontal: number;
   let tiltLimit = MAX_ADVISORY_TILT_RAD;
 
-  if (inBraking && braking !== null) {
-    // Deceleration that brings the downrange velocity to the approach-phase
-    // hand-over inside the range that is actually left to run.
-    const runoutM = Math.max(500, braking.rangeToLandingZoneM - braking.handoverRangeM);
+  if (braking !== null) {
     const v = orbit.tangentialSpeedMps;
-    aHorizontal = -Math.sign(v) * ((v * v) / (2 * runoutM));
+    if (inBraking) {
+      // Deceleration that brings the downrange velocity to the approach-phase
+      // hand-over inside the range that is actually left to run.
+      const runoutM = Math.max(500, signedRange - braking.handoverRangeM);
+      aHorizontal = -Math.sign(v) * ((v * v) / (2 * runoutM));
+      tiltLimit = MAX_BRAKING_TILT_RAD;
+    } else {
+      // Approach: close the last kilometres to the site and arrive with the
+      // downrange velocity nulled over the aim point.
+      const s = Math.abs(signedRange);
+      const desired =
+        s < 30
+          ? 0
+          : Math.sign(signedRange) * Math.min(60, Math.sqrt(2 * APPROACH_CLOSING_ACCEL * s));
+      aHorizontal = (desired - v) / APPROACH_TAU_S;
+    }
 
-    // Vertical: hold the profile altitude for the range still to run.
+    // Vertical: hold the profile altitude for the range still to run, but
+    // never sink faster than the altitude schedule allows.
     const altitudeError = braking.targetAltitudeM - orbit.altitudeM;
     targetRadial = Math.max(
-      -BRAKING_MAX_SINK_MPS,
+      Math.max(-BRAKING_MAX_SINK_MPS, targetSinkRate(orbit.altitudeM)),
       Math.min(5, altitudeError / BRAKING_ALTITUDE_TAU_S),
     );
     aRadial = localG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
-    tiltLimit = MAX_BRAKING_TILT_RAD;
   } else {
     targetRadial = targetSinkRate(orbit.altitudeM);
     // Radial acceleration needed: cancel gravity, then drive the rate error out.
@@ -115,6 +128,7 @@ export function computeReferenceGuidance(
     // Horizontal acceleration needed: null the tangential velocity.
     aHorizontal = -orbit.tangentialSpeedMps / HORIZONTAL_TAU_S;
   }
+
 
   const radialError = orbit.radialSpeedMps - targetRadial;
 
