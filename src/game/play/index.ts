@@ -7,5 +7,6 @@ export * from "./procedures";
 export * from "./procedureEngine";
 export * from "./ignitionSequence";
 export * from "./descentRoll";
+export * from "./descentMonitor";
 export * from "./programAlarms";
 export * from "./scoring";
