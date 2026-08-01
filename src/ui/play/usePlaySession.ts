@@ -363,9 +363,17 @@ export function usePlaySession(
         steps += 1;
         if (state.terminalState !== null) break;
         if (countdownRunning) dispatchIgnition({ kind: "tick", dtUs: STEP_US });
-        // M4.8 — roll and alarms run on ignition-relative time, so they only
-        // advance once the descent burn has actually started.
-        const sinceIgnitionUs = ignitionRef.current.sinceIgnitionUs;
+        // M4.8/M4.13 — roll, alarms and crew callouts run on ignition-relative
+        // time. If the player never answered the flashing V99 (or flew a mode
+        // without the PDI ritual) the descent still happens, so a fallback
+        // clock starts at the first burning step: the historical sequence must
+        // never be silently skipped.
+        if (ignitionRef.current.sinceIgnitionUs > 0) {
+          descentClockRef.current = ignitionRef.current.sinceIgnitionUs;
+        } else if (state.mainEngine !== "off" || descentClockRef.current > 0) {
+          descentClockRef.current += STEP_US;
+        }
+        const sinceIgnitionUs = descentClockRef.current;
         if (sinceIgnitionUs > 0) {
           dispatchRoll({ kind: "tick", dtUs: STEP_US, sinceIgnitionUs });
           if (apollo11Timeline) {
@@ -378,6 +386,7 @@ export function usePlaySession(
               altitudeFt: computeOrbitalValues(state).altitudeM / 0.3048,
             });
           }
+          if (sinceIgnitionUs !== descentClockView) setDescentClockView(sinceIgnitionUs);
         }
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
