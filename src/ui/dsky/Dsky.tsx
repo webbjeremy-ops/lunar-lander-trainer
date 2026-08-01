@@ -544,19 +544,19 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
 
         {/* Provenance rows are single-line in BOTH states (`truncate`), so the
             block occupies exactly five rows during boot and after ready. */}
-        <div className="mt-3 space-y-1 text-[11px] text-neutral-500 [&>div>div]:truncate">
+        <div className="mt-3 space-y-1 text-[11px] text-neutral-500">
           {ready ? (
             <div className="space-y-1">
-              <div>emulator: <span className="text-neutral-300">{ready.emulatorRepo}@{ready.emulatorCommit.slice(0, 10)}</span> ({ready.emulatorVersionString || "no version"})</div>
-              <div>rope: {ready.ropeId} ({ready.ropeByteLength.toLocaleString()} bytes)</div>
-              <div>rope source commit: <span className="text-neutral-400">{ready.ropeSourceCommit.slice(0, 10) || "unknown"}</span></div>
-              <div>rope SHA-256: <span className="text-emerald-400">match</span> <span className="ml-2 text-neutral-600">{ready.ropeSha256.slice(0, 16)}…</span></div>
-              <div data-testid="agc-met">MET µs: <span className="text-neutral-300">{snapshot?.missionTimeUs ?? 0}</span> · steps: {(snapshot?.totalAgcSteps ?? 0).toLocaleString()} · scale: {snapshot?.timeScale ?? 1}× · {snapshot?.running ? "running" : "paused"}</div>
+              <div className="truncate">emulator: <span className="text-neutral-300">{ready.emulatorRepo}@{ready.emulatorCommit.slice(0, 10)}</span> ({ready.emulatorVersionString || "no version"})</div>
+              <div className="truncate">rope: {ready.ropeId} ({ready.ropeByteLength.toLocaleString()} bytes)</div>
+              <div className="truncate">rope source commit: <span className="text-neutral-400">{ready.ropeSourceCommit.slice(0, 10) || "unknown"}</span></div>
+              <div className="truncate">rope SHA-256: <span className="text-emerald-400">match</span> <span className="ml-2 text-neutral-600">{ready.ropeSha256.slice(0, 16)}…</span></div>
+              <div data-testid="agc-met" className="truncate">MET µs: <span className="text-neutral-300">{snapshot?.missionTimeUs ?? 0}</span> · steps: {(snapshot?.totalAgcSteps ?? 0).toLocaleString()} · scale: {snapshot?.timeScale ?? 1}× · {snapshot?.running ? "running" : "paused"}</div>
             </div>
           ) : (
             <div aria-hidden="true" className="space-y-1">
               {["emulator", "rope", "rope source commit", "rope SHA-256", "MET µs"].map((label) => (
-                <div key={label} className="text-neutral-700">{label}: …</div>
+                <div key={label} className="truncate text-neutral-700">{label}: …</div>
               ))}
             </div>
           )}
