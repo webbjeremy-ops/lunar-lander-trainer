@@ -72,8 +72,15 @@ const STEP_US = 20_000;
 
 const STEP_S = STEP_US / 1_000_000;
 const MAX_CATCHUP_STEPS = 25;
+/** M4.10 — held attitude key commands this body rate (rad/s, ~9 deg/s). */
+const COMMANDED_ATTITUDE_RATE = 0.16;
+/** Proportional gain converting rate error to attitude authority command. */
+const ATTITUDE_RATE_GAIN = 12;
+/** Immediate rate kick applied on keydown so the first frame already moves. */
+const ATTITUDE_TAP_RATE = 0.02;
 /** Rate-of-descent trim increment: 1 ft/s, as in the real P66 ROD switch. */
 export const ROD_INCREMENT_MPS = 0.3048;
+
 
 export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
 
