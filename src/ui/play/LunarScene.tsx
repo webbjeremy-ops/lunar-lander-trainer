@@ -246,26 +246,105 @@ function groundY(rangeM: number, altitudeM: number, horizonY: number, h: number)
 // Side profile inset
 // -----------------------------------------------------------------------------
 
+/** Snapped display spans, so the axes hold still while the vehicle moves. */
+const SPAN_LADDER = [
+  30, 60, 120, 250, 500, 1_000, 2_000, 5_000, 10_000, 20_000, 40_000, 80_000,
+];
+
+function snapSpan(value: number, minimum: number): number {
+  const want = Math.max(minimum, value);
+  for (const s of SPAN_LADDER) if (s >= want) return s;
+  return SPAN_LADDER[SPAN_LADDER.length - 1]!;
+}
+
+function metresLabel(m: number): string {
+  return m >= 1_000 ? `${(m / 1000).toFixed(m >= 10_000 ? 0 : 1)} km` : `${Math.round(m)} m`;
+}
+
+/**
+ * Reference descent profile: altitude as a function of range-to-go, anchored
+ * on the published Apollo 11 gates (PDI ~8.5 nmi slant, high gate 7,600 ft at
+ * ~4.5 nmi to go, low gate 500 ft at ~2,000 ft to go, touchdown at 0).
+ * Advisory only — the vehicle is never steered onto it.
+ */
+function referenceAltitudeM(
+  rangeM: number,
+  initialRangeM: number,
+  initialAltitudeM: number,
+): number {
+  const knots: [number, number][] = [
+    [0, 0],
+    [600, 152],
+    [8_300, 2_316],
+    [Math.max(9_000, initialRangeM), Math.max(2_400, initialAltitudeM)],
+  ];
+  const r = Math.max(0, rangeM);
+  for (let i = 1; i < knots.length; i++) {
+    const [r0, a0] = knots[i - 1]!;
+    const [r1, a1] = knots[i]!;
+    if (r <= r1) {
+      const t = r1 === r0 ? 0 : (r - r0) / (r1 - r0);
+      return a0 + (a1 - a0) * t;
+    }
+  }
+  return knots[knots.length - 1]![1];
+}
+
 function drawProfile(
   ctx: CanvasRenderingContext2D,
   x0: number,
   y0: number,
   w: number,
   h: number,
-  { flight, orbit, downrangeM, limits }: DrawArgs,
+  { flight, orbit, downrangeM, mission, limits, trail }: DrawArgs,
 ) {
   ctx.save();
   ctx.translate(x0, y0);
   ctx.fillStyle = "#07090c";
   ctx.fillRect(0, 0, w, h);
 
-  const pad = 26;
-  const groundLine = h - pad;
-  const altSpan = Math.max(60, orbit.altitudeM * 1.35);
-  const rangeSpan = Math.max(120, Math.abs(downrangeM) * 1.6);
+  const padTop = 34;
+  const padBottom = 26;
+  const padLeft = 42;
+  const groundLine = h - padBottom;
 
-  const yFor = (altM: number) => groundLine - (altM / altSpan) * (groundLine - pad);
-  const xFor = (rangeM: number) => w / 2 - (rangeM / rangeSpan) * (w / 2 - pad);
+  // Snapped spans: the picture rescales in discrete steps as the vehicle
+  // descends, so the altitude on screen always agrees with the readout
+  // instead of the vehicle floating at a fixed height on an elastic axis.
+  const altSpan = snapSpan(Math.max(orbit.altitudeM, 0) * 1.25, 30);
+  const rangeSpan = snapSpan(Math.abs(downrangeM) * 1.3, 60);
+
+  const yFor = (altM: number) =>
+    groundLine - (Math.max(0, altM) / altSpan) * (groundLine - padTop);
+  const xFor = (rangeM: number) => w / 2 - (rangeM / rangeSpan) * (w / 2 - padLeft * 0.6);
+
+  // Altitude grid with labels — these are the numbers the altimeter shows.
+  ctx.font = "9px ui-monospace, monospace";
+  for (let i = 1; i <= 4; i++) {
+    const alt = (altSpan * i) / 4;
+    const y = yFor(alt);
+    ctx.strokeStyle = "rgba(120,130,140,0.16)";
+    ctx.beginPath();
+    ctx.moveTo(padLeft, y);
+    ctx.lineTo(w - 6, y);
+    ctx.stroke();
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText(metresLabel(alt), 4, y + 3);
+  }
+
+  // Range ticks along the surface.
+  for (const frac of [0.5, 1]) {
+    const range = rangeSpan * frac;
+    const x = xFor(range);
+    if (x < padLeft) continue;
+    ctx.strokeStyle = "rgba(120,130,140,0.16)";
+    ctx.beginPath();
+    ctx.moveTo(x, padTop);
+    ctx.lineTo(x, groundLine);
+    ctx.stroke();
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText(metresLabel(range), x + 3, groundLine + 12);
+  }
 
   // Surface.
   ctx.strokeStyle = "#6b6255";
@@ -273,6 +352,38 @@ function drawProfile(
   ctx.moveTo(0, groundLine);
   ctx.lineTo(w, groundLine);
   ctx.stroke();
+
+  // Reference descent profile (advisory), drawn across the visible range.
+  ctx.strokeStyle = "rgba(96,165,250,0.45)";
+  ctx.setLineDash([4, 3]);
+  ctx.beginPath();
+  for (let i = 0; i <= 48; i++) {
+    const range = (rangeSpan * i) / 48;
+    const alt = referenceAltitudeM(
+      range,
+      mission.initial.rangeToLandingZoneM,
+      mission.initial.altitudeM,
+    );
+    const px = xFor(range);
+    const py = yFor(Math.min(alt, altSpan));
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Flown path.
+  if (trail.length > 1) {
+    ctx.strokeStyle = "rgba(65,224,138,0.55)";
+    ctx.beginPath();
+    trail.forEach((p, i) => {
+      const px = xFor(p.rangeM);
+      const py = yFor(p.altitudeM);
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    });
+    ctx.stroke();
+  }
 
   // Landing zone marker at range 0.
   const lzX = xFor(0);
@@ -327,9 +438,25 @@ function drawProfile(
   );
   ctx.stroke();
 
+  // Header: altitude and the deviation from the reference profile, so the
+  // picture and the altimeter can be read against each other directly.
+  const refAlt = referenceAltitudeM(
+    Math.abs(downrangeM),
+    mission.initial.rangeToLandingZoneM,
+    mission.initial.altitudeM,
+  );
+  const deviation = orbit.altitudeM - refAlt;
   ctx.fillStyle = "#9ca3af";
   ctx.font = "10px ui-monospace, monospace";
-  ctx.fillText("DESCENT PROFILE", 10, 16);
-  ctx.fillText(`${orbit.altitudeM.toFixed(0)} m`, 10, 30);
+  ctx.fillText("DESCENT PROFILE", 10, 14);
+  ctx.fillStyle = "#e5e7eb";
+  ctx.fillText(`ALT ${metresLabel(orbit.altitudeM)}`, 10, 26);
+  ctx.fillStyle = Math.abs(deviation) < altSpan * 0.12 ? "#41e08a" : "#fbbf24";
+  ctx.fillText(
+    `${deviation >= 0 ? "+" : "−"}${metresLabel(Math.abs(deviation))} vs profile`,
+    112,
+    26,
+  );
   ctx.restore();
 }
+
