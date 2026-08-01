@@ -74,16 +74,22 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Tranquility — Apollo lunar flight simulator" },
+      { title: "Tranquility — Learn the AGC, fly a lunar landing" },
       {
         name: "description",
         content:
-          "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit.",
+          "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit. Free, browser-based, running the real Luminary 099 flight software.",
       },
       { name: "author", content: "The Tranquility project" },
       { property: "og:site_name", content: "Tranquility" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:title", content: "Tranquility — Learn the AGC, fly a lunar landing" },
+      { name: "twitter:title", content: "Tranquility — Learn the AGC, fly a lunar landing" },
+      { property: "og:description", content: "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit. Free, browser-based, running the real Luminary 099 flight software." },
+      { name: "twitter:description", content: "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit. Free, browser-based, running the real Luminary 099 flight software." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/267ce5b3-3f04-4a90-8d08-80ec7ba27aa2/id-preview-94e1cd1c--7a1f4da4-ee84-4871-851a-9e77c762e890.lovable.app-1785611256132.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/267ce5b3-3f04-4a90-8d08-80ec7ba27aa2/id-preview-94e1cd1c--7a1f4da4-ee84-4871-851a-9e77c762e890.lovable.app-1785611256132.png" },
     ],
 
     links: [

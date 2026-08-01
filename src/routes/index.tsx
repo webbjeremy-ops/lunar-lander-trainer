@@ -11,11 +11,11 @@ export const Route = createFileRoute("/")({
         content:
           "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit. Free, browser-based, running the real Luminary 099 flight software.",
       },
-      { property: "og:title", content: "Tranquility — Apollo lunar flight, honestly modelled" },
+      { property: "og:title", content: "Tranquility — Learn the AGC, fly a lunar landing" },
       {
         property: "og:description",
         content:
-          "Fly the lunar descent, launch from the Moon, learn rocket physics, and operate a real Apollo DSKY in your browser.",
+          "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit. Free, browser-based, running the real Luminary 099 flight software.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
