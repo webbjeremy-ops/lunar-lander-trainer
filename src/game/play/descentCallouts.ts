@@ -298,3 +298,15 @@ export function activeCallout(
 export function calloutById(id: string): DescentCallout | null {
   return APOLLO11_DESCENT_CALLOUTS.find((c) => c.id === id) ?? null;
 }
+
+/**
+ * M4.28 — the single source of truth for when a scripted phase cue is due.
+ * The procedure engine and the coach gate their DSKY recommendation on this
+ * exact time, so the crew call, the pop-up and the recommendation appear
+ * together.
+ */
+export function calloutSec(id: string): number {
+  const call = calloutById(id);
+  if (!call) throw new Error(`Unknown descent callout: ${id}`);
+  return call.atSinceIgnitionSec;
+}
