@@ -250,6 +250,14 @@ function LearnPage() {
   const step = lesson.steps[state.currentStepIndex] ?? null;
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
+  // The DSKY panel is only pertinent to lessons that actually drive the AGC.
+  // Non-AGC tracks keep the persistent session mounted (no worker churn) but
+  // never show the hardware panel.
+  const lessonUsesDsky = useMemo(
+    () => lesson.steps.some((s) => s.kind === "interactive"),
+    [lesson],
+  );
+
 
   // M4.2 — mirror lesson completion into local progress storage.
   useEffect(() => {
@@ -845,7 +853,15 @@ function LearnPage() {
           {/* Persistent AGC session — mounted for the full /learn lifetime.
               Stable key: ONLY changes on explicit "Reset AGC" (agcEpoch) or
               rope swap. Lesson navigation does NOT remount this. */}
-          <div className="mt-6 rounded border border-neutral-800 bg-neutral-950/60 p-3" data-testid="learn-dsky-panel">
+          <div
+            className={
+              lessonUsesDsky
+                ? "mt-6 rounded border border-neutral-800 bg-neutral-950/60 p-3"
+                : "hidden"
+            }
+            aria-hidden={lessonUsesDsky ? undefined : true}
+            data-testid="learn-dsky-panel"
+          >
             <div className="mb-2 flex items-center justify-between">
               <h3 className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
                 AGC Session (persistent)
