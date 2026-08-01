@@ -127,6 +127,9 @@ export const CHORD_PROGRESSION: readonly Chord[] = [
 ];
 
 /** How many melody notes are held per chord — fewer when the line is slow. */
+/** Harmonic rhythm: the drone bass moves once every eight heartbeats. */
+export const PULSES_PER_CHORD = 8;
+
 export function melodyNotesPerChord(melodyArp: number): number {
   const arp = clamp01(melodyArp);
   if (arp < 0.25) return 2;

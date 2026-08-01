@@ -16,8 +16,8 @@
 //   rumble      filtered noise, the descent engine through the structure
 
 import {
-  chordForStep,
-  melodyNotesPerChord,
+  CHORD_PROGRESSION,
+  PULSES_PER_CHORD,
   scoreLayers,
   type ScoreLayers,
 } from "@/game/play/descentScore";
@@ -64,7 +64,10 @@ export class DescentScoreEngine {
   private pulseTimer: number | null = null;
   private melodyTimer: number | null = null;
   private melodyStep = 0;
-  private currentChordName: string | null = null;
+  /** Drone oscillators plus their pitch ratio to the chord root. */
+  private droneVoices: { osc: OscillatorNode; ratio: number }[] = [];
+  private pulseCount = 0;
+  private chordIndex = 0;
 
   private layers: ScoreLayers = scoreLayers(0);
 
@@ -138,6 +141,9 @@ export class DescentScoreEngine {
       g.gain.value = 0.16;
       osc.connect(g).connect(droneGain);
       osc.start();
+      // The drone IS the bass line: each voice keeps its interval above the
+      // chord root and glides when the harmony moves.
+      this.droneVoices.push({ osc, ratio: hz / ROOT_HZ });
     }
 
     // --- strings cluster ---------------------------------------------------
@@ -212,6 +218,8 @@ export class DescentScoreEngine {
     melodyDelay.connect(melodyWet).connect(master);
     this.melodyGain = melodyGain;
 
+    this.pulseCount = 0;
+    this.chordIndex = 0;
     this.started = true;
     this.applyLayers();
     ramp(master.gain, this.volume, ctx, 2.5);
@@ -235,6 +243,7 @@ export class DescentScoreEngine {
     }
     this.ctx = null;
     this.master = null;
+    this.droneVoices = [];
     this.started = false;
   }
 
@@ -312,14 +321,9 @@ export class DescentScoreEngine {
     const arp = this.layers.melodyArp;
     const seq = this.melodyPattern(arp);
     const step = this.melodyStep;
-    const chord = chordForStep(step, arp);
-    const perChord = melodyNotesPerChord(arp);
-
-    // New chord? Sound the bass root underneath before the melody note.
-    if (step % perChord === 0 && chord.name !== this.currentChordName) {
-      this.currentChordName = chord.name;
-      this.tickBass(chord.bassHz, perChord);
-    }
+    // Harmony is owned by the drone (it moves every PULSES_PER_CHORD beats);
+    // the melody simply colours itself from whatever chord is sounding.
+    const chord = CHORD_PROGRESSION[this.chordIndex % CHORD_PROGRESSION.length]!;
 
     const degree = seq[step % seq.length]!;
     const tones = chord.tonesHz;
@@ -356,6 +360,15 @@ export class DescentScoreEngine {
 
 
 
+  /** Glide the drone bed onto a new chord root over several seconds. */
+  private moveDrone(rootHz: number): void {
+    const ctx = this.ctx;
+    if (!ctx) return;
+    for (const { osc, ratio } of this.droneVoices) {
+      ramp(osc.frequency, rootHz * ratio, ctx, 2.5);
+    }
+  }
+
   /** One heartbeat: a short bass thud whose rate tracks tension. */
   private scheduleNextPulse(): void {
     if (!this.started) return;
@@ -372,6 +385,12 @@ export class DescentScoreEngine {
     const bus = this.pulseGain;
     if (!ctx || !bus || this.layers.pulse <= 0) return;
     const now = ctx.currentTime;
+    // Slow harmonic rhythm: the drone changes chord every eighth heartbeat.
+    this.pulseCount += 1;
+    if (this.pulseCount % PULSES_PER_CHORD === 0) {
+      this.chordIndex = (this.chordIndex + 1) % CHORD_PROGRESSION.length;
+      this.moveDrone(CHORD_PROGRESSION[this.chordIndex]!.bassHz);
+    }
     const osc = ctx.createOscillator();
     osc.type = "sine";
     osc.frequency.setValueAtTime(96, now);
@@ -399,32 +418,6 @@ export class DescentScoreEngine {
       osc2.connect(g2).connect(bus);
       osc2.start(t2);
       osc2.stop(t2 + 0.36);
-    }
-  }
-
-  /** Chord root under the melody: a long, swelling low note on each change. */
-  private tickBass(hz: number, notesPerChord: number): void {
-    const ctx = this.ctx;
-    const bus = this.melodyGain;
-    if (!ctx || !bus) return;
-    const now = ctx.currentTime;
-    const dur = Math.max(1.2, this.layers.melodyNoteSec * notesPerChord);
-    const level = 0.2 * this.layers.melody;
-    for (const [mult, weight, type] of [
-      [1, 1, "sine"],
-      [2, 0.3, "sine"],
-      [3, 0.1, "triangle"],
-    ] as const) {
-      const osc = ctx.createOscillator();
-      osc.type = type;
-      osc.frequency.value = hz * mult;
-      const g = ctx.createGain();
-      g.gain.setValueAtTime(0.0001, now);
-      g.gain.linearRampToValueAtTime(level * weight, now + 0.5);
-      g.gain.setTargetAtTime(0.0001, now + dur * 0.6, dur * 0.3);
-      osc.connect(g).connect(bus);
-      osc.start(now);
-      osc.stop(now + dur + 1.0);
     }
   }
 }
