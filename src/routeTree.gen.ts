@@ -17,7 +17,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as PlayAscentRouteImport } from './routes/play.ascent'
+import { Route as PlayAscentRouteImport } from './routes/play_.ascent'
 import { Route as DevMissionRuntimeRouteImport } from './routes/dev.mission-runtime'
 import { Route as DevLmPhysicsRouteImport } from './routes/dev.lm-physics'
 
@@ -62,9 +62,9 @@ const IndexRoute = IndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayAscentRoute = PlayAscentRouteImport.update({
-  id: '/ascent',
-  path: '/ascent',
-  getParentRoute: () => PlayRoute,
+  id: '/play_/ascent',
+  path: '/play/ascent',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DevMissionRuntimeRoute = DevMissionRuntimeRouteImport.update({
   id: '/dev/mission-runtime',
@@ -83,7 +83,7 @@ export interface FileRoutesByFullPath {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
-  '/play': typeof PlayRouteWithChildren
+  '/play': typeof PlayRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -96,7 +96,7 @@ export interface FileRoutesByTo {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
-  '/play': typeof PlayRouteWithChildren
+  '/play': typeof PlayRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -110,12 +110,12 @@ export interface FileRoutesById {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
-  '/play': typeof PlayRouteWithChildren
+  '/play': typeof PlayRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
-  '/play/ascent': typeof PlayAscentRoute
+  '/play_/ascent': typeof PlayAscentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -156,7 +156,7 @@ export interface FileRouteTypes {
     | '/sources'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
-    | '/play/ascent'
+    | '/play_/ascent'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,11 +165,12 @@ export interface RootRouteChildren {
   CaptureRoute: typeof CaptureRoute
   ExploreRoute: typeof ExploreRoute
   LearnRoute: typeof LearnRoute
-  PlayRoute: typeof PlayRouteWithChildren
+  PlayRoute: typeof PlayRoute
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
   DevMissionRuntimeRoute: typeof DevMissionRuntimeRoute
+  PlayAscentRoute: typeof PlayAscentRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -230,12 +231,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/play/ascent': {
-      id: '/play/ascent'
-      path: '/ascent'
+    '/play_/ascent': {
+      id: '/play_/ascent'
+      path: '/play/ascent'
       fullPath: '/play/ascent'
       preLoaderRoute: typeof PlayAscentRouteImport
-      parentRoute: typeof PlayRoute
+      parentRoute: typeof rootRouteImport
     }
     '/dev/mission-runtime': {
       id: '/dev/mission-runtime'
@@ -254,28 +255,29 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface PlayRouteChildren {
-  PlayAscentRoute: typeof PlayAscentRoute
-}
-
-const PlayRouteChildren: PlayRouteChildren = {
-  PlayAscentRoute: PlayAscentRoute,
-}
-
-const PlayRouteWithChildren = PlayRoute._addFileChildren(PlayRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CaptureRoute: CaptureRoute,
   ExploreRoute: ExploreRoute,
   LearnRoute: LearnRoute,
-  PlayRoute: PlayRouteWithChildren,
+  PlayRoute: PlayRoute,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
   DevLmPhysicsRoute: DevLmPhysicsRoute,
   DevMissionRuntimeRoute: DevMissionRuntimeRoute,
+  PlayAscentRoute: PlayAscentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
