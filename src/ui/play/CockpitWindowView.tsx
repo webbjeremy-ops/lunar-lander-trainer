@@ -185,14 +185,14 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   ctx.fillRect(0, 0, w, h);
   const top = Math.max(-h, Math.min(h, hy));
   const grad = ctx.createLinearGradient(0, top, 0, h);
-  grad.addColorStop(0, "#4a443c");
-  grad.addColorStop(0.55, "#332f2a");
-  grad.addColorStop(1, "#15130f");
+  grad.addColorStop(0, "#8a8072");
+  grad.addColorStop(0.55, "#6a6154");
+  grad.addColorStop(1, "#4a4438");
   ctx.fillStyle = grad;
   ctx.fillRect(0, top, w, h - top);
 
   if (hy > -h && hy < h) {
-    ctx.strokeStyle = "#7d7264";
+    ctx.strokeStyle = "#cfc4b0";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(0, hy);
@@ -313,7 +313,7 @@ function drawLandmark(
 ) {
   const flat = 0.34;
   if (mark.kind === "rille") {
-    ctx.strokeStyle = `rgba(120,110,96,${0.25 + mark.albedo * 0.4})`;
+    ctx.strokeStyle = `rgba(52,47,40,${0.4 + mark.albedo * 0.4})`;
     ctx.lineWidth = Math.max(1, r * 0.1);
     ctx.beginPath();
     ctx.moveTo(x - r, y);
@@ -338,7 +338,7 @@ function drawLandmark(
       );
       ctx.fill();
     }
-    ctx.strokeStyle = `rgba(150,140,124,${0.3 + mark.albedo * 0.35})`;
+    ctx.strokeStyle = `rgba(214,203,183,${0.35 + mark.albedo * 0.4})`;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.ellipse(x, y, r, r * flat, 0, 0, Math.PI * 2);
@@ -346,12 +346,12 @@ function drawLandmark(
     return;
   }
   // Crater: shadowed far wall, lit near rim.
-  ctx.fillStyle = `rgba(22,20,17,${0.35 + mark.albedo * 0.3})`;
+  ctx.fillStyle = `rgba(30,27,22,${0.45 + mark.albedo * 0.4})`;
   ctx.beginPath();
   ctx.ellipse(x, y, r, r * flat, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = `rgba(168,157,138,${0.25 + mark.albedo * 0.45})`;
-  ctx.lineWidth = Math.max(0.8, r * 0.06);
+  ctx.strokeStyle = `rgba(226,216,196,${0.35 + mark.albedo * 0.5})`;
+  ctx.lineWidth = Math.max(1.1, r * 0.12);
   ctx.beginPath();
   ctx.ellipse(x, y, r, r * flat, 0, Math.PI * 0.05, Math.PI * 0.95);
   ctx.stroke();
