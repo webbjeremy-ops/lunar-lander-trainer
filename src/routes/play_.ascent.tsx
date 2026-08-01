@@ -22,6 +22,9 @@ import {
   type AscentMissionId,
   type AssistanceLevel,
 } from "@/game/ascent";
+import { useSettings } from "@/settings/SettingsProvider";
+import { RouteErrorBoundary } from "@/ui/shell/Reliability";
+
 
 export const Route = createFileRoute("/play_/ascent")({
   head: () => ({
