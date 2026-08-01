@@ -124,7 +124,45 @@ function MissionsPage() {
           </ul>
         </section>
 
+        <section aria-labelledby="orbit-heading" data-testid="missions-orbit">
+          <h2 id="orbit-heading" className="text-lg font-semibold text-neutral-100">
+            Lunar orbital operations
+          </h2>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-neutral-500">
+            Planning exercises rather than stick-and-rudder flying: read an orbit, rescue a
+            periapsis, circularise, and phase for an intercept. These end at a safe intercept
+            setup — terminal rendezvous and docking are out of scope.
+          </p>
+          <ul className="mt-3 grid gap-3 md:grid-cols-2">
+            {ORBIT_ORDER.map((m) => (
+              <li key={m.id}>
+                <Link
+                  to="/play/orbit"
+                  data-testid={`missions-card-${m.id}`}
+                  className="block h-full rounded border border-neutral-800 bg-neutral-950/60 p-4 hover:border-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+                >
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-neutral-100">{m.title}</h3>
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                      #{m.order}
+                    </span>
+                  </div>
+                  <p className="mt-1 font-mono text-[10px] uppercase tracking-widest text-emerald-400">
+                    {m.subtitle}
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-neutral-400">{m.summary}</p>
+                  <p className="mt-2 text-[11px] text-neutral-500">
+                    <span className="text-neutral-400">Objective:</span>{" "}
+                    {m.objectives[0]?.title ?? "Fly the exercise."}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <AccuracyLegend compact />
+
       </div>
     </main>
   );
