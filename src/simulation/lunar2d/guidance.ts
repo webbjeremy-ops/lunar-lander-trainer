@@ -58,6 +58,9 @@ const BRAKING_STOP_OVERRIDE_MPS2 = 2.8;
 const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
+/** Schedule catch-up trim: time constant and authority limit. */
+const SCHEDULE_TRIM_TAU_S = 30;
+const SCHEDULE_TRIM_MAX_MPS2 = 0.8;
 /** Time constant for the approach-phase downrange velocity loop, seconds. */
 const APPROACH_TAU_S = 8;
 /** Vertical error is flown out on this time constant after high gate, seconds. */
@@ -194,7 +197,12 @@ export function computeReferenceGuidance(
       // back on the schedule, so it does not reach low gate a minute early.
       const scheduled = braking.targetDownrangeSpeedMps ?? null;
       if (scheduled !== null && Math.abs(v) > Math.abs(scheduled)) {
-        decel += (Math.abs(v) - Math.abs(scheduled)) / APPROACH_TAU_S;
+        // Trim gently and with limited authority: a hard schedule catch-up
+        // would snap the pitch over at high gate instead of easing through it.
+        decel += Math.min(
+          SCHEDULE_TRIM_MAX_MPS2,
+          (Math.abs(v) - Math.abs(scheduled)) / SCHEDULE_TRIM_TAU_S,
+        );
       }
       if (inBraking) {
         // Safety law: genuinely late braking (still faster than the gate speed
