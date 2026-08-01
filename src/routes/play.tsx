@@ -15,6 +15,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dsky } from "@/ui/dsky/Dsky";
 import { useAgcSession } from "@/agc/AgcSession";
 import { LunarScene } from "@/ui/play/LunarScene";
+import { CockpitWindowView } from "@/ui/play/CockpitWindowView";
+
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
 import { FlightControls } from "@/ui/play/FlightControls";
 import { GamepadLegend } from "@/ui/play/GamepadLegend";
