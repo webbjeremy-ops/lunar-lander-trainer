@@ -53,24 +53,24 @@ describe("M4.2 learning progress", () => {
       kind: "lessonCompleted",
       lessonId: "lesson-08-why-the-lm-falls",
       atMs: 1000,
-      unlocks: ["terminal-descent"],
+      unlocks: ["landing-fundamentals"],
     });
     const b = reduceProgress(a, {
       kind: "lessonCompleted",
       lessonId: "lesson-08-why-the-lm-falls",
       atMs: 2000,
-      unlocks: ["terminal-descent"],
+      unlocks: ["landing-fundamentals"],
     });
     expect(a.completedLessons).toEqual(["lesson-08-why-the-lm-falls"]);
     expect(b.completedLessons).toEqual(a.completedLessons);
-    expect(b.unlockedMissions).toContain("terminal-descent");
+    expect(b.unlockedMissions).toContain("landing-fundamentals");
   });
 
   it("keeps only the best challenge score but counts every attempt", () => {
     let p = emptyProgress();
     p = reduceProgress(p, {
       kind: "challengeResult",
-      missionId: "terminal-descent",
+      missionId: "landing-fundamentals",
       difficulty: "instructor",
       score: 620,
       grade: "C",
@@ -79,14 +79,14 @@ describe("M4.2 learning progress", () => {
     });
     p = reduceProgress(p, {
       kind: "challengeResult",
-      missionId: "terminal-descent",
+      missionId: "landing-fundamentals",
       difficulty: "pilot",
       score: 410,
       grade: "D",
       outcome: "hard-landing",
       atMs: 2,
     });
-    const rec = p.challenges["terminal-descent"]!;
+    const rec = p.challenges["landing-fundamentals"]!;
     expect(rec.bestScore).toBe(620);
     expect(rec.bestGrade).toBe("C");
     expect(rec.attempts).toBe(2);
@@ -126,7 +126,7 @@ describe("M4.2 lesson ⇄ game handoff", () => {
     version: 1,
     lessonId: "lesson-13-fly-the-terminal-descent",
     stepId: "step-fly",
-    missionId: "terminal-descent",
+    missionId: "landing-fundamentals",
     assistance: "instructor",
     controlMode: "quick-manual",
     passingScore: 500,

@@ -22,9 +22,7 @@ describe("mission registry", () => {
   it("exposes five missions in progression order", () => {
     expect(MISSION_IDS).toEqual([
       "landing-fundamentals",
-      "terminal-descent",
-      "high-gate-challenge",
-      "apollo11-powered-descent",
+      "full-descent",
       "free-flight",
     ]);
   });
@@ -44,8 +42,9 @@ describe("mission registry", () => {
     expect(DESCENT_LANDMARKS.highGateM).toBe(2316);
     expect(DESCENT_LANDMARKS.lowGateM).toBe(152);
     expect(DESCENT_LANDMARKS.poweredDescentInitiationM).toBe(15742);
-    expect(MISSIONS["terminal-descent"].initial.altitudeM).toBe(DESCENT_LANDMARKS.lowGateM);
-    expect(MISSIONS["high-gate-challenge"].initial.altitudeM).toBe(DESCENT_LANDMARKS.highGateM);
+    expect(MISSIONS["full-descent"].initial.altitudeM).toBe(
+      DESCENT_LANDMARKS.poweredDescentInitiationM,
+    );
   });
 
   it("downrange geometry round-trips through the central angle", () => {
@@ -70,7 +69,7 @@ describe("mission registry", () => {
 function summaryWith(overrides: Partial<FlightSummary> = {}): FlightSummary {
   const base = createLunarFlightState({ altitudeM: 0, descentPropellantKg: 400 });
   return {
-    missionId: "terminal-descent",
+    missionId: "landing-fundamentals",
     controlMode: "agc-assisted",
     assistance: "pilot",
     finalState: {
