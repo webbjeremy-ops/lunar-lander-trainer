@@ -27,6 +27,7 @@ import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
 import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
 import { useDescentSfx } from "@/ui/play/useDescentSfx";
+import { useMissionAudio } from "@/ui/play/useMissionAudio";
 import eagleLandedAudio from "@/assets/eagle-has-landed.mp3.asset.json";
 
 
