@@ -23,7 +23,7 @@ import {
   type AssistanceLevel,
 } from "@/game/ascent";
 
-export const Route = createFileRoute("/play/ascent")({
+export const Route = createFileRoute("/play_/ascent")({
   head: () => ({
     meta: [
       { title: "Lunar Liftoff and Orbital Insertion · AGC — Tranquility" },

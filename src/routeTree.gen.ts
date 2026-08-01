@@ -17,6 +17,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlayAscentRouteImport } from './routes/play.ascent'
 import { Route as DevMissionRuntimeRouteImport } from './routes/dev.mission-runtime'
 import { Route as DevLmPhysicsRouteImport } from './routes/dev.lm-physics'
 
@@ -60,6 +61,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayAscentRoute = PlayAscentRouteImport.update({
+  id: '/ascent',
+  path: '/ascent',
+  getParentRoute: () => PlayRoute,
+} as any)
 const DevMissionRuntimeRoute = DevMissionRuntimeRouteImport.update({
   id: '/dev/mission-runtime',
   path: '/dev/mission-runtime',
@@ -77,11 +83,12 @@ export interface FileRoutesByFullPath {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
-  '/play': typeof PlayRoute
+  '/play': typeof PlayRouteWithChildren
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
+  '/play/ascent': typeof PlayAscentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,11 +96,12 @@ export interface FileRoutesByTo {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
-  '/play': typeof PlayRoute
+  '/play': typeof PlayRouteWithChildren
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
+  '/play/ascent': typeof PlayAscentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,11 +110,12 @@ export interface FileRoutesById {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
-  '/play': typeof PlayRoute
+  '/play': typeof PlayRouteWithChildren
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
+  '/play/ascent': typeof PlayAscentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/sources'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
+    | '/play/ascent'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/sources'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
+    | '/play/ascent'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/sources'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
+    | '/play/ascent'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,7 +165,7 @@ export interface RootRouteChildren {
   CaptureRoute: typeof CaptureRoute
   ExploreRoute: typeof ExploreRoute
   LearnRoute: typeof LearnRoute
-  PlayRoute: typeof PlayRoute
+  PlayRoute: typeof PlayRouteWithChildren
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
@@ -218,6 +230,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/play/ascent': {
+      id: '/play/ascent'
+      path: '/ascent'
+      fullPath: '/play/ascent'
+      preLoaderRoute: typeof PlayAscentRouteImport
+      parentRoute: typeof PlayRoute
+    }
     '/dev/mission-runtime': {
       id: '/dev/mission-runtime'
       path: '/dev/mission-runtime'
@@ -235,13 +254,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface PlayRouteChildren {
+  PlayAscentRoute: typeof PlayAscentRoute
+}
+
+const PlayRouteChildren: PlayRouteChildren = {
+  PlayAscentRoute: PlayAscentRoute,
+}
+
+const PlayRouteWithChildren = PlayRoute._addFileChildren(PlayRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   CaptureRoute: CaptureRoute,
   ExploreRoute: ExploreRoute,
   LearnRoute: LearnRoute,
-  PlayRoute: PlayRoute,
+  PlayRoute: PlayRouteWithChildren,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
   DevLmPhysicsRoute: DevLmPhysicsRoute,
