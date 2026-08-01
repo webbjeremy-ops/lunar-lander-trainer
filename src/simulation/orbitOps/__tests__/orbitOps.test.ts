@@ -786,7 +786,7 @@ describe("physics firewall", () => {
       "@/simulation/lm/__tests__/goldenScenario"
     );
     const result = runLmScenario(GOLDEN_INITIAL_STATE, GOLDEN_COMMANDS, 600_000_000);
-    expect(result.finalState.touchdown?.simulationTimeUs).toBe(368_279_425);
+    expect(result.finalState.touchdown?.touchdownTimeUs).toBe(368_279_425);
   });
 
   it("available delta-v is a pure function of mass and propellant", () => {
