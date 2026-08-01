@@ -361,6 +361,7 @@ export function usePlaySession(
   const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
   const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
   const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
 
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
@@ -1207,6 +1208,7 @@ export function usePlaySession(
     scriptTerminated,
     aborted,
     highGateStatus: currentHighGateStatus,
+    hapticsEnabled,
     actions,
 
   };

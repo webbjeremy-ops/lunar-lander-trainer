@@ -17,6 +17,7 @@ import { useAgcSession } from "@/agc/AgcSession";
 import { LunarScene } from "@/ui/play/LunarScene";
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
 import { FlightControls } from "@/ui/play/FlightControls";
+import { GamepadLegend } from "@/ui/play/GamepadLegend";
 import { ProcedurePanel } from "@/ui/play/ProcedurePanel";
 import { ProcedureCoach } from "@/ui/play/ProcedureCoach";
 import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
@@ -514,6 +515,10 @@ function PlayClient() {
             onThrottle={session.actions.adjustThrottle}
             onEngine={session.actions.setEngine}
             onRod={session.actions.trimRod}
+          />
+          <GamepadLegend
+            haptics={session.hapticsEnabled}
+            onHaptics={session.actions.setHaptics}
           />
         </div>
 
