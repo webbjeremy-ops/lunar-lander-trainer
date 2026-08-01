@@ -134,8 +134,10 @@ function PlayClient() {
   const limits = LANDING_LIMITS[assistance];
   const session = usePlaySession(mission, controlMode, assistance);
 
-  // M4.21 — procedural descent score. Started by the player (autoplay policy),
-  // then driven continuously by timeline position, altitude and Houston's mood.
+  // M4.32 — while an air-to-ground recording is on the loop, everything else
+  // drops to a background level (never off) so the crew is intelligible.
+  const [missionDuck, setMissionDuck] = useState(1);
+
   const musicScore = useDescentScore({
     sinceIgnitionSec: session.descentClock.sinceIgnitionUs / 1_000_000,
     altitudeM: session.orbit.altitudeM,
@@ -147,6 +149,7 @@ function PlayClient() {
     crewAborted: session.aborted,
     terminal: session.flight.terminalState !== null,
     running: session.running,
+    duck: missionDuck,
   });
 
   // M4.26 — cockpit sound effects share the score's on/off state: DPS bed and
@@ -159,16 +162,22 @@ function PlayClient() {
     alarmActive: session.alarms.lampOn,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     running: session.running,
+    duck: missionDuck,
   });
 
   // M4.31 — restored Apollo 11 air-to-ground recordings, cued by story beat.
-  useMissionAudio({
+  const missionAudio = useMissionAudio({
     enabled: musicScore.enabled,
     engineOn: session.controls.engineOn,
     activeAlarmId: session.alarms.active?.id ?? null,
     calloutId: session.callout?.id ?? null,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
   });
+
+  useEffect(() => {
+    setMissionDuck(missionAudio.duck);
+  }, [missionAudio.duck]);
+
 
   const agc = useAgcSession();
 
