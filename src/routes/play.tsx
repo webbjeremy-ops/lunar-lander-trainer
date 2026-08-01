@@ -108,7 +108,7 @@ function PlayClient() {
   // Onboarding / Settings choose the starting assistance level; a lesson
   // challenge always wins, because its score threshold assumes that level.
   const [assistance, setAssistance] = useState<AssistanceLevel>(
-    (challenge?.assistance as AssistanceLevel) ?? (settings.assistance as AssistanceLevel),
+    (challenge?.assistance as AssistanceLevel) ?? (settings.defaultAssistance as AssistanceLevel),
   );
 
   const [started, setStarted] = useState(false);
