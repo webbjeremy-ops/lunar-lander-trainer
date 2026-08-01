@@ -168,11 +168,28 @@ export class DescentScoreEngine {
     pulseGain.connect(master);
     this.pulseGain = pulseGain;
 
+    // --- under-melody bus (organ) -------------------------------------------
+    const melodyGain = ctx.createGain();
+    melodyGain.gain.value = 0;
+    const melodyDelay = ctx.createDelay(1.5);
+    melodyDelay.delayTime.value = 0.42;
+    const melodyFeedback = ctx.createGain();
+    melodyFeedback.gain.value = 0.35;
+    const melodyWet = ctx.createGain();
+    melodyWet.gain.value = 0.45;
+    melodyGain.connect(master);
+    melodyGain.connect(melodyDelay);
+    melodyDelay.connect(melodyFeedback).connect(melodyDelay);
+    melodyDelay.connect(melodyWet).connect(master);
+    this.melodyGain = melodyGain;
+
     this.started = true;
     this.applyLayers();
     ramp(master.gain, this.volume, ctx, 2.5);
     this.scheduleNextPulse();
+    this.scheduleNextNote();
   }
+
 
   stop(): void {
     if (this.pulseTimer !== null) window.clearTimeout(this.pulseTimer);
