@@ -306,14 +306,16 @@ export const ATTITUDE_CONTROL: AttitudeControlConstants = {
       "per-jet fidelity.",
   },
   rateDeadbandRadPerSec: {
-    value: 1e-4,
+    value: 2e-3,
     unit: "rad/s",
     classification: "gameplay-tuned",
     sourceId: null,
     rationale:
-      "Zero-command rates below this collapse to exactly zero, keeping " +
-      "serialized states clean and bit-reproducible.",
+      "Attitude-hold deadband (~0.1 deg/s). Zero-command rates below this " +
+      "collapse to exactly zero, so a released control settles in one or two " +
+      "substeps and serialized states stay bit-reproducible.",
   },
+
 };
 
 // -----------------------------------------------------------------------------
