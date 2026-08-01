@@ -287,9 +287,12 @@ const TERMINAL_STEPS: readonly DskyProcedureStep[] = [
   { ...POWERED_DESCENT_STEPS[1]!, startsIgnitionCountdown: false },
   {
     ...POWERED_DESCENT_STEPS[4]!,
+    // Terminal descent starts at low gate, so the timeline gate does not apply.
+    notBeforeSinceIgnitionSec: undefined,
     instruction:
       "You are already in the low-gate region. Take P66 and fly it down.",
   },
+
 ];
 
 export const POWERED_DESCENT_SCRIPT: DskyProcedureScript = {
