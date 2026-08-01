@@ -78,26 +78,29 @@ export function FlightInstruments({
   const tiltDeg = (flight.attitudeRad * 180) / Math.PI;
   const fuelFraction = initialPropellantKg > 0 ? flight.descentPropellantKg / initialPropellantKg : 0;
 
+  const units = useAppSettings().units;
+  const speedUnit = speedUnitLabel(units);
+  const conv = (mps: number) => (units === "apollo" ? mps / M_PER_FT : mps);
+
   return (
     <div className="space-y-2" data-testid="play-instruments">
       <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
         <Readout
           label="Altitude"
-          value={orbit.altitudeM >= 1000 ? (orbit.altitudeM / 1000).toFixed(2) : orbit.altitudeM.toFixed(0)}
-          unit={orbit.altitudeM >= 1000 ? "km" : "m"}
+          value={formatDistance(orbit.altitudeM, units, 0)}
           testid="inst-altitude"
         />
         <Readout
           label="Sink rate"
-          value={sink.toFixed(1)}
-          unit="m/s"
+          value={conv(sink).toFixed(1)}
+          unit={speedUnit}
           tone={sink > limits.verticalSpeedMps && orbit.altitudeM < 60 ? "danger" : sink > 25 ? "warn" : "normal"}
           testid="inst-sink"
         />
         <Readout
           label="Lateral"
-          value={lateral.toFixed(1)}
-          unit="m/s"
+          value={conv(lateral).toFixed(1)}
+          unit={speedUnit}
           tone={lateral > limits.horizontalSpeedMps && orbit.altitudeM < 60 ? "danger" : "normal"}
           testid="inst-lateral"
         />
@@ -109,12 +112,11 @@ export function FlightInstruments({
         />
         <Readout
           label="Range to LZ"
-          value={Math.abs(downrangeM) >= 1000 ? (downrangeM / 1000).toFixed(2) : downrangeM.toFixed(0)}
-          unit={Math.abs(downrangeM) >= 1000 ? "km" : "m"}
+          value={formatDistance(downrangeM, units, 0)}
           tone={Math.abs(downrangeM) < limits.landingZoneRadiusM ? "good" : "normal"}
           testid="inst-range"
         />
-        <Readout label="Vehicle mass" value={massKg.toFixed(0)} unit="kg" />
+        <Readout label="Vehicle mass" value={formatMass(massKg, units, 0)} />
       </div>
 
       <div className="grid gap-2 rounded border border-neutral-800 bg-black/40 px-2 py-2">
@@ -133,7 +135,7 @@ export function FlightInstruments({
         <div className="font-mono text-emerald-300">{guidance.advisory}</div>
         {assistance !== "commander" && (
           <div className="mt-1 font-mono text-neutral-400">
-            target sink {(-guidance.targetRadialSpeedMps).toFixed(1)} m/s · throttle{" "}
+            target sink {conv(-guidance.targetRadialSpeedMps).toFixed(1)} {speedUnit} · throttle{" "}
             {(guidance.recommendedThrottle * 100).toFixed(0)}% · pitch{" "}
             {((guidance.recommendedAttitudeRad * 180) / Math.PI).toFixed(0)}°
           </div>
@@ -141,10 +143,11 @@ export function FlightInstruments({
       </div>
 
       <div className="rounded border border-neutral-800 bg-black/40 px-2 py-1.5 text-[10px] text-neutral-500">
-        Gear limits ({assistance}): ≤ {limits.verticalSpeedMps} m/s vertical, ≤{" "}
-        {limits.horizontalSpeedMps} m/s lateral, ≤{" "}
+        Gear limits ({assistance}): ≤ {conv(limits.verticalSpeedMps).toFixed(1)} {speedUnit}{" "}
+        vertical, ≤ {conv(limits.horizontalSpeedMps).toFixed(1)} {speedUnit} lateral, ≤{" "}
         {((limits.tiltRad * 180) / Math.PI).toFixed(0)}° tilt.
       </div>
+
     </div>
   );
 }
