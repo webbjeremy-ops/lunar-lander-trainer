@@ -770,9 +770,20 @@ export function usePlaySession(
       acknowledgeCallout: (id: string) => {
         setAcknowledgedCallouts((prev) => (prev.includes(id) ? prev : [...prev, id]));
       },
+      acknowledgeHouston: (id: string) => {
+        setAcknowledgedHouston((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      },
+      abortStage: () => {
+        if (abortedRef.current) return;
+        if (flightRef.current.terminalState !== null) return;
+        abortedRef.current = true;
+        setAborted(true);
+        setRunning(true);
+      },
     }),
     [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
+
 
   const descentMonitor = useMemo(
     () =>
