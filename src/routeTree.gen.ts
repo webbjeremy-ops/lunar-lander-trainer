@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SimRouteImport } from './routes/sim'
 import { Route as PlayRouteImport } from './routes/play'
+import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
@@ -34,6 +35,11 @@ const SimRoute = SimRouteImport.update({
 const PlayRoute = PlayRouteImport.update({
   id: '/play',
   path: '/play',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsRoute = MissionsRouteImport.update({
+  id: '/missions',
+  path: '/missions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnRoute = LearnRouteImport.update({
@@ -83,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
+  '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByTo {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
+  '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
@@ -110,6 +118,7 @@ export interface FileRoutesById {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
+  '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
@@ -125,6 +134,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/explore'
     | '/learn'
+    | '/missions'
     | '/play'
     | '/sim'
     | '/sources'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/explore'
     | '/learn'
+    | '/missions'
     | '/play'
     | '/sim'
     | '/sources'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/capture'
     | '/explore'
     | '/learn'
+    | '/missions'
     | '/play'
     | '/sim'
     | '/sources'
@@ -165,6 +177,7 @@ export interface RootRouteChildren {
   CaptureRoute: typeof CaptureRoute
   ExploreRoute: typeof ExploreRoute
   LearnRoute: typeof LearnRoute
+  MissionsRoute: typeof MissionsRoute
   PlayRoute: typeof PlayRoute
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/play'
       fullPath: '/play'
       preLoaderRoute: typeof PlayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions': {
+      id: '/missions'
+      path: '/missions'
+      fullPath: '/missions'
+      preLoaderRoute: typeof MissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn': {
@@ -261,6 +281,7 @@ const rootRouteChildren: RootRouteChildren = {
   CaptureRoute: CaptureRoute,
   ExploreRoute: ExploreRoute,
   LearnRoute: LearnRoute,
+  MissionsRoute: MissionsRoute,
   PlayRoute: PlayRoute,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
