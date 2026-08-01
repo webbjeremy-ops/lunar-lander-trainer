@@ -33,12 +33,12 @@ describe("descent sequence timing", () => {
     // at T+6:26 into the 10-60 % variable range.
     expect(dpsThrottleEnvelope(0)).toMatchObject({ min: 0.1, max: 0.1 });
     expect(dpsThrottleEnvelope(25 * S).max).toBeCloseTo(0.1);
-    expect(dpsThrottleEnvelope(30 * S).max).toBeCloseTo(0.925);
-    expect(dpsThrottleEnvelope(380 * S).min).toBeCloseTo(0.925);
+    expect(dpsThrottleEnvelope(30 * S).max).toBeCloseTo(1);
+    expect(dpsThrottleEnvelope(380 * S).min).toBeCloseTo(1);
     expect(THROTTLE_RECOVERY_SINCE_IGNITION_US / S).toBe(386);
     const after = dpsThrottleEnvelope(390 * S);
-    expect(after.max).toBeCloseTo(0.6);
+    expect(after.max).toBeCloseTo(0.65);
     expect(after.min).toBeCloseTo(0.1);
-    expect(throttleCeilingForSinceIgnition(390 * S)).toBeCloseTo(0.6);
+    expect(throttleCeilingForSinceIgnition(390 * S)).toBeCloseTo(0.65);
   });
 });

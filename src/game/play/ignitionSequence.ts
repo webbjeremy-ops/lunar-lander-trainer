@@ -306,10 +306,12 @@ export function throttleCeilingForSinceIgnition(sinceIgnitionUs: number): number
 }
 
 /**
- * Thrust at the fixed throttle point. The DPS was flown at maximum rated
- * thrust for the braking phase, which Luminary commands as 92.5 %.
+ * The fixed throttle point, in KERNEL throttle units. The DPS was flown at
+ * FTP through the braking phase, which is 92.5 % of the engine's rated
+ * thrust; the flight kernel defines throttle = 1.0 AS that FTP thrust
+ * (45,040 N), so FTP is 1.0 here and reads "92.5 %" on the crew displays.
  */
-export const FTP_FRACTION = 0.925;
+export const FTP_FRACTION = 1;
 
 /**
  * The descent engine could not be run continuously between about 65 % and the
@@ -317,7 +319,8 @@ export const FTP_FRACTION = 0.925;
  * Guidance therefore only modulates between 10 % and 60 %.
  */
 export const MIN_VARIABLE_THROTTLE = 0.1;
-export const MAX_VARIABLE_THROTTLE = 0.6;
+/** 0.65 of FTP thrust = the 60 %-of-rated ceiling of the continuous band. */
+export const MAX_VARIABLE_THROTTLE = 0.65;
 
 /**
  * "Throttle recovery": guidance leaves the fixed throttle point and steps the
@@ -362,7 +365,7 @@ export function dpsThrottleEnvelope(sinceIgnitionUs: number): DpsThrottleEnvelop
     ramp >= 1
       ? FTP_FRACTION
       : FIXED_THROTTLE_FRACTION + (FTP_FRACTION - FIXED_THROTTLE_FRACTION) * ramp;
-  return { min: level, max: level, label: "FTP · 92.5 %" };
+  return { min: level, max: level, label: "FTP · 92.5 % RATED" };
 }
 
 /** "T-01:05" / "T+00:26" clock face for the countdown. */

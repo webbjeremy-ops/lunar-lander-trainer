@@ -77,9 +77,8 @@ describe("ignition sequence", () => {
     expect(s.sinceIgnitionUs).toBeLessThan(FIXED_THROTTLE_DURATION_US);
 
     s = tick(s, 30);
-    // Fixed throttle point is 92.5 %, not "full" — the engine was never run
-    // between 65 % and FTP for long, and never above FTP.
-    expect(throttleCeiling(s)).toBeCloseTo(0.925);
+    // Kernel throttle 1.0 IS the fixed throttle point (92.5 % of rated thrust).
+    expect(throttleCeiling(s)).toBe(1);
   });
 
   it("speaks Aldrin's ignition callout at TIG", () => {
