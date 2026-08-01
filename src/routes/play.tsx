@@ -381,7 +381,8 @@ function PlayClient() {
             />
           )}
 
-          {session.ignition.phase !== "standby" && (
+          {(session.ignition.phase !== "standby" ||
+            session.descentClock.mode === "running") && (
             <AttitudePanel
               roll={session.roll}
               alarms={session.alarms}
