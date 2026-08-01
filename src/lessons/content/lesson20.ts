@@ -49,7 +49,7 @@ export const LESSON_20_PHASING_AND_INTERCEPT: LessonDefinition = {
         assistance: "instructor",
         controlMode: "maneuver-planner",
         passingScore: 60,
-        route: "/play/orbit",
+        route: "/play",
       },
     },
   ],
