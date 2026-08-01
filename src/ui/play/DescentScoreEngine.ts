@@ -360,14 +360,27 @@ export class DescentScoreEngine {
 
 
 
-  /** Glide the drone bed onto a new chord root over several seconds. */
+  /** Step the drone bed onto a new chord root instantly, on the beat. */
   private moveDrone(rootHz: number): void {
     const ctx = this.ctx;
     if (!ctx) return;
-    for (const { osc, ratio } of this.droneVoices) {
-      ramp(osc.frequency, rootHz * ratio, ctx, 2.5);
+    const now = ctx.currentTime;
+    // Tiny gain dip masks the discontinuity so the step reads as a new note
+    // rather than a click — no portamento between chords.
+    const g = this.droneGain;
+    const target = g ? g.gain.value : 0;
+    if (g) {
+      g.gain.cancelScheduledValues(now);
+      g.gain.setValueAtTime(target, now);
+      g.gain.linearRampToValueAtTime(target * 0.35, now + 0.02);
     }
+    for (const { osc, ratio } of this.droneVoices) {
+      osc.frequency.cancelScheduledValues(now);
+      osc.frequency.setValueAtTime(rootHz * ratio, now + 0.02);
+    }
+    if (g) g.gain.linearRampToValueAtTime(target, now + 0.08);
   }
+
 
   /** One heartbeat: a short bass thud whose rate tracks tension. */
   private scheduleNextPulse(): void {
