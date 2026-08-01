@@ -663,7 +663,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           Keyboard: 0–9, V, N, +, −, Enter, C, R, K, P (PRO). All key events
           are forwarded to the AGC worker over the typed protocol.
         </p>
-        <DskyLiveRegion decoded={decoded} />
+        <DskyLiveRegion decoded={decoded} patched={bridgedRegisters} />
       </div>
     </div>
   );
@@ -768,7 +768,7 @@ function RegistersPanel({ decoded, patched }: { decoded: DecodedDsky; patched: B
   );
 }
 
-function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
+function DskyLiveRegion({ decoded, patched }: { decoded: DecodedDsky; patched: BridgedRegisters | null }) {
   // Consolidated ARIA live region — the only accessible mirror of DSKY output.
   // MUST derive from the SAME `decoded` value in the SAME React commit as the
   // visible register digits, so screen-reader text and rendered digits never
@@ -783,10 +783,12 @@ function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
     .filter(([, v]) => v)
     .map(([k]) => k)
     .join(", ") || "none";
-  const text =
-    `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
-    `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
-    `Indicators: ${on}.`;
+  const text = patched
+    ? `Program ${patched.program}, Verb ${patched.verb}, Noun ${patched.noun}. ` +
+      `R1 ${patched.r1}. R2 ${patched.r2}. R3 ${patched.r3}. Flight-data patch. Indicators: ${on}.`
+    : `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
+      `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
+      `Indicators: ${on}.`;
   return (
     <div
       role="status"
