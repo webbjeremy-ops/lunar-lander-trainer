@@ -323,10 +323,11 @@ function referenceAltitudeM(
 }
 
 function rollLabel(rollDeg: number): string {
-  if (rollDeg <= 5) return "WINDOWS UP";
-  if (rollDeg >= 175) return "WINDOWS DOWN";
+  if (rollDeg <= 5) return "WINDOWS UP \u00b7 RADAR AT SURFACE";
+  if (rollDeg >= 175) return "WINDOWS DOWN \u00b7 CREW FACING SPACE";
   return `ROLLING ${rollDeg.toFixed(0)}\u00b0`;
 }
+
 
 function cwLabelColor(rollDeg: number): string {
   if (rollDeg <= 5) return "#41e08a";
@@ -453,16 +454,26 @@ function drawProfile(
   // Eagle flew before the windows-up roll).
   const rollRad = (rollDeg * Math.PI) / 180;
   const cw = Math.cos(rollRad);
+  // Ascent-stage cabin.
   ctx.fillStyle = "#d6d3d1";
   ctx.fillRect(-7, -6, 14, 10);
-  // Crew window band and the landing-radar antenna sit on opposite faces, so
-  // the silhouette reads the roll state directly.
-  ctx.fillStyle = cw > 0 ? "#7dd3fc" : "#1f2937";
-  ctx.fillRect(-6, 1.5 * cw - 1, 12, 2.2);
-  ctx.fillStyle = cw > 0 ? "#1f2937" : "#7dd3fc";
-  ctx.fillRect(-4, -1.5 * cw - 1, 8, 2.2);
+  // Crew window band and the landing-radar antenna sit on opposite faces of
+  // the vehicle, so the silhouette reads the roll state directly. Rolling
+  // about the thrust axis never inverts the side-view silhouette; what it
+  // swaps is which face looks at the surface.
+  const windowY = cw > 0 ? 2.4 : -4.6; // windows-up -> band low (facing surface)
+  ctx.fillStyle = "#7dd3fc";
+  ctx.globalAlpha = cw > 0 ? 1 : 0.28;
+  ctx.fillRect(-6, windowY, 12, 2.6);
+  ctx.globalAlpha = 1;
+  // Landing-radar antenna on the opposite face; solid when it can see ground.
+  const radarY = cw > 0 ? -6 : 4;
+  ctx.fillStyle = cw > 0 ? "#4b5563" : "#fbbf24";
+  ctx.fillRect(-3.5, radarY - 1.6, 7, 1.8);
+  // Descent stage.
   ctx.fillStyle = "#a8a29e";
   ctx.fillRect(-5, 4, 10, 5);
+
   ctx.strokeStyle = "#a8a29e";
   ctx.beginPath();
   ctx.moveTo(-6, 9); ctx.lineTo(-9, 14);
