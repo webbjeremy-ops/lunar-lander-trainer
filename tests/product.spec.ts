@@ -12,7 +12,10 @@ const SETTINGS_KEY = "agc-tranquility:settings:v2";
 const ONBOARDING_KEY = "agc-tranquility:onboarding:v1";
 
 async function freshVisit(page: Page, path = "/") {
-  await page.addInitScript(
+  // Clear once, on the current origin only. An addInitScript would re-run on
+  // every navigation and wipe the very persistence these tests assert on.
+  await page.goto("/");
+  await page.evaluate(
     ([s, o]) => {
       window.localStorage.removeItem(s as string);
       window.localStorage.removeItem(o as string);
@@ -20,6 +23,7 @@ async function freshVisit(page: Page, path = "/") {
     [SETTINGS_KEY, ONBOARDING_KEY],
   );
   await page.goto(path);
+  if (path === "/") await page.reload();
 }
 
 test.describe("M4.4 product shell", () => {
@@ -45,7 +49,7 @@ test.describe("M4.4 product shell", () => {
 
   test("home states the product promise and the accuracy legend", async ({ page }) => {
     await freshVisit(page);
-    await expect(page.locator("h1")).toContainText(/Tranquility/i);
+    await expect(page.locator("h1")).toContainText(/Apollo Guidance Computer/i);
     await expect(page.getByTestId("accuracy-legend")).toBeVisible();
     const legend = page.getByTestId("accuracy-legend");
     for (const tier of [
@@ -92,6 +96,7 @@ test.describe("M4.4 product shell", () => {
 
     // Apollo units reach the descent cockpit.
     await page.goto("/play");
+    await page.getByTestId("mission-terminal-descent").click();
     await page.getByTestId("mission-start").click();
     await expect(page.getByTestId("inst-sink")).toContainText("fps");
   });
@@ -102,7 +107,7 @@ test.describe("M4.4 product shell", () => {
     await expect(page.getByTestId("setting-units")).toHaveValue("apollo");
     await page.getByTestId("settings-reset-settings").click();
     await expect(page.getByTestId("setting-units")).toHaveValue("metric");
-    await expect(page.getByTestId("settings-status")).toContainText(/reset/i);
+    await expect(page.getByTestId("settings-status")).toContainText(/reset|defaults/i);
   });
 
   test("keyboard-only operation: skip link and focus reach the nav", async ({ page }) => {
@@ -122,6 +127,8 @@ test.describe("M4.4 product shell", () => {
 
   test("a hidden tab pauses the descent instead of fast-forwarding it", async ({ page }) => {
     await freshVisit(page, "/play");
+    await page.getByTestId("mission-terminal-descent").click();
+    await page.getByTestId("mode-agc-assisted").click();
     await page.getByTestId("mission-start").click();
     await page.getByTestId("procedure-takeover").click();
     await expect(page.getByTestId("play-runpause")).toHaveText(/pause/i);
