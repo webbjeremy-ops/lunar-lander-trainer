@@ -28,12 +28,34 @@ export function LunarScene({
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
+  // Flown path in profile coordinates (range-to-go, altitude). Sampled from
+  // the props ref, capped, and reset whenever the flight clock rewinds.
+  const trailRef = useRef<TrailPoint[]>([]);
+  const lastTimeRef = useRef(0);
+  if (flight.missionTimeUs < lastTimeRef.current) trailRef.current = [];
+  lastTimeRef.current = flight.missionTimeUs;
+  {
+    const last = trailRef.current[trailRef.current.length - 1];
+    const point = { rangeM: Math.abs(downrangeM), altitudeM: orbit.altitudeM };
+    if (
+      !last ||
+      Math.abs(last.altitudeM - point.altitudeM) > 2 ||
+      Math.abs(last.rangeM - point.rangeM) > 2
+    ) {
+      trailRef.current = [...trailRef.current.slice(-400), point];
+    }
+  }
+
   // M4.10 — the scene used to redraw from an effect keyed on flight state and
   // reallocated the backing store on every draw. Now the latest props live in
   // a ref and painting happens once per animation frame, so the picture tracks
   // the vehicle instead of trailing React's render work.
-  const propsRef = useRef<DrawArgs>({ flight, orbit, downrangeM, mission, limits, manual });
-  propsRef.current = { flight, orbit, downrangeM, mission, limits, manual };
+  const propsRef = useRef<DrawArgs>({
+    flight, orbit, downrangeM, mission, limits, manual, trail: trailRef.current,
+  });
+  propsRef.current = {
+    flight, orbit, downrangeM, mission, limits, manual, trail: trailRef.current,
+  };
 
   useEffect(() => {
     const canvas = ref.current;
