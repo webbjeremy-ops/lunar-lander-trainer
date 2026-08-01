@@ -376,22 +376,19 @@ export function usePlaySession(
         steps += 1;
         if (state.terminalState !== null) break;
         if (countdownRunning) dispatchIgnition({ kind: "tick", dtUs: STEP_US });
-        // M4.8/M4.13 — roll, alarms and crew callouts run on ignition-relative
-        // time. If the player never answered the flashing V99 (or flew a mode
-        // without the PDI ritual) the descent still happens, so a fallback
-        // clock starts at the first burning step: the historical sequence must
-        // never be silently skipped.
-        if (ignitionRef.current.sinceIgnitionUs > 0) {
-          descentClockRef.current = ignitionRef.current.sinceIgnitionUs;
-        } else if (
-          state.mainEngine !== "off" ||
-          ignitionRef.current.phase === "aborted" ||
-          ignitionRef.current.tigOffsetUs <= 0 ||
-          descentClockRef.current > 0
-        ) {
-          descentClockRef.current += STEP_US;
-        }
-        const sinceIgnitionUs = descentClockRef.current;
+        // M4.13B — roll, alarms and crew callouts run on ignition-relative
+        // time from one pure state machine, so every entry path into the
+        // descent (ritual, skipped ritual, abort, auto-guidance) drives the
+        // historical sequence.
+        descentClockRef.current = stepDescentClock(descentClockRef.current, {
+          ritualSinceIgnitionUs: ignitionRef.current.sinceIgnitionUs,
+          countdownArmed: countdownRunning,
+          countdownAborted: ignitionRef.current.phase === "aborted",
+          engineBurning: state.mainEngine !== "off",
+          flightLockReleased: proc.flightLockReleased,
+          stepUs: STEP_US,
+        });
+        const sinceIgnitionUs = descentClockRef.current.sinceIgnitionUs;
         if (sinceIgnitionUs > 0) {
           dispatchRoll({ kind: "tick", dtUs: STEP_US, sinceIgnitionUs });
           if (apollo11Timeline) {
