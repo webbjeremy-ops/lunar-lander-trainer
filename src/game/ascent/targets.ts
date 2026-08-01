@@ -49,9 +49,9 @@ export const ASCENT_TARGETS: Readonly<Record<string, TargetOrbit>> = {
   },
   "training-low-orbit": {
     id: "training-low-orbit",
-    label: "Training — 15 x 60 km",
+    label: "Training — 15 x 70 km",
     periapsisAltitudeM: 15_000,
-    apoapsisAltitudeM: 60_000,
+    apoapsisAltitudeM: 70_000,
     classification: "gameplay-tuned",
     sourceId: null,
     rationale:
