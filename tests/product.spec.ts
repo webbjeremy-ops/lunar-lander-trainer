@@ -77,7 +77,7 @@ test.describe("M4.4 product shell", () => {
     const stored = await page.evaluate((k) => window.localStorage.getItem(k), SETTINGS_KEY);
     expect(stored).toContain("pilot");
 
-    await page.reload();
+    await page.goto("/");
     await expect(page.getByTestId("onboarding")).toHaveCount(0);
   });
 
