@@ -57,7 +57,12 @@ export const INITIAL_ROLL_DEG = 180;
  */
 export const ROLL_RATE_DEG_PER_SEC = 10;
 
-/** Within this many degrees of 0° the vehicle counts as windows-up. */
+/**
+ * Numerical latch band for fixed-step integration, not a historical attitude
+ * tolerance. Apollo sources describe a complete windows-up reorientation and
+ * do not support stopping five degrees short; completion is therefore snapped
+ * to an exact displayed 0° below.
+ */
 export const WINDOWS_UP_TOLERANCE_DEG = 5;
 
 /**
@@ -145,14 +150,17 @@ export function reduceDescentRoll(
 
       if (!next.commanded || next.phase === "windows-up") return next;
 
-      const rollDeg = Math.max(0, next.rollDeg - ROLL_RATE_DEG_PER_SEC * (event.dtUs / S));
-      const phase = phaseFor(rollDeg);
+      const integratedRollDeg = Math.max(
+        0,
+        next.rollDeg - ROLL_RATE_DEG_PER_SEC * (event.dtUs / S),
+      );
+      const phase = phaseFor(integratedRollDeg);
       // The guard above returned early when we were already windows-up, so
       // reaching it now is always the completing transition.
       const justCompleted = phase === "windows-up";
       return {
         ...next,
-        rollDeg,
+        rollDeg: justCompleted ? 0 : integratedRollDeg,
         phase,
         commanded: justCompleted ? false : next.commanded,
         completedSinceIgnitionUs: justCompleted

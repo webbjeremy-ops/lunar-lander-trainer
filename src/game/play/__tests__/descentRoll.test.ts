@@ -9,6 +9,7 @@ import {
   reduceDescentRoll,
   ROLL_CUE_SINCE_IGNITION_US,
   ROLL_RATE_DEG_PER_SEC,
+  WINDOWS_UP_TOLERANCE_DEG,
   rollProgress,
   type DescentRollState,
 } from "../descentRoll";
@@ -57,6 +58,8 @@ describe("descent roll", () => {
     s = run(s, INITIAL_ROLL_DEG / ROLL_RATE_DEG_PER_SEC + 1);
     expect(s.phase).toBe("windows-up");
     expect(s.commanded).toBe(false);
+    expect(WINDOWS_UP_TOLERANCE_DEG).toBeGreaterThan(0);
+    expect(s.rollDeg).toBe(0);
     expect(radarAvailable(s)).toBe(true);
     expect(s.completedSinceIgnitionUs).not.toBeNull();
     // Further ticks cannot roll past windows-up.

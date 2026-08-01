@@ -40,6 +40,9 @@ export interface FlightDeviationInput {
   readonly windowsUp: boolean;
   readonly engineBurning: boolean;
   readonly terminal: boolean;
+  readonly rangeToLzM?: number;
+  readonly sinceIgnitionUs?: number;
+  readonly p64Selected?: boolean;
 }
 
 export const HOUSTON_IMPROVISED_NOTE =
@@ -86,6 +89,22 @@ export function houstonDeviations(
   const speed = Math.abs(input.horizontalSpeedMps);
   const pitchDeg = Math.abs(input.attitudeRad) / DEG;
   const rateDeg = Math.abs(input.angularRateRadPerSec) / DEG;
+
+  if (
+    (input.sinceIgnitionUs ?? 0) >= 506 * 1_000_000 &&
+    (input.rangeToLzM ?? 1) <= 0 &&
+    input.p64Selected !== true
+  ) {
+    out.push(
+      call(
+        "high-gate-missed",
+        "no-go",
+        "Eagle, Houston. You have crossed the landing zone without making high gate. P64 is not authorized on this geometry.",
+        "Do not continue the flown transcript. Correct immediately if you still have a safe energy state; otherwise ABORT STAGE.",
+        "High gate is both a time and geometry condition. Calling P64 after the aim point is behind the vehicle would hide a failed braking profile.",
+      ),
+    );
+  }
 
   if (pitchDeg > 100) {
     out.push(

@@ -71,6 +71,8 @@ import {
   nominalAltitudeForRangeM,
   nominalDownrangeSpeedForRange,
   HIGH_GATE_RANGE_M,
+  highGateStatus,
+  type HighGateStatus,
   usesApollo11Timeline,
   type AssistanceLevel,
   type BridgedAlarmOverlay,
@@ -111,6 +113,20 @@ export const ROD_INCREMENT_MPS = 0.3048;
 
 
 export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
+
+/** Full Descent's configured state is the TIG state, not a pre-TIG state. */
+export function shouldAdvanceFlightPhysics(
+  missionId: MissionDefinition["id"],
+  ignitionState: IgnitionSequenceState,
+  aborted: boolean,
+): boolean {
+  return !(
+    missionId === "full-descent" &&
+    ignitionState.phase !== "standby" &&
+    !isBurning(ignitionState) &&
+    !aborted
+  );
+}
 
 export interface PlayControlsView {
   readonly throttle: number;
@@ -168,6 +184,7 @@ export interface PlaySessionApi {
    */
   readonly scriptTerminated: boolean;
   readonly aborted: boolean;
+  readonly highGateStatus: HighGateStatus;
   readonly actions: {
 
     readonly setRunning: (v: boolean) => void;
@@ -436,8 +453,9 @@ export function usePlaySession(
       accumulatorUs += dtMs * 1000 * timeScale;
 
       const proc = procedureRef.current;
-      // The vehicle coasts through the PDI countdown, so the clock runs as
-      // soon as the countdown is armed — not only after PROCEED.
+      // The ritual clock runs as soon as the countdown is armed. Full Descent
+      // is initialized at TIG/PDI, so its physical state remains fixed until
+      // ignition rather than receiving an unmodelled minute of orbital coast.
       const countdownRunning = ignitionRef.current.phase !== "standby";
       if (!proc.flightLockReleased && !countdownRunning && !abortedRef.current) {
         accumulatorUs = 0;
@@ -495,14 +513,28 @@ export function usePlaySession(
               windowsUp: radarAvailable(rollRef.current),
               engineBurning: state.mainEngine !== "off",
               terminal: state.terminalState !== null,
+              rangeToLzM: downrangeToLandingZoneM(
+                o.centralAngleRad,
+                LANDING_ZONE_ANGLE_RAD,
+              ),
+              sinceIgnitionUs,
+              p64Selected: procedureRef.current.completedStepIds.includes("p64-monitor"),
             }),
             stepUs: STEP_US,
             terminal: state.terminalState !== null,
             crewAborted: abortedRef.current,
           });
         }
-        const input = resolveInput(state);
-        state = stepLunarFlight(state, input, STEP_US);
+        if (
+          shouldAdvanceFlightPhysics(
+            mission.id,
+            ignitionRef.current,
+            abortedRef.current,
+          )
+        ) {
+          const input = resolveInput(state);
+          state = stepLunarFlight(state, input, STEP_US);
+        }
       }
       if (steps > 0) {
         flightRef.current = state;
@@ -736,6 +768,11 @@ export function usePlaySession(
   const guidance = useMemo(() => computeReferenceGuidance(flight), [flight]);
   const massKg = useMemo(() => totalMassKg(flight), [flight]);
   const downrangeM = downrangeToLandingZoneM(orbit.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
+  const currentHighGateStatus = highGateStatus(
+    descentClockUs,
+    orbit.altitudeM,
+    downrangeM,
+  );
 
   const summary: FlightSummary | null = useMemo(() => {
     if (flight.terminalState === null) return null;
@@ -801,6 +838,15 @@ export function usePlaySession(
         windowsUp: radarAvailable(rollRef.current),
         alarmActive: alarmsRef.current.active !== null,
         sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+        highGateReady:
+          highGateStatus(
+            descentClockRef.current.sinceIgnitionUs,
+            computeOrbitalValues(flightRef.current).altitudeM,
+            downrangeToLandingZoneM(
+              computeOrbitalValues(flightRef.current).centralAngleRad,
+              LANDING_ZONE_ANGLE_RAD,
+            ),
+          ) === "ready",
       };
       setProcedure((prev) => {
         const next = reduceProcedure(script, prev, {
@@ -937,8 +983,11 @@ export function usePlaySession(
       windowsUp: radarAvailable(roll),
       engineBurning: flight.mainEngine !== "off",
       terminal: flight.terminalState !== null,
+      rangeToLzM: downrangeM,
+      sinceIgnitionUs: descentClockUs,
+      p64Selected: procedure.completedStepIds.includes("p64-monitor"),
     }),
-    [orbit, flight, mission, roll],
+    [orbit, flight, mission, roll, downrangeM, descentClockUs, procedure.completedStepIds],
   );
 
   const scriptTerminated = escalation.scriptTerminated || aborted;
@@ -974,6 +1023,7 @@ export function usePlaySession(
               sinceIgnitionUs: descentClockUs,
               altitudeM: orbit.altitudeM,
               burning: flight.mainEngine !== "off",
+              rangeToLzM: downrangeM,
             },
             acknowledgedCallouts,
           )
@@ -985,6 +1035,7 @@ export function usePlaySession(
       orbit.altitudeM,
       flight.mainEngine,
       acknowledgedCallouts,
+      downrangeM,
     ],
   );
 
@@ -1026,6 +1077,7 @@ export function usePlaySession(
     secondsToAbort: secondsToAbort(escalation),
     scriptTerminated,
     aborted,
+    highGateStatus: currentHighGateStatus,
     actions,
 
   };

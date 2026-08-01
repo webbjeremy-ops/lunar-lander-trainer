@@ -31,7 +31,7 @@ function keys(
       kind: "key",
       code: c,
       missionTimeUs: t,
-      gates: { engineArmed, sinceIgnitionUs: 900 * 1_000_000 },
+      gates: { engineArmed, sinceIgnitionUs: 900 * 1_000_000, highGateReady: true },
     });
   return s;
 }

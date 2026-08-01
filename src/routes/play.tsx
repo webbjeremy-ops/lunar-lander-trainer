@@ -466,6 +466,7 @@ function PlayClient() {
               step={session.step}
               manual={session.manualUnlocked}
               sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
+              highGateReady={session.highGateStatus === "ready"}
             />
           )}
           <HoustonOverlay

@@ -21,6 +21,7 @@ export function ProcedureCoach({
   step,
   manual,
   sinceIgnitionSec = Number.POSITIVE_INFINITY,
+  highGateReady = true,
   onDismiss,
 }: {
   script: DskyProcedureScript;
@@ -29,6 +30,7 @@ export function ProcedureCoach({
   manual: boolean;
   /** Descent-clock time, so timeline-gated steps are coached in flight order. */
   sinceIgnitionSec?: number;
+  highGateReady?: boolean;
   onDismiss?: () => void;
 }) {
   const stepId = step?.id ?? null;
@@ -50,6 +52,7 @@ export function ProcedureCoach({
   ) {
     return null;
   }
+  if (step.requiresHighGate === true && !highGateReady) return null;
 
   const dismiss = () => {
     setDismissedStep(stepId);

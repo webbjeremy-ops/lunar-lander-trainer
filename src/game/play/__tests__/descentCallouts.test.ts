@@ -46,6 +46,7 @@ describe("descent callouts", () => {
       sinceIgnitionUs: 560 * S,
       altitudeM: 900,
       burning: true,
+      rangeToLzM: 5_000,
     }).map((c) => c.id);
     const order = APOLLO11_DESCENT_CALLOUTS.map((c) => c.id);
     expect(fired).toEqual(order.slice(0, fired.length));
@@ -54,13 +55,34 @@ describe("descent callouts", () => {
 
   it("makes a call anyway once the geometry grace period expires", () => {
     const fired = triggeredCallouts({
-      // Shallow trajectory: still high at high-gate time, but the clock wins
-      // after the grace window so the script cannot stall.
+      // Shallow trajectory: high gate is a geometry gate, so the historical
+      // script must stall rather than claiming P64 on the wrong trajectory.
       sinceIgnitionUs: (514 + 46) * S,
       altitudeM: 9_000,
       burning: true,
+      rangeToLzM: 7_000,
+    }).map((c) => c.id);
+    expect(fired).not.toContain("high-gate");
+  });
+
+  it("fires high gate only when time and geometry agree", () => {
+    const fired = triggeredCallouts({
+      sinceIgnitionUs: 506 * S,
+      altitudeM: 7_600 * 0.3048,
+      burning: true,
+      rangeToLzM: 4.1 * 1852,
     }).map((c) => c.id);
     expect(fired).toContain("high-gate");
+  });
+
+  it("does not claim P64 after the landing zone has been crossed", () => {
+    const fired = triggeredCallouts({
+      sinceIgnitionUs: 560 * S,
+      altitudeM: 1_000,
+      burning: true,
+      rangeToLzM: -1,
+    }).map((c) => c.id);
+    expect(fired).not.toContain("high-gate");
   });
 
   it("moves to the next call once acknowledged", () => {

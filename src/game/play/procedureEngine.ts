@@ -26,6 +26,8 @@ export interface ProcedureGates {
   readonly alarmActive?: boolean;
   /** Microseconds since ignition on the descent-sequence clock. */
   readonly sinceIgnitionUs?: number;
+  /** True only when the shared P63→P64 time-and-geometry gate is ready. */
+  readonly highGateReady?: boolean;
 }
 
 export type ProcedureEvent =
@@ -212,6 +214,21 @@ export function reduceProcedure(
         stepId: step.id,
         outcome: "incorrect",
         message: "Step keyed before its point in the descent timeline",
+      }),
+    };
+  }
+
+  if (step.requiresHighGate === true && event.gates?.highGateReady !== true) {
+    return {
+      ...state,
+      lastMessage:
+        "P64 gate not available — remain in P63 until high-gate time and geometry agree. " +
+        "If the landing zone is already behind you, follow Houston's correction or abort call.",
+      log: push(state.log, {
+        missionTimeUs: event.missionTimeUs,
+        stepId: step.id,
+        outcome: "incorrect",
+        message: "P64 refused — high-gate geometry not satisfied",
       }),
     };
   }
