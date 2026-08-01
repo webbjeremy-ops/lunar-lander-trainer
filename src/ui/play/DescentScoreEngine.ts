@@ -61,6 +61,8 @@ export class DescentScoreEngine {
   private pulseTimer: number | null = null;
   private melodyTimer: number | null = null;
   private melodyStep = 0;
+  private currentChordName: string | null = null;
+
   private layers: ScoreLayers = scoreLayers(0);
 
   private volume = 0.7;
