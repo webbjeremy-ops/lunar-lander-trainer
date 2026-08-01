@@ -61,8 +61,8 @@ export function ManeuverPlannerPanel({
   onCutoff: () => void;
 }) {
   const showGuided = assistance !== "commander";
-  const showPhasing =
-    showGuided && scenario.availableControls.includes("phasing-planner");
+  const showPhasing = showGuided && scenario.targetVehicleState !== null;
+
 
   const countdownS = useMemo(
     () => (node === null ? null : (node.ignitionTimeUs - missionTimeUs) / 1_000_000),
