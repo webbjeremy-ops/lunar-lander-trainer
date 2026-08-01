@@ -323,10 +323,11 @@ function referenceAltitudeM(
 }
 
 function rollLabel(rollDeg: number): string {
-  if (rollDeg <= 5) return "WINDOWS UP";
-  if (rollDeg >= 175) return "WINDOWS DOWN";
+  if (rollDeg <= 5) return "WINDOWS UP \u00b7 RADAR AT SURFACE";
+  if (rollDeg >= 175) return "WINDOWS DOWN \u00b7 CREW FACING SPACE";
   return `ROLLING ${rollDeg.toFixed(0)}\u00b0`;
 }
+
 
 function cwLabelColor(rollDeg: number): string {
   if (rollDeg <= 5) return "#41e08a";
