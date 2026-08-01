@@ -150,7 +150,7 @@ function drawWindow(
   y0: number,
   w: number,
   h: number,
-  { flight, orbit, downrangeM, mission, limits }: DrawArgs,
+  { flight, orbit, downrangeM, mission, limits, manual }: DrawArgs,
 ) {
   ctx.save();
   ctx.translate(x0, y0);
@@ -162,8 +162,14 @@ function drawWindow(
   ctx.fillStyle = "#05070a";
   ctx.fillRect(0, 0, w, h);
 
-  const pitch = flight.attitudeRad; // 0 = thrust up = looking level-ish
-  const horizonY = h * 0.36 + pitch * h * 0.35;
+  // Historical attitude: pitched back near 90 deg through braking (windows off
+  // the surface), pitch-over at high gate, near upright at low gate.
+  const phase = descentPhaseFor(orbit.altitudeM);
+  const pitch = displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual);
+  // At 90 deg from vertical the crew is looking at space: the horizon drops
+  // out of the bottom of the window. Upright brings it back up.
+  const horizonY = h * 0.36 + (pitch / (Math.PI / 2)) * h * 0.95;
+
 
   // Regolith.
   const grad = ctx.createLinearGradient(0, horizonY, 0, h);
