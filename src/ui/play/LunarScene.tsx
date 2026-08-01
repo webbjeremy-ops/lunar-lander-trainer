@@ -255,7 +255,18 @@ function drawWindow(
   ctx.fillStyle = "#9ca3af";
   ctx.font = "10px ui-monospace, monospace";
   ctx.fillText("COMMANDER'S WINDOW · LPD", 10, 16);
+  ctx.fillStyle = phase.id === "braking" ? "#fbbf24" : "#41e08a";
+  ctx.fillText(`${phase.label} · ${(pitch * 180) / Math.PI | 0}° FROM VERTICAL`, 10, 30);
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "9px ui-monospace, monospace";
+  ctx.fillText(phase.windowView, 10, 42);
+  if (horizonY > h - 4) {
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "11px ui-monospace, monospace";
+    ctx.fillText("SURFACE BELOW THE WINDOW SILL", 10, h / 2);
+  }
   ctx.restore();
+
 }
 
 function drawHazard(
