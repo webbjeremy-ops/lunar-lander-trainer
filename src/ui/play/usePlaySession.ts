@@ -263,17 +263,26 @@ export function usePlaySession(
         k === "ArrowRight" || k === " "
       ) {
         e.preventDefault();
+        // OS key-repeat must never re-trigger edge actions (it made the
+        // engine toggle flicker and delayed the felt response).
+        if (e.repeat) return;
         heldRef.current.add(k);
         if (k === " ") engineRef.current = !engineRef.current;
+        // Immediate throttle nudge on press so the first frame already moves,
+        // instead of waiting for the ramp integrator to build up.
+        if (k === "ArrowUp") throttleRef.current = clamp01(throttleRef.current + 0.03);
+        if (k === "ArrowDown") throttleRef.current = clamp01(throttleRef.current - 0.03);
       } else if (k === "," || k === ".") {
         e.preventDefault();
         rodTargetRef.current += (k === "," ? -1 : 1) * ROD_INCREMENT_MPS;
       } else if (k === "r" || k === "R") {
         // M4.8 — hold R to roll toward windows-up.
         e.preventDefault();
+        if (e.repeat) return;
         dispatchRoll({ kind: "roll", active: true });
       }
     };
+
     const up = (e: KeyboardEvent) => {
       heldRef.current.delete(e.key);
       if (e.key === "r" || e.key === "R") dispatchRoll({ kind: "roll", active: false });
@@ -348,8 +357,8 @@ export function usePlaySession(
       if (manual) {
         // Held-key integration (also used by touch buttons via heldRef).
         const held = heldRef.current;
-        if (held.has("ArrowUp")) throttleRef.current += 0.9 * STEP_S;
-        if (held.has("ArrowDown")) throttleRef.current -= 0.9 * STEP_S;
+        if (held.has("ArrowUp")) throttleRef.current += 1.8 * STEP_S;
+        if (held.has("ArrowDown")) throttleRef.current -= 1.8 * STEP_S;
         let att = 0;
         if (held.has("ArrowLeft")) att -= 1;
         if (held.has("ArrowRight")) att += 1;
