@@ -26,6 +26,7 @@ import {
 import {
   angleForRange,
   bridgedAlarmFor,
+  activeCallout,
   bridgedRequestFor,
   createDescentRollState,
   createIgnitionState,
@@ -123,6 +124,8 @@ export interface PlaySessionApi {
   readonly radarAvailable: boolean;
   readonly alarms: ProgramAlarmState;
   readonly bridgedAlarm: BridgedAlarmOverlay | null;
+  /** M4.13 — the crew callout the cockpit should be showing, if any. */
+  readonly callout: DescentCallout | null;
   readonly actions: {
     readonly setRunning: (v: boolean) => void;
     readonly setTimeScale: (v: number) => void;
@@ -140,6 +143,8 @@ export interface PlaySessionApi {
     readonly startIgnitionCountdown: () => void;
     /** Hold to roll the vehicle toward windows-up (M4.8). */
     readonly setRollCommand: (active: boolean) => void;
+    /** Acknowledge ("copy that") the currently displayed crew callout. */
+    readonly acknowledgeCallout: (id: string) => void;
   };
 }
 
