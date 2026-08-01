@@ -17,6 +17,7 @@ import {
   buildLandmarks,
   dustDensity,
   horizonY,
+  nearFieldPocks,
   projectSurfacePoint,
   shadowEnvelope,
   type SurfaceLandmark,
@@ -200,6 +201,18 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
 
   const rangeToGoM = Math.abs(a.downrangeM);
+
+  // Near-field regolith texture, so the ground reads as moving even in a hover.
+  if (alt < 3_000) {
+    for (const pock of nearFieldPocks(rangeToGoM)) {
+      const aheadM = rangeToGoM - pock.trackRangeM;
+      const p = projectSurfacePoint(aheadM, pock.lateralM, proj);
+      if (!p.visible) continue;
+      const rx = pock.radiusM * p.scale;
+      if (rx < 0.8 || p.x < -40 || p.x > w + 40 || p.y < top || p.y > h + 40) continue;
+      drawLandmark(ctx, p.x, p.y, rx, pock);
+    }
+  }
 
   // Landmarks: far to near so nearer features overpaint.
   for (const mark of a.landmarks) {
