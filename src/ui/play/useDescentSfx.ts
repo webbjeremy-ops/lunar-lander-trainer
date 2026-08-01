@@ -19,6 +19,8 @@ export interface DescentSfxInput {
   /** Footpad probes have touched. */
   readonly contact: boolean;
   readonly running: boolean;
+  /** 0..1 master multiplier; drops while a mission recording is playing. */
+  readonly duck?: number;
 }
 
 export function useDescentSfx(input: DescentSfxInput): void {
@@ -59,7 +61,7 @@ export function useDescentSfx(input: DescentSfxInput): void {
   useEffect(() => {
     const engine = engineRef.current;
     if (!engine || !input.enabled) return;
-    engine.setVolume(input.running ? 0.85 : 0.3);
+    engine.setVolume((input.running ? 0.85 : 0.3) * (input.duck ?? 1));
     engine.setEngine(input.throttle, input.engineOn);
 
     if (input.engineOn && !prevEngineOn.current) {
@@ -72,7 +74,7 @@ export function useDescentSfx(input: DescentSfxInput): void {
     }
     prevEngineOn.current = input.engineOn;
     prevThrottle.current = input.throttle;
-  }, [input.enabled, input.throttle, input.engineOn, input.running]);
+  }, [input.enabled, input.throttle, input.engineOn, input.running, input.duck]);
 
   // Master alarm.
   useEffect(() => {
