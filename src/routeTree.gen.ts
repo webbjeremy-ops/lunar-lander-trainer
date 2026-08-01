@@ -19,6 +19,7 @@ import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlayOrbitRouteImport } from './routes/play_.orbit'
 import { Route as PlayAscentRouteImport } from './routes/play_.ascent'
 import { Route as DevMissionRuntimeRouteImport } from './routes/dev.mission-runtime'
 import { Route as DevLmPhysicsRouteImport } from './routes/dev.lm-physics'
@@ -74,6 +75,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PlayOrbitRoute = PlayOrbitRouteImport.update({
+  id: '/play_/orbit',
+  path: '/play/orbit',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayAscentRoute = PlayAscentRouteImport.update({
   id: '/play_/ascent',
   path: '/play/ascent',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
   '/play/ascent': typeof PlayAscentRoute
+  '/play/orbit': typeof PlayOrbitRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -126,6 +133,7 @@ export interface FileRoutesByTo {
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
   '/play/ascent': typeof PlayAscentRoute
+  '/play/orbit': typeof PlayOrbitRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -143,6 +151,7 @@ export interface FileRoutesById {
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
   '/play_/ascent': typeof PlayAscentRoute
+  '/play_/orbit': typeof PlayOrbitRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
     | '/play/ascent'
+    | '/play/orbit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
     | '/play/ascent'
+    | '/play/orbit'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
     | '/play_/ascent'
+    | '/play_/orbit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -210,6 +222,7 @@ export interface RootRouteChildren {
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
   DevMissionRuntimeRoute: typeof DevMissionRuntimeRoute
   PlayAscentRoute: typeof PlayAscentRoute
+  PlayOrbitRoute: typeof PlayOrbitRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -284,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/play_/orbit': {
+      id: '/play_/orbit'
+      path: '/play/orbit'
+      fullPath: '/play/orbit'
+      preLoaderRoute: typeof PlayOrbitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/play_/ascent': {
       id: '/play_/ascent'
       path: '/play/ascent'
@@ -330,6 +350,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevLmPhysicsRoute: DevLmPhysicsRoute,
   DevMissionRuntimeRoute: DevMissionRuntimeRoute,
   PlayAscentRoute: PlayAscentRoute,
+  PlayOrbitRoute: PlayOrbitRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
