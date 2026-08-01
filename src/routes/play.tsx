@@ -220,7 +220,7 @@ function PlayClient() {
     {
       id: "roll",
       legend: "Att Roll",
-      on: session.roll.phase !== "complete",
+      on: session.roll.phase !== "windows-up",
       tone: "caution" as const,
       title: "Vehicle is not yet windows-up; roll to 0° for radar and visibility.",
     },
