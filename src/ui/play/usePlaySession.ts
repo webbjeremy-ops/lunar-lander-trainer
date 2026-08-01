@@ -168,6 +168,11 @@ export interface PlaySessionApi {
     readonly setRollCommand: (active: boolean) => void;
     /** Acknowledge ("copy that") the currently displayed crew callout. */
     readonly acknowledgeCallout: (id: string) => void;
+    /** Acknowledge an improvised Houston caution. */
+    readonly acknowledgeHouston: (id: string) => void;
+    /** M4.18 — ABORT STAGE: jettison the descent stage, fly the ascent engine. */
+    readonly abortStage: () => void;
+
   };
 }
 
