@@ -32,6 +32,7 @@ import {
   createProcedureState,
   createProgramAlarmState,
   currentStep,
+  descentMonitorFor,
   downrangeToLandingZoneM,
   formatTig,
   LANDING_LIMITS,
@@ -52,6 +53,7 @@ import {
   type BridgedDskyRequest,
   type ControlModeId,
   type DescentRollState,
+  type DescentMonitorView,
   type FlightSummary,
   type IgnitionSequenceState,
   type MissionDefinition,
@@ -113,6 +115,8 @@ export interface PlaySessionApi {
   readonly ignition: IgnitionSequenceState;
   readonly ignitionClock: string;
   readonly bridgedDskyRequest: BridgedDskyRequest | null;
+  /** M4.12 — bridged descent-monitor registers (R1/R2/R3) in Apollo units. */
+  readonly descentMonitor: DescentMonitorView;
   /** M4.8 — windows-up roll state and live program alarms. */
   readonly roll: DescentRollState;
   readonly rollActive: boolean;
@@ -132,6 +136,8 @@ export interface PlaySessionApi {
     readonly setEngine: (on: boolean) => void;
     readonly trimRod: (steps: number) => void;
     readonly setEngineArm: (on: boolean) => void;
+    /** M4.12 — arm the PDI countdown directly (T-60) from the cockpit. */
+    readonly startIgnitionCountdown: () => void;
     /** Hold to roll the vehicle toward windows-up (M4.8). */
     readonly setRollCommand: (active: boolean) => void;
   };
@@ -656,9 +662,28 @@ export function usePlaySession(
       setEngine: (on: boolean) => { engineRef.current = on; },
       trimRod: (steps: number) => { rodTargetRef.current += steps * ROD_INCREMENT_MPS; },
       setEngineArm: (on: boolean) => { dispatchIgnition({ kind: "arm", on }); },
+      startIgnitionCountdown: () => {
+        if (ignitionRef.current.phase !== "standby") return;
+        dispatchIgnition({ kind: "start" });
+        setRunning(true);
+      },
       setRollCommand: (active: boolean) => { dispatchRoll({ kind: "roll", active }); },
     }),
     [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
+  );
+
+  const descentMonitor = useMemo(
+    () =>
+      descentMonitorFor({
+        altitudeM: orbit.altitudeM,
+        radialSpeedMps: orbit.radialSpeedMps,
+        tangentialSpeedMps: orbit.tangentialSpeedMps,
+        tigOffsetUs: ignition.tigOffsetUs,
+        sinceIgnitionUs: ignition.sinceIgnitionUs,
+        burning: flight.mainEngine !== "off" || ignition.phase === "burning",
+        terminal: flight.terminalState !== null,
+      }),
+    [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
 
   return {
@@ -681,6 +706,7 @@ export function usePlaySession(
     ignition,
     ignitionClock: formatTig(ignition),
     bridgedDskyRequest: bridgedRequestFor(ignition),
+    descentMonitor,
     roll,
     rollActive: roll.commanded,
     radarAvailable: radarAvailable(roll),
