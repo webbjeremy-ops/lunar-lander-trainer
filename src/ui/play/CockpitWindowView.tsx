@@ -392,13 +392,18 @@ function drawLpdReticle(
 }
 
 function drawFrame(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  // Outer structure.
+  // Outer structure: everything outside the aperture is cockpit skin.
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, w, h);
   windowPath(ctx, 0, 0, w, h, true);
+  ctx.clip("evenodd");
   ctx.fillStyle = "#1b1d1c";
-  ctx.fill("evenodd");
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+
+  ctx.save();
+
 
   // Bevelled inner sill.
   windowPath(ctx, 0, 0, w, h);
