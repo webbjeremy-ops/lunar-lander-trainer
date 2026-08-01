@@ -144,7 +144,20 @@ function PlayClient() {
     terminal: session.flight.terminalState !== null,
     running: session.running,
   });
+
+  // M4.26 — cockpit sound effects share the score's on/off state: DPS bed and
+  // ignition swell from the live throttle, master alarm from the 1201/1202
+  // lamp, contact chime from the footpad probes.
+  useDescentSfx({
+    enabled: musicScore.enabled,
+    throttle: session.controls.throttle,
+    engineOn: session.controls.engineOn,
+    alarmActive: session.alarms.lampOn,
+    contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
+    running: session.running,
+  });
   const agc = useAgcSession();
+
 
   const onDskyKey = session.actions.onDskyKey;
   const handleKey = useCallback((code: number | "PRO") => onDskyKey(code), [onDskyKey]);
