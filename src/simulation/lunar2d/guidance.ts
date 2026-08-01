@@ -60,7 +60,7 @@ const BRAKING_SPEED_TAU_S = 20;
 const APPROACH_CLOSING_ACCEL = 0.6;
 /** Schedule catch-up trim: time constant and authority limit. */
 const SCHEDULE_TRIM_TAU_S = 30;
-const SCHEDULE_TRIM_MAX_MPS2 = 0.8;
+const SCHEDULE_TRIM_MAX_MPS2 = 0.35;
 /** Time constant for the approach-phase downrange velocity loop, seconds. */
 const APPROACH_TAU_S = 8;
 /** Vertical error is flown out on this time constant after high gate, seconds. */
