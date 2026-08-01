@@ -502,24 +502,56 @@ function PlayClient() {
             onAcknowledge={session.actions.acknowledgeCallout}
           />
 
-          <LunarScene
-            flight={session.flight}
-            orbit={session.orbit}
-            downrangeM={session.downrangeM}
-            mission={mission}
-            limits={limits}
-            manual={session.manualUnlocked}
-            rollDeg={session.roll.rollDeg}
-            sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
-            p64Selected={
-              // Pitch-over is withheld until the crew takes the approach
-              // program on the DSKY (V06 N64), unless this script has no P64
-              // step or the player is already flying P66.
+          {(() => {
+            // Pitch-over is withheld until the crew takes the approach
+            // program on the DSKY (V06 N64), unless this script has no P64
+            // step or the player is already flying P66.
+            const p64Selected =
               !session.script.steps.some((s) => s.id === "p64-monitor") ||
               session.procedure.completedStepIds.includes("p64-monitor") ||
-              session.manualUnlocked
-            }
-          />
+              session.manualUnlocked;
+            const windowAvailable = p64Selected;
+            return (
+              <div className="relative">
+                {windowAvailable && (
+                  <button
+                    type="button"
+                    onClick={() => setFirstPerson((v) => !v)}
+                    data-testid="view-toggle"
+                    className="absolute right-2 top-2 z-10 rounded border border-neutral-700 bg-neutral-900/85 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-300 hover:border-neutral-500"
+                  >
+                    {firstPerson ? "Profile view" : "Window view"}
+                  </button>
+                )}
+                {firstPerson && windowAvailable ? (
+                  <CockpitWindowView
+                    flight={session.flight}
+                    orbit={session.orbit}
+                    downrangeM={session.downrangeM}
+                    mission={mission}
+                    manual={session.manualUnlocked}
+                    rollDeg={session.roll.rollDeg}
+                    p64Selected={p64Selected}
+                  />
+                ) : (
+                  <LunarScene
+                    flight={session.flight}
+                    orbit={session.orbit}
+                    downrangeM={session.downrangeM}
+                    mission={mission}
+                    limits={limits}
+                    manual={session.manualUnlocked}
+                    rollDeg={session.roll.rollDeg}
+                    sinceIgnitionSec={
+                      session.descentClock.sinceIgnitionUs / 1_000_000
+                    }
+                    p64Selected={p64Selected}
+                  />
+                )}
+              </div>
+            );
+          })()}
+
           <FlightInstruments
             flight={session.flight}
             orbit={session.orbit}
