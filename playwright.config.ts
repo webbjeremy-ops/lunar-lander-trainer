@@ -19,10 +19,11 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${PORT}`,
     viewport: { width: 1280, height: 1800 },
     trace: "retain-on-failure",
-    launchOptions: {
-      executablePath:
-        process.env.PW_CHROMIUM ?? "/chromium-1194/chrome-linux/chrome",
-    },
+    // Resolve Chromium from PLAYWRIGHT_BROWSERS_PATH by default; only override
+    // when PW_CHROMIUM explicitly points at a binary.
+    launchOptions: process.env.PW_CHROMIUM
+      ? { executablePath: process.env.PW_CHROMIUM }
+      : {},
   },
 
   webServer: {
