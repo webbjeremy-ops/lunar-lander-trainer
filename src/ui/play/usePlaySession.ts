@@ -400,7 +400,7 @@ export function usePlaySession(
       // The vehicle coasts through the PDI countdown, so the clock runs as
       // soon as the countdown is armed — not only after PROCEED.
       const countdownRunning = ignitionRef.current.phase !== "standby";
-      if (!proc.flightLockReleased && !countdownRunning) {
+      if (!proc.flightLockReleased && !countdownRunning && !abortedRef.current) {
         accumulatorUs = 0;
         return;
       }
