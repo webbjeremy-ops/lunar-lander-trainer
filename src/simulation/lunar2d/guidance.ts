@@ -48,7 +48,7 @@ const BRAKING_MAX_SINK_MPS = 45;
  * Once the stopping law needs more than this deceleration the vehicle is late
  * braking, and it takes priority over the nominal speed profile, m/s².
  */
-const BRAKING_STOP_OVERRIDE_MPS2 = 2;
+const BRAKING_STOP_OVERRIDE_MPS2 = 2.8;
 /** Braking-phase downrange velocity loop time constant, seconds. */
 const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
