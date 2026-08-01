@@ -11,6 +11,7 @@ import {
   ROLL_RATE_DEG_PER_SEC,
   WINDOWS_UP_TOLERANCE_DEG,
   rollProgress,
+  startsWindowsUp,
   type DescentRollState,
 } from "../descentRoll";
 
