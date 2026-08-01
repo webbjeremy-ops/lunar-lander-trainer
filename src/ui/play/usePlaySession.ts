@@ -28,7 +28,12 @@ import {
   bridgedAlarmFor,
   activeCallout,
   bridgedRequestFor,
+  createDescentClockState,
   createDescentRollState,
+  descentClockStatusLabel,
+  formatDescentClock,
+  stepDescentClock,
+  type DescentClockState,
   createIgnitionState,
   createProcedureState,
   createProgramAlarmState,
@@ -116,6 +121,10 @@ export interface PlaySessionApi {
   /** M4.7 — PDI ignition ritual (countdown, ENG ARM, V99 request, FTP). */
   readonly ignition: IgnitionSequenceState;
   readonly ignitionClock: string;
+  /** M4.13B — descent-sequence clock driving roll cue, callouts and alarms. */
+  readonly descentClock: DescentClockState;
+  readonly descentClockLabel: string;
+  readonly descentClockStatus: string;
   readonly bridgedDskyRequest: BridgedDskyRequest | null;
   /** M4.12 — bridged descent-monitor registers (R1/R2/R3) in Apollo units. */
   readonly descentMonitor: DescentMonitorView;
@@ -186,12 +195,16 @@ export function usePlaySession(
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
   const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
   /**
-   * Ignition-relative descent clock. Normally the PDI sequence drives it, but
-   * it falls back to the first burning step so the roll cue, the crew callouts
-   * and the 1201/1202 alarms still occur if the player skipped the ritual.
+   * M4.13B — Ignition-relative descent clock, owned by a pure state machine
+   * (`stepDescentClock`). Normally the PDI sequence drives it; otherwise it
+   * free-runs from the first descent step so the roll cue, the crew callouts
+   * and the 1201/1202 alarms are never silently skipped.
    */
-  const descentClockRef = useRef(0);
-  const [descentClockUs, setDescentClockUs] = useState(0);
+  const descentClockRef = useRef<DescentClockState>(createDescentClockState());
+  const [descentClock, setDescentClock] = useState<DescentClockState>(
+    createDescentClockState,
+  );
+  const descentClockUs = descentClock.sinceIgnitionUs;
   // The Apollo 11 mission always flies the historical roll / alarm / callout
   // timeline, whatever control mode the player picked — the alarms are part of
   // the flight, not part of the DSKY procedure script.
@@ -286,8 +299,8 @@ export function usePlaySession(
     alarmsRef.current = a;
     setAlarms(a);
     setAcknowledgedCallouts([]);
-    descentClockRef.current = 0;
-    setDescentClockUs(0);
+    descentClockRef.current = createDescentClockState();
+    setDescentClock(descentClockRef.current);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -372,22 +385,19 @@ export function usePlaySession(
         steps += 1;
         if (state.terminalState !== null) break;
         if (countdownRunning) dispatchIgnition({ kind: "tick", dtUs: STEP_US });
-        // M4.8/M4.13 — roll, alarms and crew callouts run on ignition-relative
-        // time. If the player never answered the flashing V99 (or flew a mode
-        // without the PDI ritual) the descent still happens, so a fallback
-        // clock starts at the first burning step: the historical sequence must
-        // never be silently skipped.
-        if (ignitionRef.current.sinceIgnitionUs > 0) {
-          descentClockRef.current = ignitionRef.current.sinceIgnitionUs;
-        } else if (
-          state.mainEngine !== "off" ||
-          ignitionRef.current.phase === "aborted" ||
-          ignitionRef.current.tigOffsetUs <= 0 ||
-          descentClockRef.current > 0
-        ) {
-          descentClockRef.current += STEP_US;
-        }
-        const sinceIgnitionUs = descentClockRef.current;
+        // M4.13B — roll, alarms and crew callouts run on ignition-relative
+        // time from one pure state machine, so every entry path into the
+        // descent (ritual, skipped ritual, abort, auto-guidance) drives the
+        // historical sequence.
+        descentClockRef.current = stepDescentClock(descentClockRef.current, {
+          ritualSinceIgnitionUs: ignitionRef.current.sinceIgnitionUs,
+          countdownArmed: countdownRunning,
+          countdownAborted: ignitionRef.current.phase === "aborted",
+          engineBurning: state.mainEngine !== "off",
+          flightLockReleased: proc.flightLockReleased,
+          stepUs: STEP_US,
+        });
+        const sinceIgnitionUs = descentClockRef.current.sinceIgnitionUs;
         if (sinceIgnitionUs > 0) {
           dispatchRoll({ kind: "tick", dtUs: STEP_US, sinceIgnitionUs });
           if (apollo11Timeline) {
@@ -407,7 +417,7 @@ export function usePlaySession(
       if (steps > 0) {
         flightRef.current = state;
         setFlight(state);
-        setDescentClockUs(descentClockRef.current);
+        setDescentClock(descentClockRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
     };
@@ -774,6 +784,9 @@ export function usePlaySession(
     gamepadConnected,
     ignition,
     ignitionClock: formatTig(ignition),
+    descentClock,
+    descentClockLabel: formatDescentClock(descentClock),
+    descentClockStatus: descentClockStatusLabel(descentClock),
     bridgedDskyRequest: bridgedRequestFor(ignition),
     descentMonitor,
     roll,
