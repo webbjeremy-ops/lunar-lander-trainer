@@ -364,7 +364,6 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
         {phase !== "error" && (
           <div
             data-testid="dsky-boot-strip"
-            aria-live="off"
             className="mb-3 flex min-h-[2.25rem] items-center gap-2 rounded border border-neutral-800 bg-black/40 px-2 py-2 text-xs text-neutral-400"
           >
             <span
