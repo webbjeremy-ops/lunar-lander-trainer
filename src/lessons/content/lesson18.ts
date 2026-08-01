@@ -50,7 +50,7 @@ export const LESSON_18_SAVE_THE_PERIAPSIS: LessonDefinition = {
         assistance: "instructor",
         controlMode: "maneuver-planner",
         passingScore: 60,
-        route: "/play/orbit",
+        route: "/play",
       },
     },
   ],

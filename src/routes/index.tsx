@@ -41,13 +41,6 @@ const PILLARS: readonly Pillar[] = [
     testId: "pillar-descent",
   },
   {
-    to: "/play/ascent",
-    title: "Launch from the Moon",
-    body: "Stage off the descent stage, hold the vertical rise, pitch over, and cut off into a real elliptical lunar orbit — with apsis markers and a live coast arc.",
-    cta: "Open the ascent cockpit",
-    testId: "pillar-ascent",
-  },
-  {
     to: "/learn",
     title: "Learn Rocket Physics",
     body: "Sixteen lessons across four tracks: why the lander falls, thrust-to-weight, the rocket equation, and why an orbit is just continuous free fall.",

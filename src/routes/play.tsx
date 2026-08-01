@@ -86,7 +86,6 @@ function PlayPage() {
         <p className="mt-1 text-xs text-neutral-200/80">
           Fly the descent with the real Apollo Guidance Computer beside you.{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/missions">All missions</Link> ·{" "}
-          <Link className="text-emerald-200 underline underline-offset-2" to="/play/ascent">Lunar ascent</Link> ·{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/sim">AGC Lab</Link> ·{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/learn">Learn</Link> ·{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/sources">Sources</Link>
