@@ -6,6 +6,15 @@
 // value is displayed as a flight quantity, and nothing here commands anything.
 
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
+import { useAppSettings } from "@/settings/SettingsProvider";
+import {
+  speedUnitLabel,
+  massUnitLabel,
+  M_PER_FT,
+  M_PER_NMI,
+  KG_PER_LB,
+} from "@/settings/units";
+
 import type {
   AscentGuidanceCue,
   AscentMissionDefinition,
