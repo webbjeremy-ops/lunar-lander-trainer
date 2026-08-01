@@ -235,17 +235,34 @@ export class DescentScoreEngine {
   }
 
   /**
-   * Under-melody: a slow rising organ ostinato in A minor with a suspended
-   * 4th — the Zimmer/"Interstellar" gesture. One note per step, each ringing
-   * long enough to overlap the next so the line stacks into a chord.
+   * Under-melody: A-minor organ line that evolves with the mission. Early on
+   * it is two sustained pedal tones; as tension builds it opens into a
+   * four-note figure and finally a running eight/twelve-note arpeggio with a
+   * shorter, more articulated attack — the Zimmer/"Interstellar" build.
    */
   private scheduleNextNote(): void {
     if (!this.started) return;
-    const stepMs = Math.max(320, this.layers.melodyNoteSec * 1000);
+    const stepMs = Math.max(280, this.layers.melodyNoteSec * 1000);
     this.melodyTimer = window.setTimeout(() => {
       this.tickNote();
       this.scheduleNextNote();
     }, stepMs);
+  }
+
+  /** Pattern for the current arpeggiation amount (Hz). */
+  private melodyPattern(arp: number): readonly number[] {
+    const A3 = 220.0;
+    const C4 = 261.63;
+    const D4 = 293.66;
+    const E4 = 329.63;
+    const G4 = 392.0;
+    const A4 = 440.0;
+    const C5 = 523.25;
+    const E5 = 659.25;
+    if (arp < 0.25) return [A3, E4]; // pedal: root and fifth
+    if (arp < 0.5) return [A3, E4, C4, G4]; // simple rocking figure
+    if (arp < 0.78) return [A3, C4, E4, G4, E4, C4]; // rising/falling arpeggio
+    return [A3, C4, E4, A4, C5, E5, C5, A4, E4, C4, D4, E4]; // full running line
   }
 
   private tickNote(): void {
@@ -253,16 +270,19 @@ export class DescentScoreEngine {
     const bus = this.melodyGain;
     if (!ctx || !bus || this.layers.melody <= 0) return;
 
-    // A minor with sus4 colour: A3 C4 D4 E4 G4 E4 D4 C4 (up then back down).
-    const SEQ = [220.0, 261.63, 293.66, 329.63, 392.0, 329.63, 293.66, 261.63];
-    const base = SEQ[this.melodyStep % SEQ.length]!;
+    const arp = this.layers.melodyArp;
+    const seq = this.melodyPattern(arp);
+    const base = seq[this.melodyStep % seq.length]!;
     this.melodyStep += 1;
 
     const now = ctx.currentTime;
-    const hold = Math.max(0.9, this.layers.melodyNoteSec * 1.6);
-    const level = 0.16 * this.layers.melody;
+    // Sustained and overlapping when simple; short and articulated when fast.
+    const overlap = 2.2 - 1.3 * arp;
+    const hold = Math.max(0.35, this.layers.melodyNoteSec * overlap);
+    const attack = 0.24 - 0.2 * arp;
+    const level = (0.16 - 0.05 * arp) * this.layers.melody;
 
-    // Organ voice: fundamental + octave + soft fifth, slow swell and release.
+    // Organ voice: fundamental + octave + soft fifth + sub.
     for (const [mult, weight] of [
       [1, 1],
       [2, 0.45],
@@ -274,13 +294,14 @@ export class DescentScoreEngine {
       osc.frequency.value = base * mult;
       const g = ctx.createGain();
       g.gain.setValueAtTime(0.0001, now);
-      g.gain.linearRampToValueAtTime(level * weight, now + 0.22);
+      g.gain.linearRampToValueAtTime(level * weight, now + Math.max(0.02, attack));
       g.gain.setTargetAtTime(0.0001, now + hold * 0.55, hold * 0.28);
       osc.connect(g).connect(bus);
       osc.start(now);
       osc.stop(now + hold + 0.6);
     }
   }
+
 
 
   /** One heartbeat: a short bass thud whose rate tracks tension. */
