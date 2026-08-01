@@ -33,6 +33,33 @@ export interface LunarGuidanceCue {
 const VERTICAL_TAU_S = 4;
 const HORIZONTAL_TAU_S = 12;
 const MAX_ADVISORY_TILT_RAD = 1.05; // ~60 degrees
+/**
+ * Braking-phase attitude authority. The real LM flew the braking phase with
+ * the thrust vector almost horizontal (pitch 80-88 degrees from local
+ * vertical), which is the only way the downrange velocity is killed inside the
+ * available range. The 60-degree cap above is a terminal-phase limit.
+ */
+const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
+/** Vertical error is flown out on this time constant during braking, seconds. */
+const BRAKING_ALTITUDE_TAU_S = 30;
+/** Sink-rate authority during braking, m/s. */
+const BRAKING_MAX_SINK_MPS = 45;
+
+/**
+ * Range-aware braking target. When the caller knows how far the vehicle still
+ * has to run to the landing zone, and what altitude the canonical descent
+ * profile wants at that range, guidance flies the trajectory ONTO that
+ * profile instead of merely nulling velocity where it happens to be — which
+ * is what let the vehicle sail tens of kilometres past the site.
+ */
+export interface BrakingTarget {
+  /** Range still to run to the landing zone along the surface, metres. */
+  readonly rangeToLandingZoneM: number;
+  /** Altitude the canonical profile wants at this range, metres. */
+  readonly targetAltitudeM: number;
+  /** Range at which the braking phase hands over to the approach phase. */
+  readonly handoverRangeM: number;
+}
 
 /**
  * Target sink-rate schedule: gentle near the surface, faster up high.
@@ -48,23 +75,52 @@ export function targetSinkRate(altitudeM: number): number {
 export function computeReferenceGuidance(
   state: Readonly<LunarFlightState>,
   parameters: Readonly<LunarFlightParameters> = DEFAULT_LUNAR_FLIGHT_PARAMETERS,
+  braking: BrakingTarget | null = null,
 ): LunarGuidanceCue {
   const orbit = computeOrbitalValues(state, parameters);
   const mass = totalMassKg(state);
   const mu = parameters.environment.gravitationalParameterM3S2.value;
   const localG = mu / (orbit.radiusM * orbit.radiusM);
 
-  const targetRadial = targetSinkRate(orbit.altitudeM);
+  // Braking phase: fly the canonical range/altitude profile.
+  const inBraking =
+    braking !== null &&
+    braking.rangeToLandingZoneM > braking.handoverRangeM &&
+    Math.abs(orbit.tangentialSpeedMps) > 5;
+
+  let targetRadial: number;
+  let aRadial: number;
+  let aHorizontal: number;
+  let tiltLimit = MAX_ADVISORY_TILT_RAD;
+
+  if (inBraking && braking !== null) {
+    // Deceleration that brings the downrange velocity to the approach-phase
+    // hand-over inside the range that is actually left to run.
+    const runoutM = Math.max(500, braking.rangeToLandingZoneM - braking.handoverRangeM);
+    const v = orbit.tangentialSpeedMps;
+    aHorizontal = -Math.sign(v) * ((v * v) / (2 * runoutM));
+
+    // Vertical: hold the profile altitude for the range still to run.
+    const altitudeError = braking.targetAltitudeM - orbit.altitudeM;
+    targetRadial = Math.max(
+      -BRAKING_MAX_SINK_MPS,
+      Math.min(5, altitudeError / BRAKING_ALTITUDE_TAU_S),
+    );
+    aRadial = localG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
+    tiltLimit = MAX_BRAKING_TILT_RAD;
+  } else {
+    targetRadial = targetSinkRate(orbit.altitudeM);
+    // Radial acceleration needed: cancel gravity, then drive the rate error out.
+    aRadial = localG + (targetRadial - orbit.radialSpeedMps) / VERTICAL_TAU_S;
+    // Horizontal acceleration needed: null the tangential velocity.
+    aHorizontal = -orbit.tangentialSpeedMps / HORIZONTAL_TAU_S;
+  }
+
   const radialError = orbit.radialSpeedMps - targetRadial;
 
-  // Radial acceleration needed: cancel gravity, then drive the rate error out.
-  const aRadial = localG + (targetRadial - orbit.radialSpeedMps) / VERTICAL_TAU_S;
-  // Horizontal acceleration needed: null the tangential velocity.
-  const aHorizontal = -orbit.tangentialSpeedMps / HORIZONTAL_TAU_S;
-
   let attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
-  if (attitude > MAX_ADVISORY_TILT_RAD) attitude = MAX_ADVISORY_TILT_RAD;
-  if (attitude < -MAX_ADVISORY_TILT_RAD) attitude = -MAX_ADVISORY_TILT_RAD;
+  if (attitude > tiltLimit) attitude = tiltLimit;
+  if (attitude < -tiltLimit) attitude = -tiltLimit;
 
   const requiredAccel = Math.hypot(aRadial, aHorizontal);
   const maxThrust =
@@ -82,6 +138,9 @@ export function computeReferenceGuidance(
   let advisory: string;
   if (state.terminalState !== null) {
     advisory = "Terminal state reached — guidance inactive.";
+  } else if (inBraking) {
+    advisory =
+      "Braking phase: thrust retrograde, flying the range/altitude profile to high gate.";
   } else if (orbit.altitudeM > 1_000) {
     advisory = "Braking phase: hold attitude against the velocity vector.";
   } else if (Math.abs(orbit.tangentialSpeedMps) > 2) {
