@@ -22,6 +22,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PlayAscentRouteImport } from './routes/play_.ascent'
 import { Route as DevMissionRuntimeRouteImport } from './routes/dev.mission-runtime'
 import { Route as DevLmPhysicsRouteImport } from './routes/dev.lm-physics'
+import { Route as DevAgcShadowRouteImport } from './routes/dev.agc-shadow'
 
 const SourcesRoute = SourcesRouteImport.update({
   id: '/sources',
@@ -88,6 +89,11 @@ const DevLmPhysicsRoute = DevLmPhysicsRouteImport.update({
   path: '/dev/lm-physics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevAgcShadowRoute = DevAgcShadowRouteImport.update({
+  id: '/dev/agc-shadow',
+  path: '/dev/agc-shadow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
+  '/dev/agc-shadow': typeof DevAgcShadowRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
   '/play/ascent': typeof PlayAscentRoute
@@ -115,6 +122,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
+  '/dev/agc-shadow': typeof DevAgcShadowRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
   '/play/ascent': typeof PlayAscentRoute
@@ -131,6 +139,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
+  '/dev/agc-shadow': typeof DevAgcShadowRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
   '/dev/mission-runtime': typeof DevMissionRuntimeRoute
   '/play_/ascent': typeof PlayAscentRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sim'
     | '/sources'
+    | '/dev/agc-shadow'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
     | '/play/ascent'
@@ -163,6 +173,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sim'
     | '/sources'
+    | '/dev/agc-shadow'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
     | '/play/ascent'
@@ -178,6 +189,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sim'
     | '/sources'
+    | '/dev/agc-shadow'
     | '/dev/lm-physics'
     | '/dev/mission-runtime'
     | '/play_/ascent'
@@ -194,6 +206,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
+  DevAgcShadowRoute: typeof DevAgcShadowRoute
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
   DevMissionRuntimeRoute: typeof DevMissionRuntimeRoute
   PlayAscentRoute: typeof PlayAscentRoute
@@ -292,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevLmPhysicsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dev/agc-shadow': {
+      id: '/dev/agc-shadow'
+      path: '/dev/agc-shadow'
+      fullPath: '/dev/agc-shadow'
+      preLoaderRoute: typeof DevAgcShadowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -306,6 +326,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
+  DevAgcShadowRoute: DevAgcShadowRoute,
   DevLmPhysicsRoute: DevLmPhysicsRoute,
   DevMissionRuntimeRoute: DevMissionRuntimeRoute,
   PlayAscentRoute: PlayAscentRoute,
