@@ -250,6 +250,14 @@ function LearnPage() {
   const step = lesson.steps[state.currentStepIndex] ?? null;
   const isInteractive = step?.kind === "interactive";
   const isComplete = state.status === "completed";
+  // The DSKY panel is only pertinent to lessons that actually drive the AGC.
+  // Non-AGC tracks keep the persistent session mounted (no worker churn) but
+  // never show the hardware panel.
+  const lessonUsesDsky = useMemo(
+    () => lesson.steps.some((s) => s.kind === "interactive"),
+    [lesson],
+  );
+
 
   // M4.2 — mirror lesson completion into local progress storage.
   useEffect(() => {
