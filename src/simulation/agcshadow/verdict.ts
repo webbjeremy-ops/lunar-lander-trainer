@@ -104,7 +104,9 @@ export const M4_6A_OBSERVED_RESULT: ShadowEvidenceV1 = {
       "PREREAD is reached only from BURN_BABY_BURN--MASTER_IGNITION_ROUTINE.agc:339-343 (REDO4.2) at TIG-30.",
       "That path needs TIG/TLAND/RLS and a valid state vector, whose erasable scaling is UNRESOLVED in-repo.",
       "PIPA counters increase monotonically under delivery and are never drained.",
+      "HW-I/O v4 seals the pad-load window after the first batch per AGC epoch, so the experimental batch cannot be combined with the frozen M3.3E coordinate bootstrap without a rebuild.",
     ],
+
   },
   navigationStateEvolved: false,
   guidanceQuantityEvolved: false,
