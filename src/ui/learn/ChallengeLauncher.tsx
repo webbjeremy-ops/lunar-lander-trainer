@@ -25,10 +25,12 @@ export function ChallengeLauncher({
     controlMode: challenge.controlMode,
     passingScore: challenge.passingScore,
   });
+  const route = challenge.route ?? "/play";
   return (
     <div className="flex flex-wrap items-center gap-3">
       <a
-        href={`/play?${search}`}
+        href={`${route}?${search}`}
+
         data-testid="lesson-fly-it"
         className="rounded border border-emerald-600 bg-emerald-950/40 px-3 py-2 font-mono text-xs uppercase tracking-widest text-emerald-300 hover:bg-emerald-900/40"
       >

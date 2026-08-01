@@ -64,9 +64,21 @@ export const LEARNING_TRACKS: readonly LearningTrack[] = [
     id: TRACK_ORBITAL,
     title: "Track 4 — Orbital Mechanics",
     blurb:
-      "Orbit as continuous free fall: speed against curvature, periapsis and apoapsis, and what liftoff has to buy back.",
-    lessonIds: ["lesson-15-orbit-is-free-fall", "lesson-16-prepare-for-liftoff"],
-    unlocksMissions: [],
+      "Orbit as continuous free fall: speed against curvature, periapsis and apoapsis, what liftoff has to buy back, and how to plan the manoeuvres that reshape an orbit.",
+    lessonIds: [
+      "lesson-15-orbit-is-free-fall",
+      "lesson-16-prepare-for-liftoff",
+      "lesson-17-reading-an-orbit",
+      "lesson-18-save-the-periapsis",
+      "lesson-19-circularizing",
+      "lesson-20-phasing-and-intercept",
+    ],
+    unlocksMissions: [
+      "save-the-periapsis",
+      "circularization-trainer",
+      "phasing-burn-trainer",
+      "apollo11-orbital-operations",
+    ],
   },
 ] as const;
 
@@ -105,7 +117,7 @@ export function recommendNextLesson(
 /** Mission ids unlocked by the completed-lesson set. */
 export function unlockedMissionsFor(completed: readonly string[]): readonly string[] {
   const done = new Set(completed);
-  const out = new Set<string>(["landing-fundamentals", "free-flight"]);
+  const out = new Set<string>(["landing-fundamentals", "free-flight", "orbit-fundamentals", "orbit-sandbox"]);
   for (const t of LEARNING_TRACKS) {
     // Partial credit: completing any lesson in a track unlocks its first
     // mission; completing all of them unlocks the rest.

@@ -158,7 +158,13 @@ export interface LessonChallengeSpec {
   readonly controlMode: string;
   /** Minimum mission score (points) that marks the challenge as passed. */
   readonly passingScore: number;
+  /**
+   * M5.0 — target cockpit route. Omitted means the M4.1 descent game at
+   * "/play"; orbital exercises use "/play/orbit".
+   */
+  readonly route?: string;
 }
+
 
 
 export interface LessonInteractiveStep {

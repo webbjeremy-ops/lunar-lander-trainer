@@ -15,6 +15,10 @@ export { LESSON_13_FLY_THE_TERMINAL_DESCENT } from "./lesson13";
 export { LESSON_14_PIPA_AND_LANDING_RADAR } from "./lesson14";
 export { LESSON_15_ORBIT_IS_FREE_FALL } from "./lesson15";
 export { LESSON_16_PREPARE_FOR_LIFTOFF } from "./lesson16";
+export { LESSON_17_READING_AN_ORBIT } from "./lesson17";
+export { LESSON_18_SAVE_THE_PERIAPSIS } from "./lesson18";
+export { LESSON_19_CIRCULARIZING } from "./lesson19";
+export { LESSON_20_PHASING_AND_INTERCEPT } from "./lesson20";
 
 import type { LessonDefinition } from "../types";
 import { LESSON_01_MEET_THE_AGC } from "./lesson01";
@@ -33,6 +37,10 @@ import { LESSON_13_FLY_THE_TERMINAL_DESCENT } from "./lesson13";
 import { LESSON_14_PIPA_AND_LANDING_RADAR } from "./lesson14";
 import { LESSON_15_ORBIT_IS_FREE_FALL } from "./lesson15";
 import { LESSON_16_PREPARE_FOR_LIFTOFF } from "./lesson16";
+import { LESSON_17_READING_AN_ORBIT } from "./lesson17";
+import { LESSON_18_SAVE_THE_PERIAPSIS } from "./lesson18";
+import { LESSON_19_CIRCULARIZING } from "./lesson19";
+import { LESSON_20_PHASING_AND_INTERCEPT } from "./lesson20";
 
 export const ALL_LESSONS: readonly LessonDefinition[] = [
   LESSON_01_MEET_THE_AGC,
@@ -51,6 +59,10 @@ export const ALL_LESSONS: readonly LessonDefinition[] = [
   LESSON_14_PIPA_AND_LANDING_RADAR,
   LESSON_15_ORBIT_IS_FREE_FALL,
   LESSON_16_PREPARE_FOR_LIFTOFF,
+  LESSON_17_READING_AN_ORBIT,
+  LESSON_18_SAVE_THE_PERIAPSIS,
+  LESSON_19_CIRCULARIZING,
+  LESSON_20_PHASING_AND_INTERCEPT,
 ];
 
 export function lessonById(id: string): LessonDefinition | null {
