@@ -300,6 +300,12 @@ function PlayClient() {
             Start PDI countdown (T−60)
           </button>
         )}
+        <span
+          data-testid="play-descent-clock"
+          className="rounded border border-neutral-800 bg-neutral-950 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-emerald-300"
+        >
+          {session.descentClockLabel} · {session.descentClockStatus}
+        </span>
         <button
           onClick={() => session.actions.restart()}
           data-testid="play-restart"
