@@ -259,3 +259,48 @@ export function dustDensity(altitudeM: number, throttle: number): number {
   const height = 1 - alt / DUST_ONSET_M;
   return Math.max(0, Math.min(1, height * height * Math.max(0.15, throttle)));
 }
+
+// ---------------------------------------------------------------------------
+// Near-field ground texture
+// ---------------------------------------------------------------------------
+
+function hash2(a: number, b: number): number {
+  let h = Math.imul(a | 0, 374761393) ^ Math.imul(b | 0, 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+}
+
+/**
+ * Small pocks and stones tiled around the vehicle's current ground point.
+ *
+ * The seeded landmark table gives the crew recognisable features; this gives
+ * the regolith immediately below the window enough texture to read as moving
+ * even in a hover, and it is a pure function of the world cell indices, so the
+ * same patch of ground always looks the same.
+ */
+export function nearFieldPocks(
+  rangeToGoM: number,
+  options: { readonly spanM?: number; readonly cellM?: number } = {},
+): readonly SurfaceLandmark[] {
+  const cell = options.cellM ?? 22;
+  const span = options.spanM ?? 420;
+  const out: SurfaceLandmark[] = [];
+  const first = Math.floor((rangeToGoM - span) / cell);
+  const last = Math.ceil((rangeToGoM + span) / cell);
+  for (let i = first; i <= last; i += 1) {
+    for (let j = -8; j <= 8; j += 1) {
+      const r = hash2(i, j);
+      if (r < 0.45) continue;
+      out.push({
+        id: `pock-${i}-${j}`,
+        kind: r > 0.93 ? "boulder-field" : "crater",
+        trackRangeM: (i + hash2(i, j + 91)) * cell,
+        lateralM: (j + hash2(i + 17, j)) * cell,
+        radiusM: 1.5 + hash2(i + 5, j + 5) * (r > 0.93 ? 4 : 9),
+        albedo: 0.25 + hash2(i, j + 3) * 0.5,
+      });
+    }
+  }
+  out.sort((a, b) => b.trackRangeM - a.trackRangeM);
+  return out;
+}
