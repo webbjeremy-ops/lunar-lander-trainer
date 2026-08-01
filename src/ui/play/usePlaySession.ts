@@ -799,9 +799,47 @@ export function usePlaySession(
     [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
 
+  // M4.18 — deviation snapshot feeding the improvised Houston calls and the
+  // go/no-go for landing. Pure inputs; no timers, no AGC.
+  const deviation: FlightDeviationInput = useMemo(
+    () => ({
+      altitudeM: orbit.altitudeM,
+      radialSpeedMps: orbit.radialSpeedMps,
+      horizontalSpeedMps: orbit.tangentialSpeedMps,
+      attitudeRad: flight.attitudeRad,
+      angularRateRadPerSec: flight.angularRateRadPerSec,
+      propellantFraction:
+        mission.initial.descentPropellantKg > 0
+          ? flight.descentPropellantKg / mission.initial.descentPropellantKg
+          : 0,
+      windowsUp: radarAvailable(roll),
+      engineBurning: flight.mainEngine !== "off",
+      terminal: flight.terminalState !== null,
+    }),
+    [orbit, flight, mission, roll],
+  );
+
+  const offScript = aborted || isOffScript(deviation);
+
+  const houston = useMemo(
+    () =>
+      aborted
+        ? HOUSTON_ABORT_CALL
+        : activeHoustonCall(deviation, acknowledgedHouston),
+    [aborted, deviation, acknowledgedHouston],
+  );
+
+  const clearance = useMemo(
+    () =>
+      aborted
+        ? { clear: false, reasons: [HOUSTON_ABORT_CALL.guidance], label: "ABORT — NO LANDING" }
+        : landingClearance(deviation),
+    [aborted, deviation],
+  );
+
   const callout = useMemo(
     () =>
-      apollo11Timeline
+      apollo11Timeline && !offScript
         ? activeCallout(
             {
               sinceIgnitionUs: descentClockUs,
@@ -813,6 +851,7 @@ export function usePlaySession(
         : null,
     [
       apollo11Timeline,
+      offScript,
       descentClockUs,
       orbit.altitudeM,
       flight.mainEngine,
@@ -822,6 +861,7 @@ export function usePlaySession(
 
 
   return {
+
     flight,
     orbit,
     guidance,
