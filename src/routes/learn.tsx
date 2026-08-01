@@ -14,6 +14,10 @@ import { ropeById } from "@/sim/agc/roms";
 import { useAgcSession } from "@/agc/AgcSession";
 import type { EventBoundaryPayload, StateSnapshot } from "@/agc/protocol";
 import { ReadinessTracker, type ReadinessSnapshot } from "@/lessons/ReadinessTracker";
+import {
+  AttemptReadinessPublisher,
+  type LessonAttemptReadyV1,
+} from "@/lessons/attemptReadiness";
 import { LessonDiagram } from "@/ui/learn/diagrams";
 import { ChallengeLauncher, ChallengeResultCard } from "@/ui/learn/ChallengeLauncher";
 import { ProgressPanel } from "@/ui/learn/ProgressPanel";
@@ -208,9 +212,14 @@ function LearnPage() {
   // ---- Attempt handshake state.
   const [attemptPhase, setAttemptPhase] = useState<AttemptPhase>("idle");
   const [attemptError, setAttemptError] = useState<string | null>(null);
+  const [attemptReady, setAttemptReady] = useState<LessonAttemptReadyV1 | null>(null);
   const [lastBoundary, setLastBoundary] = useState<EventBoundaryPayload | null>(null);
   const [readinessSnap, setReadinessSnap] = useState<ReadinessSnapshot | null>(null);
   const openingTokenRef = useRef(0);
+  // M4.5 — the single monotonic readiness authority. React state below is a
+  // rendering mirror of this object, never an independent source of truth.
+  const readinessRef = useRef<AttemptReadinessPublisher | null>(null);
+  if (readinessRef.current === null) readinessRef.current = new AttemptReadinessPublisher();
   const readinessTrackerRef = useRef<ReadinessTracker | null>(null);
   const instanceIdRef = useRef<string>("");
   if (instanceIdRef.current === "") {
@@ -283,8 +292,11 @@ function LearnPage() {
   // so lifecycle diagnostics can attribute cancellations.
   const invalidateOpening = useCallback((reason: string): number => {
     const previous = openingTokenRef.current;
-    const next = previous + 1;
+    // The publisher owns the token; React refs merely mirror it so existing
+    // call sites keep reading a plain number.
+    const next = readinessRef.current!.begin(reason);
     openingTokenRef.current = next;
+    setAttemptReady(null);
     testOnlyLog({
       type: "opening-invalidated",
       reason,
@@ -299,6 +311,14 @@ function LearnPage() {
     return next;
   }, [testOnlyLog, openKey, resetKey, agcEpoch, lesson.id, step?.id]);
 
+  /** Mirror a phase transition through the monotonic publisher. Returns false
+   *  when the write was refused (stale token or a downgrade). */
+  const applyPhase = useCallback((token: number, phase: AttemptPhase): boolean => {
+    if (!readinessRef.current!.setPhase(token, phase)) return false;
+    setAttemptPhase(phase);
+    return true;
+  }, []);
+
   // Mount / unmount lifecycle probe.
   useEffect(() => {
     testOnlyLog({ type: "component-mount" });
@@ -306,6 +326,25 @@ function LearnPage() {
       testOnlyLog({ type: "component-unmount" });
     };
   }, [testOnlyLog]);
+
+  // Render-updated context for the async open workflow. Refs (not closure
+  // captures) so a workflow started on an earlier render still publishes the
+  // step/epoch it is actually running against.
+  const openContextRef = useRef<{ stepId: string | null; agcEpoch: number }>({
+    stepId: step?.id ?? null,
+    agcEpoch,
+  });
+  openContextRef.current = { stepId: step?.id ?? null, agcEpoch };
+
+  /** Read-only reflection of LessonHost's listener attachment. Diagnostic
+   *  only — LessonHost buffers and replays any event that predates its
+   *  listener, so readiness does not depend on this value being present. */
+  function readListenerAttachedEventId(): number | null {
+    if (typeof window === "undefined") return null;
+    const d = (window as unknown as { __learnDiag?: { listenerAttachedEventId?: number | null } })
+      .__learnDiag;
+    return d?.listenerAttachedEventId ?? null;
+  }
 
   /** Perform the barrier handshake and open a fresh lesson attempt.
    *  MUST be called only when there is a live client and an interactive
@@ -322,7 +361,7 @@ function LearnPage() {
 
     try {
       if (forLesson.requiresReadinessGate) {
-        setAttemptPhase("gating");
+        applyPhase(token, "gating");
         const tracker = new ReadinessTracker();
         readinessTrackerRef.current = tracker;
         testOnlyLog({ type: "boundary-request-sent", token, purpose: "readiness-baseline" });
@@ -369,50 +408,72 @@ function LearnPage() {
         }
       }
 
-      setAttemptPhase("opening");
+      applyPhase(token, "opening");
       testOnlyLog({ type: "boundary-request-sent", token, purpose: "attempt-open" });
       const boundary = await client.requestEventBoundary();
       testOnlyLog({ type: "boundary-response-received", token, purpose: "attempt-open", tokenMatch: openingTokenRef.current === token, boundaryEventId: boundary.boundaryEventId });
       if (openingTokenRef.current !== token) return;
       setLastBoundary(boundary);
       const seedObs = boundarySeedObservation(boundary, latestSnapshotRef.current);
+      const attemptId = nextAttemptId(forLesson.id);
       setStates((prev) => {
         const cur = prev[forLesson.id] ?? initialLessonState(forLesson);
         const next = stepLesson(forLesson, cur, {
           kind: action,
-          attemptId: nextAttemptId(forLesson.id),
+          attemptId,
           observation: seedObs,
         });
         return { ...prev, [forLesson.id]: next };
       });
-      setAttemptPhase("ready");
+      // Readiness is published last, and only with a complete identity:
+      // lesson + step + attempt + epoch + boundary. Nothing downstream may
+      // observe "ready" before the attempt exists in engine state.
+      const ctx = openContextRef.current;
+      const record = readinessRef.current!.publishReady(token, {
+        lessonId: forLesson.id,
+        stepId: ctx.stepId ?? "-",
+        attemptId,
+        agcEpoch: ctx.agcEpoch,
+        boundaryEventId: boundary.boundaryEventId,
+        boundaryTick: boundary.tickIndex,
+        listenerAttachedEventId: readListenerAttachedEventId(),
+      });
+      if (record) {
+        setAttemptReady(record);
+        setAttemptPhase("ready");
+      }
     } catch (err) {
       if (openingTokenRef.current !== token) return;
-      setAttemptError(err instanceof Error ? err.message : String(err));
-      setAttemptPhase("error");
+      const message = err instanceof Error ? err.message : String(err);
+      if (readinessRef.current!.fail(token, message)) {
+        setAttemptError(message);
+        setAttemptPhase("error");
+      }
     }
-  }, [agcClient, invalidateOpening, testOnlyLog]);
+  }, [agcClient, invalidateOpening, testOnlyLog, applyPhase]);
 
-  // Auto-open an attempt for the current interactive step. Depends on the
-  // stable semantic `openKey` plus the essentials — NOT snapshot, decoded
-  // state, readiness, or state.attempt (openAttempt sets state.attempt on
-  // success, which would otherwise re-trigger this effect).
+  // ---- ROOT-CAUSE FIX (M4.5) ------------------------------------------
+  // These two effects MUST be declared reset-first. React runs effects in
+  // declaration order within a commit. Previously the open-effect was
+  // declared first, so a lesson change ran:
+  //
+  //   open-effect:  openedKeyRef = newKey; openAttempt(token N)
+  //   reset-effect: invalidateOpening()  -> token N+1 (cancels N)
+  //                 openedKeyRef = null; phase = "idle"
+  //
+  // The just-started workflow was cancelled, and because no dependency of
+  // the open-effect changed afterwards it never re-ran: `attemptPhase`
+  // stayed "idle" forever and the keypad stayed locked. That is the
+  // intermittent /learn acceptance timeout — a real product deadlock,
+  // reachable whenever a lesson is selected while its current step is
+  // already interactive (revisiting a partially-completed lesson).
+  //
+  // Reset now runs first, and additionally bumps `resetNonce`, which is a
+  // dependency of the open-effect. Either mechanism alone would fix it;
+  // both together make the ordering guarantee explicit rather than
+  // incidental.
   const openedKeyRef = useRef<string | null>(null);
-  useEffect(() => {
-    testOnlyLog({ type: "open-effect-start", hasClient: !!agcClient, isInteractive, isComplete, openKey, opened: openedKeyRef.current, phase: attemptPhase });
-    if (!agcClient || !isInteractive || isComplete) return;
-    if (openedKeyRef.current === openKey) return; // one active workflow per openKey
-    openedKeyRef.current = openKey;
-    void openAttempt(lesson, "beginAttempt");
-    return () => {
-      testOnlyLog({ type: "open-effect-cleanup", openKey });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [agcClient, openKey, isInteractive, isComplete, openAttempt]);
-
-  // Reset attempt state on a true session/reset boundary (agcEpoch or lesson
-  // change). Step change alone MUST NOT invalidate — openAttempt itself
-  // increments the token when the open-effect re-runs on a new openKey.
+  const [resetNonce, setResetNonce] = useState(0);
   const prevResetKeyRef = useRef<string | null>(null);
   useEffect(() => {
     testOnlyLog({ type: "reset-effect-start", resetKey, prev: prevResetKeyRef.current });
@@ -429,8 +490,25 @@ function LearnPage() {
     setAttemptError(null);
     setReadinessSnap(null);
     readinessTrackerRef.current = null;
+    setResetNonce((n) => n + 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resetKey]);
+
+  // Auto-open an attempt for the current interactive step. Depends on the
+  // stable semantic `openKey` plus the essentials — NOT snapshot, decoded
+  // state, readiness, or state.attempt (openAttempt sets state.attempt on
+  // success, which would otherwise re-trigger this effect).
+  useEffect(() => {
+    testOnlyLog({ type: "open-effect-start", hasClient: !!agcClient, isInteractive, isComplete, openKey, opened: openedKeyRef.current, phase: attemptPhase });
+    if (!agcClient || !isInteractive || isComplete) return;
+    if (openedKeyRef.current === openKey) return; // one active workflow per openKey
+    openedKeyRef.current = openKey;
+    void openAttempt(lesson, "beginAttempt");
+    return () => {
+      testOnlyLog({ type: "open-effect-cleanup", openKey });
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agcClient, openKey, isInteractive, isComplete, openAttempt, resetNonce]);
 
   // Committed-phase diagnostic — the only reliable observation that
   // setAttemptPhase actually flushed before any subsequent cancellation.
@@ -450,11 +528,12 @@ function LearnPage() {
 
   function resetLesson() {
     openedKeyRef.current = null;
-    ++openingTokenRef.current;
+    invalidateOpening("reset-lesson");
     setAttemptPhase("idle");
     setLastBoundary(null);
     setReadinessSnap(null);
     readinessTrackerRef.current = null;
+    setResetNonce((n) => n + 1);
     setStates((s) => ({ ...s, [lesson.id]: initialLessonState(lesson) }));
   }
 
@@ -466,11 +545,12 @@ function LearnPage() {
 
   function resetAgc() {
     openedKeyRef.current = null;
-    ++openingTokenRef.current;
+    invalidateOpening("reset-agc");
     setAttemptPhase("idle");
     setLastBoundary(null);
     setReadinessSnap(null);
     readinessTrackerRef.current = null;
+    setResetNonce((n) => n + 1);
     setStates(() => {
       const init: Record<string, LessonState> = {};
       for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
@@ -482,7 +562,8 @@ function LearnPage() {
 
   // Test hook: expose current lesson/state/epoch/handshake diagnostics
   // for E2E introspection. Boundary IDs and the latest observed global
-  // eventId make cursor-namespace bugs directly assertable.
+  // eventId make cursor-namespace bugs directly assertable. Everything here
+  // is a READ-ONLY reflection of production state — no test-only mutation.
   useEffect(() => {
     if (typeof window === "undefined") return;
     (window as unknown as { __learnTest?: unknown }).__learnTest = {
@@ -493,6 +574,8 @@ function LearnPage() {
       agcEpoch,
       attemptPhase,
       attemptError,
+      attemptReady,
+      readinessContract: readinessRef.current?.read() ?? null,
       boundaryEventId: lastBoundary?.boundaryEventId ?? null,
       boundaryTick: lastBoundary?.tickIndex ?? null,
       latestEventId: latestSnapshotRef.current?.latestEventId ?? null,
@@ -500,12 +583,22 @@ function LearnPage() {
       readiness: readinessSnap,
       readinessRequired: lesson.requiresReadinessGate === true,
     };
-  }, [lesson, step, state, states, agcEpoch, attemptPhase, attemptError, lastBoundary, readinessSnap]);
+  }, [lesson, step, state, states, agcEpoch, attemptPhase, attemptError, attemptReady, lastBoundary, readinessSnap]);
 
-  // Interaction lock: DSKY input is suppressed while an interactive attempt
-  // is being opened. This prevents a keystroke from carrying an eventId
-  // that pre-dates the barrier and could be misattributed to the attempt.
-  const dskyDisabled = isInteractive && !isComplete && attemptPhase !== "ready";
+  // Interaction lock: DSKY input is suppressed until the readiness contract
+  // for THIS exact (lesson, step, attempt, epoch) is published. Reading the
+  // contract rather than the phase alone closes the window where the phase
+  // said "ready" but the attempt identity belonged to a previous step.
+  const dskyDisabled =
+    isInteractive &&
+    !isComplete &&
+    !(
+      attemptPhase === "ready" &&
+      attemptReady !== null &&
+      attemptReady.lessonId === lesson.id &&
+      attemptReady.stepId === (step?.id ?? "-") &&
+      attemptReady.agcEpoch === agcEpoch
+    );
 
 
 

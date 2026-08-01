@@ -355,13 +355,35 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           </span>
         </div>
 
-        {phase !== "ready" && phase !== "error" && (
-          <div className="mb-3 flex items-center gap-2 rounded border border-neutral-800 bg-black/40 px-2 py-2 text-xs text-neutral-400">
-            <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
-            {phase === "booting-worker" && "Starting AGC worker…"}
-            {phase === "loading-wasm" && "Compiling yaAGC WebAssembly (in worker)…"}
-            {phase === "loading-rom" && `Loading & verifying rope image ${rope.id}…`}
-            {phase === "idle" && "Preparing…"}
+        {/* M4.5 — the boot strip is ALWAYS rendered (except on error, which
+            replaces it with a same-role block). Previously it unmounted at
+            "ready", which shifted the entire DSKY and everything below it
+            upward at the exact moment the user started looking at it.
+            Reserving the row makes cold start visually stable while still
+            naming each boot stage explicitly. */}
+        {phase !== "error" && (
+          <div
+            data-testid="dsky-boot-strip"
+            className="mb-3 flex min-h-[2.25rem] items-center gap-2 rounded border border-neutral-800 bg-black/40 px-2 py-2 text-xs text-neutral-400"
+          >
+            <span
+              className={
+                "inline-block h-2 w-2 shrink-0 rounded-full " +
+                (phase === "ready" ? "bg-emerald-600" : "animate-pulse bg-emerald-500")
+              }
+            />
+            <span className="truncate">
+              {phase === "idle" && "Preparing…"}
+              {phase === "booting-worker" && "Starting AGC worker…"}
+              {phase === "loading-wasm" && "Compiling yaAGC WebAssembly (in worker)…"}
+              {phase === "loading-rom" && `Loading & verifying rope image ${rope.id}…`}
+              {phase === "ready" && `${rope.id} verified · yaAGC running in worker`}
+            </span>
+            {phase !== "ready" && (
+              <span className="ml-auto shrink-0 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                {phase === "idle" ? "1" : phase === "booting-worker" ? "2" : phase === "loading-wasm" ? "3" : "4"}/4
+              </span>
+            )}
           </div>
         )}
 
