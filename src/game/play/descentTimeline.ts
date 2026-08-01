@@ -16,11 +16,12 @@
 //   T+200  yaw-around: windows up, landing radar looking at the surface
 //   T+300  radar lock / Delta-H converged
 //   T+318  first 1202, T+357 second 1202
-//   T+420  throttle down out of the fixed-throttle point
-//   T+514  HIGH GATE — P63 hands to P64, pitch-over, SETPOS2 (radar to
+//   T+386  THROTTLE RECOVERY: guidance leaves the 92.5 % fixed throttle point
+//          and drops straight to ~57 %, below the 65-92.5 % erosion band
+//   T+506  HIGH GATE — P63 hands to P64, pitch-over, SETPOS2 (radar to
 //          antenna position 2), ~7,600 ft and ~4.1 nmi from the aim point
 //   T+553 / T+578  the two 1201s in the approach phase
-//   T+686  LOW GATE — 500 ft, P66 rate-of-descent, manual landing
+//   T+642  LOW GATE — 500 ft, P66 rate-of-descent, manual landing
 //   T+700  "sixty seconds", T+731 "thirty seconds"
 //   T+755  contact / touchdown  (12:35 from PDI)
 //
@@ -78,9 +79,10 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
     "Executive overflow — no core sets. Read it, reset it, keep flying."),
   m("alarm-1202-second", 357, "1202 PROGRAM ALARM", "P63", 26_977, 37,
     "Recurring overload; guidance and displays stay healthy."),
-  m("throttle-down", 420, "THROTTLE DOWN", "P63", 21_000, 18.5,
-    "Guidance comes off the fixed throttle point as braking ends."),
-  m("high-gate", 514, "HIGH GATE · P64 · SETPOS2", "P64", 7_600, 4.1,
+  m("throttle-down", 386, "THROTTLE RECOVERY · 92.5 % → 57 %", "P63", 24_000, 30,
+    "Guidance leaves the fixed throttle point and steps straight down to the " +
+    "variable range, skipping the 65-92.5 % nozzle-erosion band."),
+  m("high-gate", 506, "HIGH GATE · P64 · SETPOS2", "P64", 7_600, 4.1,
     "P63 hands to P64: pitch-over brings the site into the window and the " +
     "landing radar antenna is cranked to position 2 for the descent."),
   m("alarm-1201-first", 553, "1201 PROGRAM ALARM", "P64", 3_000, 2.2,
@@ -89,11 +91,11 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
     "Last of the descent alarms, landing point already in the window."),
   m("redesignate", 620, "LPD REDESIGNATION", "P64", 700, 0.7,
     "Commander flies past the rocky area, moving the aim point downrange."),
-  m("low-gate", 686, "LOW GATE · P66", "P66", 500, 0.3,
+  m("low-gate", 642, "LOW GATE · P66", "P66", 500, 0.3,
     "Rate-of-descent landing: hold the sink rate, null forward velocity."),
-  m("sixty-seconds", 700, "SIXTY SECONDS", "P66", 250, 0.15,
+  m("sixty-seconds", 683, "SIXTY SECONDS", "P66", 250, 0.15,
     "Propellant call from Houston — burn time remaining, not tank quantity."),
-  m("thirty-seconds", 731, "THIRTY SECONDS", "P66", 60, 0.05,
+  m("thirty-seconds", 713, "THIRTY SECONDS", "P66", 60, 0.05,
     "Final propellant call; the vehicle is essentially over the site."),
   m("contact", 755, "CONTACT · ENGINE STOP", "P66", 0, 0,
     "A probe touches, the contact light comes on, the engine is shut down."),
@@ -107,7 +109,7 @@ export const TIMELINE_CITATION = {
   label: "Apollo 11 Mission Report / air-to-ground transcript / Luminary 099",
   detail:
     "Times are ignition-relative (PDI at GET 102:33:05). High gate, the P64 " +
-    "hand-over and the SETPOS2 antenna reposition are at T+514 s, ~7,600 ft " +
+    "hand-over and the SETPOS2 antenna reposition are at T+506 s (8:26), ~7,600 ft " +
     "and ~4.1 nmi from the aim point. The timeline is raised by the game as a " +
     "bridged overlay, never by the pinned rope.",
 } as const;
