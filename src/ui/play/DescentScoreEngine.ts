@@ -268,8 +268,21 @@ export class DescentScoreEngine {
 
     const arp = this.layers.melodyArp;
     const seq = this.melodyPattern(arp);
-    const base = seq[this.melodyStep % seq.length]!;
+    const step = this.melodyStep;
+    const chord = chordForStep(step, arp);
+    const perChord = melodyNotesPerChord(arp);
+
+    // New chord? Sound the bass root underneath before the melody note.
+    if (step % perChord === 0 && chord.name !== this.currentChordName) {
+      this.currentChordName = chord.name;
+      this.tickBass(chord.bassHz, perChord);
+    }
+
+    const degree = seq[step % seq.length]!;
+    const tones = chord.tonesHz;
+    const base = tones[degree % tones.length]! * 2 ** Math.floor(degree / tones.length);
     this.melodyStep += 1;
+
 
     const now = ctx.currentTime;
     // Sustained and overlapping when simple; short and articulated when fast.
