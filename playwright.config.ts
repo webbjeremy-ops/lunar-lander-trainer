@@ -48,9 +48,7 @@ export default defineConfig({
     trace: "retain-on-failure",
     // Resolve Chromium from PLAYWRIGHT_BROWSERS_PATH by default; only override
     // when PW_CHROMIUM explicitly points at a binary.
-    launchOptions: process.env.PW_CHROMIUM
-      ? { executablePath: process.env.PW_CHROMIUM }
-      : {},
+    launchOptions: chromiumPath ? { executablePath: chromiumPath } : {},
   },
 
   webServer: {
