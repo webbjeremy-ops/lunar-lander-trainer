@@ -345,11 +345,12 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
       className={
         compact
           ? "grid gap-3"
-          : "grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]"
+          : "grid gap-4 md:grid-cols-[minmax(0,1fr)_17.5rem]"
       }
       data-testid="agc-dsky"
     >
-      <div className="rounded border border-neutral-800 bg-neutral-950 p-3 shadow-inner">
+      <div className="min-w-0 rounded border border-neutral-800 bg-neutral-950 p-3 shadow-inner">
+
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-xs uppercase tracking-widest text-neutral-500">DSKY</h3>
           <span
