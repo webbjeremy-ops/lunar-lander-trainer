@@ -450,7 +450,27 @@ export function usePlaySession(
     };
 
     const resolveInput = (state: LunarFlightState): LunarControlInput => {
+      // M4.18 — ABORT STAGE overrides everything: jettison the descent stage
+      // and fly the fixed-thrust ascent engine up and downrange.
+      if (abortedRef.current) {
+        const staged = state.configuration !== "complete-lm";
+        const target = state.altitudeAboveSurfaceHint ?? 0;
+        void target;
+        const desired = 1.2; // rad from local vertical — pitch over for orbit
+        const err = desired - state.attitudeRad;
+        const cmd = clampSigned(err * 3 - state.angularRateRadPerSec * 2.5);
+        throttleRef.current = 1;
+        attitudeRef.current = cmd;
+        engineRef.current = true;
+        return {
+          throttle: 1,
+          engineCommand: "ascent",
+          attitudeCommand: cmd,
+          stageSeparation: !staged,
+        };
+      }
       const manual = procedureRef.current.manualControlUnlocked;
+
       let throttle: number;
       let attitudeCommand: number;
 
