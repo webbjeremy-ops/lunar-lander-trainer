@@ -194,7 +194,7 @@ export const RECONSTRUCTED_VALUES: readonly ReconstructedValue[] = [
     id: "flags.moon-gravity",
     category: "moon-gravity-flags",
     value: null,
-    unit: "MUNFLAG bit in FLAGWRD (0o141 word)",
+    unit: "MUNFLAG flag bit (flag number 97 in FLAGWORD_ASSIGNMENTS)",
     classification: "experimental-best-estimate",
     sourceReferences: [`${ROPE} THE_LUNAR_LANDING.agc:69-71 (P63 sets MUNFLAG itself)`],
     rationale:
