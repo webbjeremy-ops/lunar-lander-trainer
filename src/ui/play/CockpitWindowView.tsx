@@ -128,8 +128,9 @@ function windowPath(
   y: number,
   w: number,
   h: number,
+  continuePath = false,
 ) {
-  ctx.beginPath();
+  if (!continuePath) ctx.beginPath();
   WINDOW_SHAPE.forEach(([nx, ny], i) => {
     const px = x + nx * w;
     const py = y + ny * h;
@@ -395,7 +396,7 @@ function drawFrame(ctx: CanvasRenderingContext2D, w: number, h: number) {
   ctx.save();
   ctx.beginPath();
   ctx.rect(0, 0, w, h);
-  windowPath(ctx, 0, 0, w, h);
+  windowPath(ctx, 0, 0, w, h, true);
   ctx.fillStyle = "#1b1d1c";
   ctx.fill("evenodd");
 
