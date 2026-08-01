@@ -662,9 +662,28 @@ export function usePlaySession(
       setEngine: (on: boolean) => { engineRef.current = on; },
       trimRod: (steps: number) => { rodTargetRef.current += steps * ROD_INCREMENT_MPS; },
       setEngineArm: (on: boolean) => { dispatchIgnition({ kind: "arm", on }); },
+      startIgnitionCountdown: () => {
+        if (ignitionRef.current.phase !== "standby") return;
+        dispatchIgnition({ kind: "start" });
+        setRunning(true);
+      },
       setRollCommand: (active: boolean) => { dispatchRoll({ kind: "roll", active }); },
     }),
     [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
+  );
+
+  const descentMonitor = useMemo(
+    () =>
+      descentMonitorFor({
+        altitudeM: orbit.altitudeM,
+        radialSpeedMps: orbit.radialSpeedMps,
+        tangentialSpeedMps: orbit.tangentialSpeedMps,
+        tigOffsetUs: ignition.tigOffsetUs,
+        sinceIgnitionUs: ignition.sinceIgnitionUs,
+        burning: flight.mainEngine !== "off" || ignition.phase === "burning",
+        terminal: flight.terminalState !== null,
+      }),
+    [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
 
   return {
@@ -687,6 +706,7 @@ export function usePlaySession(
     ignition,
     ignitionClock: formatTig(ignition),
     bridgedDskyRequest: bridgedRequestFor(ignition),
+    descentMonitor,
     roll,
     rollActive: roll.commanded,
     radarAvailable: radarAvailable(roll),
