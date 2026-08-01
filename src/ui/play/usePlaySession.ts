@@ -223,8 +223,12 @@ export interface PlaySessionApi {
     readonly acknowledgeHouston: (id: string) => void;
     /** M4.18 — ABORT STAGE: jettison the descent stage, fly the ascent engine. */
     readonly abortStage: () => void;
+    /** M4.30 — enable/disable controller rumble. */
+    readonly setHaptics: (on: boolean) => void;
 
   };
+  /** M4.30 — whether controller rumble is currently enabled. */
+  readonly hapticsEnabled: boolean;
 }
 
 export function usePlaySession(
@@ -1061,6 +1065,10 @@ export function usePlaySession(
       },
       acknowledgeHouston: (id: string) => {
         setAcknowledgedHouston((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      },
+      setHaptics: (on: boolean) => {
+        hapticsRef.current.setEnabled(on);
+        setHapticsEnabled(on);
       },
       abortStage: () => {
         if (abortedRef.current) return;
