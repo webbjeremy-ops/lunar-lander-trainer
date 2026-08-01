@@ -379,7 +379,11 @@ export function usePlaySession(
         // never be silently skipped.
         if (ignitionRef.current.sinceIgnitionUs > 0) {
           descentClockRef.current = ignitionRef.current.sinceIgnitionUs;
-        } else if (state.mainEngine !== "off" || descentClockRef.current > 0) {
+        } else if (
+          state.mainEngine !== "off" ||
+          ignitionRef.current.tigOffsetUs <= 0 ||
+          descentClockRef.current > 0
+        ) {
           descentClockRef.current += STEP_US;
         }
         const sinceIgnitionUs = descentClockRef.current;
