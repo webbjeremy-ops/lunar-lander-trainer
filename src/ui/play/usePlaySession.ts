@@ -357,8 +357,8 @@ export function usePlaySession(
       if (manual) {
         // Held-key integration (also used by touch buttons via heldRef).
         const held = heldRef.current;
-        if (held.has("ArrowUp")) throttleRef.current += 0.9 * STEP_S;
-        if (held.has("ArrowDown")) throttleRef.current -= 0.9 * STEP_S;
+        if (held.has("ArrowUp")) throttleRef.current += 1.8 * STEP_S;
+        if (held.has("ArrowDown")) throttleRef.current -= 1.8 * STEP_S;
         let att = 0;
         if (held.has("ArrowLeft")) att -= 1;
         if (held.has("ArrowRight")) att += 1;
