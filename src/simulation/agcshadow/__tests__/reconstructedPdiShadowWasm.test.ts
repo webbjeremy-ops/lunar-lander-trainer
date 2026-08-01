@@ -195,6 +195,39 @@ suite("M4.6A reconstructed-PDI shadow — real WASM", () => {
     expect(verdict.recommendM4_6B).toBe(false);
   }, 600_000);
 
+  // The blocker that forces the experiment to drop the frozen coordinate
+  // bootstrap: HW-I/O v4 seals the pad-load window after the first batch.
+  it("cannot combine the frozen coordinate bootstrap and the experimental batch in one AGC epoch", async () => {
+    const { ex, memory } = await boot();
+    const rd = (a: number) => ex.agc_erasable_read_word(a);
+
+    const frozen = applyBytes(
+      ex,
+      memory,
+      encodePadLoadRecords(FROZEN.records),
+      FROZEN.records.length,
+    );
+    expect(frozen.rc).toBe(0);
+    expect(frozen.applied).toBe(FROZEN.records.length);
+
+    ex.cpu_step(2_000_000);
+
+    const before = rd(A.FLAGWRD7);
+    const second = applyBytes(
+      ex,
+      memory,
+      encodeShadowPadLoad([
+        { address: A.FLAGWRD7, expectedBefore: before, value: before | AVEGFBIT_MASK },
+      ]),
+      1,
+    );
+    // window sealed for this epoch — refused, and nothing written.
+    expect(second.open).toBe(-30);
+    expect(rd(A.FLAGWRD7)).toBe(before);
+  }, 300_000);
+
+
+
   it("rejects the experimental batch atomically when compare-before-write fails", async () => {
     const { ex, memory } = await boot();
     const rd = (a: number) => ex.agc_erasable_read_word(a);
