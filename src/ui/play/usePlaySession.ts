@@ -71,6 +71,8 @@ import {
   nominalAltitudeForRangeM,
   nominalDownrangeSpeedForRange,
   HIGH_GATE_RANGE_M,
+  highGateStatus,
+  type HighGateStatus,
   usesApollo11Timeline,
   type AssistanceLevel,
   type BridgedAlarmOverlay,
@@ -168,6 +170,7 @@ export interface PlaySessionApi {
    */
   readonly scriptTerminated: boolean;
   readonly aborted: boolean;
+  readonly highGateStatus: HighGateStatus;
   readonly actions: {
 
     readonly setRunning: (v: boolean) => void;
@@ -501,8 +504,15 @@ export function usePlaySession(
             crewAborted: abortedRef.current,
           });
         }
-        const input = resolveInput(state);
-        state = stepLunarFlight(state, input, STEP_US);
+        const holdPdiState =
+          mission.id === "full-descent" &&
+          ignitionRef.current.phase !== "standby" &&
+          !isBurning(ignitionRef.current) &&
+          !abortedRef.current;
+        if (!holdPdiState) {
+          const input = resolveInput(state);
+          state = stepLunarFlight(state, input, STEP_US);
+        }
       }
       if (steps > 0) {
         flightRef.current = state;
@@ -736,6 +746,11 @@ export function usePlaySession(
   const guidance = useMemo(() => computeReferenceGuidance(flight), [flight]);
   const massKg = useMemo(() => totalMassKg(flight), [flight]);
   const downrangeM = downrangeToLandingZoneM(orbit.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
+  const currentHighGateStatus = highGateStatus(
+    descentClockUs,
+    orbit.altitudeM,
+    downrangeM,
+  );
 
   const summary: FlightSummary | null = useMemo(() => {
     if (flight.terminalState === null) return null;
@@ -801,6 +816,15 @@ export function usePlaySession(
         windowsUp: radarAvailable(rollRef.current),
         alarmActive: alarmsRef.current.active !== null,
         sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+        highGateReady:
+          highGateStatus(
+            descentClockRef.current.sinceIgnitionUs,
+            computeOrbitalValues(flightRef.current).altitudeM,
+            downrangeToLandingZoneM(
+              computeOrbitalValues(flightRef.current).centralAngleRad,
+              LANDING_ZONE_ANGLE_RAD,
+            ),
+          ) === "ready",
       };
       setProcedure((prev) => {
         const next = reduceProcedure(script, prev, {
@@ -937,8 +961,11 @@ export function usePlaySession(
       windowsUp: radarAvailable(roll),
       engineBurning: flight.mainEngine !== "off",
       terminal: flight.terminalState !== null,
+      rangeToLzM: downrangeM,
+      sinceIgnitionUs: descentClockUs,
+      p64Selected: procedure.completedStepIds.includes("p64-monitor"),
     }),
-    [orbit, flight, mission, roll],
+    [orbit, flight, mission, roll, downrangeM, descentClockUs, procedure.completedStepIds],
   );
 
   const scriptTerminated = escalation.scriptTerminated || aborted;
@@ -974,6 +1001,7 @@ export function usePlaySession(
               sinceIgnitionUs: descentClockUs,
               altitudeM: orbit.altitudeM,
               burning: flight.mainEngine !== "off",
+              rangeToLzM: downrangeM,
             },
             acknowledgedCallouts,
           )
@@ -985,6 +1013,7 @@ export function usePlaySession(
       orbit.altitudeM,
       flight.mainEngine,
       acknowledgedCallouts,
+      downrangeM,
     ],
   );
 
@@ -1026,6 +1055,7 @@ export function usePlaySession(
     secondsToAbort: secondsToAbort(escalation),
     scriptTerminated,
     aborted,
+    highGateStatus: currentHighGateStatus,
     actions,
 
   };

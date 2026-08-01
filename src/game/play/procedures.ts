@@ -75,6 +75,8 @@ export interface DskyProcedureStep {
    * DSKY recommendation can never precede the crew callout that motivates it.
    */
   readonly notBeforeSinceIgnitionSec?: number;
+  /** P64 may only be taken inside the shared time-and-geometry high-gate box. */
+  readonly requiresHighGate?: boolean;
 }
 
 export interface DskyProcedureScript {
@@ -200,6 +202,7 @@ const POWERED_DESCENT_STEPS: readonly DskyProcedureStep[] = [
     citation: GSOP,
     bridged: true,
     notBeforeSinceIgnitionSec: calloutSec("high-gate"),
+    requiresHighGate: true,
   },
   {
     id: "p66-takeover",

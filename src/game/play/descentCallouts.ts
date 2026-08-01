@@ -230,6 +230,8 @@ export interface CalloutInput {
   readonly sinceIgnitionUs: number;
   readonly altitudeM: number;
   readonly burning: boolean;
+  /** Signed range remaining; required to authorize the high-gate/P64 call. */
+  readonly rangeToLzM?: number;
 }
 
 /**
@@ -266,9 +268,15 @@ export function triggeredCallouts(
   for (const call of timeline) {
     const atAltitude =
       call.belowAltitudeM !== null && input.altitudeM <= call.belowAltitudeM;
+    const highGateGeometryReady =
+      call.id !== "high-gate" ||
+      (input.rangeToLzM !== undefined &&
+        input.rangeToLzM > 0 &&
+        input.rangeToLzM <= 2 * 4.1 * 1852 &&
+        input.altitudeM <= 1.5 * 7_600 * FT);
     const fired = ALTITUDE_PRIMARY_IDS.includes(call.id)
       ? atAltitude
-      : t >= call.atSinceIgnitionSec;
+      : t >= call.atSinceIgnitionSec && highGateGeometryReady;
     // Strict order: a later call can never overtake an earlier one.
     if (!fired) break;
     out.push(call);

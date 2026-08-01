@@ -149,6 +149,27 @@ export interface NominalState {
   readonly program: DescentProgram;
 }
 
+export type HighGateStatus = "pending" | "ready" | "missed";
+
+/**
+ * Shared P63→P64 gate. The clock may announce high gate only while the landing
+ * site is still ahead and the vehicle is inside the high-gate approach box.
+ * Passing the site before satisfying the box is a missed gate, not P64.
+ */
+export function highGateStatus(
+  sinceIgnitionUs: number,
+  altitudeM: number,
+  rangeToLzM: number,
+): HighGateStatus {
+  if (rangeToLzM <= 0) return "missed";
+  if (sinceIgnitionUs < milestoneSec("high-gate") * 1_000_000) return "pending";
+  const altitudeCeilingM = milestoneById("high-gate")!.altitudeM * 1.5;
+  const rangeCeilingM = HIGH_GATE_RANGE_M * 2;
+  return altitudeM <= altitudeCeilingM && rangeToLzM <= rangeCeilingM
+    ? "ready"
+    : "pending";
+}
+
 /**
  * Nominal altitude and range-to-go for a time since ignition, linearly
  * interpolated between milestones. Used to show the player how their descent
