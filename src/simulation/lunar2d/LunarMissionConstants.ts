@@ -277,7 +277,7 @@ export interface AttitudeControlConstants {
 
 export const ATTITUDE_CONTROL: AttitudeControlConstants = {
   maxAngularAccelRadPerSec2: {
-    value: 0.35,
+    value: 0.6,
     unit: "rad/s^2",
     classification: "gameplay-tuned",
     sourceId: null,
