@@ -20,6 +20,7 @@ import { FlightControls } from "@/ui/play/FlightControls";
 import { ProcedurePanel } from "@/ui/play/ProcedurePanel";
 import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
 import { AttitudePanel } from "@/ui/play/AttitudePanel";
+import { FdaiBall } from "@/ui/play/FdaiBall";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
@@ -274,6 +275,14 @@ function PlayClient() {
         </div>
 
         <div className="space-y-3">
+          <FdaiBall
+            pitchDeg={(session.flight.attitudeRad * 180) / Math.PI}
+            rollDeg={session.roll.rollDeg}
+            pitchRateDegPerSec={(session.flight.angularRateRadPerSec * 180) / Math.PI}
+            rollRateDegPerSec={session.roll.phase === "rolling" ? -10 : 0}
+            valid={session.flight.terminalState !== "crashed"}
+          />
+
           {session.ignition.phase !== "standby" && (
             <IgnitionPanel
               state={session.ignition}
