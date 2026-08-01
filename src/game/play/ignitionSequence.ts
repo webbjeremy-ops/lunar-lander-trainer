@@ -22,6 +22,8 @@
 // keystrokes still go to the real computer; nothing here is injected into the
 // AGC and nothing here reads AGC state.
 
+import { milestoneSec } from "./descentTimeline";
+
 export type IgnitionPhase =
   | "standby"
   | "countdown"
