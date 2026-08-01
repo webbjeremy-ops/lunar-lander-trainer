@@ -130,6 +130,7 @@ function RootComponent() {
         >
           <Link to="/" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Home</Link>
           <Link to="/play" data-testid="nav-play" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Fly</Link>
+          <Link to="/play/ascent" data-testid="nav-ascent" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Ascent</Link>
 
           <Link to="/learn" data-testid="nav-learn" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Learn</Link>
           <Link to="/explore" data-testid="nav-explore" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Explore</Link>
