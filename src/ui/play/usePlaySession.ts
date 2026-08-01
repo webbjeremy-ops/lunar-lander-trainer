@@ -688,6 +688,9 @@ export function usePlaySession(
         setRunning(true);
       },
       setRollCommand: (active: boolean) => { dispatchRoll({ kind: "roll", active }); },
+      acknowledgeCallout: (id: string) => {
+        setAcknowledgedCallouts((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      },
     }),
     [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
@@ -705,6 +708,28 @@ export function usePlaySession(
       }),
     [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
+
+  const callout = useMemo(
+    () =>
+      apollo11Timeline
+        ? activeCallout(
+            {
+              sinceIgnitionUs: ignition.sinceIgnitionUs,
+              altitudeM: orbit.altitudeM,
+              burning: flight.mainEngine !== "off",
+            },
+            acknowledgedCallouts,
+          )
+        : null,
+    [
+      apollo11Timeline,
+      ignition.sinceIgnitionUs,
+      orbit.altitudeM,
+      flight.mainEngine,
+      acknowledgedCallouts,
+    ],
+  );
+
 
   return {
     flight,
