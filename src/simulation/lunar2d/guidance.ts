@@ -44,6 +44,10 @@ const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
 const BRAKING_ALTITUDE_TAU_S = 30;
 /** Sink-rate authority during braking, m/s. */
 const BRAKING_MAX_SINK_MPS = 45;
+/** Closing deceleration used to fly the last kilometres onto the site, m/s². */
+const APPROACH_CLOSING_ACCEL = 0.6;
+/** Time constant for the approach-phase downrange velocity loop, seconds. */
+const APPROACH_TAU_S = 8;
 
 /**
  * Range-aware braking target. When the caller knows how far the vehicle still
