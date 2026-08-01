@@ -320,7 +320,6 @@ export function usePlaySession(
       // 10 % fixed-throttle point for 26 s before throttle-up. While the
       // countdown is armed this ceiling overrides player and guidance alike.
       const ign = ignitionRef.current;
-      let ceilingLimited = false;
       if (ign.phase !== "standby") {
         const ceiling = throttleCeiling(ign);
         if (ceiling <= 0) {
@@ -328,11 +327,9 @@ export function usePlaySession(
           engineRef.current = false;
         } else if (throttle > ceiling) {
           throttle = ceiling;
-          ceilingLimited = true;
         }
         if (ign.phase === "burning" && !manual) engineRef.current = throttle > 0;
       }
-      void ceilingLimited;
       // Keep the published instruments honest about the commanded throttle.
       throttleRef.current = throttle;
 
