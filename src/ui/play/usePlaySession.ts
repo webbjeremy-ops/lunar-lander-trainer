@@ -26,6 +26,7 @@ import {
 import {
   angleForRange,
   bridgedAlarmFor,
+  activeCallout,
   bridgedRequestFor,
   createDescentRollState,
   createIgnitionState,
@@ -50,6 +51,7 @@ import {
   usesApollo11Timeline,
   type AssistanceLevel,
   type BridgedAlarmOverlay,
+  type DescentCallout,
   type BridgedDskyRequest,
   type ControlModeId,
   type DescentRollState,
@@ -123,6 +125,8 @@ export interface PlaySessionApi {
   readonly radarAvailable: boolean;
   readonly alarms: ProgramAlarmState;
   readonly bridgedAlarm: BridgedAlarmOverlay | null;
+  /** M4.13 — the crew callout the cockpit should be showing, if any. */
+  readonly callout: DescentCallout | null;
   readonly actions: {
     readonly setRunning: (v: boolean) => void;
     readonly setTimeScale: (v: number) => void;
@@ -140,6 +144,8 @@ export interface PlaySessionApi {
     readonly startIgnitionCountdown: () => void;
     /** Hold to roll the vehicle toward windows-up (M4.8). */
     readonly setRollCommand: (active: boolean) => void;
+    /** Acknowledge ("copy that") the currently displayed crew callout. */
+    readonly acknowledgeCallout: (id: string) => void;
   };
 }
 
@@ -178,7 +184,19 @@ export function usePlaySession(
   // kernel or the AGC.
   const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
-  const apollo11Timeline = usesApollo11Timeline(script);
+  const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
+  /**
+   * Ignition-relative descent clock. Normally the PDI sequence drives it, but
+   * it falls back to the first burning step so the roll cue, the crew callouts
+   * and the 1201/1202 alarms still occur if the player skipped the ritual.
+   */
+  const descentClockRef = useRef(0);
+  const [descentClockUs, setDescentClockUs] = useState(0);
+  // The Apollo 11 mission always flies the historical roll / alarm / callout
+  // timeline, whatever control mode the player picked — the alarms are part of
+  // the flight, not part of the DSKY procedure script.
+  const apollo11Timeline =
+    mission.id === "apollo11-powered-descent" || usesApollo11Timeline(script);
 
   const flightRef = useRef(flight);
   flightRef.current = flight;
@@ -267,6 +285,9 @@ export function usePlaySession(
     const a = createProgramAlarmState();
     alarmsRef.current = a;
     setAlarms(a);
+    setAcknowledgedCallouts([]);
+    descentClockRef.current = 0;
+    setDescentClockUs(0);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -351,12 +372,34 @@ export function usePlaySession(
         steps += 1;
         if (state.terminalState !== null) break;
         if (countdownRunning) dispatchIgnition({ kind: "tick", dtUs: STEP_US });
-        // M4.8 — roll and alarms run on ignition-relative time, so they only
-        // advance once the descent burn has actually started.
-        const sinceIgnitionUs = ignitionRef.current.sinceIgnitionUs;
+        // M4.8/M4.13 — roll, alarms and crew callouts run on ignition-relative
+        // time. If the player never answered the flashing V99 (or flew a mode
+        // without the PDI ritual) the descent still happens, so a fallback
+        // clock starts at the first burning step: the historical sequence must
+        // never be silently skipped.
+        if (ignitionRef.current.sinceIgnitionUs > 0) {
+          descentClockRef.current = ignitionRef.current.sinceIgnitionUs;
+        } else if (
+          state.mainEngine !== "off" ||
+          ignitionRef.current.phase === "aborted" ||
+          ignitionRef.current.tigOffsetUs <= 0 ||
+          descentClockRef.current > 0
+        ) {
+          descentClockRef.current += STEP_US;
+        }
+        const sinceIgnitionUs = descentClockRef.current;
         if (sinceIgnitionUs > 0) {
           dispatchRoll({ kind: "tick", dtUs: STEP_US, sinceIgnitionUs });
-          if (apollo11Timeline) dispatchAlarm({ kind: "tick", sinceIgnitionUs });
+          if (apollo11Timeline) {
+            // Alarms are keyed to the flown timeline AND to the telemetry
+            // altitudes they were taken at, so they still occur when the
+            // game's trajectory runs faster or slower than the real descent.
+            dispatchAlarm({
+              kind: "tick",
+              sinceIgnitionUs,
+              altitudeFt: computeOrbitalValues(state).altitudeM / 0.3048,
+            });
+          }
         }
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
@@ -364,6 +407,7 @@ export function usePlaySession(
       if (steps > 0) {
         flightRef.current = state;
         setFlight(state);
+        setDescentClockUs(descentClockRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
     };
@@ -668,6 +712,9 @@ export function usePlaySession(
         setRunning(true);
       },
       setRollCommand: (active: boolean) => { dispatchRoll({ kind: "roll", active }); },
+      acknowledgeCallout: (id: string) => {
+        setAcknowledgedCallouts((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      },
     }),
     [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
@@ -685,6 +732,28 @@ export function usePlaySession(
       }),
     [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
+
+  const callout = useMemo(
+    () =>
+      apollo11Timeline
+        ? activeCallout(
+            {
+              sinceIgnitionUs: descentClockUs,
+              altitudeM: orbit.altitudeM,
+              burning: flight.mainEngine !== "off",
+            },
+            acknowledgedCallouts,
+          )
+        : null,
+    [
+      apollo11Timeline,
+      descentClockUs,
+      orbit.altitudeM,
+      flight.mainEngine,
+      acknowledgedCallouts,
+    ],
+  );
+
 
   return {
     flight,
@@ -712,6 +781,7 @@ export function usePlaySession(
     radarAvailable: radarAvailable(roll),
     alarms,
     bridgedAlarm: apollo11Timeline ? bridgedAlarmFor(alarms) : null,
+    callout,
     actions,
   };
 }

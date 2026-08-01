@@ -32,6 +32,12 @@ export interface ProgramAlarmDefinition {
   readonly code: ProgramAlarmCode;
   /** Seconds after ignition (PDI) at which the alarm is raised. */
   readonly atSinceIgnitionSec: number;
+  /**
+   * …or the telemetry-derived altitude (feet) the alarm was taken at. The
+   * game's planar trajectory does not run at exactly the flown timeline, so
+   * whichever condition is met first raises the alarm.
+   */
+  readonly belowAltitudeFt?: number;
   readonly label: string;
   readonly teaching: string;
 }
@@ -54,6 +60,8 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1202-first",
     code: "1202",
     atSinceIgnitionSec: timelineSeconds("alarm-1202-first", "102:38:23"),
+    // Telemetry-derived altitude at the first 1202 (mission log row 101).
+    belowAltitudeFt: 34_069,
     label: "1202 — Executive overflow, no core sets",
     teaching:
       "More jobs were queued than the Executive had core sets to hold. It " +
@@ -63,6 +71,7 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1202-second",
     code: "1202",
     atSinceIgnitionSec: timelineSeconds("alarm-1202-second", "102:39:02"),
+    belowAltitudeFt: 26_977,
     label: "1202 — Executive overflow (recurring)",
     teaching:
       "Recurring overload. Houston's call was based on whether guidance and " +
@@ -72,6 +81,8 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1201-first",
     code: "1201",
     atSinceIgnitionSec: getToSeconds("102:42:18") - PDI_GET_SEC,
+    // Between the P64 entry (7,129 ft) and ATT HOLD (513 ft) anchors.
+    belowAltitudeFt: 3_000,
     label: "1201 — Executive overflow, no VAC areas",
     teaching:
       "Same overload, different exhausted resource: vector accumulator areas " +
@@ -81,6 +92,7 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1201-second",
     code: "1201",
     atSinceIgnitionSec: getToSeconds("102:42:43") - PDI_GET_SEC,
+    belowAltitudeFt: 1_600,
     label: "1201 — Executive overflow (recurring)",
     teaching:
       "The last of the descent alarms, taken low in the approach phase with " +
@@ -124,7 +136,12 @@ export interface ProgramAlarmState {
 }
 
 export type ProgramAlarmEvent =
-  | { readonly kind: "tick"; readonly sinceIgnitionUs: number }
+  | {
+      readonly kind: "tick";
+      readonly sinceIgnitionUs: number;
+      /** Current altitude in feet; enables the altitude-based trigger. */
+      readonly altitudeFt?: number;
+    }
   | { readonly kind: "key"; readonly code: number; readonly sinceIgnitionUs: number };
 
 /** V05 N09 E — display the alarm code from the AGC's alarm register. */
@@ -158,7 +175,12 @@ export function reduceProgramAlarms(
     case "tick": {
       const def = timeline[state.nextIndex];
       if (def === undefined) return state;
-      if (event.sinceIgnitionUs < def.atSinceIgnitionSec * S) return state;
+      const dueByTime = event.sinceIgnitionUs >= def.atSinceIgnitionSec * S;
+      const dueByAltitude =
+        def.belowAltitudeFt !== undefined &&
+        event.altitudeFt !== undefined &&
+        event.altitudeFt <= def.belowAltitudeFt;
+      if (!dueByTime && !dueByAltitude) return state;
 
       // A new alarm supersedes an unanswered one; the unanswered alarm is
       // recorded as such.
