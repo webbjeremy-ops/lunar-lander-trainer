@@ -69,7 +69,7 @@ export const Route = createFileRoute("/play")({
 function PlayPage() {
   return (
     <main className="min-h-screen lm-bay text-neutral-100">
-      <header className="lm-placard px-4 py-3">
+      <header className="lm-placard lm-rivets px-4 py-3">
         <h1 className="lm-legend text-sm font-semibold uppercase">
           Lunar descent · fly the landing
         </h1>

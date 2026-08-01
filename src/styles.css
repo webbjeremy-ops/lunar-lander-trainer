@@ -232,22 +232,26 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
   --lm-caution: #f5b323;
 }
 
-/* The cabin structure behind the panels: painted aluminium, riveted. */
+/* The cabin structure behind the panels: painted aluminium. */
 .lm-bay {
-  background-color: var(--lm-panel-dark);
+  background-color: var(--lm-panel);
   background-image:
-    /* rivet rows down the structural seams */
-    radial-gradient(circle at 8px 8px, rgba(255, 255, 255, 0.22) 0.6px, rgba(0, 0, 0, 0.35) 1.4px, transparent 1.9px),
-    /* paint grain */
     repeating-linear-gradient(
       112deg,
-      rgba(255, 255, 255, 0.018) 0px,
-      rgba(255, 255, 255, 0.018) 1px,
-      rgba(0, 0, 0, 0.022) 1px,
-      rgba(0, 0, 0, 0.022) 2px
+      rgba(255, 255, 255, 0.02) 0px,
+      rgba(255, 255, 255, 0.02) 1px,
+      rgba(0, 0, 0, 0.024) 1px,
+      rgba(0, 0, 0, 0.024) 2px
     ),
-    radial-gradient(140% 90% at 50% -10%, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.55));
-  background-size: 22px 22px, auto, auto;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.18) 55%, rgba(0, 0, 0, 0.3));
+}
+
+/* Fastener rows along the structural seams of a bay. */
+.lm-rivets {
+  background-image:
+    radial-gradient(circle at 6px 6px, rgba(255, 255, 255, 0.35) 0.7px, rgba(0, 0, 0, 0.45) 1.5px, transparent 2px);
+  background-size: 18px 100%;
+  background-repeat: repeat-x;
 }
 
 /* A painted panel section: flat grey-green with a machined edge. */
@@ -319,6 +323,18 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
     0 0 0 3px var(--lm-panel),
     0 0 0 4px var(--lm-panel-dark),
     0 6px 12px rgba(0, 0, 0, 0.5);
+}
+
+/* Muted body text sits on grey paint, so lift it out of near-black. */
+.cockpit-metal .text-neutral-500,
+.cockpit-metal .text-neutral-600 {
+  color: #23261f;
+}
+.cockpit-metal [class*="bg-neutral-95"] .text-neutral-500,
+.cockpit-metal [class*="bg-neutral-95"] .text-neutral-600,
+.cockpit-metal [class*="bg-black"] .text-neutral-500,
+.cockpit-metal [class*="bg-black"] .text-neutral-600 {
+  color: #8f958a;
 }
 
 /* Panel legends inside the bays: white silkscreen, not muted grey. */
