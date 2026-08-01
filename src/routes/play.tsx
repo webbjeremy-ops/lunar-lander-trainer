@@ -339,6 +339,14 @@ function PlayClient() {
             limits={limits}
             manual={session.manualUnlocked}
             rollDeg={session.roll.rollDeg}
+            p64Selected={
+              // Pitch-over is withheld until the crew takes the approach
+              // program on the DSKY (V06 N64), unless this script has no P64
+              // step or the player is already flying P66.
+              !session.script.steps.some((s) => s.id === "p64-monitor") ||
+              session.procedure.completedStepIds.includes("p64-monitor") ||
+              session.manualUnlocked
+            }
           />
           <FlightInstruments
             flight={session.flight}
