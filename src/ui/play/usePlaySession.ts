@@ -121,6 +121,10 @@ export interface PlaySessionApi {
   /** M4.7 — PDI ignition ritual (countdown, ENG ARM, V99 request, FTP). */
   readonly ignition: IgnitionSequenceState;
   readonly ignitionClock: string;
+  /** M4.13B — descent-sequence clock driving roll cue, callouts and alarms. */
+  readonly descentClock: DescentClockState;
+  readonly descentClockLabel: string;
+  readonly descentClockStatus: string;
   readonly bridgedDskyRequest: BridgedDskyRequest | null;
   /** M4.12 — bridged descent-monitor registers (R1/R2/R3) in Apollo units. */
   readonly descentMonitor: DescentMonitorView;
