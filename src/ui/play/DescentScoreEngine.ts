@@ -50,9 +50,13 @@ export class DescentScoreEngine {
   private stringsGain: GainNode | null = null;
   private dissonanceGain: GainNode | null = null;
   private rumbleGain: GainNode | null = null;
+  private melodyGain: GainNode | null = null;
   private bedFilter: BiquadFilterNode | null = null;
   private pulseTimer: number | null = null;
+  private melodyTimer: number | null = null;
+  private melodyStep = 0;
   private layers: ScoreLayers = scoreLayers(0);
+
   private volume = 0.7;
   private started = false;
 
