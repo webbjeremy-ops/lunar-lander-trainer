@@ -477,10 +477,33 @@ function drawProfile(
   ctx.fillStyle = "#41e08a";
   ctx.font = "9px ui-monospace, monospace";
   ctx.fillText(`±${limits.landingZoneRadiusM}m`, lzX - 16, groundLine + 12);
+  ctx.fillText("LZ", lzX - 6, groundLine - 14);
 
-  // Vehicle.
-  const vx = xFor(downrangeM);
-  const vy = yFor(orbit.altitudeM);
+  // Vehicle — always kept inside the plot so the LM is visible in relation to
+  // the landing zone, even when the true position falls outside the framing.
+  const rawVx = xFor(downrangeM);
+  const rawVy = yFor(orbit.altitudeM);
+  const vx = clampX(rawVx);
+  const vy = clampY(rawVy);
+  const offScale = Math.abs(rawVx - vx) > 0.5 || Math.abs(rawVy - vy) > 0.5;
+
+  // Leader line from the vehicle to the landing zone, labelled with range-to-go.
+  ctx.strokeStyle = offScale ? "rgba(251,191,36,0.5)" : "rgba(65,224,138,0.32)";
+  ctx.setLineDash([3, 4]);
+  ctx.beginPath();
+  ctx.moveTo(vx, vy);
+  ctx.lineTo(lzX, groundLine);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = offScale ? "#fbbf24" : "#41e08a";
+  ctx.font = "9px ui-monospace, monospace";
+  ctx.fillText(
+    `${metresLabel(Math.abs(downrangeM))} to LZ${offScale ? " (off scale)" : ""}`,
+    Math.min(vx + 12, w - 96),
+    (vy + groundLine) / 2,
+  );
+
+
   ctx.save();
   ctx.translate(vx, vy);
   // Pitch from local vertical: near 90 deg on its back through braking, then
