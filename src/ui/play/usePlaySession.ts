@@ -94,6 +94,11 @@ import {
 } from "@/game/play";
 import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
 import { contactLightState } from "@/game/play/contactLight";
+import {
+  ACCEPTANCE_KEY_INTERVAL_MS,
+  resolveProgramAcceptance,
+  type InjectableKey,
+} from "@/game/play/programAcceptance";
 
 import {
   DESCENT_ENGINE,
@@ -225,10 +230,25 @@ export interface PlaySessionApi {
     readonly abortStage: () => void;
     /** M4.30 — enable/disable controller rumble. */
     readonly setHaptics: (on: boolean) => void;
+    /**
+     * M4.31 — easy program acceptance (LB): key the pending DSKY step for the
+     * crew. The keys go through the real DSKY into the AGC, one at a time.
+     */
+    readonly acceptProgram: () => void;
+    /**
+     * Register the DSKY's key injector. The DSKY owns the AGC client, so the
+     * assist can only key through it; without a registered injector the
+     * procedure state is left untouched.
+     */
+    readonly registerKeyInjector: (
+      send: ((code: number | "PRO") => void) | null,
+    ) => void;
 
   };
   /** M4.30 — whether controller rumble is currently enabled. */
   readonly hapticsEnabled: boolean;
+  /** M4.31 — how many steps were keyed by the LB assist rather than by hand. */
+  readonly assistedProgramEntries: number;
 }
 
 export function usePlaySession(
@@ -362,6 +382,10 @@ export function usePlaySession(
   const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
   const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  // M4.31 — easy program acceptance.
+  const keyInjectorRef = useRef<((code: number | "PRO") => void) | null>(null);
+  const acceptanceTimersRef = useRef<number[]>([]);
+  const [assistedProgramEntries, setAssistedProgramEntries] = useState(0);
 
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
