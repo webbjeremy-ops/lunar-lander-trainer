@@ -27,7 +27,7 @@ export interface DescentPhaseInfo {
 }
 
 /** Gate altitudes in metres (7,000 ft high gate, 500 ft low gate). */
-export const PHASE_HIGH_GATE_M = 2_134;
+export const PHASE_HIGH_GATE_M = 2_316;
 export const PHASE_LOW_GATE_M = 152;
 
 const DEG = Math.PI / 180;
