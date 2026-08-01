@@ -50,26 +50,36 @@ function AscentPage() {
     <main className="min-h-screen bg-neutral-900 text-neutral-100">
       <header className="border-b border-neutral-800 px-4 py-3">
         <h1 className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
-          AGC — Tranquility · Lunar Ascent
+          Lunar ascent · liftoff and orbital insertion
         </h1>
         <p className="mt-1 text-xs text-neutral-400">
           Liftoff, pitch program and orbital insertion.{" "}
+          <Link className="text-emerald-400" to="/missions">All missions</Link> ·{" "}
           <Link className="text-emerald-400" to="/play">Descent</Link> ·{" "}
-          <Link className="text-emerald-400" to="/learn">Learn the DSKY</Link> ·{" "}
+          <Link className="text-emerald-400" to="/learn">Learn</Link> ·{" "}
           <Link className="text-emerald-400" to="/sources">Sources</Link>
         </p>
       </header>
-      <ClientOnly fallback={<div className="p-6 text-xs text-neutral-500">Loading cockpit…</div>}>
-        <AscentClient />
-      </ClientOnly>
+      <p className="orientation-hint border-b border-amber-900/60 bg-amber-950/30 px-4 py-2 text-xs text-amber-200">
+        Rotate your device to landscape — the cockpit needs the width.
+      </p>
+      <RouteErrorBoundary title="The ascent cockpit stopped responding">
+        <ClientOnly fallback={<div className="p-6 text-xs text-neutral-500">Loading cockpit…</div>}>
+          <AscentClient />
+        </ClientOnly>
+      </RouteErrorBoundary>
     </main>
   );
 }
 
 function AscentClient() {
+  const { settings } = useSettings();
   const [missionId, setMissionId] = useState<AscentMissionId>("liftoff-fundamentals");
-  const [assistance, setAssistance] = useState<AssistanceLevel>("instructor");
+  const [assistance, setAssistance] = useState<AssistanceLevel>(
+    settings.defaultAssistance as AssistanceLevel,
+  );
   const [started, setStarted] = useState(false);
+
 
   const mission = ASCENT_MISSIONS[missionId];
   const session = useAscentSession(mission, assistance);
