@@ -44,6 +44,11 @@ const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
 const BRAKING_ALTITUDE_TAU_S = 90;
 /** Sink-rate authority during braking, m/s. */
 const BRAKING_MAX_SINK_MPS = 45;
+/**
+ * Once the stopping law needs more than this deceleration the vehicle is late
+ * braking, and it takes priority over the nominal speed profile, m/s².
+ */
+const BRAKING_STOP_OVERRIDE_MPS2 = 2;
 /** Braking-phase downrange velocity loop time constant, seconds. */
 const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
@@ -127,7 +132,10 @@ export function computeReferenceGuidance(
       if (profileSpeed !== null) {
         const desired = Math.sign(signedRange || 1) * Math.abs(profileSpeed);
         const onProfile = (desired - v) / BRAKING_SPEED_TAU_S;
-        aHorizontal = Math.min(onProfile, stopping);
+        // Fly the profile speed; only fall back on the stopping law when the
+        // vehicle is genuinely late braking and needs more than the profile.
+        aHorizontal =
+          Math.abs(stopping) > BRAKING_STOP_OVERRIDE_MPS2 ? stopping : onProfile;
       } else {
         aHorizontal = stopping;
       }
