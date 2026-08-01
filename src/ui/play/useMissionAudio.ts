@@ -57,9 +57,20 @@ export function beatFor(input: MissionAudioInput): MissionAudioBeat | null {
   return null;
 }
 
-export function useMissionAudio(input: MissionAudioInput): void {
+export interface MissionAudioApi {
+  /** A recording is on the comm loop right now. */
+  readonly speaking: boolean;
+  /** Multiplier other cockpit audio should apply while a clip plays. */
+  readonly duck: number;
+}
+
+/** Everything else drops to this fraction while the crew loop is talking. */
+export const MISSION_AUDIO_DUCK = 0.25;
+
+export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
   const playedRef = useRef<Set<MissionAudioBeat>>(new Set());
   const currentRef = useRef<HTMLAudioElement | null>(null);
+  const [speaking, setSpeaking] = useState(false);
 
   useEffect(
     () => () => {
@@ -81,8 +92,28 @@ export function useMissionAudio(input: MissionAudioInput): void {
 
     playedRef.current.add(beat);
     const el = new Audio(MISSION_AUDIO_URLS[beat]);
-    el.volume = 0.9;
+    el.volume = 1;
     currentRef.current = el;
-    void el.play().catch(() => undefined);
+    const done = () => {
+      if (currentRef.current === el) setSpeaking(false);
+    };
+    el.addEventListener("ended", done);
+    el.addEventListener("pause", done);
+    el.addEventListener("error", done);
+    setSpeaking(true);
+    void el.play().catch(() => {
+      done();
+    });
   }, [enabled, engineOn, activeAlarmId, calloutId, contact]);
+
+  // Muting the cockpit audio also silences the comm loop.
+  useEffect(() => {
+    if (enabled) return;
+    currentRef.current?.pause();
+    currentRef.current = null;
+    setSpeaking(false);
+  }, [enabled]);
+
+  return { speaking, duck: speaking ? MISSION_AUDIO_DUCK : 1 };
+}
 }
