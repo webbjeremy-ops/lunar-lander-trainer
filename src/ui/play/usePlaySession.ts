@@ -87,6 +87,7 @@ import {
   type ProgramAlarmState,
   type TakeoverRecord,
 } from "@/game/play";
+import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
 
 import {
   DESCENT_ENGINE,
@@ -365,6 +366,7 @@ export function usePlaySession(
     setDescentClock(descentClockRef.current);
     escalationRef.current = createHoustonEscalationState();
     setEscalation(escalationRef.current);
+    crewHasVehicleRef.current = false;
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
