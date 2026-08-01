@@ -249,21 +249,17 @@ export class DescentScoreEngine {
     }, stepMs);
   }
 
-  /** Pattern for the current arpeggiation amount (Hz). */
+  /**
+   * Pattern as chord-tone indices (0,1,2 = chord tones; 3+ wrap an octave up),
+   * so the same figure re-colours as the bass chord moves underneath.
+   */
   private melodyPattern(arp: number): readonly number[] {
-    const A3 = 220.0;
-    const C4 = 261.63;
-    const D4 = 293.66;
-    const E4 = 329.63;
-    const G4 = 392.0;
-    const A4 = 440.0;
-    const C5 = 523.25;
-    const E5 = 659.25;
-    if (arp < 0.25) return [A3, E4]; // pedal: root and fifth
-    if (arp < 0.5) return [A3, E4, C4, G4]; // simple rocking figure
-    if (arp < 0.78) return [A3, C4, E4, G4, E4, C4]; // rising/falling arpeggio
-    return [A3, C4, E4, A4, C5, E5, C5, A4, E4, C4, D4, E4]; // full running line
+    if (arp < 0.25) return [0, 2]; // pedal: root and fifth
+    if (arp < 0.5) return [0, 2, 1, 4]; // simple rocking figure
+    if (arp < 0.78) return [0, 1, 2, 4, 2, 1]; // rising/falling arpeggio
+    return [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 2, 4]; // full running line
   }
+
 
   private tickNote(): void {
     const ctx = this.ctx;
