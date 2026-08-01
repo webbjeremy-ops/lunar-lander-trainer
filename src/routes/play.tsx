@@ -223,6 +223,15 @@ function PlayClient() {
             <option key={s} value={s}>{s === 0 ? "HOLD" : `${s}×`}</option>
           ))}
         </select>
+        {session.ignition.phase === "standby" && session.flight.terminalState === null && (
+          <button
+            onClick={() => session.actions.startIgnitionCountdown()}
+            data-testid="play-start-pdi"
+            className="rounded border border-amber-600 bg-amber-950/40 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-amber-200 hover:bg-amber-900/40"
+          >
+            Start PDI countdown (T−60)
+          </button>
+        )}
         <button
           onClick={() => session.actions.restart()}
           data-testid="play-restart"
