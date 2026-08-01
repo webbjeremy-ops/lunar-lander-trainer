@@ -222,15 +222,16 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
  * Reference: Apollo Operations Handbook LM-5, main panels 1-4 (NASA, 1969).
  * ------------------------------------------------------------------------ */
 :root {
-  --lm-panel: #6c7168;
-  --lm-panel-dark: #565b53;
-  --lm-panel-light: #7d8278;
-  --lm-legend: #f2f3ee;
-  --lm-face: #0b0d0b;
-  --lm-bezel: #1a1c19;
+  --lm-panel: #1b1d1c;
+  --lm-panel-dark: #121413;
+  --lm-panel-light: #262928;
+  --lm-legend: #e8eae6;
+  --lm-face: #050605;
+  --lm-bezel: #0a0b0a;
   --lm-el: #5df2a3;
   --lm-caution: #f5b323;
 }
+
 
 /* The cabin structure behind the panels: painted aluminium. */
 .lm-bay {
@@ -327,9 +328,9 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
 
 /* The control strip rides on the grey paint, so give it its own dark rail. */
 .cockpit-strip {
-  border: 1px solid #2f322c;
+  border: 1px solid #2a2c2b;
   border-radius: 3px;
-  background-color: #23261f;
+  background-color: #141615;
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.4));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 3px 8px rgba(0, 0, 0, 0.4);
   padding: 0.45rem 0.6rem;
@@ -357,8 +358,8 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
 
 /* Push-buttons and switch legends on the grey panel. */
 .cockpit-metal button[class*="bg-neutral-9"] {
-  border-color: #23261f;
-  background-color: #2b2e28;
+  border-color: #0f100f;
+  background-color: #232524;
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.4));
   color: #e6e8e0;
   box-shadow:
@@ -374,7 +375,7 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
 .lm-placard {
   background-color: var(--lm-panel-dark);
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.32));
-  border-bottom: 2px solid #2f322c;
+  border-bottom: 2px solid #000000;
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
