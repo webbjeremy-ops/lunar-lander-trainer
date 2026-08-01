@@ -418,6 +418,7 @@ function PlayClient() {
               state={session.procedure}
               step={session.step}
               manual={session.manualUnlocked}
+              sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
             />
           )}
           <HoustonOverlay
