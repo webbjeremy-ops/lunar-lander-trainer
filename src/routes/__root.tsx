@@ -12,6 +12,10 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AgcSessionProvider } from "@/agc/AgcSession";
+import { SettingsProvider } from "@/settings/SettingsProvider";
+import { AppNav } from "@/ui/shell/AppNav";
+import { AgcBootBanner, RecoverableError } from "@/ui/shell/Reliability";
+
 
 function NotFoundComponent() {
   return (
