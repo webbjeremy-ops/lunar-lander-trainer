@@ -28,19 +28,47 @@ export function LunarScene({
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
+  // M4.10 — the scene used to redraw from an effect keyed on flight state and
+  // reallocated the backing store on every draw. Now the latest props live in
+  // a ref and painting happens once per animation frame, so the picture tracks
+  // the vehicle instead of trailing React's render work.
+  const propsRef = useRef<DrawArgs>({ flight, orbit, downrangeM, mission, limits, manual });
+  propsRef.current = { flight, orbit, downrangeM, mission, limits, manual };
+
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const dpr = Math.min(2, typeof window === "undefined" ? 1 : window.devicePixelRatio || 1);
-    const w = canvas.clientWidth;
-    const h = canvas.clientHeight;
-    canvas.width = Math.round(w * dpr);
-    canvas.height = Math.round(h * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    draw(ctx, w, h, { flight, orbit, downrangeM, mission, limits, manual });
-  }, [flight, orbit, downrangeM, mission, limits, manual]);
+
+    let frame = 0;
+    let lastW = -1;
+    let lastH = -1;
+    let lastDpr = -1;
+
+    const paint = () => {
+      const dpr = Math.min(2, typeof window === "undefined" ? 1 : window.devicePixelRatio || 1);
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      if (w > 0 && h > 0) {
+        if (w !== lastW || h !== lastH || dpr !== lastDpr) {
+          canvas.width = Math.round(w * dpr);
+          canvas.height = Math.round(h * dpr);
+          lastW = w;
+          lastH = h;
+          lastDpr = dpr;
+        }
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, w, h);
+        draw(ctx, w, h, propsRef.current);
+      }
+      frame = requestAnimationFrame(paint);
+    };
+
+    paint();
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
 
   return (
     <canvas

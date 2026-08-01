@@ -72,8 +72,15 @@ const STEP_US = 20_000;
 
 const STEP_S = STEP_US / 1_000_000;
 const MAX_CATCHUP_STEPS = 25;
+/** M4.10 — held attitude key commands this body rate (rad/s, ~9 deg/s). */
+const COMMANDED_ATTITUDE_RATE = 0.16;
+/** Proportional gain converting rate error to attitude authority command. */
+const ATTITUDE_RATE_GAIN = 12;
+/** Immediate rate kick applied on keydown so the first frame already moves. */
+const ATTITUDE_TAP_RATE = 0.02;
 /** Rate-of-descent trim increment: 1 ft/s, as in the real P66 ROD switch. */
 export const ROD_INCREMENT_MPS = 0.3048;
+
 
 export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
 
@@ -214,6 +221,9 @@ export function usePlaySession(
 
   const throttleRef = useRef(0);
   const attitudeRef = useRef(0);
+  /** One-shot rate kick consumed by the attitude controller on key press. */
+  const attitudeKickRef = useRef(0);
+
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
   const roughnessRef = useRef(0);
@@ -268,10 +278,13 @@ export function usePlaySession(
         if (e.repeat) return;
         heldRef.current.add(k);
         if (k === " ") engineRef.current = !engineRef.current;
-        // Immediate throttle nudge on press so the first frame already moves,
-        // instead of waiting for the ramp integrator to build up.
+        // Immediate nudge on press so the first frame already moves, instead
+        // of waiting for the integrator to build up.
         if (k === "ArrowUp") throttleRef.current = clamp01(throttleRef.current + 0.03);
         if (k === "ArrowDown") throttleRef.current = clamp01(throttleRef.current - 0.03);
+        if (k === "ArrowLeft") attitudeKickRef.current = -ATTITUDE_TAP_RATE;
+        if (k === "ArrowRight") attitudeKickRef.current = ATTITUDE_TAP_RATE;
+
       } else if (k === "," || k === ".") {
         e.preventDefault();
         rodTargetRef.current += (k === "," ? -1 : 1) * ROD_INCREMENT_MPS;
@@ -359,17 +372,32 @@ export function usePlaySession(
         const held = heldRef.current;
         if (held.has("ArrowUp")) throttleRef.current += 1.8 * STEP_S;
         if (held.has("ArrowDown")) throttleRef.current -= 1.8 * STEP_S;
-        let att = 0;
-        if (held.has("ArrowLeft")) att -= 1;
-        if (held.has("ArrowRight")) att += 1;
+        let stick = 0;
+        if (held.has("ArrowLeft")) stick -= 1;
+        if (held.has("ArrowRight")) stick += 1;
 
         const pad = readGamepad();
         if (pad) {
-          if (Math.abs(pad.attitude) > 0.12) att = pad.attitude;
+          if (Math.abs(pad.attitude) > 0.12) stick = pad.attitude;
           if (pad.throttle !== null) throttleRef.current = pad.throttle;
         }
 
-        attitudeRef.current = att;
+        // M4.10 rate-command / attitude-hold: the stick commands a body rate,
+        // and a released stick commands zero rate so the RCS nulls rotation
+        // instead of leaving the vehicle drifting.
+        const rateCmd = stick * COMMANDED_ATTITUDE_RATE;
+        const kick = attitudeKickRef.current;
+        attitudeKickRef.current = 0;
+        attitudeRef.current = clampSigned(
+          (rateCmd + kick - state.angularRateRadPerSec) * ATTITUDE_RATE_GAIN,
+        );
+        // Settled and hands off: issue an exact zero so the kernel's deadband
+        // collapses the residual rate and the state stays reproducible.
+        if (stick === 0 && kick === 0 && Math.abs(state.angularRateRadPerSec) < 2e-3) {
+          attitudeRef.current = 0;
+        }
+
+
         throttleRef.current = clamp01(throttleRef.current);
 
         // P66 rate-of-descent: with no direct thrust input, the throttle is

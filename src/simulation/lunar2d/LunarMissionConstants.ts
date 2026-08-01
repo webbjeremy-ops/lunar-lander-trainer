@@ -277,14 +277,15 @@ export interface AttitudeControlConstants {
 
 export const ATTITUDE_CONTROL: AttitudeControlConstants = {
   maxAngularAccelRadPerSec2: {
-    value: 0.12,
+    value: 0.6,
     unit: "rad/s^2",
     classification: "gameplay-tuned",
     sourceId: null,
     rationale:
-      "Single-axis stand-in for the 16-thruster RCS. Chosen so a full-scale " +
-      "command reorients the vehicle on a timescale comparable to the real " +
-      "vehicle without modelling jet geometry or inertia tensors.",
+      "Single-axis stand-in for the 16-thruster RCS. M4.10 raised this so a " +
+      "pilot input bites within about a tenth of a second and a released " +
+      "control nulls the rate promptly, matching the feel of the digital " +
+      "autopilot without modelling jet geometry or inertia tensors.",
   },
   maxAngularRateRadPerSec: {
     value: 0.35,
@@ -293,6 +294,7 @@ export const ATTITUDE_CONTROL: AttitudeControlConstants = {
     sourceId: null,
     rationale: "Hard rate limit (~20 deg/s) so attitude cannot run away.",
   },
+
   rcsMassFlowKgPerSec: {
     value: 0.4,
     unit: "kg/s",
@@ -304,14 +306,16 @@ export const ATTITUDE_CONTROL: AttitudeControlConstants = {
       "per-jet fidelity.",
   },
   rateDeadbandRadPerSec: {
-    value: 1e-4,
+    value: 2e-3,
     unit: "rad/s",
     classification: "gameplay-tuned",
     sourceId: null,
     rationale:
-      "Zero-command rates below this collapse to exactly zero, keeping " +
-      "serialized states clean and bit-reproducible.",
+      "Attitude-hold deadband (~0.1 deg/s). Zero-command rates below this " +
+      "collapse to exactly zero, so a released control settles in one or two " +
+      "substeps and serialized states stay bit-reproducible.",
   },
+
 };
 
 // -----------------------------------------------------------------------------

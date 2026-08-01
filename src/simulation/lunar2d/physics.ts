@@ -501,17 +501,35 @@ export function stepLunarFlight(
       }
     }
 
-    // --- attitude (bounded RCS model) -------------------------------------
-    const angularAccel = attitudeCommand * att.maxAngularAccelRadPerSec2.value;
+    // --- attitude (bounded RCS model, rate-command / attitude-hold) --------
+    // M4.10 — a zero command is an ACTIVE command to null the rate, the way
+    // the digital autopilot held attitude. Previously a released control left
+    // the vehicle rotating forever, which is what made manual (and therefore
+    // horizontal) control feel laggy.
+    const maxAccel = att.maxAngularAccelRadPerSec2.value;
+    const deadband = att.rateDeadbandRadPerSec.value;
     let rcsBurn = 0;
     if (attitudeCommand !== 0 && rcsProp > 0) {
       rcsBurn = Math.min(
         rcsProp,
         Math.abs(attitudeCommand) * att.rcsMassFlowKgPerSec.value * dtS,
       );
-      rate += angularAccel * dtS;
-    } else if (attitudeCommand === 0 && Math.abs(rate) < att.rateDeadbandRadPerSec.value) {
-      rate = 0;
+      rate += attitudeCommand * maxAccel * dtS;
+    } else if (attitudeCommand === 0) {
+      if (Math.abs(rate) < deadband) {
+        rate = 0;
+      } else if (rcsProp > 0) {
+        // Brake toward zero without overshooting within the substep.
+        const delta = Math.min(maxAccel * dtS, Math.abs(rate));
+        rate -= Math.sign(rate) * delta;
+        if (Math.abs(rate) < deadband) rate = 0;
+        rcsBurn = Math.min(
+          rcsProp,
+          (delta / Math.max(maxAccel * dtS, Number.EPSILON)) *
+            att.rcsMassFlowKgPerSec.value *
+            dtS,
+        );
+      }
     }
     const maxRate = att.maxAngularRateRadPerSec.value;
     if (rate > maxRate) rate = maxRate;
@@ -519,6 +537,7 @@ export function stepLunarFlight(
     attitude = wrapAngle(attitude + rate * dtS);
     rcsProp -= rcsBurn;
     if (rcsProp < 0) rcsProp = 0;
+
 
     // --- accelerations ----------------------------------------------------
     const r = Math.hypot(px, py);
