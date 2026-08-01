@@ -387,9 +387,16 @@ function drawProfile(
   const altSpan = snapSpan(Math.max(orbit.altitudeM, 0) * 1.25, 30);
   const rangeSpan = snapSpan(Math.abs(downrangeM) * 1.3, 60);
 
+  // The landing zone is anchored near the right edge and the range axis runs
+  // back from it, so the vehicle and its target are always framed together.
+  const lzAnchorX = w - 30;
   const yFor = (altM: number) =>
     groundLine - (Math.max(0, altM) / altSpan) * (groundLine - padTop);
-  const xFor = (rangeM: number) => w / 2 - (rangeM / rangeSpan) * (w / 2 - padLeft * 0.6);
+  const xFor = (rangeM: number) =>
+    lzAnchorX - (rangeM / rangeSpan) * (lzAnchorX - padLeft);
+  const clampX = (px: number) => Math.max(padLeft + 6, Math.min(w - 8, px));
+  const clampY = (py: number) => Math.max(padTop + 6, Math.min(groundLine - 2, py));
+
 
   // Altitude grid with labels — these are the numbers the altimeter shows.
   ctx.font = "9px ui-monospace, monospace";
