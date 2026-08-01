@@ -2,9 +2,36 @@
 // Playwright configuration for the Wrangler-served /learn acceptance suite.
 // Serves the real production Cloudflare Workers bundle from dist/, exactly as
 // deployed. Serial execution; a single browser context per test.
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { defineConfig } from "@playwright/test";
 
 const PORT = Number(process.env.PW_PORT ?? 4173);
+
+/**
+ * Resolve a Chromium binary that actually exists on this machine.
+ *
+ * Playwright pins a browser build number per release; sandboxes and CI images
+ * frequently ship a different build under PLAYWRIGHT_BROWSERS_PATH. Rather than
+ * hard-coding a build that goes stale, discover the installed chromium-* folder
+ * and fall back to Playwright's own resolution when nothing is found.
+ */
+function resolveChromium(): string | undefined {
+  if (process.env.PW_CHROMIUM) return process.env.PW_CHROMIUM;
+  const root = process.env.PLAYWRIGHT_BROWSERS_PATH;
+  if (!root || !existsSync(root)) return undefined;
+  const candidates = readdirSync(root)
+    .filter((name) => /^chromium-\d+$/.test(name))
+    .sort()
+    .reverse();
+  for (const dir of candidates) {
+    const bin = join(root, dir, "chrome-linux", "chrome");
+    if (existsSync(bin)) return bin;
+  }
+  return undefined;
+}
+
+const chromiumPath = resolveChromium();
 
 export default defineConfig({
   testDir: "tests",
