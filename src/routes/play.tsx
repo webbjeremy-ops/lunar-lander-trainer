@@ -135,6 +135,19 @@ function PlayClient() {
   // M4.34 — out-the-window first-person view toggle.
   const [firstPerson, setFirstPerson] = useState(false);
 
+  // "V" toggles the commander's window view without leaving the controls.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "KeyV" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = e.target as HTMLElement | null;
+      if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+      setFirstPerson((v) => !v);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+
 
   const mission = MISSIONS[missionId];
   const limits = LANDING_LIMITS[assistance];
