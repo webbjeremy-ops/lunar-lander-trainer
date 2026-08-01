@@ -22,6 +22,8 @@
 // Deterministic reducer: (state, event) -> state. No timers, no AGC access,
 // no side effects.
 
+import { milestoneSec } from "./descentTimeline";
+
 const S = 1_000_000;
 
 export type RollPhase = "windows-down" | "rolling" | "windows-up";
