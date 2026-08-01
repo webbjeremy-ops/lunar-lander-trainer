@@ -336,6 +336,8 @@ export function usePlaySession(
 
 
   const throttleRef = useRef(0);
+  /** Latched once the vehicle drops below low gate: terminal (P66) guidance. */
+  const terminalGuidanceRef = useRef(false);
   const attitudeRef = useRef(0);
   /** One-shot rate kick consumed by the attitude controller on key press. */
   const attitudeKickRef = useRef(0);
