@@ -42,3 +42,18 @@ describe("descent attitude phases", () => {
     expect(manual).toBeGreaterThan(0);
   });
 });
+
+describe("P64 gate", () => {
+  it("holds the braking attitude below high gate until P64 is taken", () => {
+    const held = descentPhaseFor(1_000, { p64Selected: false });
+    expect(held.id).toBe("braking");
+    expect(held.label).toContain("P64 NOT SELECTED");
+  });
+
+  it("pitches over once the approach program is selected", () => {
+    const held = descentPhaseFor(1_000, { p64Selected: false });
+    const taken = descentPhaseFor(1_000, { p64Selected: true });
+    expect(taken.id).toBe("approach");
+    expect(taken.pitchRad).toBeLessThan(held.pitchRad);
+  });
+});
