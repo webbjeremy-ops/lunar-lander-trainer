@@ -290,8 +290,8 @@ export function usePlaySession(
     alarmsRef.current = a;
     setAlarms(a);
     setAcknowledgedCallouts([]);
-    descentClockRef.current = 0;
-    setDescentClockUs(0);
+    descentClockRef.current = createDescentClockState();
+    setDescentClock(descentClockRef.current);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
