@@ -307,6 +307,7 @@ function groundY(rangeM: number, altitudeM: number, horizonY: number, h: number)
 /** Snapped display spans, so the axes hold still while the vehicle moves. */
 const SPAN_LADDER = [
   30, 60, 120, 250, 500, 1_000, 2_000, 5_000, 10_000, 20_000, 40_000, 80_000,
+  160_000, 320_000, 640_000,
 ];
 
 function snapSpan(value: number, minimum: number): number {
