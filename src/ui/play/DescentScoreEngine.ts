@@ -60,14 +60,20 @@ export class DescentScoreEngine {
     return this.started;
   }
 
-  /** Must be called from a user gesture (browser autoplay policy). */
+  /** Safe to call repeatedly: a suspended context is resumed on each gesture. */
   start(): void {
-    if (this.started || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
+    if (this.started) {
+      // Created before the user gesture: the context is suspended, resume it.
+      if (this.ctx && this.ctx.state !== "running") void this.ctx.resume();
+      return;
+    }
     const Ctor: typeof AudioContext | undefined =
       window.AudioContext ??
       (window as unknown as { webkitAudioContext?: typeof AudioContext })
         .webkitAudioContext;
     if (!Ctor) return;
+
 
     const ctx = new Ctor();
     this.ctx = ctx;
