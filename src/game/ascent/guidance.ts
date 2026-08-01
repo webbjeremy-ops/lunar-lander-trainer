@@ -82,8 +82,13 @@ export function computeAscentGuidance(
   if (inVerticalRise) pitch = 0;
 
   const apo = orbit.apoapsisAltitudeM;
+  // Cutting off as soon as the high point reaches the target is the classic
+  // mistake: the low point is still inside the Moon while the vehicle is only
+  // part-way up. The cue therefore also waits for the insertion altitude.
+  const nearInsertionAltitude = orbit.altitudeM >= 0.85 * hIns;
   const recommendCutoff =
-    lifted && (apo === null || apo >= target.apoapsisAltitudeM);
+    lifted &&
+    (apo === null || (apo >= target.apoapsisAltitudeM && nearInsertionAltitude));
 
   let phase: AscentPhase;
   if (!lifted) phase = "surface-preparation";
