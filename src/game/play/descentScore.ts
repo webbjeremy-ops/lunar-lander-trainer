@@ -104,3 +104,40 @@ export function scoreLayers(tension: number): ScoreLayers {
 
 }
 
+
+// --- harmonic progression ---------------------------------------------------
+//
+// The under-melody sits on a moving bass: a slow four-chord loop in A minor
+// (i – VI – III – VII). The melody borrows its notes from the current chord,
+// so the same arpeggio figure re-colours as the harmony moves underneath.
+
+export interface Chord {
+  readonly name: string;
+  /** Bass root, Hz (octave 1/2 territory). */
+  readonly bassHz: number;
+  /** Chord tones for the arpeggio, ascending, Hz (octave 3/4 territory). */
+  readonly tonesHz: readonly number[];
+}
+
+export const CHORD_PROGRESSION: readonly Chord[] = [
+  { name: "Am", bassHz: 55.0, tonesHz: [220.0, 261.63, 329.63] }, // A C E
+  { name: "F", bassHz: 43.65, tonesHz: [174.61, 220.0, 261.63] }, // F A C
+  { name: "C", bassHz: 65.41, tonesHz: [196.0, 261.63, 329.63] }, // G C E
+  { name: "G", bassHz: 49.0, tonesHz: [196.0, 246.94, 293.66] }, // G B D
+];
+
+/** How many melody notes are held per chord — fewer when the line is slow. */
+export function melodyNotesPerChord(melodyArp: number): number {
+  const arp = clamp01(melodyArp);
+  if (arp < 0.25) return 2;
+  if (arp < 0.5) return 4;
+  if (arp < 0.78) return 6;
+  return 12;
+}
+
+/** Chord for a given melody-step index. */
+export function chordForStep(step: number, melodyArp: number): Chord {
+  const per = melodyNotesPerChord(melodyArp);
+  const idx = Math.floor(Math.max(0, step) / per) % CHORD_PROGRESSION.length;
+  return CHORD_PROGRESSION[idx]!;
+}

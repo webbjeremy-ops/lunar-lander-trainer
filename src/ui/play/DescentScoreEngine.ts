@@ -15,7 +15,13 @@
 //   dissonance  a high tritone partial that only appears when it is going wrong
 //   rumble      filtered noise, the descent engine through the structure
 
-import { scoreLayers, type ScoreLayers } from "@/game/play/descentScore";
+import {
+  chordForStep,
+  melodyNotesPerChord,
+  scoreLayers,
+  type ScoreLayers,
+} from "@/game/play/descentScore";
+
 
 type Ctx = AudioContext;
 
@@ -55,6 +61,8 @@ export class DescentScoreEngine {
   private pulseTimer: number | null = null;
   private melodyTimer: number | null = null;
   private melodyStep = 0;
+  private currentChordName: string | null = null;
+
   private layers: ScoreLayers = scoreLayers(0);
 
   private volume = 0.7;
@@ -249,21 +257,17 @@ export class DescentScoreEngine {
     }, stepMs);
   }
 
-  /** Pattern for the current arpeggiation amount (Hz). */
+  /**
+   * Pattern as chord-tone indices (0,1,2 = chord tones; 3+ wrap an octave up),
+   * so the same figure re-colours as the bass chord moves underneath.
+   */
   private melodyPattern(arp: number): readonly number[] {
-    const A3 = 220.0;
-    const C4 = 261.63;
-    const D4 = 293.66;
-    const E4 = 329.63;
-    const G4 = 392.0;
-    const A4 = 440.0;
-    const C5 = 523.25;
-    const E5 = 659.25;
-    if (arp < 0.25) return [A3, E4]; // pedal: root and fifth
-    if (arp < 0.5) return [A3, E4, C4, G4]; // simple rocking figure
-    if (arp < 0.78) return [A3, C4, E4, G4, E4, C4]; // rising/falling arpeggio
-    return [A3, C4, E4, A4, C5, E5, C5, A4, E4, C4, D4, E4]; // full running line
+    if (arp < 0.25) return [0, 2]; // pedal: root and fifth
+    if (arp < 0.5) return [0, 2, 1, 4]; // simple rocking figure
+    if (arp < 0.78) return [0, 1, 2, 4, 2, 1]; // rising/falling arpeggio
+    return [0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 2, 4]; // full running line
   }
+
 
   private tickNote(): void {
     const ctx = this.ctx;
@@ -272,8 +276,21 @@ export class DescentScoreEngine {
 
     const arp = this.layers.melodyArp;
     const seq = this.melodyPattern(arp);
-    const base = seq[this.melodyStep % seq.length]!;
+    const step = this.melodyStep;
+    const chord = chordForStep(step, arp);
+    const perChord = melodyNotesPerChord(arp);
+
+    // New chord? Sound the bass root underneath before the melody note.
+    if (step % perChord === 0 && chord.name !== this.currentChordName) {
+      this.currentChordName = chord.name;
+      this.tickBass(chord.bassHz, perChord);
+    }
+
+    const degree = seq[step % seq.length]!;
+    const tones = chord.tonesHz;
+    const base = tones[degree % tones.length]! * 2 ** Math.floor(degree / tones.length);
     this.melodyStep += 1;
+
 
     const now = ctx.currentTime;
     // Sustained and overlapping when simple; short and articulated when fast.
@@ -332,5 +349,31 @@ export class DescentScoreEngine {
     bus.gain.setValueAtTime(1, now);
     osc.start(now);
     osc.stop(now + 0.4);
+  }
+
+  /** Chord root under the melody: a long, swelling low note on each change. */
+  private tickBass(hz: number, notesPerChord: number): void {
+    const ctx = this.ctx;
+    const bus = this.melodyGain;
+    if (!ctx || !bus) return;
+    const now = ctx.currentTime;
+    const dur = Math.max(1.2, this.layers.melodyNoteSec * notesPerChord);
+    const level = 0.2 * this.layers.melody;
+    for (const [mult, weight, type] of [
+      [1, 1, "sine"],
+      [2, 0.3, "sine"],
+      [3, 0.1, "triangle"],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      osc.type = type;
+      osc.frequency.value = hz * mult;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(level * weight, now + 0.5);
+      g.gain.setTargetAtTime(0.0001, now + dur * 0.6, dur * 0.3);
+      osc.connect(g).connect(bus);
+      osc.start(now);
+      osc.stop(now + dur + 1.0);
+    }
   }
 }
