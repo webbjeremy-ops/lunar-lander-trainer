@@ -178,7 +178,12 @@ export function usePlaySession(
   // kernel or the AGC.
   const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
-  const apollo11Timeline = usesApollo11Timeline(script);
+  const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
+  // The Apollo 11 mission always flies the historical roll / alarm / callout
+  // timeline, whatever control mode the player picked — the alarms are part of
+  // the flight, not part of the DSKY procedure script.
+  const apollo11Timeline =
+    mission.id === "apollo11-powered-descent" || usesApollo11Timeline(script);
 
   const flightRef = useRef(flight);
   flightRef.current = flight;
