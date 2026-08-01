@@ -10,6 +10,7 @@
 import { useEffect, useRef } from "react";
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
 import type { Hazard, LandingLimits, MissionDefinition } from "@/game/play";
+import { descentPhaseFor, displayPitchRad } from "@/game/play/descentPhase";
 
 export function LunarScene({
   flight,
@@ -149,7 +150,7 @@ function drawWindow(
   y0: number,
   w: number,
   h: number,
-  { flight, orbit, downrangeM, mission, limits }: DrawArgs,
+  { flight, orbit, downrangeM, mission, limits, manual }: DrawArgs,
 ) {
   ctx.save();
   ctx.translate(x0, y0);
@@ -161,8 +162,14 @@ function drawWindow(
   ctx.fillStyle = "#05070a";
   ctx.fillRect(0, 0, w, h);
 
-  const pitch = flight.attitudeRad; // 0 = thrust up = looking level-ish
-  const horizonY = h * 0.36 + pitch * h * 0.35;
+  // Historical attitude: pitched back near 90 deg through braking (windows off
+  // the surface), pitch-over at high gate, near upright at low gate.
+  const phase = descentPhaseFor(orbit.altitudeM);
+  const pitch = displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual);
+  // At 90 deg from vertical the crew is looking at space: the horizon drops
+  // out of the bottom of the window. Upright brings it back up.
+  const horizonY = h * 0.36 + (pitch / (Math.PI / 2)) * h * 0.95;
+
 
   // Regolith.
   const grad = ctx.createLinearGradient(0, horizonY, 0, h);
@@ -248,7 +255,18 @@ function drawWindow(
   ctx.fillStyle = "#9ca3af";
   ctx.font = "10px ui-monospace, monospace";
   ctx.fillText("COMMANDER'S WINDOW · LPD", 10, 16);
+  ctx.fillStyle = phase.id === "braking" ? "#fbbf24" : "#41e08a";
+  ctx.fillText(`${phase.label} · ${(pitch * 180) / Math.PI | 0}° FROM VERTICAL`, 10, 30);
+  ctx.fillStyle = "#9ca3af";
+  ctx.font = "9px ui-monospace, monospace";
+  ctx.fillText(phase.windowView, 10, 42);
+  if (horizonY > h - 4) {
+    ctx.fillStyle = "#fbbf24";
+    ctx.font = "11px ui-monospace, monospace";
+    ctx.fillText("SURFACE BELOW THE WINDOW SILL", 10, h / 2);
+  }
   ctx.restore();
+
 }
 
 function drawHazard(
@@ -341,7 +359,7 @@ function drawProfile(
   y0: number,
   w: number,
   h: number,
-  { flight, orbit, downrangeM, mission, limits, trail, rollDeg }: DrawArgs,
+  { flight, orbit, downrangeM, mission, limits, trail, rollDeg, manual }: DrawArgs,
 ) {
   ctx.save();
   ctx.translate(x0, y0);
@@ -448,7 +466,9 @@ function drawProfile(
   const vy = yFor(orbit.altitudeM);
   ctx.save();
   ctx.translate(vx, vy);
-  ctx.rotate(flight.attitudeRad);
+  // Pitch from local vertical: near 90 deg on its back through braking, then
+  // pitch-over at high gate, then near upright for the landing phase.
+  ctx.rotate(displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual));
   // M4.8 — roll about the thrust axis. cos(roll) = +1 windows-up (crew and
   // landing radar looking at the surface), -1 windows-down (the PDI attitude
   // Eagle flew before the windows-up roll).
@@ -520,7 +540,7 @@ function drawProfile(
   const deviation = orbit.altitudeM - refAlt;
   ctx.fillStyle = "#9ca3af";
   ctx.font = "10px ui-monospace, monospace";
-  ctx.fillText("DESCENT PROFILE", 10, 14);
+  ctx.fillText(`DESCENT PROFILE · ${descentPhaseFor(orbit.altitudeM).label}`, 10, 14);
   ctx.fillStyle = "#e5e7eb";
   ctx.fillText(`ALT ${metresLabel(orbit.altitudeM)}`, 10, 26);
   ctx.fillStyle = Math.abs(deviation) < altSpan * 0.12 ? "#41e08a" : "#fbbf24";
