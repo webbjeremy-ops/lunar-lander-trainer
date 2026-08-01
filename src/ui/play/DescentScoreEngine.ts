@@ -15,7 +15,13 @@
 //   dissonance  a high tritone partial that only appears when it is going wrong
 //   rumble      filtered noise, the descent engine through the structure
 
-import { scoreLayers, type ScoreLayers } from "@/game/play/descentScore";
+import {
+  chordForStep,
+  melodyNotesPerChord,
+  scoreLayers,
+  type ScoreLayers,
+} from "@/game/play/descentScore";
+
 
 type Ctx = AudioContext;
 
