@@ -891,7 +891,11 @@ export function usePlaySession(
     alarms,
     bridgedAlarm: apollo11Timeline ? bridgedAlarmFor(alarms) : null,
     callout,
+    houston,
+    landingClearance: clearance,
+    aborted,
     actions,
+
   };
 }
 
