@@ -7,7 +7,13 @@
 
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { useEffect, useRef } from "react";
 import { ORBIT_SCENARIOS, getOrbitScenario } from "@/simulation/orbitOps";
+import {
+  decodeChallengeRequest,
+  publishChallengeResult,
+  type ChallengeRequest,
+} from "@/learning/handoff";
 import { OrbitControls } from "@/ui/orbit/OrbitControls";
 import { OrbitDebrief } from "@/ui/orbit/OrbitDebrief";
 import { OrbitHud } from "@/ui/orbit/OrbitHud";
@@ -15,6 +21,7 @@ import { OrbitMap } from "@/ui/orbit/OrbitMap";
 import { OrbitScenarioSelect } from "@/ui/orbit/OrbitScenarioSelect";
 import { ManeuverPlannerPanel } from "@/ui/orbit/ManeuverPlannerPanel";
 import { useOrbitSession, type OrbitAssistance } from "@/ui/orbit/useOrbitSession";
+
 
 export const Route = createFileRoute("/play_/orbit")({
   component: OrbitOpsPage,
