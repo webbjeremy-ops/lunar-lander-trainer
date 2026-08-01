@@ -94,6 +94,11 @@ import {
 } from "@/game/play";
 import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
 import { contactLightState } from "@/game/play/contactLight";
+import {
+  ACCEPTANCE_KEY_INTERVAL_MS,
+  resolveProgramAcceptance,
+  type InjectableKey,
+} from "@/game/play/programAcceptance";
 
 import {
   DESCENT_ENGINE,
@@ -225,10 +230,25 @@ export interface PlaySessionApi {
     readonly abortStage: () => void;
     /** M4.30 — enable/disable controller rumble. */
     readonly setHaptics: (on: boolean) => void;
+    /**
+     * M4.31 — easy program acceptance (LB): key the pending DSKY step for the
+     * crew. The keys go through the real DSKY into the AGC, one at a time.
+     */
+    readonly acceptProgram: () => void;
+    /**
+     * Register the DSKY's key injector. The DSKY owns the AGC client, so the
+     * assist can only key through it; without a registered injector the
+     * procedure state is left untouched.
+     */
+    readonly registerKeyInjector: (
+      send: ((code: number | "PRO") => void) | null,
+    ) => void;
 
   };
   /** M4.30 — whether controller rumble is currently enabled. */
   readonly hapticsEnabled: boolean;
+  /** M4.31 — how many steps were keyed by the LB assist rather than by hand. */
+  readonly assistedProgramEntries: number;
 }
 
 export function usePlaySession(
@@ -360,8 +380,13 @@ export function usePlaySession(
   // live in refs because the 50 Hz loop reads them without re-rendering.
   const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
   const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
+  const acceptProgramRef = useRef<() => void>(() => {});
   const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
+  // M4.31 — easy program acceptance.
+  const keyInjectorRef = useRef<((code: number | "PRO") => void) | null>(null);
+  const acceptanceTimersRef = useRef<number[]>([]);
+  const [assistedProgramEntries, setAssistedProgramEntries] = useState(0);
 
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
@@ -596,6 +621,8 @@ export function usePlaySession(
         });
         hapticsRef.current.pulse("alarm");
       }
+      // Left bumper — easy program acceptance: key the pending DSKY step.
+      if (input.acceptProgramPressed) acceptProgramRef.current();
       // A — DPS on/off, but only once the crew actually has the vehicle.
       if (
         input.enginePressed &&
@@ -952,6 +979,23 @@ export function usePlaySession(
     [],
   );
 
+  /** Live procedure gates, shared by hand-keyed and assisted entries. */
+  const readGates = useCallback(() => {
+    const o = computeOrbitalValues(flightRef.current);
+    return {
+      engineArmed: ignitionRef.current.engineArmed,
+      windowsUp: radarAvailable(rollRef.current),
+      alarmActive: alarmsRef.current.active !== null,
+      sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+      highGateReady:
+        highGateStatus(
+          descentClockRef.current.sinceIgnitionUs,
+          o.altitudeM,
+          downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD),
+        ) === "ready",
+    };
+  }, []);
+
   const onDskyKey = useCallback(
     (code: number | "PRO") => {
       // The AGC already received this keystroke upstream. Here we only run the
@@ -959,21 +1003,7 @@ export function usePlaySession(
       if (code === "PRO") dispatchIgnition({ kind: "proceed" });
       // Gates are read before the alarm reducer sees the key, so the RSET that
       // clears an alarm still satisfies the "an alarm is lit" requirement.
-      const gates = {
-        engineArmed: ignitionRef.current.engineArmed,
-        windowsUp: radarAvailable(rollRef.current),
-        alarmActive: alarmsRef.current.active !== null,
-        sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
-        highGateReady:
-          highGateStatus(
-            descentClockRef.current.sinceIgnitionUs,
-            computeOrbitalValues(flightRef.current).altitudeM,
-            downrangeToLandingZoneM(
-              computeOrbitalValues(flightRef.current).centralAngleRad,
-              LANDING_ZONE_ANGLE_RAD,
-            ),
-          ) === "ready",
-      };
+      const gates = readGates();
       setProcedure((prev) => {
         const next = reduceProcedure(script, prev, {
           kind: "key",
@@ -1007,9 +1037,55 @@ export function usePlaySession(
         });
       }
     },
-    [script, recordTakeover, dispatchIgnition, dispatchAlarm],
+    [script, recordTakeover, dispatchIgnition, dispatchAlarm, readGates],
   );
 
+  /**
+   * M4.31 — easy program acceptance. Resolves the outstanding keys for the
+   * pending step and taps them into the DSKY on a human cadence, so the AGC
+   * sees an ordinary keystroke stream and the procedure engine advances
+   * through its normal path (gates, logging and scoring all still apply).
+   */
+  const acceptProgram = useCallback(() => {
+    const plan = resolveProgramAcceptance(script, procedureRef.current, readGates());
+    if (plan.kind !== "keys") {
+      if (plan.kind === "blocked") {
+        setProcedure((prev) => {
+          const next = { ...prev, lastMessage: `Assist held: ${plan.reason}` };
+          procedureRef.current = next;
+          return next;
+        });
+      }
+      return;
+    }
+    const send = keyInjectorRef.current;
+    if (send === null) return;
+    // Cancel any acceptance still in flight so a double-press cannot interleave
+    // two keystroke streams into the AGC.
+    for (const id of acceptanceTimersRef.current) window.clearTimeout(id);
+    acceptanceTimersRef.current = [];
+    setAssistedProgramEntries((n) => n + 1);
+    plan.keys.forEach((code: InjectableKey, i) => {
+      const id = window.setTimeout(() => {
+        keyInjectorRef.current?.(code);
+      }, i * ACCEPTANCE_KEY_INTERVAL_MS);
+      acceptanceTimersRef.current.push(id);
+    });
+  }, [script, readGates]);
+
+  // Never leave keystrokes queued into an unmounted session.
+  useEffect(
+    () => () => {
+      for (const id of acceptanceTimersRef.current) window.clearTimeout(id);
+      acceptanceTimersRef.current = [];
+    },
+    [],
+  );
+
+
+  useEffect(() => {
+    acceptProgramRef.current = acceptProgram;
+  }, [acceptProgram]);
 
   const actions = useMemo(
     () => ({
@@ -1067,6 +1143,10 @@ export function usePlaySession(
       acknowledgeHouston: (id: string) => {
         setAcknowledgedHouston((prev) => (prev.includes(id) ? prev : [...prev, id]));
       },
+      acceptProgram,
+      registerKeyInjector: (send: ((code: number | "PRO") => void) | null) => {
+        keyInjectorRef.current = send;
+      },
       setHaptics: (on: boolean) => {
         hapticsRef.current.setEnabled(on);
         setHapticsEnabled(on);
@@ -1079,7 +1159,7 @@ export function usePlaySession(
         setRunning(true);
       },
     }),
-    [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
+    [onDskyKey, acceptProgram, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
 
 
@@ -1209,6 +1289,7 @@ export function usePlaySession(
     aborted,
     highGateStatus: currentHighGateStatus,
     hapticsEnabled,
+    assistedProgramEntries,
     actions,
 
   };
