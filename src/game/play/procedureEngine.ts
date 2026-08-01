@@ -24,6 +24,8 @@ export interface ProcedureGates {
   readonly windowsUp?: boolean;
   /** True while a program alarm lamp is lit (M4.8). */
   readonly alarmActive?: boolean;
+  /** Microseconds since ignition on the descent-sequence clock. */
+  readonly sinceIgnitionUs?: number;
 }
 
 export type ProcedureEvent =
@@ -189,6 +191,27 @@ export function reduceProcedure(
         stepId: step.id,
         outcome: "incorrect",
         message: "Step refused — vehicle is not windows-up",
+      }),
+    };
+  }
+
+  // The scripted descent steps are keyed to the 13-minute timeline: the crew
+  // callout comes first, the keystroke second. Keying early is refused.
+  if (
+    step.notBeforeSinceIgnitionSec !== undefined &&
+    (event.gates?.sinceIgnitionUs ?? 0) < step.notBeforeSinceIgnitionSec * 1_000_000
+  ) {
+    return {
+      ...state,
+      lastMessage:
+        "Too early — stand by. This step is flown at " +
+        `T+${String(Math.floor(step.notBeforeSinceIgnitionSec / 60)).padStart(2, "0")}:` +
+        `${String(step.notBeforeSinceIgnitionSec % 60).padStart(2, "0")} on the descent timeline.`,
+      log: push(state.log, {
+        missionTimeUs: event.missionTimeUs,
+        stepId: step.id,
+        outcome: "incorrect",
+        message: "Step keyed before its point in the descent timeline",
       }),
     };
   }

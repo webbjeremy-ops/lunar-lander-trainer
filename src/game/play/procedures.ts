@@ -25,6 +25,7 @@
 // actually drove onto channel 010.
 
 import { AGC_KEY, digitKey } from "@/lessons/keyCodes";
+import { milestoneSec } from "./descentTimeline";
 import type { ControlModeId, MissionId, PlayPhase } from "./types";
 
 export type ProcedureKey = number;
@@ -68,6 +69,12 @@ export interface DskyProcedureStep {
   readonly startsIgnitionCountdown?: boolean;
   /** Completing this step releases the flight-control lock for guided flight. */
   readonly releasesFlightLock?: boolean;
+  /**
+   * The step belongs to a scripted point in the 13-minute descent timeline and
+   * is refused (and not coached) before that ignition-relative time, so the
+   * DSKY recommendation can never precede the crew callout that motivates it.
+   */
+  readonly notBeforeSinceIgnitionSec?: number;
 }
 
 export interface DskyProcedureScript {
@@ -230,6 +237,7 @@ const APOLLO11_EXTRA_STEPS: readonly DskyProcedureStep[] = [
     citation: FLIGHT_PLAN,
     bridged: true,
     requiresWindowsUp: true,
+    notBeforeSinceIgnitionSec: milestoneSec("yaw-around"),
   },
   {
     id: "lr-accept",
@@ -245,6 +253,7 @@ const APOLLO11_EXTRA_STEPS: readonly DskyProcedureStep[] = [
     citation: FLIGHT_PLAN,
     bridged: true,
     requiresWindowsUp: true,
+    notBeforeSinceIgnitionSec: milestoneSec("radar-lock"),
   },
   {
     id: "alarm-response",

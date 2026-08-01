@@ -289,7 +289,18 @@ export function isBurning(state: IgnitionSequenceState): boolean {
  */
 export function throttleCeiling(state: IgnitionSequenceState): number {
   if (state.phase !== "burning") return 0;
-  const t = state.sinceIgnitionUs;
+  return throttleCeilingForSinceIgnition(state.sinceIgnitionUs);
+}
+
+/**
+ * The DPS start profile as a pure function of ignition-relative time: 10 % for
+ * the first 26 s while the engine settles, then a 2 s ramp to the fixed
+ * throttle point. Used by any entry path into the burn, so the throttle always
+ * matches the "ignition, ten percent" call.
+ */
+export function throttleCeilingForSinceIgnition(sinceIgnitionUs: number): number {
+  const t = sinceIgnitionUs;
+  if (t < 0) return 0;
   if (t < FIXED_THROTTLE_DURATION_US) return FIXED_THROTTLE_FRACTION;
   const ramp = (t - FIXED_THROTTLE_DURATION_US) / THROTTLE_UP_RAMP_US;
   if (ramp >= 1) return 1;

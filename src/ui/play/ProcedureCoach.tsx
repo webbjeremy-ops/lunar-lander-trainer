@@ -20,12 +20,15 @@ export function ProcedureCoach({
   state,
   step,
   manual,
+  sinceIgnitionSec = Number.POSITIVE_INFINITY,
   onDismiss,
 }: {
   script: DskyProcedureScript;
   state: ProcedureState;
   step: DskyProcedureStep | null;
   manual: boolean;
+  /** Descent-clock time, so timeline-gated steps are coached in flight order. */
+  sinceIgnitionSec?: number;
   onDismiss?: () => void;
 }) {
   const stepId = step?.id ?? null;
@@ -39,6 +42,14 @@ export function ProcedureCoach({
 
   if (manual || muted || script.steps.length === 0 || !step) return null;
   if (dismissedStep === stepId) return null;
+  // A step keyed to the descent timeline is not coached before the crew
+  // callout that motivates it — the transcript leads, the DSKY follows.
+  if (
+    step.notBeforeSinceIgnitionSec !== undefined &&
+    sinceIgnitionSec < step.notBeforeSinceIgnitionSec
+  ) {
+    return null;
+  }
 
   const dismiss = () => {
     setDismissedStep(stepId);
