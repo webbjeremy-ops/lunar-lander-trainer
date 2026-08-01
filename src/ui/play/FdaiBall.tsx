@@ -141,14 +141,14 @@ export function FdaiBall({
       data-testid="fdai"
       data-pitch={pitch.toFixed(2)}
       data-roll={roll.toFixed(2)}
-      className="rounded-lg border border-border bg-card p-3"
+      className="rounded border border-neutral-800 bg-neutral-950 p-3"
       aria-label="Flight director attitude indicator"
     >
       <header className="mb-2 flex items-baseline justify-between">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-neutral-400">
           FDAI · attitude
         </h2>
-        <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">
           {valid ? "IMU" : "no att"}
         </span>
       </header>
@@ -349,7 +349,7 @@ export function FdaiBall({
           testid="fdai-rate-readout"
         />
       </div>
-      <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
+      <p className="mt-2 text-[10px] leading-snug text-neutral-400">
         Planar kernel: pitch is the thrust axis off local vertical, roll is the windows-up
         orientation. Yaw is not modelled and its needle stays caged.
       </p>
