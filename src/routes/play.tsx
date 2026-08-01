@@ -280,7 +280,7 @@ function PlayClient() {
             rollDeg={session.roll.rollDeg}
             pitchRateDegPerSec={(session.flight.angularRateRadPerSec * 180) / Math.PI}
             rollRateDegPerSec={session.roll.phase === "rolling" ? -10 : 0}
-            valid={session.flight.terminalState === "flying" || session.flight.terminalState === "landed"}
+            valid={session.flight.terminalState !== "crashed"}
           />
 
           {session.ignition.phase !== "standby" && (
