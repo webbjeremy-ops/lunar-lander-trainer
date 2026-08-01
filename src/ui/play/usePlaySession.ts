@@ -286,6 +286,8 @@ export function usePlaySession(
     alarmsRef.current = a;
     setAlarms(a);
     setAcknowledgedCallouts([]);
+    descentClockRef.current = 0;
+    setDescentClockUs(0);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -731,7 +733,7 @@ export function usePlaySession(
       apollo11Timeline
         ? activeCallout(
             {
-              sinceIgnitionUs: ignition.sinceIgnitionUs,
+              sinceIgnitionUs: descentClockUs,
               altitudeM: orbit.altitudeM,
               burning: flight.mainEngine !== "off",
             },
