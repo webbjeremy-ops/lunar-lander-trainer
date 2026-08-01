@@ -563,7 +563,9 @@ function PlayClient() {
             />
           )}
 
-          {session.roll.rollDeg > 0 &&
+          {/* Scenarios that begin below the braking phase are already
+              windows-up (completed at T+0): no roll cue, no roll card. */}
+          {session.roll.completedSinceIgnitionUs !== 0 &&
             session.descentClock.mode === "running" &&
             session.descentClock.sinceIgnitionUs >=
               (milestoneSec("yaw-around") - 60) * 1_000_000 && (
