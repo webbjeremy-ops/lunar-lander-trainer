@@ -292,7 +292,7 @@ export function FdaiBall({
         </g>
 
         {/* Rate needles: roll (top), pitch (right), yaw (bottom, unmodelled) */}
-        <g transform="translate(55 24)">
+        <g transform="translate(55 28)">
           <RateTape
             orientation="horizontal"
             value={rollRateDegPerSec}
@@ -310,7 +310,7 @@ export function FdaiBall({
             testid="fdai-pitch-rate"
           />
         </g>
-        <g transform="translate(55 224)">
+        <g transform="translate(55 220)">
           <RateTape
             orientation="horizontal"
             value={0}
@@ -321,7 +321,7 @@ export function FdaiBall({
           />
         </g>
 
-        <text x="130" y="18" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#8b8b8b">
+        <text x="130" y="17" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#8b8b8b">
           ROLL RATE
         </text>
         <text
@@ -335,7 +335,7 @@ export function FdaiBall({
         >
           PITCH RATE
         </text>
-        <text x="130" y="252" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#5f5f5f">
+        <text x="130" y="251" textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="#5f5f5f">
           YAW RATE
         </text>
       </svg>
