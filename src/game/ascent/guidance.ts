@@ -21,9 +21,9 @@ import { timeToApoapsisSeconds } from "./orbit";
 import type { AscentMissionDefinition, AscentPhase, TargetOrbit } from "./types";
 
 /** Radial-speed schedule anchor at the top of the pitch-over, m/s. */
-const VERTICAL_RISE_TARGET_MPS = 45;
+const VERTICAL_RISE_TARGET_MPS = 80;
 /** Time constant for driving the radial-speed error out, seconds. */
-const RADIAL_TAU_S = 15;
+const RADIAL_TAU_S = 10;
 /** The advisory never asks for more than this from local vertical. */
 const MAX_PITCH_RAD = (88 * Math.PI) / 180;
 
@@ -55,10 +55,10 @@ export function computeAscentGuidance(
   const aTotal = mass > 0 ? thrust / mass : 0;
 
   const hIns = Math.max(1, mission.insertionAltitudeM);
-  const targetRadial = Math.max(
-    0,
-    VERTICAL_RISE_TARGET_MPS * (1 - orbit.altitudeM / hIns),
-  );
+  // Square-root altitude schedule: climb hard early, flatten out at the
+  // insertion altitude so the low point of the final orbit ends up there.
+  const climbFraction = Math.max(0, 1 - orbit.altitudeM / hIns);
+  const targetRadial = VERTICAL_RISE_TARGET_MPS * Math.sqrt(climbFraction);
   const radialError = orbit.radialSpeedMps - targetRadial;
 
   // Radial acceleration the vehicle must hold: cancel gravity, credit the
@@ -85,10 +85,11 @@ export function computeAscentGuidance(
   // Cutting off as soon as the high point reaches the target is the classic
   // mistake: the low point is still inside the Moon while the vehicle is only
   // part-way up. The cue therefore also waits for the insertion altitude.
-  const nearInsertionAltitude = orbit.altitudeM >= 0.85 * hIns;
   const recommendCutoff =
     lifted &&
-    (apo === null || (apo >= target.apoapsisAltitudeM && nearInsertionAltitude));
+    (apo === null ||
+      (apo >= target.apoapsisAltitudeM &&
+        orbit.periapsisAltitudeM >= mission.safePeriapsisAltitudeM));
 
   let phase: AscentPhase;
   if (!lifted) phase = "surface-preparation";
