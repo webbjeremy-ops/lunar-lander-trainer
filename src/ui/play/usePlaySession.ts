@@ -275,10 +275,13 @@ export function usePlaySession(
         if (e.repeat) return;
         heldRef.current.add(k);
         if (k === " ") engineRef.current = !engineRef.current;
-        // Immediate throttle nudge on press so the first frame already moves,
-        // instead of waiting for the ramp integrator to build up.
+        // Immediate nudge on press so the first frame already moves, instead
+        // of waiting for the integrator to build up.
         if (k === "ArrowUp") throttleRef.current = clamp01(throttleRef.current + 0.03);
         if (k === "ArrowDown") throttleRef.current = clamp01(throttleRef.current - 0.03);
+        if (k === "ArrowLeft") attitudeKickRef.current = -ATTITUDE_TAP_RATE;
+        if (k === "ArrowRight") attitudeKickRef.current = ATTITUDE_TAP_RATE;
+
       } else if (k === "," || k === ".") {
         e.preventDefault();
         rodTargetRef.current += (k === "," ? -1 : 1) * ROD_INCREMENT_MPS;
