@@ -51,6 +51,7 @@ import {
   usesApollo11Timeline,
   type AssistanceLevel,
   type BridgedAlarmOverlay,
+  type DescentCallout,
   type BridgedDskyRequest,
   type ControlModeId,
   type DescentRollState,
