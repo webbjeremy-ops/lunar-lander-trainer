@@ -69,6 +69,7 @@ import {
   dpsThrottleEnvelope,
   isBurning,
   nominalAltitudeForRangeM,
+  nominalDownrangeSpeedForRange,
   HIGH_GATE_RANGE_M,
   usesApollo11Timeline,
   type AssistanceLevel,
@@ -582,10 +583,23 @@ export function usePlaySession(
         // Below the last few tens of metres the profile is spent: hand back to
         // the terminal sink-rate law so the vehicle settles onto the surface.
         const useProfile = o.altitudeM > 60;
+        // The DPS throttle envelope is a hardware fact, so guidance has to know
+        // about it: during fixed-throttle position the computer steers the
+        // thrust vector instead of modulating it.
+        const guidanceSinceIgnitionUs = isBurning(ign)
+          ? ign.sinceIgnitionUs
+          : apollo11Timeline && descentClockRef.current.mode === "running"
+            ? descentClockRef.current.sinceIgnitionUs
+            : null;
+        const guidanceEnv =
+          guidanceSinceIgnitionUs === null ? null : dpsThrottleEnvelope(guidanceSinceIgnitionUs);
         const cue = computeReferenceGuidance(state, undefined, !useProfile ? null : {
           rangeToLandingZoneM: rangeM,
           targetAltitudeM: nominalAltitudeForRangeM(Math.abs(rangeM)),
+          targetDownrangeSpeedMps: nominalDownrangeSpeedForRange(Math.abs(rangeM)),
           handoverRangeM: HIGH_GATE_RANGE_M,
+          fixedThrottle:
+            guidanceEnv && guidanceEnv.min === guidanceEnv.max ? guidanceEnv.min : null,
         });
         throttle = cue.recommendedThrottle;
         // Simple proportional attitude autopilot onto the advisory angle.
