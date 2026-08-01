@@ -212,6 +212,11 @@ export function usePlaySession(
   const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
   const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
+  const [acknowledgedHouston, setAcknowledgedHouston] = useState<readonly string[]>([]);
+  /** M4.18 — ABORT STAGE latched by the crew. */
+  const [aborted, setAborted] = useState(false);
+  const abortedRef = useRef(false);
+
   /**
    * M4.13B — Ignition-relative descent clock, owned by a pure state machine
    * (`stepDescentClock`). Normally the PDI sequence drives it; otherwise it
