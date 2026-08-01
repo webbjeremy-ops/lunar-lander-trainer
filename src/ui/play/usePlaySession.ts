@@ -43,6 +43,7 @@ import {
   bridgedRequestFor,
   createDescentClockState,
   createDescentRollState,
+  startsWindowsUp,
 
   descentClockStatusLabel,
   formatDescentClock,
@@ -284,7 +285,12 @@ export function usePlaySession(
   // M4.8 — cockpit roll orientation and program alarms. Both are pure
   // reducers driven from the same 20 ms loop; neither touches the physics
   // kernel or the AGC.
-  const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
+  // Scenarios that begin below the braking phase start AFTER the windows-up
+  // roll: the maneuver was flown at ~13 km, so there is no cue to give.
+  const windowsUpAtStart = startsWindowsUp(mission.initial.altitudeM);
+  const [roll, setRoll] = useState<DescentRollState>(() =>
+    createDescentRollState({ windowsUp: windowsUpAtStart }),
+  );
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
   const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
   const [acknowledgedHouston, setAcknowledgedHouston] = useState<readonly string[]>([]);
@@ -419,7 +425,7 @@ export function usePlaySession(
     const ign = createIgnitionState();
     ignitionRef.current = ign;
     setIgnition(ign);
-    const r = createDescentRollState();
+    const r = createDescentRollState({ windowsUp: windowsUpAtStart });
     rollRef.current = r;
     setRoll(r);
     const a = createProgramAlarmState();
