@@ -93,6 +93,7 @@ import {
   type TakeoverRecord,
 } from "@/game/play";
 import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
+import { contactLightState } from "@/game/play/contactLight";
 
 import {
   DESCENT_ENGINE,
