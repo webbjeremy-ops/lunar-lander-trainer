@@ -181,3 +181,29 @@ export function formatT(tSec: number): string {
   const s = Math.max(0, Math.round(tSec));
   return `T+${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
+
+/**
+ * The altitude the canonical profile wants at a given range still to run to
+ * the landing zone, metres. This is the link between the 13-minute timeline
+ * and the flown trajectory: guided flight uses it as its braking-phase
+ * altitude target so the vehicle arrives at high gate over the site instead of
+ * sailing past it. Advisory only — it never enters the AGC.
+ */
+export function nominalAltitudeForRangeM(rangeToLzM: number): number {
+  const first = DESCENT_TIMELINE[0]!;
+  if (rangeToLzM >= first.rangeToLzM) return first.altitudeM;
+  if (rangeToLzM <= 0) return 0;
+  for (let i = 0; i < DESCENT_TIMELINE.length - 1; i++) {
+    const a = DESCENT_TIMELINE[i]!;
+    const b = DESCENT_TIMELINE[i + 1]!;
+    if (rangeToLzM <= a.rangeToLzM && rangeToLzM >= b.rangeToLzM) {
+      const span = a.rangeToLzM - b.rangeToLzM;
+      const f = span > 0 ? (a.rangeToLzM - rangeToLzM) / span : 0;
+      return lerp(a.altitudeM, b.altitudeM, f);
+    }
+  }
+  return 0;
+}
+
+/** Range to the landing zone at which the braking phase hands to P64, metres. */
+export const HIGH_GATE_RANGE_M = milestoneById("high-gate")!.rangeToLzM;
