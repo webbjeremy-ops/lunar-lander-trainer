@@ -597,30 +597,34 @@ export function usePlaySession(
 
       engineRef.current = manual ? engineRef.current : throttle > 0;
 
-      // DPS start profile: the engine is cold until TIG, then held at the
-      // 10 % fixed-throttle point for 26 s before throttle-up. While the
-      // countdown is armed this ceiling overrides player and guidance alike.
+      // DPS throttle profile: cold until TIG, 10 % for 26 s, the 92.5 % fixed
+      // throttle point through the braking phase, then throttle recovery at
+      // T+6:26 into the 10-60 % variable range (the band above 60 % eroded the
+      // nozzle, so guidance never modulates there).
       const ign = ignitionRef.current;
-      // Apollo 11 always flies the DPS start profile, even if the player
-      // reached the burn without the countdown ritual: the transcript says
-      // "ignition, ten percent", so the engine must actually be at 10 %.
-      const clockCeiling =
-        apollo11Timeline && ign.phase === "standby" && descentClockRef.current.mode === "running"
-          ? throttleCeilingForSinceIgnition(descentClockRef.current.sinceIgnitionUs)
-          : null;
-      if (clockCeiling !== null && throttle > clockCeiling) {
-        throttle = clockCeiling;
-      }
-      if (ign.phase !== "standby") {
-        const ceiling = throttleCeiling(ign);
-        if (ceiling <= 0) {
-          throttle = 0;
-          engineRef.current = false;
-        } else if (throttle > ceiling) {
-          throttle = ceiling;
+      if (ign.phase !== "standby" && !isBurning(ign)) {
+        // Pre-ignition: the engine is cold whatever the player commands.
+        throttle = 0;
+        engineRef.current = false;
+      } else {
+        // Apollo 11 always flies the profile, even if the player reached the
+        // burn without the countdown ritual: the transcript says "ignition,
+        // ten percent", so the engine must actually be at 10 %.
+        const sinceIgnitionUs = isBurning(ign)
+          ? ign.sinceIgnitionUs
+          : apollo11Timeline && descentClockRef.current.mode === "running"
+            ? descentClockRef.current.sinceIgnitionUs
+            : null;
+        if (sinceIgnitionUs !== null) {
+          const env = dpsThrottleEnvelope(sinceIgnitionUs);
+          if (throttle > env.max) throttle = env.max;
+          // Under guidance the computer holds the commanded level exactly;
+          // in manual the crew may close the throttle entirely.
+          if (!manual && throttle > 0 && throttle < env.min) throttle = env.min;
         }
-        if (ign.phase === "burning" && !manual) engineRef.current = throttle > 0;
+        if (isBurning(ign) && !manual) engineRef.current = throttle > 0;
       }
+
       // Keep the published instruments honest about the commanded throttle.
       throttleRef.current = throttle;
 
