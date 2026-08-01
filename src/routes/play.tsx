@@ -24,6 +24,7 @@ import { AttitudePanel } from "@/ui/play/AttitudePanel";
 import { FdaiBall } from "@/ui/play/FdaiBall";
 import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
 import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
+import { useDescentScore } from "@/ui/play/useDescentScore";
 
 import { CautionWarningPanel } from "@/ui/play/CautionWarningPanel";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
@@ -124,6 +125,21 @@ function PlayClient() {
   const mission = MISSIONS[missionId];
   const limits = LANDING_LIMITS[assistance];
   const session = usePlaySession(mission, controlMode, assistance);
+
+  // M4.21 — procedural descent score. Started by the player (autoplay policy),
+  // then driven continuously by timeline position, altitude and Houston's mood.
+  const musicScore = useDescentScore({
+    sinceIgnitionSec: session.descentClock.sinceIgnitionUs / 1_000_000,
+    altitudeM: session.orbit.altitudeM,
+    propellantFraction:
+      mission.initial.descentPropellantKg > 0
+        ? session.flight.descentPropellantKg / mission.initial.descentPropellantKg
+        : 0,
+    houstonStage: session.escalation.stage,
+    crewAborted: session.aborted,
+    terminal: session.flight.terminalState !== null,
+    running: session.running,
+  });
   const agc = useAgcSession();
 
   const onDskyKey = session.actions.onDskyKey;
@@ -324,6 +340,34 @@ function PlayClient() {
         >
           {session.landingClearance.label}
         </span>
+        {session.escalation.stage !== "clear" && session.flight.terminalState === null && (
+          <span
+            data-testid="abort-countdown"
+            data-stage={session.escalation.stage}
+            className={`rounded border px-2 py-1 font-mono text-[10px] uppercase tracking-widest ${
+              session.escalation.stage === "abort"
+                ? "border-red-500 bg-red-900/70 text-red-100"
+                : session.escalation.stage === "final-warning"
+                  ? "border-red-700 bg-red-950/60 text-red-200"
+                  : "border-amber-700 bg-amber-950/50 text-amber-200"
+            }`}
+          >
+            {session.escalation.stage === "abort"
+              ? "Houston: abort directed"
+              : `Correct within ${Math.ceil(session.secondsToAbort)} s`}
+          </span>
+        )}
+        <button
+          onClick={musicScore.toggle}
+          data-testid="play-score-toggle"
+          data-enabled={musicScore.enabled ? "yes" : "no"}
+          title="Procedural descent score — tension follows the flight"
+          className="rounded border border-neutral-700 bg-neutral-900 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-neutral-300 hover:border-neutral-500"
+        >
+          {musicScore.enabled
+            ? `♪ Score ${Math.round(musicScore.tension * 100)}%`
+            : "♪ Score off"}
+        </button>
         <button
           onClick={() => session.actions.abortStage()}
           disabled={session.aborted || session.flight.terminalState !== null}
@@ -354,12 +398,28 @@ function PlayClient() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="relative space-y-3">
-          <ProcedureCoach
-            script={session.script}
-            state={session.procedure}
-            step={session.step}
-            manual={session.manualUnlocked}
-          />
+          {session.scriptTerminated && session.flight.terminalState === null && (
+            <div
+              data-testid="script-terminated"
+              className="rounded border-2 border-red-700 bg-red-950/60 px-3 py-2 text-xs leading-snug text-red-100"
+            >
+              <span className="font-mono text-[10px] uppercase tracking-widest text-red-300">
+                Flown timeline abandoned ·{" "}
+              </span>
+              This flight left the profile far enough that Houston called an
+              abort. The rest of the Apollo 11 transcript and the remaining
+              procedure steps are not played — they never happened on this
+              flight. Fly the abort, or restart the descent.
+            </div>
+          )}
+          {!session.scriptTerminated && (
+            <ProcedureCoach
+              script={session.script}
+              state={session.procedure}
+              step={session.step}
+              manual={session.manualUnlocked}
+            />
+          )}
           <HoustonOverlay
             call={session.houston}
             onAcknowledge={session.actions.acknowledgeHouston}

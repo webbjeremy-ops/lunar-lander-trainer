@@ -22,28 +22,54 @@ describe("descent callouts", () => {
 
   it("raises the roll call on the time trigger", () => {
     const call = activeCallout(
-      { sinceIgnitionUs: 210 * S, altitudeM: 14_000, burning: true },
+      { sinceIgnitionUs: 210 * S, altitudeM: 12_000, burning: true },
       [],
     );
     expect(call?.id).toBe("roll-windows-up");
     expect(call?.action).toBe("roll");
   });
 
-  it("raises a call early when the vehicle is already below its altitude", () => {
+  it("never runs a call ahead of the canonical timeline", () => {
+    // Low altitude early in the burn must NOT drag high gate forward: the
+    // transcript follows the 13-minute timeline, in order.
     const fired = triggeredCallouts({
       sinceIgnitionUs: 5 * S,
       altitudeM: 600 * 0.3048,
+      burning: true,
+    }).map((c) => c.id);
+    expect(fired).not.toContain("high-gate");
+    expect(fired).toEqual(["ignition"]);
+  });
+
+  it("fires calls in strict flight order", () => {
+    const fired = triggeredCallouts({
+      sinceIgnitionUs: 560 * S,
+      altitudeM: 900,
+      burning: true,
+    }).map((c) => c.id);
+    const order = APOLLO11_DESCENT_CALLOUTS.map((c) => c.id);
+    expect(fired).toEqual(order.slice(0, fired.length));
+    expect(fired).toContain("high-gate");
+  });
+
+  it("makes a call anyway once the geometry grace period expires", () => {
+    const fired = triggeredCallouts({
+      // Shallow trajectory: still high at high-gate time, but the clock wins
+      // after the grace window so the script cannot stall.
+      sinceIgnitionUs: (514 + 46) * S,
+      altitudeM: 9_000,
       burning: true,
     }).map((c) => c.id);
     expect(fired).toContain("high-gate");
   });
 
   it("moves to the next call once acknowledged", () => {
-    const input = { sinceIgnitionUs: 210 * S, altitudeM: 14_000, burning: true };
+    const input = { sinceIgnitionUs: 210 * S, altitudeM: 12_000, burning: true };
     const first = activeCallout(input, [])!;
     const next = activeCallout(input, [first.id]);
     expect(next?.id).not.toBe(first.id);
   });
+
 
   it("every callout carries guidance and teaching", () => {
     for (const c of APOLLO11_DESCENT_CALLOUTS) {

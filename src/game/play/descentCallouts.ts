@@ -232,19 +232,52 @@ export interface CalloutInput {
   readonly burning: boolean;
 }
 
-/** Every callout whose trigger condition has been met, in flight order. */
+/**
+ * M4.21 — calls that are geometry-primary rather than clock-primary: the
+ * contact light is a physical event, so it fires whenever a probe touches,
+ * whatever the clock says.
+ */
+const ALTITUDE_PRIMARY_IDS: readonly string[] = ["contact"];
+
+/**
+ * How long a call will wait for the vehicle to reach the altitude it was made
+ * at before Houston makes it anyway. Beyond this the clock wins, so the script
+ * can never stall out on a trajectory that runs shallow.
+ */
+export const CALLOUT_GEOMETRY_GRACE_SEC = 45;
+
+/**
+ * Every callout whose trigger condition has been met, in flight order.
+ *
+ * M4.21 — the transcript follows the canonical timeline exactly:
+ *  • calls fire in table order and never out of sequence;
+ *  • the ignition-relative clock is the primary trigger;
+ *  • the telemetry altitude is a secondary gate — a call waits (up to
+ *    CALLOUT_GEOMETRY_GRACE_SEC) for the vehicle to be where it was made.
+ */
 export function triggeredCallouts(
   input: CalloutInput,
   timeline: readonly DescentCallout[] = APOLLO11_DESCENT_CALLOUTS,
 ): readonly DescentCallout[] {
   if (input.sinceIgnitionUs <= 0 && !input.burning) return [];
   const t = input.sinceIgnitionUs / S;
-  return timeline.filter(
-    (call) =>
-      t >= call.atSinceIgnitionSec ||
-      (call.belowAltitudeM !== null && input.altitudeM <= call.belowAltitudeM),
-  );
+  const out: DescentCallout[] = [];
+  for (const call of timeline) {
+    const atAltitude =
+      call.belowAltitudeM !== null && input.altitudeM <= call.belowAltitudeM;
+    const fired = ALTITUDE_PRIMARY_IDS.includes(call.id)
+      ? atAltitude
+      : t >= call.atSinceIgnitionSec &&
+        (call.belowAltitudeM === null ||
+          atAltitude ||
+          t >= call.atSinceIgnitionSec + CALLOUT_GEOMETRY_GRACE_SEC);
+    // Strict order: a later call can never overtake an earlier one.
+    if (!fired) break;
+    out.push(call);
+  }
+  return out;
 }
+
 
 /**
  * The callout the cockpit should be showing: the latest triggered call the
