@@ -380,6 +380,7 @@ function drawProfile(
   h: number,
   {
     flight, orbit, downrangeM, mission, limits, trail, rollDeg, manual, p64Selected,
+    sinceIgnitionSec,
   }: DrawArgs,
 ) {
   ctx.save();
@@ -594,7 +595,7 @@ function drawProfile(
 
   // M4.20 — scripted-timeline readout: where the flown descent sits against
   // the 13-minute Apollo 11 sequence, and what happens next.
-  const tSec = a.sinceIgnitionSec;
+  const tSec = sinceIgnitionSec;
   const scripted = tSec > 0;
   const nominal = nominalStateAt(tSec);
   const now = currentMilestone(tSec);

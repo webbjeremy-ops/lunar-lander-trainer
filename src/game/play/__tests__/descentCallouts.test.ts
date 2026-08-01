@@ -22,7 +22,7 @@ describe("descent callouts", () => {
 
   it("raises the roll call on the time trigger", () => {
     const call = activeCallout(
-      { sinceIgnitionUs: 50 * S, altitudeM: 14_000, burning: true },
+      { sinceIgnitionUs: 210 * S, altitudeM: 14_000, burning: true },
       [],
     );
     expect(call?.id).toBe("roll-windows-up");
@@ -39,7 +39,7 @@ describe("descent callouts", () => {
   });
 
   it("moves to the next call once acknowledged", () => {
-    const input = { sinceIgnitionUs: 50 * S, altitudeM: 14_000, burning: true };
+    const input = { sinceIgnitionUs: 210 * S, altitudeM: 14_000, burning: true };
     const first = activeCallout(input, [])!;
     const next = activeCallout(input, [first.id]);
     expect(next?.id).not.toBe(first.id);
