@@ -110,12 +110,27 @@ describe("mapXboxInput", () => {
     expect(second.input.abortPressed).toBe(false);
   });
 
-  it("trims rate of descent up on LB and down on the left trigger", () => {
+  it("accepts the pending DSKY program on the LB press edge only", () => {
+    const held = pad({ buttons: { [BUTTON.leftBumper]: 1 } });
+    const first = mapXboxInput(held, createGamepadEdgeState());
+    expect(first.input.acceptProgramPressed).toBe(true);
+    expect(first.input.rodTrim).toBe(0); // LB no longer trims
+    const second = mapXboxInput(held, first.next);
+    expect(second.input.acceptProgramPressed).toBe(false);
+  });
+
+  it("trims rate of descent on the D-pad and down on the left trigger", () => {
     const up = mapXboxInput(
-      pad({ buttons: { [BUTTON.leftBumper]: 1 } }),
+      pad({ buttons: { [BUTTON.dpadUp]: 1 } }),
       createGamepadEdgeState(),
     ).input;
     expect(up.rodTrim).toBe(1);
+
+    const dpadDown = mapXboxInput(
+      pad({ buttons: { [BUTTON.dpadDown]: 1 } }),
+      createGamepadEdgeState(),
+    ).input;
+    expect(dpadDown.rodTrim).toBe(-1);
 
     const down = mapXboxInput(
       pad({ buttons: { [BUTTON.leftTrigger]: 1 } }),

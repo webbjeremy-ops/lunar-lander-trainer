@@ -5,6 +5,7 @@ export * from "./types";
 export * from "./missions";
 export * from "./procedures";
 export * from "./procedureEngine";
+export * from "./programAcceptance";
 export * from "./ignitionSequence";
 export * from "./descentRoll";
 export * from "./descentClock";
