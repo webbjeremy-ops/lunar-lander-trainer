@@ -11,5 +11,6 @@ export * from "./descentClock";
 export * from "./descentPhase";
 export * from "./descentMonitor";
 export * from "./descentCallouts";
+export * from "./houstonAdvisory";
 export * from "./programAlarms";
 export * from "./scoring";
