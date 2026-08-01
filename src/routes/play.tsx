@@ -25,6 +25,8 @@ import { FdaiBall } from "@/ui/play/FdaiBall";
 import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
 import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
+import { useDescentSfx } from "@/ui/play/useDescentSfx";
+
 
 import { CautionWarningPanel } from "@/ui/play/CautionWarningPanel";
 import { ContactLight } from "@/ui/play/ContactLight";
