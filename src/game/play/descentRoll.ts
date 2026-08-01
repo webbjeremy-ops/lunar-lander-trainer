@@ -58,8 +58,12 @@ export const ROLL_RATE_DEG_PER_SEC = 10;
 /** Within this many degrees of 0° the vehicle counts as windows-up. */
 export const WINDOWS_UP_TOLERANCE_DEG = 5;
 
-/** The crew cue to roll windows-up is given this long after ignition. */
-export const ROLL_CUE_SINCE_IGNITION_US = 45 * S;
+/**
+ * The crew cue to roll windows-up is given at the canonical yaw-around
+ * milestone (T+200 s), the SAME timebase entry the Aldrin transcript call and
+ * the procedure step use, so the cockpit cue can never precede the callout.
+ */
+export const ROLL_CUE_SINCE_IGNITION_US = milestoneSec("yaw-around") * S;
 
 export const ROLL_CITATION = {
   label: "Apollo 11 Flight Plan / LM Timeline Book / Apollo 11 Mission Report",
