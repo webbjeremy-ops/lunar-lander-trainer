@@ -10,8 +10,12 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "typecheck": "tsgo --noEmit -p tsconfig.json",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:learn": "playwright test tests/learn-boot.spec.ts tests/learn-reading.spec.ts tests/learn-dsky.spec.ts tests/learn-session.spec.ts",
+    "release:verify": "bun run typecheck && bun run lint && bun run test && bun run build && bun run test:e2e"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
