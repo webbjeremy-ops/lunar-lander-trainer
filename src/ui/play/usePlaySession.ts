@@ -642,8 +642,14 @@ export function usePlaySession(
         const rangeM = downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
         // Below the last few tens of metres the profile is spent: hand back to
         // the terminal sink-rate law so the vehicle settles onto the surface.
+        // Below low gate guidance keeps the range-aware target so the vehicle
+        // flies the last few hundred metres to the site; it only drops to the
+        // plain settle law once it is over the site with the translation out.
         if (o.altitudeM <= LOW_GATE_AIM.altitudeM) terminalGuidanceRef.current = true;
-        const useProfile = !terminalGuidanceRef.current;
+        const useProfile =
+          !terminalGuidanceRef.current ||
+          Math.abs(rangeM) >= 60 ||
+          Math.abs(o.tangentialSpeedMps) >= 2;
         // The DPS throttle envelope is a hardware fact, so guidance has to know
         // about it: during fixed-throttle position the computer steers the
         // thrust vector instead of modulating it.

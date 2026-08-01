@@ -70,12 +70,14 @@ function flyGuidedDescent() {
     if (lowGate === null && o.altitudeM <= LOW_GATE_AIM.altitudeM) lowGate = sample;
     if (rangeM < 0) worstOvershootM = Math.max(worstOvershootM, -rangeM);
 
+    // Below low gate guidance keeps the range-aware target — the vehicle must
+    // still FLY to the site, not settle wherever it happens to be.
     if (o.altitudeM <= LOW_GATE_AIM.altitudeM) terminal = true;
     const env = dpsThrottleEnvelope(i * DT);
     const cue = computeReferenceGuidance(
       s,
       undefined,
-      terminal
+      terminal && Math.abs(rangeM) < 60 && Math.abs(o.tangentialSpeedMps) < 2
         ? null
         : {
             rangeToLandingZoneM: rangeM,

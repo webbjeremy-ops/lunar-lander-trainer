@@ -233,6 +233,13 @@ export function computeReferenceGuidance(
       // the vehicle arrives at low gate settled instead of diving through it.
       const slack = orbit.altitudeM > 800 ? 6 : 0;
       targetRadial = Math.max(targetRadial, targetSinkRate(orbit.altitudeM) - slack);
+      // Terminal picture (P66): low down with translation still on, ease the
+      // sink so the vehicle flies the last few hundred metres to the site
+      // instead of settling short of it.
+      const residual = Math.abs(v);
+      if (orbit.altitudeM < 150 && residual > 1.5) {
+        targetRadial = Math.max(targetRadial, -Math.max(0.8, 3 - residual * 0.3));
+      }
     } else {
       targetRadial = Math.max(
         Math.max(-BRAKING_MAX_SINK_MPS, targetSinkRate(orbit.altitudeM)),
