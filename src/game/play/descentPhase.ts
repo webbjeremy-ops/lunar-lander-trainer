@@ -36,9 +36,26 @@ function lerp(a: number, b: number, t: number): number {
   return a + (b - a) * Math.max(0, Math.min(1, t));
 }
 
+/**
+ * Options for the phase model.
+ *
+ * `p64Selected` reflects the crew's approach-phase DSKY entry (V06 N64 under
+ * P64). Historically the AGC switched P63 -> P64 by itself at high gate and
+ * the crew called the landing-point display to fly it; here the pitch-over is
+ * withheld until that entry is made, so the player sees the manoeuvre happen
+ * on the DSKY action instead of silently.
+ */
+export interface DescentPhaseOptions {
+  readonly p64Selected?: boolean;
+}
+
 /** Historical attitude phase for a given altitude above the surface. */
-export function descentPhaseFor(altitudeM: number): DescentPhaseInfo {
+export function descentPhaseFor(
+  altitudeM: number,
+  options: DescentPhaseOptions = {},
+): DescentPhaseInfo {
   const alt = Math.max(0, altitudeM);
+  const p64 = options.p64Selected ?? true;
 
   if (alt > PHASE_HIGH_GATE_M) {
     // Braking: essentially horizontal. Ease slightly off 90 deg as the vehicle
@@ -46,9 +63,20 @@ export function descentPhaseFor(altitudeM: number): DescentPhaseInfo {
     const t = (alt - PHASE_HIGH_GATE_M) / (15_240 - PHASE_HIGH_GATE_M); // 50k ft
     return {
       id: "braking",
-      label: "BRAKING PHASE",
+      label: "BRAKING PHASE · P63",
       pitchRad: lerp(72 * DEG, 88 * DEG, t),
       windowView: "Windows off the surface — landing site not visible",
+    };
+  }
+
+  if (!p64) {
+    // At or below high gate but the approach program has not been taken:
+    // hold the braking attitude and tell the player what is missing.
+    return {
+      id: "braking",
+      label: "HIGH GATE · P64 NOT SELECTED",
+      pitchRad: 72 * DEG,
+      windowView: "Key V06 N64 for P64 — pitch-over waits on the approach program",
     };
   }
 
@@ -57,7 +85,7 @@ export function descentPhaseFor(altitudeM: number): DescentPhaseInfo {
     const t = (alt - PHASE_LOW_GATE_M) / (PHASE_HIGH_GATE_M - PHASE_LOW_GATE_M);
     return {
       id: "approach",
-      label: "APPROACH PHASE · HIGH GATE",
+      label: "APPROACH PHASE · HIGH GATE · P64",
       pitchRad: lerp(40 * DEG, 55 * DEG, t),
       windowView: "Pitch-over — landing site in the window, LPD usable",
     };
@@ -67,7 +95,7 @@ export function descentPhaseFor(altitudeM: number): DescentPhaseInfo {
   const t = alt / PHASE_LOW_GATE_M;
   return {
     id: "landing",
-    label: "LANDING PHASE · LOW GATE",
+    label: "LANDING PHASE · LOW GATE · P66",
     pitchRad: lerp(2 * DEG, 12 * DEG, t),
     windowView: "Surface rising to meet the vehicle — manual touchdown",
   };
@@ -85,8 +113,10 @@ export function displayPitchRad(
   attitudeRad: number,
   altitudeM: number,
   manual: boolean,
+  options: DescentPhaseOptions = {},
 ): number {
-  const nominal = descentPhaseFor(altitudeM).pitchRad;
+  const nominal = descentPhaseFor(altitudeM, options).pitchRad;
   if (!manual) return nominal;
   return attitudeRad + (nominal - attitudeRad) * 0.35;
 }
+
