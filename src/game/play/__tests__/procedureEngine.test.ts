@@ -19,9 +19,20 @@ import {
 
 const S = POWERED_DESCENT_SCRIPT;
 
-function keys(state: ProcedureState, codes: readonly (number | "PRO")[], t = 0): ProcedureState {
+function keys(
+  state: ProcedureState,
+  codes: readonly (number | "PRO")[],
+  t = 0,
+  engineArmed = true,
+): ProcedureState {
   let s = state;
-  for (const c of codes) s = reduceProcedure(S, s, { kind: "key", code: c, missionTimeUs: t });
+  for (const c of codes)
+    s = reduceProcedure(S, s, {
+      kind: "key",
+      code: c,
+      missionTimeUs: t,
+      gates: { engineArmed },
+    });
   return s;
 }
 
@@ -83,6 +94,21 @@ describe("procedure reducer", () => {
     expect(s.flightLockReleased).toBe(true);
     expect(s.manualControlUnlocked).toBe(false);
   });
+
+  it("PRO is refused while ENG ARM is off and does not count as a keying error", () => {
+    let s = createProcedureState(S);
+    s = keys(s, majorModeKeys(63));
+    s = keys(s, verbNounKeys(16, 62));
+    s = keys(s, ["PRO"], 0, false);
+    expect(s.flightLockReleased).toBe(false);
+    expect(s.completedStepIds).toEqual(["p63-select", "p63-monitor"]);
+    expect(s.incorrectEntries).toBe(0);
+    expect(s.lastMessage).toMatch(/ENG ARM/);
+    // Arming then re-keying PRO works.
+    s = keys(s, ["PRO"], 0, true);
+    expect(s.flightLockReleased).toBe(true);
+  });
+
 
   it("V37E 66E unlocks manual control and completes the script", () => {
     let s = createProcedureState(S);
