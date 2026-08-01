@@ -314,6 +314,21 @@ export function usePlaySession(
     };
   }, [running, timeScale]);
 
+  // --- Tab recovery ---------------------------------------------------------
+  // A hidden tab throttles requestAnimationFrame, so the accumulator would
+  // otherwise return to a huge catch-up on re-show. We pause instead: the
+  // player comes back to the exact state they left, never to a crash that
+  // happened off-screen.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") setRunning(false);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+
   // --- Gamepad presence -----------------------------------------------------
   useEffect(() => {
     if (typeof window === "undefined" || !("getGamepads" in navigator)) return;
