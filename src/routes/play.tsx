@@ -189,6 +189,72 @@ function PlayClient() {
     );
   }
 
+  // M4.13 — LM-style annunciator array. Every lamp is driven from game state
+  // (a bridged overlay); none of them is read from the Luminary 099 rope.
+  const fuelFraction =
+    mission.initial.descentPropellantKg > 0
+      ? session.flight.descentPropellantKg / mission.initial.descentPropellantKg
+      : 0;
+  const cautionLamps = [
+    {
+      id: "prog",
+      legend: "Prog",
+      on: session.alarms.lampOn,
+      tone: "warning" as const,
+      title: "Program alarm — key V05 N09 E to read the code, then RSET.",
+    },
+    {
+      id: "eng-arm",
+      legend: "Eng Arm",
+      on: session.ignition.engineArmed,
+      tone: "status" as const,
+      title: "Descent engine armed.",
+    },
+    {
+      id: "radar",
+      legend: "LR Alt",
+      on: session.radarAvailable,
+      tone: "status" as const,
+      title: "Landing radar has the surface — windows-up roll complete.",
+    },
+    {
+      id: "roll",
+      legend: "Att Roll",
+      on: session.roll.phase !== "complete",
+      tone: "caution" as const,
+      title: "Vehicle is not yet windows-up; roll to 0° for radar and visibility.",
+    },
+    {
+      id: "des-qty",
+      legend: "Des Qty",
+      on: fuelFraction > 0 && fuelFraction < 0.06,
+      tone: "caution" as const,
+      title: "Descent propellant low-level.",
+    },
+    {
+      id: "velocity",
+      legend: "Velocity",
+      on: Math.abs(session.orbit.radialSpeedMps) > limits.verticalSpeedMps * 1.5,
+      tone: "caution" as const,
+      title: "Sink rate above the landing-gear limit.",
+    },
+    {
+      id: "altitude",
+      legend: "Altitude",
+      on: session.orbit.altitudeM < 60 && Math.abs(session.orbit.tangentialSpeedMps) > limits.horizontalSpeedMps * 2,
+      tone: "caution" as const,
+      title: "Low and still translating — null the horizontal velocity.",
+    },
+    {
+      id: "contact",
+      legend: "Contact",
+      on: session.flight.terminalState !== null,
+      tone: "status" as const,
+      title: "Contact light — shut the engine down.",
+    },
+  ];
+
+
   return (
     <section className="mx-auto max-w-[1400px] space-y-4 px-4 py-4" data-testid="play-cockpit">
       <div className="flex flex-wrap items-center gap-2">
