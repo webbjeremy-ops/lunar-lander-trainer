@@ -44,6 +44,8 @@ const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
 const BRAKING_ALTITUDE_TAU_S = 30;
 /** Sink-rate authority during braking, m/s. */
 const BRAKING_MAX_SINK_MPS = 45;
+/** Braking-phase downrange velocity loop time constant, seconds. */
+const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
 /** Time constant for the approach-phase downrange velocity loop, seconds. */
@@ -71,6 +73,12 @@ export interface BrakingTarget {
    * phase was flown.
    */
   readonly fixedThrottle?: number | null;
+  /**
+   * Downrange closing speed the canonical profile wants at this range, m/s.
+   * Guidance brakes onto it rather than simply nulling velocity, so the burn
+   * stays on the 13-minute clock. Positive = closing on the site.
+   */
+  readonly targetDownrangeSpeedMps?: number | null;
 }
 
 /**
@@ -112,7 +120,17 @@ export function computeReferenceGuidance(
       // Deceleration that brings the downrange velocity to the approach-phase
       // hand-over inside the range that is actually left to run.
       const runoutM = Math.max(500, signedRange - braking.handoverRangeM);
-      aHorizontal = -Math.sign(v) * ((v * v) / (2 * runoutM));
+      // Safety law: constant deceleration that stops the downrange motion by
+      // high gate. Never brake less than this.
+      const stopping = -Math.sign(v) * ((v * v) / (2 * runoutM));
+      const profileSpeed = braking.targetDownrangeSpeedMps ?? null;
+      if (profileSpeed !== null) {
+        const desired = Math.sign(signedRange || 1) * Math.abs(profileSpeed);
+        const onProfile = (desired - v) / BRAKING_SPEED_TAU_S;
+        aHorizontal = Math.min(onProfile, stopping);
+      } else {
+        aHorizontal = stopping;
+      }
       tiltLimit = MAX_BRAKING_TILT_RAD;
     } else {
       // Approach: close the last kilometres to the site and arrive with the

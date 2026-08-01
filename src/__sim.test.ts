@@ -1,6 +1,6 @@
 import { it } from "vitest";
 import { createLunarFlightState, stepLunarFlight, computeOrbitalValues, computeReferenceGuidance, totalMassKg } from "@/simulation/lunar2d";
-import { MISSIONS, angleForRange, downrangeToLandingZoneM, LANDING_ZONE_ANGLE_RAD, nominalAltitudeForRangeM, HIGH_GATE_RANGE_M, dpsThrottleEnvelope } from "@/game/play";
+import { MISSIONS, angleForRange, downrangeToLandingZoneM, LANDING_ZONE_ANGLE_RAD, nominalAltitudeForRangeM, nominalDownrangeSpeedForRange, HIGH_GATE_RANGE_M, dpsThrottleEnvelope } from "@/game/play";
 
 it("guided full descent", () => {
   const m = MISSIONS["full-descent"]!;
@@ -19,7 +19,7 @@ it("guided full descent", () => {
     const env0=dpsThrottleEnvelope(t);
     const env=env0;
     const useProfile=o.altitudeM>60;
-    const cue=computeReferenceGuidance(s,undefined,useProfile?{rangeToLandingZoneM:range,targetAltitudeM:nominalAltitudeForRangeM(Math.abs(range)),handoverRangeM:HIGH_GATE_RANGE_M,fixedThrottle: env.min===env.max?env.min:null}:null);
+    const cue=computeReferenceGuidance(s,undefined,useProfile?{rangeToLandingZoneM:range,targetAltitudeM:nominalAltitudeForRangeM(Math.abs(range)),handoverRangeM:HIGH_GATE_RANGE_M,fixedThrottle: env.min===env.max?env.min:null,targetDownrangeSpeedMps:nominalDownrangeSpeedForRange(Math.abs(range))}:null);
     let throttle=Math.min(cue.recommendedThrottle, env.max);
     if (throttle>0 && throttle<env.min) throttle=env.min;
     const err=cue.recommendedAttitudeRad - s.attitudeRad;

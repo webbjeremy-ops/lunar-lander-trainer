@@ -207,5 +207,27 @@ export function nominalAltitudeForRangeM(rangeToLzM: number): number {
   return 0;
 }
 
+/**
+ * Nominal downrange (closing) speed for a range still to run, m/s — the slope
+ * of the canonical range-versus-time profile in the segment that contains this
+ * range. Guided flight brakes ONTO this speed instead of simply nulling
+ * velocity, which is what keeps the burn on the 13-minute clock instead of
+ * arriving over the site early and slow. Advisory only.
+ */
+export function nominalDownrangeSpeedForRange(rangeToLzM: number): number {
+  const clamped = Math.max(0, rangeToLzM);
+  for (let i = 0; i < DESCENT_TIMELINE.length - 1; i++) {
+    const a = DESCENT_TIMELINE[i]!;
+    const b = DESCENT_TIMELINE[i + 1]!;
+    if (clamped <= a.rangeToLzM && clamped >= b.rangeToLzM) {
+      const dt = b.tSec - a.tSec;
+      return dt > 0 ? (a.rangeToLzM - b.rangeToLzM) / dt : 0;
+    }
+  }
+  const first = DESCENT_TIMELINE[0]!;
+  const second = DESCENT_TIMELINE[1]!;
+  return (first.rangeToLzM - second.rangeToLzM) / (second.tSec - first.tSec);
+}
+
 /** Range to the landing zone at which the braking phase hands to P64, metres. */
 export const HIGH_GATE_RANGE_M = milestoneById("high-gate")!.rangeToLzM;
