@@ -377,6 +377,7 @@ function PlayClient() {
             limits={limits}
             manual={session.manualUnlocked}
             rollDeg={session.roll.rollDeg}
+            sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
             p64Selected={
               // Pitch-over is withheld until the crew takes the approach
               // program on the DSKY (V06 N64), unless this script has no P64

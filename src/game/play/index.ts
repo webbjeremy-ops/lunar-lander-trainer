@@ -9,6 +9,7 @@ export * from "./ignitionSequence";
 export * from "./descentRoll";
 export * from "./descentClock";
 export * from "./descentPhase";
+export * from "./descentTimeline";
 export * from "./descentMonitor";
 export * from "./descentCallouts";
 export * from "./houstonAdvisory";

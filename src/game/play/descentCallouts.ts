@@ -18,6 +18,8 @@
 //
 // PURE MODULE: no timers, no side effects, no AGC access.
 
+import { milestoneSec } from "./descentTimeline";
+
 const S = 1_000_000;
 const FT = 0.3048;
 
@@ -119,7 +121,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "HOLD R (or the ROLL button) until the roll indicator reads WINDOWS UP — about 18 seconds of roll.",
     "Eagle flew the first minutes face-down. Rolling windows-up points the landing-radar antenna at the surface and puts the ground in the crew's window.",
     "roll",
-    45,
+    milestoneSec("yaw-around"),
     42_426,
     "P63 · roll",
   ),
@@ -130,7 +132,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "Key V16 N68 E to watch Delta-H: the disagreement between radar altitude and the computer's own estimate.",
     "Delta-H is the go/no-go for trusting the landing radar. A small Delta-H means the radar and the state vector agree.",
     "dsky",
-    140,
+    milestoneSec("radar-lock"),
     37_462,
     "P63 · LR",
   ),
@@ -141,7 +143,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "Key V57 E to tell the computer to start folding radar altitude into its state estimate.",
     "Without V57 the AGC keeps navigating on inertial data alone, and altitude error grows all the way down.",
     "dsky",
-    215,
+    milestoneSec("radar-lock") + 20,
     35_000,
     "P63 · LR",
   ),
@@ -152,9 +154,20 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "High gate. The vehicle pitches up and the site comes into the window — key V06 N64 E for the approach display.",
     "High gate (~7,600 ft) is where P64 takes over and the landing-point designator angle becomes meaningful.",
     "dsky",
-    520,
+    milestoneSec("high-gate"),
     7_600,
     "P64",
+  ),
+  c(
+    "radar-position-2",
+    "Aldrin",
+    "P64 — crank the silly thing around. Landing radar to position two.",
+    "Set the landing-radar antenna to POSITION 2 (the RADAR ANTENNA switch on the panel).",
+    "In position 1 the antenna looks along the braking-phase velocity vector. Coming through high gate the beam has to point down the descent path, so the crew reposition it (SETPOS2) as P64 takes over — otherwise altitude and velocity updates drop out at the worst moment.",
+    "none",
+    milestoneSec("high-gate") + 4,
+    7_400,
+    "P64 · LR POS 2",
   ),
   c(
     "site-assessment",
@@ -163,7 +176,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "Look out the window. Use LEFT/RIGHT to pitch and steer past the boulder field before you commit.",
     "In P64 the commander can redesignate the aim point; Armstrong flew past West Crater's ejecta before settling.",
     "throttle",
-    600,
+    milestoneSec("redesignate"),
     2_000,
     "P64",
   ),
@@ -174,7 +187,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "Take P66 (V37 E 6 6 E). Then fly it: hold sink under 3 ft/s per 100 ft, and null forward velocity before contact.",
     "Low gate (~500 ft) is where the descent becomes a visual, semi-manual landing on the rate-of-descent switch.",
     "land",
-    640,
+    milestoneSec("low-gate"),
     500,
     "P66",
   ),
@@ -185,8 +198,19 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "Propellant is low. Get down: keep sink around 3 ft/s and stop translating.",
     "The low-level light starts a burn-time countdown, not a tank reading. Eagle landed with about 25 seconds left.",
     "land",
-    680,
+    milestoneSec("sixty-seconds"),
     200,
+    "P66",
+  ),
+  c(
+    "thirty-seconds",
+    "Duke (CAPCOM)",
+    "Thirty seconds.",
+    "Put it down. Sink about 2 ft/s, wings level, no translation.",
+    "Thirty seconds of burn time remained before an abort would have been called. Eagle touched down with roughly 25 seconds showing.",
+    "land",
+    milestoneSec("thirty-seconds"),
+    100,
     "P66",
   ),
   c(

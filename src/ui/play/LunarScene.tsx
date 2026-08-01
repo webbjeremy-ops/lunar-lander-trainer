@@ -11,6 +11,12 @@ import { useEffect, useRef } from "react";
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
 import type { Hazard, LandingLimits, MissionDefinition } from "@/game/play";
 import { descentPhaseFor, displayPitchRad } from "@/game/play/descentPhase";
+import {
+  currentMilestone,
+  formatT,
+  nextMilestone,
+  nominalStateAt,
+} from "@/game/play/descentTimeline";
 
 export function LunarScene({
   flight,
@@ -21,6 +27,7 @@ export function LunarScene({
   manual,
   rollDeg = 0,
   p64Selected = true,
+  sinceIgnitionSec = 0,
 }: {
   flight: LunarFlightState;
   orbit: LunarOrbitalValues;
@@ -32,6 +39,8 @@ export function LunarScene({
   rollDeg?: number;
   /** True once the crew has taken the approach program (P64) on the DSKY. */
   p64Selected?: boolean;
+  /** Seconds since ignition — drives the scripted-timeline readout. */
+  sinceIgnitionSec?: number;
 }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
 
@@ -59,11 +68,11 @@ export function LunarScene({
   // the vehicle instead of trailing React's render work.
   const propsRef = useRef<DrawArgs>({
     flight, orbit, downrangeM, mission, limits, manual, rollDeg, p64Selected,
-    trail: trailRef.current,
+    sinceIgnitionSec, trail: trailRef.current,
   });
   propsRef.current = {
     flight, orbit, downrangeM, mission, limits, manual, rollDeg, p64Selected,
-    trail: trailRef.current,
+    sinceIgnitionSec, trail: trailRef.current,
   };
 
   useEffect(() => {
@@ -125,6 +134,7 @@ interface DrawArgs {
   manual: boolean;
   rollDeg: number;
   p64Selected: boolean;
+  sinceIgnitionSec: number;
   trail: readonly TrailPoint[];
 }
 
@@ -370,6 +380,7 @@ function drawProfile(
   h: number,
   {
     flight, orbit, downrangeM, mission, limits, trail, rollDeg, manual, p64Selected,
+    sinceIgnitionSec,
   }: DrawArgs,
 ) {
   ctx.save();
@@ -581,6 +592,14 @@ function drawProfile(
     mission.initial.altitudeM,
   );
   const deviation = orbit.altitudeM - refAlt;
+
+  // M4.20 — scripted-timeline readout: where the flown descent sits against
+  // the 13-minute Apollo 11 sequence, and what happens next.
+  const tSec = sinceIgnitionSec;
+  const scripted = tSec > 0;
+  const nominal = nominalStateAt(tSec);
+  const now = currentMilestone(tSec);
+  const next = nextMilestone(tSec);
   ctx.fillStyle = "#9ca3af";
   ctx.font = "10px ui-monospace, monospace";
   ctx.fillText(`DESCENT PROFILE · ${descentPhaseFor(orbit.altitudeM, { p64Selected }).label}`, 10, 14);
@@ -592,6 +611,29 @@ function drawProfile(
     112,
     26,
   );
+
+  if (scripted) {
+    ctx.font = "9px ui-monospace, monospace";
+    ctx.fillStyle = "#9ca3af";
+    ctx.fillText(`${formatT(tSec)} · ${now.label}`, 10, 38);
+    if (next) {
+      const dt = Math.round(next.tSec - tSec);
+      ctx.fillStyle = dt <= 20 ? "#fbbf24" : "#6b7280";
+      ctx.fillText(
+        `NEXT ${next.label} in ${dt}s — ${metresLabel(next.altitudeM)} · ${
+          (next.rangeToLzM / 1852).toFixed(1)
+        } nmi`,
+        10,
+        50,
+      );
+    }
+    ctx.fillStyle = "#6b7280";
+    ctx.fillText(
+      `NOMINAL ${metresLabel(nominal.altitudeM)} · ${(nominal.rangeToLzM / 1852).toFixed(1)} nmi to LZ`,
+      10,
+      62,
+    );
+  }
   ctx.restore();
 }
 
