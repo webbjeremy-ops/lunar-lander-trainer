@@ -488,6 +488,47 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           )}
         </div>
 
+        {bridgedRegisters && (
+          <div
+            data-testid="dsky-bridged-registers"
+            className="mt-2 rounded border border-amber-700/60 bg-amber-950/20 p-2"
+          >
+            <div className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-[0.16em] text-amber-400/90">
+              <span>{bridgedRegisters.caption}</span>
+              <span className="text-amber-500/70">bridged — not rope output</span>
+            </div>
+            <div className="mb-1 flex gap-4 font-mono text-[11px] text-amber-200/90">
+              <span data-testid="bridged-prog">PROG {bridgedRegisters.program}</span>
+              <span data-testid="bridged-verb">VERB {bridgedRegisters.verb}</span>
+              <span data-testid="bridged-noun">NOUN {bridgedRegisters.noun}</span>
+            </div>
+            <div className="grid gap-0.5">
+              {([
+                ["R1", bridgedRegisters.r1, bridgedRegisters.units[0], "bridged-r1"],
+                ["R2", bridgedRegisters.r2, bridgedRegisters.units[1], "bridged-r2"],
+                ["R3", bridgedRegisters.r3, bridgedRegisters.units[2], "bridged-r3"],
+              ] as const).map(([label, value, unit, testid]) => (
+                <div key={label} className="flex items-baseline gap-2">
+                  <span className="w-6 font-mono text-[10px] uppercase tracking-widest text-amber-500/80">
+                    {label}
+                  </span>
+                  <span
+                    data-testid={testid}
+                    className="font-mono text-xl tabular-nums tracking-[0.12em] text-emerald-300"
+                  >
+                    {value}
+                  </span>
+                  <span className="text-[9px] uppercase tracking-widest text-neutral-500">
+                    {unit}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+
+
         <div className={compact ? "hidden" : undefined}>
         <div className="mt-3 flex flex-wrap items-center gap-1">
 
