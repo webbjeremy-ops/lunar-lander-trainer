@@ -10,9 +10,10 @@ const BINDINGS: readonly (readonly [string, string])[] = [
   ["Right stick ←/→", "Pitch attitude"],
   ["Right trigger", "Roll to windows-up"],
   ["Right bumper", "Cancel program alarm"],
+  ["Left bumper", "Accept pending DSKY program"],
   ["A", "Engine on / off"],
   ["B", "Abort stage"],
-  ["LB / left trigger", "Rate-of-descent trim"],
+  ["D-pad / left trigger", "Rate-of-descent trim"],
 ];
 
 export function GamepadLegend({ haptics, onHaptics }: {

@@ -71,7 +71,7 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null, onKeyPress, compact = false, bridgedRequest = null, bridgedRegisters = null }: {
+export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null, onKeyPress, onKeyInjector, compact = false, bridgedRequest = null, bridgedRegisters = null }: {
   rope: RopeImage;
   onClient?: (client: AgcWorkerClient | null) => void;
   onSnapshot?: (snap: StateSnapshot) => void;

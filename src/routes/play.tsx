@@ -574,6 +574,7 @@ function PlayClient() {
                 sharedClient={agc.client}
                 sharedReady={agc.ready}
                 onKeyPress={handleKey}
+                onKeyInjector={session.actions.registerKeyInjector}
                 bridgedRequest={session.bridgedAlarm ?? session.bridgedDskyRequest}
                 bridgedRegisters={
                   session.procedure.completedStepIds.includes("p63-select")
