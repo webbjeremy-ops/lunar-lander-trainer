@@ -136,7 +136,12 @@ export interface ProgramAlarmState {
 }
 
 export type ProgramAlarmEvent =
-  | { readonly kind: "tick"; readonly sinceIgnitionUs: number }
+  | {
+      readonly kind: "tick";
+      readonly sinceIgnitionUs: number;
+      /** Current altitude in feet; enables the altitude-based trigger. */
+      readonly altitudeFt?: number;
+    }
   | { readonly kind: "key"; readonly code: number; readonly sinceIgnitionUs: number };
 
 /** V05 N09 E — display the alarm code from the AGC's alarm register. */
