@@ -18,6 +18,12 @@ export interface DescentScoreInput {
   readonly terminal: boolean;
   /** The simulation is actually advancing. */
   readonly running: boolean;
+  /**
+   * M4.32 — 0..1 multiplier applied to the master volume. Drops while an
+   * air-to-ground recording is playing so the crew loop sits on top without
+   * the score cutting out entirely.
+   */
+  readonly duck?: number;
 }
 
 export interface DescentScoreApi {
