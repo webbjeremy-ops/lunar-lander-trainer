@@ -275,6 +275,14 @@ function PlayClient() {
         </div>
 
         <div className="space-y-3">
+          <FdaiBall
+            pitchDeg={(session.flight.attitudeRad * 180) / Math.PI}
+            rollDeg={session.roll.rollDeg}
+            pitchRateDegPerSec={(session.flight.angularRateRadPerSec * 180) / Math.PI}
+            rollRateDegPerSec={session.roll.phase === "rolling" ? -10 : 0}
+            valid={session.flight.terminalState === "flying" || session.flight.terminalState === "landed"}
+          />
+
           {session.ignition.phase !== "standby" && (
             <IgnitionPanel
               state={session.ignition}
