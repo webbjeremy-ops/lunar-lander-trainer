@@ -408,7 +408,7 @@ export function usePlaySession(
       if (steps > 0) {
         flightRef.current = state;
         setFlight(state);
-        setDescentClockUs(descentClockRef.current);
+        setDescentClock(descentClockRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
     };
