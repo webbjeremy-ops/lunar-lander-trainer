@@ -29,6 +29,14 @@ import {
 import { ALL_LESSONS } from "@/lessons/content";
 import { SOURCE_REGISTRY } from "@/lessons/SourceRegistry";
 import { MISSIONS } from "@/game/play";
+import { ORBIT_SCENARIOS } from "@/simulation/orbitOps";
+
+// M5.0 — a challenge or unlock may name a descent/ascent mission or an
+// orbital-operations exercise.
+const FLYABLE_IDS = [
+  ...Object.keys(MISSIONS),
+  ...Object.keys(ORBIT_SCENARIOS),
+];
 
 const ALLOWED_CLASSIFICATIONS = new Set([
   "authentic-emulator",
@@ -168,7 +176,7 @@ describe("M4.2 tracks", () => {
     for (const t of LEARNING_TRACKS) {
       expect(t.lessonIds.length).toBeGreaterThan(0);
       for (const id of t.lessonIds) expect(lessonIds.has(id)).toBe(true);
-      for (const m of t.unlocksMissions) expect(Object.keys(MISSIONS)).toContain(m);
+      for (const m of t.unlocksMissions) expect(FLYABLE_IDS).toContain(m);
     }
   });
 
@@ -220,7 +228,7 @@ describe("M4.2 lesson content integrity", () => {
     for (const lesson of ALL_LESSONS) {
       for (const step of lesson.steps) {
         if (step.kind !== "reading" || !step.challenge) continue;
-        expect(Object.keys(MISSIONS)).toContain(step.challenge.missionId);
+        expect(FLYABLE_IDS).toContain(step.challenge.missionId);
         expect(step.challenge.passingScore).toBeGreaterThan(0);
       }
     }
