@@ -252,3 +252,67 @@ export function nominalDownrangeSpeedForRange(rangeToLzM: number): number {
 
 /** Range to the landing zone at which the braking phase hands to P64, metres. */
 export const HIGH_GATE_RANGE_M = milestoneById("high-gate")!.rangeToLzM;
+
+/**
+ * M4.29 — Canonical gate aim points.
+ *
+ * The braking phase does not merely "get low": it delivers the vehicle to a
+ * specific point in altitude, range, speed and time. These four numbers are
+ * the flight-record picture of high gate and low gate, and guidance, the P64
+ * gate, Houston and the regression tests all read them from here so that no
+ * two parts of the game can disagree about where the vehicle should be.
+ *
+ *   High gate  T+506 s   7,600 ft   4.1 nmi to run   ~500 ft/s   ~145 ft/s sink
+ *   Low gate   T+642 s     500 ft   0.3 nmi to run    ~50 ft/s    ~16 ft/s sink
+ */
+export interface GateAimPoint {
+  /** Seconds since ignition at which the vehicle should arrive. */
+  readonly tSec: number;
+  readonly altitudeM: number;
+  readonly rangeToLzM: number;
+  /** Downrange closing speed on arrival, m/s (positive = closing). */
+  readonly downrangeSpeedMps: number;
+  /** Sink rate magnitude on arrival, m/s. */
+  readonly sinkRateMps: number;
+}
+
+export const HIGH_GATE_AIM: GateAimPoint = {
+  tSec: milestoneSec("high-gate"),
+  altitudeM: 7_600 * FT,
+  rangeToLzM: 4.1 * NMI,
+  downrangeSpeedMps: 500 * FT,
+  sinkRateMps: 145 * FT,
+} as const;
+
+export const LOW_GATE_AIM: GateAimPoint = {
+  tSec: milestoneSec("low-gate"),
+  altitudeM: 500 * FT,
+  rangeToLzM: 0.3 * NMI,
+  downrangeSpeedMps: 50 * FT,
+  sinkRateMps: 16 * FT,
+} as const;
+
+/**
+ * Slope of the canonical altitude-versus-range profile at a given range to go
+ * (metres of altitude per metre of ground track). Guidance multiplies it by
+ * the current closing speed to get the sink rate that keeps the vehicle ON the
+ * profile — which is what makes altitude, range and speed arrive at the gates
+ * together. Between the gates the slope is 0.31, i.e. ~44 m/s of sink at the
+ * 152 m/s high-gate speed and ~5 m/s at the low-gate speed, exactly the
+ * flight-record picture.
+ */
+export function nominalGlideSlopeForRange(rangeToLzM: number): number {
+  const s = Math.max(0, rangeToLzM);
+  for (let i = 0; i < DESCENT_TIMELINE.length - 1; i++) {
+    const a = DESCENT_TIMELINE[i]!;
+    const b = DESCENT_TIMELINE[i + 1]!;
+    if (s <= a.rangeToLzM && s >= b.rangeToLzM) {
+      const dRange = a.rangeToLzM - b.rangeToLzM;
+      if (dRange <= 0) continue;
+      return (a.altitudeM - b.altitudeM) / dRange;
+    }
+  }
+  const first = DESCENT_TIMELINE[0]!;
+  const second = DESCENT_TIMELINE[1]!;
+  return (first.altitudeM - second.altitudeM) / (first.rangeToLzM - second.rangeToLzM);
+}

@@ -32,6 +32,8 @@ export interface LunarGuidanceCue {
 /** Time constants for the advisory controller, seconds. */
 const VERTICAL_TAU_S = 4;
 const HORIZONTAL_TAU_S = 12;
+/** Terminal-phase horizontal nulling time constant, seconds. */
+const TERMINAL_HORIZONTAL_TAU_S = 6;
 const MAX_ADVISORY_TILT_RAD = 1.05; // ~60 degrees
 /**
  * Braking-phase attitude authority. The real LM flew the braking phase with
@@ -39,22 +41,28 @@ const MAX_ADVISORY_TILT_RAD = 1.05; // ~60 degrees
  * vertical), which is the only way the downrange velocity is killed inside the
  * available range. The 60-degree cap above is a terminal-phase limit.
  */
-const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
+// Slightly past horizontal is allowed: at the fixed throttle point the only
+// way to keep from ballooning while nearly orbital is to let the thrust vector
+// dip a few degrees below the local horizon, exactly as the real profile did.
+const MAX_BRAKING_TILT_RAD = 1.66; // ~95 degrees
 /** Vertical error is flown out on this time constant during braking, seconds. */
-const BRAKING_ALTITUDE_TAU_S = 45;
+const BRAKING_ALTITUDE_TAU_S = 25;
 /** Sink-rate authority during braking, m/s. */
-const BRAKING_MAX_SINK_MPS = 45;
+const BRAKING_MAX_SINK_MPS = 55;
 /**
  * Once the stopping law needs more than this deceleration the vehicle is late
  * braking, and it takes priority over the nominal speed profile, m/s².
  */
 const BRAKING_STOP_OVERRIDE_MPS2 = 2.8;
-/** Braking-phase downrange velocity loop time constant, seconds. */
-const BRAKING_SPEED_TAU_S = 20;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
+/** Schedule catch-up trim: time constant and authority limit. */
+const SCHEDULE_TRIM_TAU_S = 30;
+const SCHEDULE_TRIM_MAX_MPS2 = 0.35;
 /** Time constant for the approach-phase downrange velocity loop, seconds. */
 const APPROACH_TAU_S = 8;
+/** Vertical error is flown out on this time constant after high gate, seconds. */
+const APPROACH_ALTITUDE_TAU_S = 18;
 
 /**
  * Range-aware braking target. When the caller knows how far the vehicle still
@@ -84,6 +92,32 @@ export interface BrakingTarget {
    * stays on the 13-minute clock. Positive = closing on the site.
    */
   readonly targetDownrangeSpeedMps?: number | null;
+  /**
+   * Downrange speed the vehicle should have when it reaches `handoverRangeM`
+   * — the high-gate aim speed (~152 m/s on Apollo 11). Braking is terminal-
+   * targeted onto this speed at that range so the burn arrives on the
+   * historical pitch-over point instead of merely low and slow.
+   */
+  readonly handoverSpeedMps?: number | null;
+  /** Low-gate aim range for the approach phase, metres. */
+  readonly approachAimRangeM?: number | null;
+  /** Low-gate aim downrange speed for the approach phase, m/s. */
+  readonly approachAimSpeedMps?: number | null;
+  /**
+   * The DPS throttle band the engine will actually be held inside, [0, 1].
+   * Guidance snaps its own command into this band and then chooses the pitch
+   * that splits the DELIVERED thrust — without this, a clamped or snapped
+   * throttle over-thrusts both axes and the vehicle over-brakes.
+   */
+  readonly throttleMinFraction?: number | null;
+  readonly throttleMaxFraction?: number | null;
+  /**
+   * Slope of the canonical altitude-versus-range profile here (metres of
+   * altitude per metre of ground track). Guidance flies the profile as a
+   * flight path: sink rate = slope x closing speed, so altitude, range and
+   * speed reach each gate together instead of drifting apart.
+   */
+  readonly targetGlideSlope?: number | null;
 }
 
 /**
@@ -93,7 +127,12 @@ export interface BrakingTarget {
  */
 export function targetSinkRate(altitudeM: number): number {
   if (altitudeM <= 0) return 0;
-  const magnitude = Math.min(45, Math.max(0.6, 0.7 * Math.sqrt(altitudeM)));
+  // Below low gate the flown profile is much gentler than a square-root
+  // schedule: Apollo 11 took ~110 s to fly the last 500 ft. Cap the sink so a
+  // guided descent settles at a crew-plausible rate instead of dropping.
+  const schedule = Math.max(0.6, 0.7 * Math.sqrt(altitudeM));
+  const lowGate = altitudeM < 450 ? Math.max(0.6, altitudeM / 45 + 0.5) : Infinity;
+  const magnitude = Math.min(45, schedule, lowGate);
   return -magnitude;
 }
 
@@ -114,6 +153,15 @@ export function computeReferenceGuidance(
     signedRange > braking.handoverRangeM &&
     Math.abs(orbit.tangentialSpeedMps) > 5;
 
+  // M4.29 — Centrifugal relief. At PDI the vehicle is still nearly orbital
+  // (v^2 / r is within a few percent of local g), so a vertical law written
+  // against gravity alone commands far too much lift and the trajectory
+  // blooms upward instead of tracking the profile. Net radial gravity is what
+  // the thrust vector actually has to fight.
+  const centrifugal =
+    (orbit.tangentialSpeedMps * orbit.tangentialSpeedMps) / Math.max(1, orbit.radiusM);
+  const netG = localG - centrifugal;
+
   let targetRadial: number;
   let aRadial: number;
   let aHorizontal: number;
@@ -121,51 +169,98 @@ export function computeReferenceGuidance(
 
   if (braking !== null) {
     const v = orbit.tangentialSpeedMps;
-    if (inBraking) {
-      // Deceleration that brings the downrange velocity to the approach-phase
-      // hand-over inside the range that is actually left to run.
-      const runoutM = Math.max(500, signedRange - braking.handoverRangeM);
-      // Safety law: constant deceleration that stops the downrange motion by
-      // high gate. Never brake less than this.
-      const stopping = -Math.sign(v) * ((v * v) / (2 * runoutM));
-      const profileSpeed = braking.targetDownrangeSpeedMps ?? null;
-      if (profileSpeed !== null) {
-        const desired = Math.sign(signedRange || 1) * Math.abs(profileSpeed);
-        const onProfile = (desired - v) / BRAKING_SPEED_TAU_S;
-        // Fly the profile speed; only fall back on the stopping law when the
-        // vehicle is genuinely late braking and needs more than the profile.
-        aHorizontal =
-          Math.abs(stopping) > BRAKING_STOP_OVERRIDE_MPS2 ? stopping : onProfile;
-      } else {
-        aHorizontal = stopping;
-      }
-      tiltLimit = MAX_BRAKING_TILT_RAD;
+    // M4.29 — ONE continuous closing law for braking and approach. Both
+    // phases are terminal targeting: pick the deceleration that arrives at an
+    // aim point (high gate first, low gate always) with its aim speed over the
+    // range actually left to run, and take whichever demand is larger. Using
+    // the same formulation either side of high gate is what removes the
+    // pitch step the crew would have seen at pitch-over.
+    const s = Math.abs(signedRange);
+    const aimRange = braking.approachAimRangeM ?? 0;
+    const aimSpeed = Math.abs(braking.approachAimSpeedMps ?? 0);
+    const vGate = Math.abs(braking.handoverSpeedMps ?? 0);
+    if (s <= Math.max(30, aimRange)) {
+      // Over the site: settle the residual translation out.
+      const desired = s < 30 ? 0 : Math.sqrt(2 * APPROACH_CLOSING_ACCEL * s);
+      aHorizontal = (Math.sign(signedRange || 1) * desired - v) / APPROACH_TAU_S;
     } else {
-      // Approach: close the last kilometres to the site and arrive with the
-      // downrange velocity nulled over the aim point.
-      const s = Math.abs(signedRange);
-      const desired =
-        s < 30
-          ? 0
-          : Math.sign(signedRange) * Math.min(60, Math.sqrt(2 * APPROACH_CLOSING_ACCEL * s));
-      aHorizontal = (desired - v) / APPROACH_TAU_S;
+      const toLowGate =
+        (v * v - aimSpeed * aimSpeed) / (2 * Math.max(50, s - aimRange));
+      const toHighGate = inBraking
+        ? (v * v - vGate * vGate) / (2 * Math.max(500, s - braking.handoverRangeM))
+        : 0;
+      let decel = Math.max(0, toLowGate, toHighGate);
+      // The canonical table paces the run: if the vehicle is running faster
+      // than the flown range-versus-time schedule, add the trim that puts it
+      // back on the schedule, so it does not reach low gate a minute early.
+      const scheduled = braking.targetDownrangeSpeedMps ?? null;
+      if (scheduled !== null && Math.abs(v) > Math.abs(scheduled)) {
+        // Trim gently and with limited authority: a hard schedule catch-up
+        // would snap the pitch over at high gate instead of easing through it.
+        decel += Math.min(
+          SCHEDULE_TRIM_MAX_MPS2,
+          (Math.abs(v) - Math.abs(scheduled)) / SCHEDULE_TRIM_TAU_S,
+        );
+      }
+      if (inBraking) {
+        // Safety law: genuinely late braking (still faster than the gate speed
+        // and needing more than the profile deceleration) takes priority.
+        const stopping = (v * v) / (2 * Math.max(500, s - braking.handoverRangeM));
+        if (Math.abs(v) > vGate && stopping > BRAKING_STOP_OVERRIDE_MPS2) decel = stopping;
+        tiltLimit = MAX_BRAKING_TILT_RAD;
+      }
+      aHorizontal = -Math.sign(v || 1) * decel;
     }
+    // Never thrust the vehicle FORWARD to catch a schedule it has already
+    // fallen behind: descent guidance only ever removes downrange velocity.
+    if (Math.abs(v) > 2 && Math.sign(aHorizontal) === Math.sign(v)) aHorizontal = 0;
 
     // Vertical: hold the profile altitude for the range still to run, but
     // never sink faster than the altitude schedule allows.
     const altitudeError = braking.targetAltitudeM - orbit.altitudeM;
-    targetRadial = Math.max(
-      Math.max(-BRAKING_MAX_SINK_MPS, targetSinkRate(orbit.altitudeM)),
-      Math.min(5, altitudeError / BRAKING_ALTITUDE_TAU_S),
-    );
-    aRadial = localG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
+    const altitudeTau = inBraking ? BRAKING_ALTITUDE_TAU_S : APPROACH_ALTITUDE_TAU_S;
+    const slope = braking.targetGlideSlope ?? null;
+    if (slope !== null) {
+      // Fly the profile as a flight path: the nominal sink rate is the profile
+      // slope times the closing speed, trimmed by the altitude error.
+      const pathSink = -Math.abs(slope) * Math.abs(v);
+      const trim = Math.max(-12, Math.min(6, altitudeError / altitudeTau));
+      targetRadial = Math.max(-BRAKING_MAX_SINK_MPS, pathSink + trim);
+      // Near the surface the sink-rate schedule has the final word: below
+      // 800 m the profile may not command a faster sink than the schedule, so
+      // the vehicle arrives at low gate settled instead of diving through it.
+      const slack = orbit.altitudeM > 800 ? 6 : 0;
+      targetRadial = Math.max(targetRadial, targetSinkRate(orbit.altitudeM) - slack);
+      // Terminal picture (P66): low down with translation still on, ease the
+      // sink so the vehicle flies the last few hundred metres to the site
+      // instead of settling short of it.
+      const residual = Math.abs(v);
+      if (orbit.altitudeM < 150 && residual > 1.5) {
+        targetRadial = Math.max(targetRadial, -Math.max(0.8, 3 - residual * 0.3));
+      }
+    } else {
+      targetRadial = Math.max(
+        Math.max(-BRAKING_MAX_SINK_MPS, targetSinkRate(orbit.altitudeM)),
+        Math.min(5, altitudeError / altitudeTau),
+      );
+    }
+    aRadial = netG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
   } else {
     targetRadial = targetSinkRate(orbit.altitudeM);
-    // Radial acceleration needed: cancel gravity, then drive the rate error out.
-    aRadial = localG + (targetRadial - orbit.radialSpeedMps) / VERTICAL_TAU_S;
+    // Terminal descent (P66 picture): the last hundred metres are flown by
+    // nulling the residual translation first and settling second. If the
+    // vehicle still has forward motion low down, ease the sink so the
+    // horizontal loop has time to work before the gear touches.
+    const residual = Math.abs(orbit.tangentialSpeedMps);
+    if (orbit.altitudeM < 150 && residual > 1.5) {
+      targetRadial = Math.max(targetRadial, -Math.max(0.8, 3 - residual * 0.3));
+    }
+    aRadial = netG + (targetRadial - orbit.radialSpeedMps) / VERTICAL_TAU_S;
     // Horizontal acceleration needed: null the tangential velocity.
-    aHorizontal = -orbit.tangentialSpeedMps / HORIZONTAL_TAU_S;
+    aHorizontal = -orbit.tangentialSpeedMps / TERMINAL_HORIZONTAL_TAU_S;
   }
+  // Thrust can only push: never ask for a negative vertical component.
+  if (aRadial < 0) aRadial = 0;
 
 
   const radialError = orbit.radialSpeedMps - targetRadial;
@@ -176,30 +271,48 @@ export function computeReferenceGuidance(
       : parameters.descentEngine.maxThrustN.value;
 
   const fixed = braking?.fixedThrottle ?? null;
+  const bandMin = braking?.throttleMinFraction ?? null;
+  const bandMax = braking?.throttleMaxFraction ?? null;
   let attitude: number;
   let recommendedThrottle: number;
 
-  if (fixed !== null && fixed > 0 && state.configuration !== "ascent-stage") {
-    // Thrust magnitude is pinned: pitch is the only vertical control left.
-    const aTotal = (maxThrust * fixed) / mass;
-    // Pitch splits the fixed thrust vector. Tilt far enough to make the
-    // downrange deceleration the profile asks for, but never so far that the
-    // vertical component falls below what the altitude profile needs.
-    const magnitude = Math.acos(Math.max(-1, Math.min(1, aRadial / aTotal)));
-    const sign = aHorizontal < 0 ? -1 : 1;
-    attitude = sign * magnitude;
-    recommendedThrottle = fixed;
-  } else {
-    attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
+  if (state.configuration === "ascent-stage") {
     const requiredAccel = Math.hypot(aRadial, aHorizontal);
-    const rawThrottle = maxThrust > 0 ? (requiredAccel * mass) / maxThrust : 0;
-    recommendedThrottle =
-      state.configuration === "ascent-stage"
-        ? rawThrottle > 0
-          ? 1
-          : 0
-        : snapDescentThrottle(Math.min(1, Math.max(0, rawThrottle)), parameters);
+    attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
+    recommendedThrottle = requiredAccel > 0 ? 1 : 0;
+  } else {
+    // M4.29 — one law for both regimes. Decide the throttle the engine will
+    // ACTUALLY be held at (pinned fixed-throttle point, or the required
+    // magnitude snapped into the DPS band), then choose the pitch that splits
+    // that delivered thrust so its vertical component meets the profile. The
+    // old code commanded an ideal vector and let the clamped throttle
+    // over-thrust both axes, which over-braked the vehicle and produced a
+    // pitch step at throttle recovery.
+    const requiredAccel = Math.hypot(aRadial, aHorizontal);
+    let throttle: number;
+    if (fixed !== null && fixed > 0) {
+      throttle = fixed;
+    } else {
+      const raw = maxThrust > 0 ? (requiredAccel * mass) / maxThrust : 0;
+      throttle = snapDescentThrottle(Math.min(1, Math.max(0, raw)), parameters);
+      if (bandMax !== null) throttle = Math.min(throttle, bandMax);
+      if (bandMin !== null && throttle > 0) throttle = Math.max(throttle, bandMin);
+    }
+    const aTotal = throttle > 0 ? (maxThrust * throttle) / mass : 0;
+    if (aTotal <= 0) {
+      attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
+    } else if (aTotal >= requiredAccel - 1e-9 && requiredAccel > 0) {
+      // Enough thrust to satisfy the vertical demand: pitch so the vertical
+      // component is exactly aRadial and the rest goes into deceleration.
+      const magnitude = Math.acos(Math.max(-1, Math.min(1, aRadial / aTotal)));
+      attitude = (aHorizontal < 0 ? -1 : 1) * magnitude;
+    } else {
+      // Not enough thrust for the whole demand: hold the demanded direction.
+      attitude = Math.atan2(aHorizontal, Math.max(aRadial, 1e-6));
+    }
+    recommendedThrottle = throttle;
   }
+
   if (attitude > tiltLimit) attitude = tiltLimit;
   if (attitude < -tiltLimit) attitude = -tiltLimit;
 

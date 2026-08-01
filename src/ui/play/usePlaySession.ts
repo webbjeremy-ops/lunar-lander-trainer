@@ -71,6 +71,9 @@ import {
   nominalAltitudeForRangeM,
   nominalDownrangeSpeedForRange,
   HIGH_GATE_RANGE_M,
+  HIGH_GATE_AIM,
+  LOW_GATE_AIM,
+  nominalGlideSlopeForRange,
   highGateStatus,
   type HighGateStatus,
   usesApollo11Timeline,
@@ -333,6 +336,8 @@ export function usePlaySession(
 
 
   const throttleRef = useRef(0);
+  /** Latched once the vehicle drops below low gate: terminal (P66) guidance. */
+  const terminalGuidanceRef = useRef(false);
   const attitudeRef = useRef(0);
   /** One-shot rate kick consumed by the attitude controller on key press. */
   const attitudeKickRef = useRef(0);
@@ -637,7 +642,14 @@ export function usePlaySession(
         const rangeM = downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
         // Below the last few tens of metres the profile is spent: hand back to
         // the terminal sink-rate law so the vehicle settles onto the surface.
-        const useProfile = o.altitudeM > 60;
+        // Below low gate guidance keeps the range-aware target so the vehicle
+        // flies the last few hundred metres to the site; it only drops to the
+        // plain settle law once it is over the site with the translation out.
+        if (o.altitudeM <= LOW_GATE_AIM.altitudeM) terminalGuidanceRef.current = true;
+        const useProfile =
+          !terminalGuidanceRef.current ||
+          Math.abs(rangeM) >= 60 ||
+          Math.abs(o.tangentialSpeedMps) >= 2;
         // The DPS throttle envelope is a hardware fact, so guidance has to know
         // about it: during fixed-throttle position the computer steers the
         // thrust vector instead of modulating it.
@@ -656,6 +668,15 @@ export function usePlaySession(
           handoverRangeM: HIGH_GATE_RANGE_M,
           fixedThrottle:
             guidanceEnv && guidanceEnv.min === guidanceEnv.max ? guidanceEnv.min : null,
+          // M4.29 — the gate aim points, the profile slope and the throttle
+          // band the engine is actually held inside, so guidance targets the
+          // historical high-gate point instead of merely descending.
+          handoverSpeedMps: HIGH_GATE_AIM.downrangeSpeedMps,
+          approachAimRangeM: LOW_GATE_AIM.rangeToLzM,
+          approachAimSpeedMps: LOW_GATE_AIM.downrangeSpeedMps,
+          targetGlideSlope: nominalGlideSlopeForRange(Math.abs(rangeM)),
+          throttleMinFraction: guidanceEnv ? guidanceEnv.min : null,
+          throttleMaxFraction: guidanceEnv ? guidanceEnv.max : null,
         });
         throttle = cue.recommendedThrottle;
         // Simple proportional attitude autopilot onto the advisory angle.
