@@ -372,17 +372,26 @@ export function usePlaySession(
         const held = heldRef.current;
         if (held.has("ArrowUp")) throttleRef.current += 1.8 * STEP_S;
         if (held.has("ArrowDown")) throttleRef.current -= 1.8 * STEP_S;
-        let att = 0;
-        if (held.has("ArrowLeft")) att -= 1;
-        if (held.has("ArrowRight")) att += 1;
+        let stick = 0;
+        if (held.has("ArrowLeft")) stick -= 1;
+        if (held.has("ArrowRight")) stick += 1;
 
         const pad = readGamepad();
         if (pad) {
-          if (Math.abs(pad.attitude) > 0.12) att = pad.attitude;
+          if (Math.abs(pad.attitude) > 0.12) stick = pad.attitude;
           if (pad.throttle !== null) throttleRef.current = pad.throttle;
         }
 
-        attitudeRef.current = att;
+        // M4.10 rate-command / attitude-hold: the stick commands a body rate,
+        // and a released stick commands zero rate so the RCS nulls rotation
+        // instead of leaving the vehicle drifting.
+        const rateCmd = stick * COMMANDED_ATTITUDE_RATE;
+        const kick = attitudeKickRef.current;
+        attitudeKickRef.current = 0;
+        attitudeRef.current = clampSigned(
+          (rateCmd + kick - state.angularRateRadPerSec) * ATTITUDE_RATE_GAIN,
+        );
+
         throttleRef.current = clamp01(throttleRef.current);
 
         // P66 rate-of-descent: with no direct thrust input, the throttle is
