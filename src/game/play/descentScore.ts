@@ -70,8 +70,12 @@ export interface ScoreLayers {
   readonly strings: number;
   /** High dissonant partial that only appears when things are bad. */
   readonly dissonance: number;
+  /** Organ under-melody (Interstellar-flavoured ostinato). */
+  readonly melody: number;
   /** Heartbeat rate, beats per minute. */
   readonly pulseBpm: number;
+  /** Seconds between under-melody notes — shortens as tension rises. */
+  readonly melodyNoteSec: number;
   /** Low-pass cutoff on the bed, Hz — opens up as tension rises. */
   readonly cutoffHz: number;
 }
@@ -84,7 +88,10 @@ export function scoreLayers(tension: number): ScoreLayers {
     pulse: t < 0.25 ? 0 : 0.18 + 0.5 * (t - 0.25),
     strings: t < 0.45 ? 0 : 0.5 * (t - 0.45) * 2,
     dissonance: t < 0.78 ? 0 : (t - 0.78) * 3.2,
+    melody: t < 0.12 ? 0 : clamp01(0.35 + 0.75 * (t - 0.12)),
     pulseBpm: 44 + 76 * t,
+    melodyNoteSec: 2.4 - 1.5 * t,
     cutoffHz: 220 + 1_600 * t * t,
   };
 }
+
