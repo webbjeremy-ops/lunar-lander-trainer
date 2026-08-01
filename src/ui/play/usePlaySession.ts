@@ -115,6 +115,8 @@ export interface PlaySessionApi {
   readonly ignition: IgnitionSequenceState;
   readonly ignitionClock: string;
   readonly bridgedDskyRequest: BridgedDskyRequest | null;
+  /** M4.12 — bridged descent-monitor registers (R1/R2/R3) in Apollo units. */
+  readonly descentMonitor: DescentMonitorView;
   /** M4.8 — windows-up roll state and live program alarms. */
   readonly roll: DescentRollState;
   readonly rollActive: boolean;
