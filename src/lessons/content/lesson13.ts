@@ -28,7 +28,7 @@ export const LESSON_13_FLY_THE_TERMINAL_DESCENT: LessonDefinition = {
       sources: [{ id: "m4-0-kernel" }],
       classification: "gameplay-tuned",
       challenge: {
-        missionId: "terminal-descent",
+        missionId: "landing-fundamentals",
         assistance: "pilot",
         controlMode: "quick-manual",
         passingScore: 55,

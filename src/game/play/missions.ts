@@ -84,81 +84,19 @@ export const MISSIONS: Readonly<Record<MissionId, MissionDefinition>> = {
       "Training scenario. Altitude chosen for teaching, not from the flight record.",
   },
 
-  "terminal-descent": {
-    id: "terminal-descent",
-    version: 1,
+  "full-descent": {
+    id: "full-descent",
+    version: 2,
     order: 2,
-    title: "Terminal Descent",
-    subtitle: "~500 ft · low-gate region",
+    title: "Full Descent",
+    subtitle: "PDI (~8.5 nmi) through touchdown",
     summary:
-      "Begins near the historically meaningful low-gate region (~500 ft), " +
-      "where the crew flew a largely visual, semi-manual descent.",
+      "The complete powered descent: the PDI ignition ritual, the braking " +
+      "phase on your back, the windows-up roll, the 1201/1202 program " +
+      "alarms, pitch-over at high gate, then P66 to the surface.",
     objective:
-      "Fly the last 150 m: hold a controlled sink rate, kill the residual " +
-      "horizontal velocity, and touch down on the marked zone.",
-    initial: {
-      altitudeM: DESCENT_LANDMARKS.lowGateM,
-      radialSpeedMps: -4.5,
-      tangentialSpeedMps: 14,
-      attitudeRad: -0.15,
-      descentPropellantKg: 900,
-      rangeToLandingZoneM: 600,
-    },
-    defaultControlMode: "quick-manual",
-    availableControlModes: ["quick-manual", "agc-assisted", "training"],
-    defaultAssistance: "pilot",
-    hazards: [
-      { angleOffsetRad: 0, radiusM: 40, kind: "boulder-field", label: "Boulder field" },
-      { angleOffsetRad: 0, radiusM: 90, kind: "crater", label: "Crater rim" },
-    ],
-    historicalNote:
-      "Low gate was approximately 500 ft on Apollo 11 (NASA mission summary). " +
-      "The state vector here is a gameplay estimate, not the flown trajectory.",
-  },
-
-  "high-gate-challenge": {
-    id: "high-gate-challenge",
-    version: 1,
-    order: 3,
-    title: "High-Gate Challenge",
-    subtitle: "~7,600 ft · approach phase",
-    summary:
-      "Starts near the historically meaningful high-gate region, where the " +
-      "LM pitched up and the landing site came into view.",
-    objective:
-      "Manage energy from high gate through low gate and land on the zone " +
-      "without exhausting descent propellant.",
-    initial: {
-      altitudeM: DESCENT_LANDMARKS.highGateM,
-      radialSpeedMps: -44,
-      tangentialSpeedMps: 152,
-      attitudeRad: -0.6,
-      descentPropellantKg: 2_300,
-      rangeToLandingZoneM: 7_400,
-    },
-    defaultControlMode: "agc-assisted",
-    availableControlModes: ["quick-manual", "agc-assisted", "training"],
-    defaultAssistance: "pilot",
-    hazards: [
-      { angleOffsetRad: 0, radiusM: 70, kind: "crater", label: "West crater" },
-      { angleOffsetRad: 0, radiusM: 160, kind: "boulder-field", label: "Ejecta blanket" },
-    ],
-    historicalNote:
-      "High gate was approximately 7,600 ft on Apollo 11 (NASA mission summary).",
-  },
-
-  "apollo11-powered-descent": {
-    id: "apollo11-powered-descent",
-    version: 1,
-    order: 4,
-    title: "Apollo 11 Powered-Descent Challenge",
-    subtitle: "~8.5 nmi · powered-descent initiation",
-    summary:
-      "Begins near powered-descent initiation from the descent-orbit low " +
-      "point, with the full Apollo-style DSKY procedure and P63/P64 guidance.",
-    objective:
-      "Work the DSKY procedure, monitor the braking and approach phases, " +
-      "then take P66 and land inside the gear limits.",
+      "Work the DSKY procedure from P63 through P64, answer the program " +
+      "alarms, take P66 at low gate and land inside the gear limits.",
     initial: {
       altitudeM: DESCENT_LANDMARKS.poweredDescentInitiationM,
       radialSpeedMps: -3,
@@ -175,15 +113,15 @@ export const MISSIONS: Readonly<Record<MissionId, MissionDefinition>> = {
       { angleOffsetRad: 0, radiusM: 190, kind: "crater", label: "Blocky crater" },
     ],
     historicalNote:
-      "The descent-orbit low point was about 8.5 nautical miles (NASA mission " +
-      "summary). This is a historically grounded gameplay scenario — it is " +
-      "NOT a reproduction of the Apollo 11 trajectory.",
+      "The descent-orbit low point was about 8.5 nautical miles and high gate " +
+      "about 7,600 ft (NASA mission summary). This is a historically grounded " +
+      "gameplay scenario — it is NOT a reproduction of the Apollo 11 trajectory.",
   },
 
   "free-flight": {
     id: "free-flight",
     version: 1,
-    order: 5,
+    order: 3,
     title: "Free Flight",
     subtitle: "Sandbox",
     summary:

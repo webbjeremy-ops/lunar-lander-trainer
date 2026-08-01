@@ -327,8 +327,7 @@ export function scriptFor(
   mode: ControlModeId,
 ): DskyProcedureScript {
   if (mode === "quick-manual") return EMPTY_SCRIPT;
-  if (missionId === "apollo11-powered-descent") return APOLLO11_DESCENT_SCRIPT;
-  if (missionId === "high-gate-challenge") return POWERED_DESCENT_SCRIPT;
+  if (missionId === "full-descent") return APOLLO11_DESCENT_SCRIPT;
   if (missionId === "free-flight") return EMPTY_SCRIPT;
   return TERMINAL_DESCENT_SCRIPT;
 }

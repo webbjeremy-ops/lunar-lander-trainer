@@ -209,7 +209,7 @@ export function usePlaySession(
   // timeline, whatever control mode the player picked — the alarms are part of
   // the flight, not part of the DSKY procedure script.
   const apollo11Timeline =
-    mission.id === "apollo11-powered-descent" || usesApollo11Timeline(script);
+    mission.id === "full-descent" || usesApollo11Timeline(script);
 
   const flightRef = useRef(flight);
   flightRef.current = flight;

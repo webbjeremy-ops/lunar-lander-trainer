@@ -139,7 +139,7 @@ describe("procedure reducer", () => {
   });
 
   it("quick-manual has no procedure and starts fully unlocked", () => {
-    const script = scriptFor("apollo11-powered-descent", "quick-manual");
+    const script = scriptFor("full-descent", "quick-manual");
     const s = createProcedureState(script);
     expect(script.steps).toHaveLength(0);
     expect(s.flightLockReleased).toBe(true);

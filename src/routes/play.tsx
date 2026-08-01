@@ -18,6 +18,7 @@ import { LunarScene } from "@/ui/play/LunarScene";
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
 import { FlightControls } from "@/ui/play/FlightControls";
 import { ProcedurePanel } from "@/ui/play/ProcedurePanel";
+import { ProcedureCoach } from "@/ui/play/ProcedureCoach";
 import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
 import { AttitudePanel } from "@/ui/play/AttitudePanel";
 import { FdaiBall } from "@/ui/play/FdaiBall";
@@ -67,7 +68,7 @@ export const Route = createFileRoute("/play")({
 
 function PlayPage() {
   return (
-    <main className="min-h-screen bg-neutral-900 text-neutral-100">
+    <main className="min-h-screen lm-bay text-neutral-100">
       <header className="border-b border-neutral-800 px-4 py-3">
         <h1 className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
           Lunar descent · fly the landing
@@ -256,7 +257,10 @@ function PlayClient() {
 
 
   return (
-    <section className="mx-auto max-w-[1400px] space-y-4 px-4 py-4" data-testid="play-cockpit">
+    <section
+      className="cockpit-metal mx-auto max-w-[1400px] space-y-4 px-4 py-4"
+      data-testid="play-cockpit"
+    >
       <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={() => setStarted(false)}
@@ -326,7 +330,13 @@ function PlayClient() {
       )}
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <div className="space-y-3">
+        <div className="relative space-y-3">
+          <ProcedureCoach
+            script={session.script}
+            state={session.procedure}
+            step={session.step}
+            manual={session.manualUnlocked}
+          />
           <CalloutOverlay
             callout={session.callout}
             onAcknowledge={session.actions.acknowledgeCallout}
