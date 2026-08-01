@@ -5,6 +5,7 @@
 // Deterministic: the same FlightSummary always produces the same MissionScore.
 
 import type { FlightSummary } from "./types";
+import { ALARM_RESPONSE_TARGET_SEC } from "./programAlarms";
 
 export interface ScoreComponent {
   readonly id: string;
@@ -125,6 +126,32 @@ export function scoreMission(summary: FlightSummary): MissionScore {
     note: procedureNote,
   });
 
+  // --- Program-alarm handling (M4.8) ------------------------------------------
+  // Alarms never fail the mission: Houston's call was made on guidance and
+  // display health, not on the alarm. They are scored on crew discipline —
+  // whether the code was read and the lamp cleared, and how quickly.
+  const alarms = summary.alarms;
+  if (alarms && alarms.raised > 0) {
+    const clearedFraction = clamp01(alarms.cleared / alarms.raised);
+    const promptness =
+      alarms.cleared === 0
+        ? 0
+        : clamp01(1 - alarms.meanResponseSeconds / ALARM_RESPONSE_TARGET_SEC);
+    const alarmFraction = clamp01(clearedFraction * 0.7 + promptness * 0.3);
+    components.push({
+      id: "alarms",
+      label: "Program-alarm handling",
+      points: round(10 * alarmFraction),
+      maxPoints: 10,
+      note:
+        `${alarms.cleared}/${alarms.raised} alarms answered · ` +
+        `${alarms.unresolved} left unread · ` +
+        `${alarms.meanResponseSeconds.toFixed(1)} s mean response`,
+    });
+  }
+
+
+
   // --- Control smoothness ----------------------------------------------------
   const smoothFraction = clamp01(1 - summary.controlRoughness / 2);
   components.push({
@@ -199,6 +226,21 @@ function buildNotes(
   if (summary.controlRoughness > 1.2) {
     notes.push("Control inputs were jerky. Smaller, held corrections settle the vehicle faster.");
   }
+  if (summary.rolledWindowsUp === false) {
+    notes.push(
+      "You never rolled windows-up. Eagle flew the early braking phase " +
+        "face-down and rolled a few minutes after PDI so the landing radar " +
+        "could see the surface — without that roll the radar stays blind.",
+    );
+  }
+  if (summary.alarms && summary.alarms.unresolved > 0) {
+    notes.push(
+      `${summary.alarms.unresolved} program alarm(s) were never read out. ` +
+        "Read the code with V05 N09 E and clear it with RSET — the alarm " +
+        "itself is not a reason to abort, but you must know which one it is.",
+    );
+  }
+
   if (outcome === "landed" && notes.length === 0) {
     notes.push("Clean approach, clean touchdown. Nothing to correct.");
   }

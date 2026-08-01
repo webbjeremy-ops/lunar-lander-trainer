@@ -25,28 +25,39 @@ import {
 } from "@/simulation/lunar2d";
 import {
   angleForRange,
+  bridgedAlarmFor,
   bridgedRequestFor,
+  createDescentRollState,
   createIgnitionState,
   createProcedureState,
+  createProgramAlarmState,
   currentStep,
   downrangeToLandingZoneM,
   formatTig,
   LANDING_LIMITS,
   LANDING_ZONE_ANGLE_RAD,
   meanResponseSeconds,
+  radarAvailable,
+  reduceDescentRoll,
   reduceIgnition,
   reduceProcedure,
+  reduceProgramAlarms,
   scoreMission,
   scriptFor,
+  summarizeAlarms,
   throttleCeiling,
+  usesApollo11Timeline,
   type AssistanceLevel,
+  type BridgedAlarmOverlay,
   type BridgedDskyRequest,
   type ControlModeId,
+  type DescentRollState,
   type FlightSummary,
   type IgnitionSequenceState,
   type MissionDefinition,
   type MissionScore,
   type ProcedureState,
+  type ProgramAlarmState,
   type TakeoverRecord,
 } from "@/game/play";
 
@@ -95,6 +106,12 @@ export interface PlaySessionApi {
   readonly ignition: IgnitionSequenceState;
   readonly ignitionClock: string;
   readonly bridgedDskyRequest: BridgedDskyRequest | null;
+  /** M4.8 — windows-up roll state and live program alarms. */
+  readonly roll: DescentRollState;
+  readonly rollActive: boolean;
+  readonly radarAvailable: boolean;
+  readonly alarms: ProgramAlarmState;
+  readonly bridgedAlarm: BridgedAlarmOverlay | null;
   readonly actions: {
     readonly setRunning: (v: boolean) => void;
     readonly setTimeScale: (v: number) => void;
@@ -108,6 +125,8 @@ export interface PlaySessionApi {
     readonly setEngine: (on: boolean) => void;
     readonly trimRod: (steps: number) => void;
     readonly setEngineArm: (on: boolean) => void;
+    /** Hold to roll the vehicle toward windows-up (M4.8). */
+    readonly setRollCommand: (active: boolean) => void;
   };
 }
 
@@ -141,6 +160,12 @@ export function usePlaySession(
   const [takeover, setTakeover] = useState<TakeoverRecord | null>(null);
   const [generation, setGeneration] = useState(0);
   const [ignition, setIgnition] = useState<IgnitionSequenceState>(createIgnitionState);
+  // M4.8 — cockpit roll orientation and program alarms. Both are pure
+  // reducers driven from the same 20 ms loop; neither touches the physics
+  // kernel or the AGC.
+  const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
+  const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
+  const apollo11Timeline = usesApollo11Timeline(script);
 
   const flightRef = useRef(flight);
   flightRef.current = flight;
@@ -148,6 +173,10 @@ export function usePlaySession(
   procedureRef.current = procedure;
   const ignitionRef = useRef(ignition);
   ignitionRef.current = ignition;
+  const rollRef = useRef(roll);
+  rollRef.current = roll;
+  const alarmsRef = useRef(alarms);
+  alarmsRef.current = alarms;
 
   const dispatchIgnition = useCallback(
     (event: Parameters<typeof reduceIgnition>[1]) => {
@@ -155,6 +184,28 @@ export function usePlaySession(
       if (next === ignitionRef.current) return next;
       ignitionRef.current = next;
       setIgnition(next);
+      return next;
+    },
+    [],
+  );
+
+  const dispatchRoll = useCallback(
+    (event: Parameters<typeof reduceDescentRoll>[1]) => {
+      const next = reduceDescentRoll(rollRef.current, event);
+      if (next === rollRef.current) return next;
+      rollRef.current = next;
+      setRoll(next);
+      return next;
+    },
+    [],
+  );
+
+  const dispatchAlarm = useCallback(
+    (event: Parameters<typeof reduceProgramAlarms>[1]) => {
+      const next = reduceProgramAlarms(alarmsRef.current, event);
+      if (next === alarmsRef.current) return next;
+      alarmsRef.current = next;
+      setAlarms(next);
       return next;
     },
     [],
@@ -194,6 +245,12 @@ export function usePlaySession(
     const ign = createIgnitionState();
     ignitionRef.current = ign;
     setIgnition(ign);
+    const r = createDescentRollState();
+    rollRef.current = r;
+    setRoll(r);
+    const a = createProgramAlarmState();
+    alarmsRef.current = a;
+    setAlarms(a);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -211,10 +268,20 @@ export function usePlaySession(
       } else if (k === "," || k === ".") {
         e.preventDefault();
         rodTargetRef.current += (k === "," ? -1 : 1) * ROD_INCREMENT_MPS;
+      } else if (k === "r" || k === "R") {
+        // M4.8 — hold R to roll toward windows-up.
+        e.preventDefault();
+        dispatchRoll({ kind: "roll", active: true });
       }
     };
-    const up = (e: KeyboardEvent) => heldRef.current.delete(e.key);
-    const blur = () => heldRef.current.clear();
+    const up = (e: KeyboardEvent) => {
+      heldRef.current.delete(e.key);
+      if (e.key === "r" || e.key === "R") dispatchRoll({ kind: "roll", active: false });
+    };
+    const blur = () => {
+      heldRef.current.clear();
+      dispatchRoll({ kind: "roll", active: false });
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     window.addEventListener("blur", blur);
@@ -223,7 +290,7 @@ export function usePlaySession(
       window.removeEventListener("keyup", up);
       window.removeEventListener("blur", blur);
     };
-  }, []);
+  }, [dispatchRoll]);
 
   // --- Real-time loop -------------------------------------------------------
   useEffect(() => {
@@ -256,6 +323,13 @@ export function usePlaySession(
         steps += 1;
         if (state.terminalState !== null) break;
         if (countdownRunning) dispatchIgnition({ kind: "tick", dtUs: STEP_US });
+        // M4.8 — roll and alarms run on ignition-relative time, so they only
+        // advance once the descent burn has actually started.
+        const sinceIgnitionUs = ignitionRef.current.sinceIgnitionUs;
+        if (sinceIgnitionUs > 0) {
+          dispatchRoll({ kind: "tick", dtUs: STEP_US, sinceIgnitionUs });
+          if (apollo11Timeline) dispatchAlarm({ kind: "tick", sinceIgnitionUs });
+        }
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
       }
@@ -365,7 +439,7 @@ export function usePlaySession(
       cancelAnimationFrame(raf);
       window.clearInterval(publish);
     };
-  }, [running, timeScale]);
+  }, [running, timeScale, apollo11Timeline, dispatchIgnition, dispatchRoll, dispatchAlarm]);
 
   // --- Tab recovery ---------------------------------------------------------
   // A hidden tab throttles requestAnimationFrame, so the accumulator would
@@ -422,9 +496,14 @@ export function usePlaySession(
         skipped: controlMode === "quick-manual",
         meanResponseSeconds: meanResponseSeconds(procedure),
       },
+      alarms: apollo11Timeline ? summarizeAlarms(alarms) : undefined,
+      rolledWindowsUp: roll.completedSinceIgnitionUs !== null,
       limits,
     };
-  }, [flight, mission, controlMode, assistance, downrangeM, takeover, script, procedure, limits]);
+  }, [
+    flight, mission, controlMode, assistance, downrangeM, takeover, script,
+    procedure, limits, apollo11Timeline, alarms, roll,
+  ]);
 
   const score = useMemo(() => (summary ? scoreMission(summary) : null), [summary]);
 
@@ -453,12 +532,19 @@ export function usePlaySession(
       // The AGC already received this keystroke upstream. Here we only run the
       // bridged cockpit ritual: PRO answers the flashing V99 request.
       if (code === "PRO") dispatchIgnition({ kind: "proceed" });
+      // Gates are read before the alarm reducer sees the key, so the RSET that
+      // clears an alarm still satisfies the "an alarm is lit" requirement.
+      const gates = {
+        engineArmed: ignitionRef.current.engineArmed,
+        windowsUp: radarAvailable(rollRef.current),
+        alarmActive: alarmsRef.current.active !== null,
+      };
       setProcedure((prev) => {
         const next = reduceProcedure(script, prev, {
           kind: "key",
           code,
           missionTimeUs: flightRef.current.missionTimeUs,
-          gates: { engineArmed: ignitionRef.current.engineArmed },
+          gates,
         });
         procedureRef.current = next;
         if (!prev.manualControlUnlocked && next.manualControlUnlocked) {
@@ -477,8 +563,16 @@ export function usePlaySession(
         if (!prev.flightLockReleased && next.flightLockReleased) setRunning(true);
         return next;
       });
+      // Alarm read-out / RSET tracking runs on the raw keystroke stream.
+      if (typeof code === "number") {
+        dispatchAlarm({
+          kind: "key",
+          code,
+          sinceIgnitionUs: ignitionRef.current.sinceIgnitionUs,
+        });
+      }
     },
-    [script, recordTakeover, dispatchIgnition],
+    [script, recordTakeover, dispatchIgnition, dispatchAlarm],
   );
 
 
@@ -525,8 +619,9 @@ export function usePlaySession(
       setEngine: (on: boolean) => { engineRef.current = on; },
       trimRod: (steps: number) => { rodTargetRef.current += steps * ROD_INCREMENT_MPS; },
       setEngineArm: (on: boolean) => { dispatchIgnition({ kind: "arm", on }); },
+      setRollCommand: (active: boolean) => { dispatchRoll({ kind: "roll", active }); },
     }),
-    [onDskyKey, script, recordTakeover, dispatchIgnition],
+    [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
 
   return {
@@ -549,6 +644,11 @@ export function usePlaySession(
     ignition,
     ignitionClock: formatTig(ignition),
     bridgedDskyRequest: bridgedRequestFor(ignition),
+    roll,
+    rollActive: roll.commanded,
+    radarAvailable: radarAvailable(roll),
+    alarms,
+    bridgedAlarm: apollo11Timeline ? bridgedAlarmFor(alarms) : null,
     actions,
   };
 }

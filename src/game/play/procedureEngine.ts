@@ -20,6 +20,10 @@ export type ProcedureKeyInput = number | "PRO";
  */
 export interface ProcedureGates {
   readonly engineArmed?: boolean;
+  /** True once the vehicle has been rolled windows-up (M4.8). */
+  readonly windowsUp?: boolean;
+  /** True while a program alarm lamp is lit (M4.8). */
+  readonly alarmActive?: boolean;
 }
 
 export type ProcedureEvent =
@@ -171,6 +175,40 @@ export function reduceProcedure(
       }),
     };
   }
+
+  // M4.8 — the landing radar cannot see the surface while the vehicle is
+  // face-down, so the radar steps stay locked until the crew rolls windows-up.
+  if (step.requiresWindowsUp === true && event.gates?.windowsUp !== true) {
+    return {
+      ...state,
+      lastMessage:
+        "Still windows-down — the landing radar cannot see the surface. " +
+        "Hold the ROLL control until the indicator reads WINDOWS UP.",
+      log: push(state.log, {
+        missionTimeUs: event.missionTimeUs,
+        stepId: step.id,
+        outcome: "incorrect",
+        message: "Step refused — vehicle is not windows-up",
+      }),
+    };
+  }
+
+  // M4.8 — the alarm response only means anything while an alarm is lit.
+  if (step.requiresAlarm === true && event.gates?.alarmActive !== true) {
+    return {
+      ...state,
+      lastMessage:
+        "No program alarm is lit — wait for the PROG lamp before reading the code.",
+      log: push(state.log, {
+        missionTimeUs: event.missionTimeUs,
+        stepId: step.id,
+        outcome: "incorrect",
+        message: "Alarm response keyed with no alarm lit",
+      }),
+    };
+  }
+
+
 
   // After a wrong key the player must clear before the machine re-arms. The
   // mistake is never silently corrected.

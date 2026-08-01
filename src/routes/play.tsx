@@ -19,6 +19,7 @@ import { FlightInstruments } from "@/ui/play/FlightInstruments";
 import { FlightControls } from "@/ui/play/FlightControls";
 import { ProcedurePanel } from "@/ui/play/ProcedurePanel";
 import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
+import { AttitudePanel } from "@/ui/play/AttitudePanel";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
@@ -281,6 +282,14 @@ function PlayClient() {
             />
           )}
 
+          {session.ignition.phase !== "standby" && (
+            <AttitudePanel
+              roll={session.roll}
+              alarms={session.alarms}
+              onRoll={session.actions.setRollCommand}
+            />
+          )}
+
           <ProcedurePanel
             script={session.script}
             state={session.procedure}
@@ -302,7 +311,7 @@ function PlayClient() {
                 sharedClient={agc.client}
                 sharedReady={agc.ready}
                 onKeyPress={handleKey}
-                bridgedRequest={session.bridgedDskyRequest}
+                bridgedRequest={session.bridgedAlarm ?? session.bridgedDskyRequest}
                 compact
               />
             ) : (

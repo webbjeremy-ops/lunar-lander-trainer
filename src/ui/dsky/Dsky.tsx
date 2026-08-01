@@ -94,6 +94,10 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
     readonly noun: string;
     readonly flashing: boolean;
     readonly label: string;
+    /** "request" (default) is amber; "alarm" draws the 1201/1202 PROG face. */
+    readonly variant?: "request" | "alarm";
+    /** Program-alarm code shown in the R1 position for the alarm variant. */
+    readonly code?: string;
   } | null;
 }) {
 
@@ -432,28 +436,47 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           {bridgedRequest && (
             <div
               data-testid="dsky-bridged-request"
-              className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded bg-background/85 backdrop-blur-[1px] ring-1 ring-amber-400/70"
+              data-variant={bridgedRequest.variant ?? "request"}
+              className={`pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded bg-background/85 backdrop-blur-[1px] ring-1 ${
+                bridgedRequest.variant === "alarm" ? "ring-red-500/70" : "ring-amber-400/70"
+              }`}
             >
-              <span className="text-[9px] uppercase tracking-[0.18em] text-amber-400/90">
+              <span
+                className={`text-[9px] uppercase tracking-[0.18em] ${
+                  bridgedRequest.variant === "alarm" ? "text-red-400/90" : "text-amber-400/90"
+                }`}
+              >
                 Bridged overlay — not rope output
               </span>
               <span
-                className={`font-mono text-2xl tabular-nums text-amber-300 ${
-                  bridgedRequest.flashing ? "animate-pulse" : ""
-                }`}
+                className={`font-mono text-2xl tabular-nums ${
+                  bridgedRequest.variant === "alarm" ? "text-red-300" : "text-amber-300"
+                } ${bridgedRequest.flashing ? "animate-pulse" : ""}`}
               >
                 V{bridgedRequest.verb} N{bridgedRequest.noun}
               </span>
-              <span className="text-[10px] uppercase tracking-[0.14em] text-amber-200/80">
+              {bridgedRequest.code !== undefined && (
+                <span
+                  data-testid="dsky-alarm-code"
+                  className="font-mono text-3xl tabular-nums text-red-200"
+                >
+                  {bridgedRequest.code}
+                </span>
+              )}
+              <span
+                className={`text-[10px] uppercase tracking-[0.14em] ${
+                  bridgedRequest.variant === "alarm" ? "text-red-200/85" : "text-amber-200/80"
+                }`}
+              >
                 {bridgedRequest.label}
               </span>
             </div>
           )}
         </div>
 
-
         <div className={compact ? "hidden" : undefined}>
         <div className="mt-3 flex flex-wrap items-center gap-1">
+
 
           {[
             { label: "Run", onClick: controls.run, testid: "ctl-run" },
