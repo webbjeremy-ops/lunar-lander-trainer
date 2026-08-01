@@ -147,29 +147,36 @@ export class DescentSfxEngine {
 
   /**
    * One-shot ignition / throttle-up swell. `strength` 0..1 scales the hit —
-   * TIG and the fixed-throttle-point run-up get the full one.
+   * TIG and the fixed-throttle-point run-up get the full one. The swell hits
+   * hard, then decays away over ~8 s so it does not sit on top of the mix for
+   * the rest of the burn.
    */
   boost(strength = 1): void {
     const ctx = this.ctx;
     const bus = this.master;
     if (!ctx || !bus || !this.started) return;
     const now = ctx.currentTime;
-    const amp = 0.35 * Math.max(0.15, Math.min(1, strength));
+    const amp = 0.26 * Math.max(0.15, Math.min(1, strength));
+    const tail = 8; // seconds to fade out
 
     // Noise swell.
     const noise = ctx.createBufferSource();
     noise.buffer = makeNoiseBuffer(ctx);
+    noise.loop = true;
     const nf = ctx.createBiquadFilter();
     nf.type = "lowpass";
     nf.frequency.setValueAtTime(140, now);
     nf.frequency.linearRampToValueAtTime(900, now + 0.9);
+    nf.frequency.linearRampToValueAtTime(220, now + tail);
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0.0001, now);
     ng.gain.exponentialRampToValueAtTime(amp, now + 0.22);
-    ng.gain.exponentialRampToValueAtTime(0.0001, now + 1.6);
+    // Long exponential tail: audible swell, then gone by ~8 s.
+    ng.gain.setTargetAtTime(0.0001, now + 0.6, tail / 4);
+    ng.gain.linearRampToValueAtTime(0, now + tail);
     noise.connect(nf).connect(ng).connect(bus);
     noise.start(now);
-    noise.stop(now + 1.7);
+    noise.stop(now + tail + 0.1);
 
     // Rising sub thump under it.
     const osc = ctx.createOscillator();
@@ -178,12 +185,14 @@ export class DescentSfxEngine {
     osc.frequency.exponentialRampToValueAtTime(64, now + 0.8);
     const og = ctx.createGain();
     og.gain.setValueAtTime(0.0001, now);
-    og.gain.exponentialRampToValueAtTime(amp * 0.9, now + 0.18);
-    og.gain.exponentialRampToValueAtTime(0.0001, now + 1.5);
+    og.gain.exponentialRampToValueAtTime(amp * 0.8, now + 0.18);
+    og.gain.setTargetAtTime(0.0001, now + 0.5, tail / 5);
+    og.gain.linearRampToValueAtTime(0, now + tail);
     osc.connect(og).connect(bus);
     osc.start(now);
-    osc.stop(now + 1.6);
+    osc.stop(now + tail + 0.1);
   }
+
 
   /** Master-alarm tone, pulsed until the crew clears the program alarm. */
   setAlarm(on: boolean): void {
