@@ -33,6 +33,9 @@ import {
   type ControlModeId,
   type MissionId,
 } from "@/game/play";
+import { useSettings } from "@/settings/SettingsProvider";
+import { RouteErrorBoundary } from "@/ui/shell/Reliability";
+
 
 
 export const Route = createFileRoute("/play")({
