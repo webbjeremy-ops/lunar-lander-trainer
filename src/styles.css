@@ -142,3 +142,72 @@
     color: var(--color-foreground);
   }
 }
+
+/* ------------------------------------------------------------------
+   M4.4 — product accessibility layer.
+   Driven by <html class="reduced-motion high-contrast"> from
+   src/settings/SettingsProvider.tsx. These rules never remove a control
+   or a readout: reduced motion only suppresses non-essential animation,
+   high contrast only strengthens borders and text.
+   ------------------------------------------------------------------ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html.reduced-motion *,
+html.reduced-motion *::before,
+html.reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+html.high-contrast body {
+  background-color: #000;
+}
+
+html.high-contrast .text-neutral-400,
+html.high-contrast .text-neutral-500,
+html.high-contrast .text-neutral-600 {
+  color: #e5e5e5 !important;
+}
+
+html.high-contrast [class*="border-neutral-8"],
+html.high-contrast [class*="border-neutral-9"],
+html.high-contrast [class*="border-neutral-7"] {
+  border-color: #ffffff !important;
+}
+
+html.high-contrast a:focus-visible,
+html.high-contrast button:focus-visible,
+html.high-contrast select:focus-visible,
+html.high-contrast input:focus-visible {
+  outline: 3px solid #ffffff !important;
+  outline-offset: 2px !important;
+}
+
+/* Always-visible keyboard focus, product-wide. */
+:where(a, button, select, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #34d399;
+  outline-offset: 2px;
+}
+
+/* Touch-control sizing, driven by data-touch-size on <html>. */
+html[data-touch-size="small"] { --touch-control-size: 2.25rem; }
+html[data-touch-size="medium"] { --touch-control-size: 2.75rem; }
+html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
+
+/* Landscape hint for phones held upright in a cockpit. */
+.orientation-hint { display: none; }
+@media (max-width: 820px) and (orientation: portrait) {
+  .orientation-hint { display: block; }
+}

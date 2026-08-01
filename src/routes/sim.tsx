@@ -10,14 +10,17 @@ import type { ReadyPayload, StateSnapshot } from "@/agc/protocol";
 export const Route = createFileRoute("/sim")({
   head: () => ({
     meta: [
-      { title: "AGC — Tranquility · Worker-hosted AGC (M1)" },
+      { title: "AGC Lab — operate a real Apollo DSKY · Tranquility" },
       {
         name: "description",
         content:
-          "Real Apollo Guidance Computer (yaAGC/webAGC) running Luminary099 in a dedicated Worker with deterministic mission time. Snapshots throttled to 25 real-time Hz.",
+          "The AGC Lab: unmodified Luminary 099 executing on a yaAGC WebAssembly core in a dedicated Worker, driving a full-size, fully interactive Apollo DSKY.",
       },
-      { property: "og:title", content: "AGC — Tranquility · Milestone 1" },
-      { property: "og:description", content: "Worker-hosted AGC with deterministic mission clock." },
+      { property: "og:title", content: "AGC Lab · Tranquility" },
+      {
+        property: "og:description",
+        content: "Type on a real Apollo DSKY driven by authentic I/O channel words.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -40,16 +43,18 @@ function SimPage() {
     <main className="min-h-screen bg-neutral-900 text-neutral-100">
       <header className="border-b border-neutral-800 px-4 py-3">
         <h1 className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
-          AGC — Tranquility · Milestone 1 · Worker-hosted AGC
+          AGC Lab · authentic Apollo Guidance Computer
         </h1>
         <p className="mt-1 text-xs text-neutral-400">
-          AGC now runs inside a dedicated Web Worker behind a typed protocol.
-          Mission time advances in fixed 20&nbsp;ms ticks; state snapshots are
-          throttled to ~25&nbsp;Hz real time regardless of acceleration.{" "}
-          <Link className="text-emerald-400" to="/about">About &amp; credits</Link> ·{" "}
-          <Link className="text-emerald-400" to="/sources">Sources & methodology</Link>.
+          The computer runs inside a dedicated Web Worker on its own mission clock. Every lamp and
+          digit below is decoded from a real I/O channel word — try <code>V35E</code> for the lamp
+          test.{" "}
+          <Link className="text-emerald-400" to="/learn">Guided lessons</Link> ·{" "}
+          <Link className="text-emerald-400" to="/explore">Live telemetry</Link> ·{" "}
+          <Link className="text-emerald-400" to="/sources">Sources &amp; methodology</Link>.
         </p>
       </header>
+
 
       <section className="mx-auto max-w-5xl space-y-4 px-4 py-6">
         <div className="flex flex-wrap items-center gap-2">

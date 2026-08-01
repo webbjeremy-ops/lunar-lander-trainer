@@ -294,6 +294,20 @@ export function useAscentSession(
     };
   }, [running, timeScale, mission, target, parameters]);
 
+  // --- Tab recovery ---------------------------------------------------------
+  // Hidden tabs throttle requestAnimationFrame; pause rather than fast-forward
+  // the ascent while the player is not looking at it.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") setRunning(false);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, []);
+
+
+
   const recordCutoff = useCallback(
     (state: LunarFlightState) => {
       if (cutoffRecordRef.current) return;

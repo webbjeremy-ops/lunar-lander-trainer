@@ -6,6 +6,15 @@
 // value is displayed as a flight quantity, and nothing here commands anything.
 
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
+import { useAppSettings } from "@/settings/SettingsProvider";
+import {
+  speedUnitLabel,
+  massUnitLabel,
+  M_PER_FT,
+  M_PER_NMI,
+  KG_PER_LB,
+} from "@/settings/units";
+
 import type {
   AscentGuidanceCue,
   AscentMissionDefinition,
@@ -53,6 +62,19 @@ export function AscentHud({
       : 0;
   const periSafe = orbit.periapsisAltitudeM >= mission.safePeriapsisAltitudeM;
 
+  // Presentation-only unit selection (Settings → Units). The model stays SI.
+  const units = useAppSettings().units;
+  const apollo = units === "apollo";
+  const altUnit = apollo ? "nmi" : "km";
+  const speedUnit = speedUnitLabel(units);
+  const massUnit = massUnitLabel(units);
+  const alt = (m: number) => (apollo ? (m / M_PER_NMI).toFixed(2) : km(m));
+  const spd = (mps: number, digits = 1) =>
+    (apollo ? mps / M_PER_FT : mps).toFixed(digits);
+  const mass = (kg: number) => (apollo ? kg / KG_PER_LB : kg).toFixed(0);
+
+
+
   return (
     <div
       className="rounded border border-neutral-800 bg-neutral-950 p-3"
@@ -81,33 +103,33 @@ export function AscentHud({
       </div>
 
       <div className="grid grid-cols-2 gap-1.5 md:grid-cols-4">
-        <Cell testid="hud-altitude" label="Altitude" value={km(orbit.altitudeM)} unit="km" />
-        <Cell label="Inertial speed" value={orbit.speedMps.toFixed(1)} unit="m/s" />
+        <Cell testid="hud-altitude" label="Altitude" value={alt(orbit.altitudeM)} unit={altUnit} />
+        <Cell label="Inertial speed" value={spd(orbit.speedMps)} unit={speedUnit} />
         <Cell
           label="Radial speed"
-          value={orbit.radialSpeedMps.toFixed(1)}
-          unit="m/s"
+          value={spd(orbit.radialSpeedMps)}
+          unit={speedUnit}
           tone={orbit.radialSpeedMps < -1 ? "warn" : "normal"}
         />
         <Cell
           testid="hud-tangential"
           label="Tangential speed"
-          value={orbit.tangentialSpeedMps.toFixed(1)}
-          unit="m/s"
+          value={spd(orbit.tangentialSpeedMps)}
+          unit={speedUnit}
         />
         <Cell label="Pitch from vertical" value={pitchDeg.toFixed(1)} unit="°" />
         <Cell label="Flight-path angle" value={fpaDeg.toFixed(1)} unit="°" />
         <Cell
           testid="hud-apoapsis"
           label="Apoapsis"
-          value={orbit.apoapsisAltitudeM === null ? "—" : km(orbit.apoapsisAltitudeM)}
-          unit="km"
+          value={orbit.apoapsisAltitudeM === null ? "—" : alt(orbit.apoapsisAltitudeM)}
+          unit={altUnit}
         />
         <Cell
           testid="hud-periapsis"
           label="Periapsis"
-          value={km(orbit.periapsisAltitudeM)}
-          unit="km"
+          value={alt(orbit.periapsisAltitudeM)}
+          unit={altUnit}
           tone={periSafe ? "good" : "warn"}
         />
         <Cell
@@ -118,13 +140,14 @@ export function AscentHud({
         <Cell
           testid="hud-propellant"
           label="APS propellant"
-          value={flight.ascentPropellantKg.toFixed(0)}
-          unit={`kg · ${(propFraction * 100).toFixed(0)}%`}
+          value={mass(flight.ascentPropellantKg)}
+          unit={`${massUnit} · ${(propFraction * 100).toFixed(0)}%`}
           tone={propFraction < 0.1 ? "warn" : "normal"}
         />
-        <Cell label="Remaining Δv" value={deltaVRemainingMps.toFixed(0)} unit="m/s" />
-        <Cell label="Vehicle mass" value={massKg.toFixed(0)} unit="kg" />
+        <Cell label="Remaining Δv" value={spd(deltaVRemainingMps, 0)} unit={speedUnit} />
+        <Cell label="Vehicle mass" value={mass(massKg)} unit={massUnit} />
       </div>
+
 
       <div className="mt-2 grid gap-1.5 md:grid-cols-2">
         <div className="rounded border border-cyan-900/60 bg-cyan-950/20 px-2 py-1.5">

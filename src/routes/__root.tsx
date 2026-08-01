@@ -12,6 +12,12 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AgcSessionProvider } from "@/agc/AgcSession";
+import { SettingsProvider } from "@/settings/SettingsProvider";
+import { AppNav } from "@/ui/shell/AppNav";
+import { AppFooter } from "@/ui/shell/AppFooter";
+import { AgcBootBanner, RecoverableError } from "@/ui/shell/Reliability";
+
+
 
 function NotFoundComponent() {
   return (
@@ -43,50 +49,43 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+    <div className="flex min-h-screen items-center justify-center bg-neutral-900 px-4">
+      <div className="w-full max-w-md">
+        <RecoverableError
+          title="This page didn't load"
+          detail={error.message}
+          onRetry={() => {
+            router.invalidate();
+            reset();
+          }}
+          testId="route-error"
+        />
+        <p className="mt-3 text-center text-xs text-neutral-500">
+          Nothing was lost — your progress and settings live in this browser and are untouched.
         </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
-          >
-            Go home
-          </a>
-        </div>
       </div>
     </div>
   );
 }
+
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Tranquility — Apollo lunar flight simulator" },
+      {
+        name: "description",
+        content:
+          "Learn the Apollo Guidance Computer, fly a lunar landing, and launch back into lunar orbit.",
+      },
+      { name: "author", content: "The Tranquility project" },
+      { property: "og:site_name", content: "Tranquility" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
+
     links: [
       {
         rel: "stylesheet",
@@ -123,22 +122,24 @@ function RootComponent() {
       {/* Shared AGC Worker session — one emulator instance persists across
           route changes (/learn ↔ /explore). See src/agc/AgcSession.tsx. */}
       <AgcSessionProvider>
-        <nav
-          aria-label="Primary"
-          data-testid="app-nav"
-          className="flex gap-4 border-b border-neutral-900 bg-neutral-950/60 px-4 py-2 text-xs font-mono uppercase tracking-widest text-neutral-500"
-        >
-          <Link to="/" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Home</Link>
-          <Link to="/play" data-testid="nav-play" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Fly</Link>
-          <Link to="/play/ascent" data-testid="nav-ascent" className="text-emerald-400 hover:text-emerald-300" activeProps={{ className: "text-emerald-200" }}>Ascent</Link>
+        <SettingsProvider>
+          <a
+            href="#main-content"
+            className="sr-only rounded bg-emerald-500 px-3 py-2 font-mono text-xs uppercase tracking-widest text-neutral-950 focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50"
+          >
+            Skip to content
+          </a>
+          <AppNav />
+          <AgcBootBanner />
+          <div id="main-content">
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+          </div>
+          <AppFooter />
+        </SettingsProvider>
 
-          <Link to="/learn" data-testid="nav-learn" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Learn</Link>
-          <Link to="/explore" data-testid="nav-explore" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Explore</Link>
-          <Link to="/dev/mission-runtime" data-testid="nav-mission-runtime" className="hover:text-neutral-200" activeProps={{ className: "text-neutral-100" }}>Mission runtime</Link>
-        </nav>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
       </AgcSessionProvider>
     </QueryClientProvider>
   );
 }
+

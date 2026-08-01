@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SimRouteImport } from './routes/sim'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PlayRouteImport } from './routes/play'
+import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as LearnRouteImport } from './routes/learn'
 import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as CaptureRouteImport } from './routes/capture'
@@ -31,9 +33,19 @@ const SimRoute = SimRouteImport.update({
   path: '/sim',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PlayRoute = PlayRouteImport.update({
   id: '/play',
   path: '/play',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionsRoute = MissionsRouteImport.update({
+  id: '/missions',
+  path: '/missions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LearnRoute = LearnRouteImport.update({
@@ -83,7 +95,9 @@ export interface FileRoutesByFullPath {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
+  '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
+  '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -96,7 +110,9 @@ export interface FileRoutesByTo {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
+  '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
+  '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -110,7 +126,9 @@ export interface FileRoutesById {
   '/capture': typeof CaptureRoute
   '/explore': typeof ExploreRoute
   '/learn': typeof LearnRoute
+  '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
+  '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -125,7 +143,9 @@ export interface FileRouteTypes {
     | '/capture'
     | '/explore'
     | '/learn'
+    | '/missions'
     | '/play'
+    | '/settings'
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
@@ -138,7 +158,9 @@ export interface FileRouteTypes {
     | '/capture'
     | '/explore'
     | '/learn'
+    | '/missions'
     | '/play'
+    | '/settings'
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
@@ -151,7 +173,9 @@ export interface FileRouteTypes {
     | '/capture'
     | '/explore'
     | '/learn'
+    | '/missions'
     | '/play'
+    | '/settings'
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
@@ -165,7 +189,9 @@ export interface RootRouteChildren {
   CaptureRoute: typeof CaptureRoute
   ExploreRoute: typeof ExploreRoute
   LearnRoute: typeof LearnRoute
+  MissionsRoute: typeof MissionsRoute
   PlayRoute: typeof PlayRoute
+  SettingsRoute: typeof SettingsRoute
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
@@ -189,11 +215,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SimRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/play': {
       id: '/play'
       path: '/play'
       fullPath: '/play'
       preLoaderRoute: typeof PlayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/missions': {
+      id: '/missions'
+      path: '/missions'
+      fullPath: '/missions'
+      preLoaderRoute: typeof MissionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/learn': {
@@ -261,7 +301,9 @@ const rootRouteChildren: RootRouteChildren = {
   CaptureRoute: CaptureRoute,
   ExploreRoute: ExploreRoute,
   LearnRoute: LearnRoute,
+  MissionsRoute: MissionsRoute,
   PlayRoute: PlayRoute,
+  SettingsRoute: SettingsRoute,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
   DevLmPhysicsRoute: DevLmPhysicsRoute,
