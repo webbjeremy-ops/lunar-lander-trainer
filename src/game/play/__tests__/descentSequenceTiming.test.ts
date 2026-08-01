@@ -6,7 +6,11 @@ import { ROLL_CUE_SINCE_IGNITION_US } from "../descentRoll";
 import { APOLLO11_DESCENT_CALLOUTS } from "../descentCallouts";
 import { APOLLO11_DESCENT_SCRIPT } from "../procedures";
 import { milestoneSec } from "../descentTimeline";
-import { throttleCeilingForSinceIgnition } from "../ignitionSequence";
+import {
+  dpsThrottleEnvelope,
+  throttleCeilingForSinceIgnition,
+  THROTTLE_RECOVERY_SINCE_IGNITION_US,
+} from "../ignitionSequence";
 
 const S = 1_000_000;
 
@@ -24,9 +28,17 @@ describe("descent sequence timing", () => {
     expect(radar.notBeforeSinceIgnitionSec).toBe(milestoneSec("radar-lock"));
   });
 
-  it("holds the engine at ten percent for the first 26 seconds", () => {
-    expect(throttleCeilingForSinceIgnition(0)).toBeCloseTo(0.1);
-    expect(throttleCeilingForSinceIgnition(25 * S)).toBeCloseTo(0.1);
-    expect(throttleCeilingForSinceIgnition(30 * S)).toBe(1);
+  it("flies the historical DPS throttle profile", () => {
+    // 10 % for 26 s, FTP 92.5 % for the braking phase, then throttle recovery
+    // at T+6:26 into the 10-60 % variable range.
+    expect(dpsThrottleEnvelope(0)).toMatchObject({ min: 0.1, max: 0.1 });
+    expect(dpsThrottleEnvelope(25 * S).max).toBeCloseTo(0.1);
+    expect(dpsThrottleEnvelope(30 * S).max).toBeCloseTo(0.925);
+    expect(dpsThrottleEnvelope(380 * S).min).toBeCloseTo(0.925);
+    expect(THROTTLE_RECOVERY_SINCE_IGNITION_US / S).toBe(386);
+    const after = dpsThrottleEnvelope(390 * S);
+    expect(after.max).toBeCloseTo(0.6);
+    expect(after.min).toBeCloseTo(0.1);
+    expect(throttleCeilingForSinceIgnition(390 * S)).toBeCloseTo(0.6);
   });
 });
