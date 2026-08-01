@@ -198,7 +198,9 @@ export class DescentScoreEngine {
   stop(): void {
     if (this.pulseTimer !== null) window.clearTimeout(this.pulseTimer);
     this.pulseTimer = null;
-    const ctx = this.ctx;
+    if (this.melodyTimer !== null) window.clearTimeout(this.melodyTimer);
+    this.melodyTimer = null;
+
     if (ctx && this.master) {
       ramp(this.master.gain, 0, ctx, 0.6);
       window.setTimeout(() => void ctx.close().catch(() => undefined), 900);
