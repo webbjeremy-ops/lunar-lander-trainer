@@ -46,6 +46,7 @@ describe("descent callouts", () => {
       sinceIgnitionUs: 560 * S,
       altitudeM: 900,
       burning: true,
+      rangeToLzM: 5_000,
     }).map((c) => c.id);
     const order = APOLLO11_DESCENT_CALLOUTS.map((c) => c.id);
     expect(fired).toEqual(order.slice(0, fired.length));

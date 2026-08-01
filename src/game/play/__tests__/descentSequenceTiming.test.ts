@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { ROLL_CUE_SINCE_IGNITION_US } from "../descentRoll";
 import { APOLLO11_DESCENT_CALLOUTS } from "../descentCallouts";
 import { APOLLO11_DESCENT_SCRIPT } from "../procedures";
-import { milestoneSec } from "../descentTimeline";
+import { highGateStatus, milestoneSec } from "../descentTimeline";
 import {
   dpsThrottleEnvelope,
   throttleCeilingForSinceIgnition,
@@ -50,5 +50,13 @@ describe("descent sequence timing", () => {
     expect(after.max).toBeCloseTo(0.65);
     expect(after.min).toBeCloseTo(0.1);
     expect(throttleCeilingForSinceIgnition(390 * S)).toBeCloseTo(0.65);
+  });
+
+  it("requires both P64 time and high-gate geometry", () => {
+    const gateUs = milestoneSec("high-gate") * S;
+    expect(highGateStatus(gateUs - 1, 2_316, 7_600)).toBe("pending");
+    expect(highGateStatus(gateUs, 2_316, 7_600)).toBe("ready");
+    expect(highGateStatus(gateUs, 2_316, -1)).toBe("missed");
+    expect(highGateStatus(gateUs, 8_000, 7_600)).toBe("pending");
   });
 });

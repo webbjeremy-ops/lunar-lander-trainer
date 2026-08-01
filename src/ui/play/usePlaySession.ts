@@ -439,8 +439,9 @@ export function usePlaySession(
       accumulatorUs += dtMs * 1000 * timeScale;
 
       const proc = procedureRef.current;
-      // The vehicle coasts through the PDI countdown, so the clock runs as
-      // soon as the countdown is armed — not only after PROCEED.
+      // The ritual clock runs as soon as the countdown is armed. Full Descent
+      // is initialized at TIG/PDI, so its physical state remains fixed until
+      // ignition rather than receiving an unmodelled minute of orbital coast.
       const countdownRunning = ignitionRef.current.phase !== "standby";
       if (!proc.flightLockReleased && !countdownRunning && !abortedRef.current) {
         accumulatorUs = 0;
@@ -498,6 +499,12 @@ export function usePlaySession(
               windowsUp: radarAvailable(rollRef.current),
               engineBurning: state.mainEngine !== "off",
               terminal: state.terminalState !== null,
+              rangeToLzM: downrangeToLandingZoneM(
+                o.centralAngleRad,
+                LANDING_ZONE_ANGLE_RAD,
+              ),
+              sinceIgnitionUs,
+              p64Selected: procedureRef.current.completedStepIds.includes("p64-monitor"),
             }),
             stepUs: STEP_US,
             terminal: state.terminalState !== null,
