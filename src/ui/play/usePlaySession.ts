@@ -391,6 +391,12 @@ export function usePlaySession(
         attitudeRef.current = clampSigned(
           (rateCmd + kick - state.angularRateRadPerSec) * ATTITUDE_RATE_GAIN,
         );
+        // Settled and hands off: issue an exact zero so the kernel's deadband
+        // collapses the residual rate and the state stays reproducible.
+        if (stick === 0 && kick === 0 && Math.abs(state.angularRateRadPerSec) < 2e-3) {
+          attitudeRef.current = 0;
+        }
+
 
         throttleRef.current = clamp01(throttleRef.current);
 
