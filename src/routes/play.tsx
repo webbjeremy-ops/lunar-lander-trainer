@@ -261,7 +261,7 @@ function PlayClient() {
       className="cockpit-metal mx-auto max-w-[1400px] space-y-4 px-4 py-4"
       data-testid="play-cockpit"
     >
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="cockpit-strip flex flex-wrap items-center gap-2">
         <button
           onClick={() => setStarted(false)}
           data-testid="play-back"
