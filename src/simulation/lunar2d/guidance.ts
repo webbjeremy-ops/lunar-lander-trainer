@@ -41,7 +41,7 @@ const MAX_ADVISORY_TILT_RAD = 1.05; // ~60 degrees
  */
 const MAX_BRAKING_TILT_RAD = 1.48; // ~85 degrees
 /** Vertical error is flown out on this time constant during braking, seconds. */
-const BRAKING_ALTITUDE_TAU_S = 90;
+const BRAKING_ALTITUDE_TAU_S = 45;
 /** Sink-rate authority during braking, m/s. */
 const BRAKING_MAX_SINK_MPS = 45;
 /**
