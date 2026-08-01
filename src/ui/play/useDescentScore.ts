@@ -28,7 +28,9 @@ export interface DescentScoreApi {
 
 export function useDescentScore(input: DescentScoreInput): DescentScoreApi {
   const engineRef = useRef<DescentScoreEngine | null>(null);
-  const [enabled, setEnabled] = useState(false);
+  // The score is on by default; browsers still require a gesture before audio
+  // may sound, so the engine is armed and started on the first interaction.
+  const [enabled, setEnabled] = useState(true);
 
   const tension = descentTension({
     sinceIgnitionSec: input.sinceIgnitionSec,
@@ -39,20 +41,45 @@ export function useDescentScore(input: DescentScoreInput): DescentScoreApi {
     terminal: input.terminal,
   });
 
+  const startEngine = useCallback(() => {
+    const engine = engineRef.current ?? new DescentScoreEngine();
+    engineRef.current = engine;
+    engine.start();
+  }, []);
+
   const toggle = useCallback(() => {
     setEnabled((prev) => {
       const next = !prev;
       if (next) {
-        const engine = engineRef.current ?? new DescentScoreEngine();
-        engineRef.current = engine;
-        engine.start();
+        startEngine();
       } else {
         engineRef.current?.stop();
         engineRef.current = null;
       }
       return next;
     });
-  }, []);
+  }, [startEngine]);
+
+  // Autoplay policy: wait for the first pointer/key event anywhere, then light
+  // the engine. Listeners remove themselves after one successful start.
+  useEffect(() => {
+    if (!enabled || typeof window === "undefined") return;
+    if (engineRef.current?.isRunning) return;
+    const onGesture = () => {
+      startEngine();
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+    };
+    // Try immediately in case the context is already allowed to run.
+    startEngine();
+    window.addEventListener("pointerdown", onGesture);
+    window.addEventListener("keydown", onGesture);
+    return () => {
+      window.removeEventListener("pointerdown", onGesture);
+      window.removeEventListener("keydown", onGesture);
+    };
+  }, [enabled, startEngine]);
+
 
   // Feed tension continuously; duck the score while the sim is paused.
   useEffect(() => {
