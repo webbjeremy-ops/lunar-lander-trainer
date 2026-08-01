@@ -231,7 +231,57 @@ export class DescentScoreEngine {
     if (this.dissonanceGain) ramp(this.dissonanceGain.gain, 0.4 * l.dissonance, ctx, 0.8);
     if (this.rumbleGain) ramp(this.rumbleGain.gain, 0.1 + 0.16 * l.drone, ctx, 1.5);
     if (this.bedFilter) ramp(this.bedFilter.frequency, l.cutoffHz, ctx, 1.5);
+    if (this.melodyGain) ramp(this.melodyGain.gain, 0.26 * l.melody, ctx, 2.0);
   }
+
+  /**
+   * Under-melody: a slow rising organ ostinato in A minor with a suspended
+   * 4th — the Zimmer/"Interstellar" gesture. One note per step, each ringing
+   * long enough to overlap the next so the line stacks into a chord.
+   */
+  private scheduleNextNote(): void {
+    if (!this.started) return;
+    const stepMs = Math.max(320, this.layers.melodyNoteSec * 1000);
+    this.melodyTimer = window.setTimeout(() => {
+      this.tickNote();
+      this.scheduleNextNote();
+    }, stepMs);
+  }
+
+  private tickNote(): void {
+    const ctx = this.ctx;
+    const bus = this.melodyGain;
+    if (!ctx || !bus || this.layers.melody <= 0) return;
+
+    // A minor with sus4 colour: A3 C4 D4 E4 G4 E4 D4 C4 (up then back down).
+    const SEQ = [220.0, 261.63, 293.66, 329.63, 392.0, 329.63, 293.66, 261.63];
+    const base = SEQ[this.melodyStep % SEQ.length]!;
+    this.melodyStep += 1;
+
+    const now = ctx.currentTime;
+    const hold = Math.max(0.9, this.layers.melodyNoteSec * 1.6);
+    const level = 0.16 * this.layers.melody;
+
+    // Organ voice: fundamental + octave + soft fifth, slow swell and release.
+    for (const [mult, weight] of [
+      [1, 1],
+      [2, 0.45],
+      [3, 0.18],
+      [0.5, 0.35],
+    ] as const) {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = base * mult;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, now);
+      g.gain.linearRampToValueAtTime(level * weight, now + 0.22);
+      g.gain.setTargetAtTime(0.0001, now + hold * 0.55, hold * 0.28);
+      osc.connect(g).connect(bus);
+      osc.start(now);
+      osc.stop(now + hold + 0.6);
+    }
+  }
+
 
   /** One heartbeat: a short bass thud whose rate tracks tension. */
   private scheduleNextPulse(): void {
