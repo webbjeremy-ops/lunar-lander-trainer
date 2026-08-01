@@ -201,9 +201,7 @@ describe("M4.3 — staging and liftoff", () => {
     const stage = r.finalState.separatedDescentStage;
     expect(stage).not.toBeNull();
     const stageAlt = Math.hypot(stage!.positionM[0], stage!.positionM[1]) - R;
-    expect(Math.abs(stageAlt)).toBeLessThan 
-      ? expect(Math.abs(stageAlt)).toBeLessThan(50)
-      : undefined;
+    expect(Math.abs(stageAlt)).toBeLessThan(50);
     // The ascent stage has climbed away from it.
     expect(ascentOrbit(r.finalState, m).altitudeM).toBeGreaterThan(stageAlt + 100);
   });
@@ -291,7 +289,7 @@ describe("M4.3 — firewall and purity", () => {
   });
 
   it("no module in the ascent game layer imports AGC state", async () => {
-    const files = import.meta.glob("../*.ts", { as: "raw", eager: true });
+    const files = import.meta.glob("../*.ts", { query: "?raw", import: "default", eager: true });
     for (const [name, src] of Object.entries(files)) {
       expect(src, name).not.toMatch(/@\/agc\//);
       expect(src, name).not.toMatch(/AgcWorkerClient|useAgcSession/);
