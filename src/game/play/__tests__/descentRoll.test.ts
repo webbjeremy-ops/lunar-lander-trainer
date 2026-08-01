@@ -84,3 +84,30 @@ describe("descent roll", () => {
     expect(a).toEqual(b);
   });
 });
+
+describe("scenarios that begin after the roll", () => {
+  it("treats sub-braking start altitudes as already windows-up", () => {
+    expect(startsWindowsUp(120)).toBe(true);
+    expect(startsWindowsUp(2_400)).toBe(true);
+    expect(startsWindowsUp(15_000)).toBe(false);
+  });
+
+  it("starts windows-up with the cue already given and nothing to roll", () => {
+    const s = createDescentRollState({ windowsUp: true });
+    expect(s.rollDeg).toBe(0);
+    expect(s.phase).toBe("windows-up");
+    expect(s.cueGiven).toBe(true);
+    expect(s.completedSinceIgnitionUs).toBe(0);
+    expect(radarAvailable(s)).toBe(true);
+  });
+
+  it("never re-cues or re-rolls once it starts windows-up", () => {
+    let s = createDescentRollState({ windowsUp: true });
+    for (let t = 0; t <= 300_000_000; t += 20_000) {
+      s = reduceDescentRoll(s, { kind: "tick", dtUs: 20_000, sinceIgnitionUs: t });
+    }
+    expect(s.rollDeg).toBe(0);
+    expect(s.phase).toBe("windows-up");
+    expect(s.lastMessage).toMatch(/before this point/i);
+  });
+});
