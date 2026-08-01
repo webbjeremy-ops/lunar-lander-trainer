@@ -120,6 +120,8 @@ export interface ProgramAlarmRecord {
   /** Microseconds from raise to RSET; null while unresolved. */
   readonly clearedAfterUs: number | null;
   readonly codeRead: boolean;
+  /** Cleared with the controller shortcut rather than the DSKY sequence. */
+  readonly shortcutCleared?: boolean;
 }
 
 export interface ProgramAlarmState {
@@ -142,7 +144,14 @@ export type ProgramAlarmEvent =
       /** Current altitude in feet; enables the altitude-based trigger. */
       readonly altitudeFt?: number;
     }
-  | { readonly kind: "key"; readonly code: number; readonly sinceIgnitionUs: number };
+  | { readonly kind: "key"; readonly code: number; readonly sinceIgnitionUs: number }
+  /**
+   * M4.30 — controller shortcut (RB). The historical clear is V05 N09 E then
+   * RSET; on a gamepad that is unusable, so the bumper performs the whole
+   * ritual in one press. The record is still marked `codeRead`, but the flight
+   * log keeps it distinguishable through `shortcutCleared`.
+   */
+  | { readonly kind: "cancel"; readonly sinceIgnitionUs: number };
 
 /** V05 N09 E — display the alarm code from the AGC's alarm register. */
 export const ALARM_READ_KEYS: readonly number[] = [
@@ -201,6 +210,25 @@ export function reduceProgramAlarms(
         history,
         readBuffer: 0,
         lastMessage: `PROG — ${def.label}. Key V05 N09 E to read the code, then RSET.`,
+      };
+    }
+
+    case "cancel": {
+      const active = state.active;
+      if (active === null) return state;
+      const cleared: ProgramAlarmRecord = {
+        ...active,
+        codeRead: true,
+        shortcutCleared: true,
+        clearedAfterUs: Math.max(0, event.sinceIgnitionUs - active.raisedSinceIgnitionUs),
+      };
+      return {
+        ...state,
+        lampOn: false,
+        active: null,
+        history: [...state.history, cleared],
+        readBuffer: 0,
+        lastMessage: `${active.code} cleared from the controller. Houston: "We're GO on that alarm."`,
       };
     }
 

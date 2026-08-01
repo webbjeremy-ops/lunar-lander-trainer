@@ -93,11 +93,22 @@ import {
   type TakeoverRecord,
 } from "@/game/play";
 import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
+import { contactLightState } from "@/game/play/contactLight";
 
 import {
   DESCENT_ENGINE,
   LUNAR_ENVIRONMENT,
 } from "@/simulation/lunar2d/LunarMissionConstants";
+
+import {
+  createGamepadEdgeState,
+  NEUTRAL_INPUT,
+  mapXboxInput,
+  readLivePad,
+  type GamepadEdgeState,
+  type XboxCockpitInput,
+} from "./xboxGamepad";
+import { GamepadHaptics } from "./gamepadHaptics";
 
 const MU_M3S2 = LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value;
 const MAX_DPS_THRUST_N = DESCENT_ENGINE.maxThrustN.value;
@@ -212,8 +223,12 @@ export interface PlaySessionApi {
     readonly acknowledgeHouston: (id: string) => void;
     /** M4.18 — ABORT STAGE: jettison the descent stage, fly the ascent engine. */
     readonly abortStage: () => void;
+    /** M4.30 — enable/disable controller rumble. */
+    readonly setHaptics: (on: boolean) => void;
 
   };
+  /** M4.30 — whether controller rumble is currently enabled. */
+  readonly hapticsEnabled: boolean;
 }
 
 export function usePlaySession(
@@ -341,6 +356,12 @@ export function usePlaySession(
   const attitudeRef = useRef(0);
   /** One-shot rate kick consumed by the attitude controller on key press. */
   const attitudeKickRef = useRef(0);
+  // M4.30 — Xbox controller: button-edge state and the haptics driver. Both
+  // live in refs because the 50 Hz loop reads them without re-rendering.
+  const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
+  const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
+  const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
+  const [hapticsEnabled, setHapticsEnabled] = useState(true);
 
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
@@ -454,6 +475,7 @@ export function usePlaySession(
       raf = requestAnimationFrame(frame);
       const dtMs = Math.min(250, now - last);
       last = now;
+      pollGamepad();
       if (timeScale <= 0) return;
       accumulatorUs += dtMs * 1000 * timeScale;
 
@@ -543,11 +565,93 @@ export function usePlaySession(
       }
       if (steps > 0) {
         flightRef.current = state;
+        updateHaptics(state);
         setFlight(state);
         setDescentClock(descentClockRef.current);
         setEscalation(escalationRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
+    };
+
+    // --- M4.30 Xbox controller ---------------------------------------------
+    // Polled once per animation frame (the Gamepad API is poll-only), turned
+    // into cockpit inputs by the pure mapper, and applied as edge actions.
+    // Stick/trigger axes are consumed inside the physics step via padInputRef.
+    let padRollCommanded = false;
+    const pollGamepad = () => {
+      const { input, next } = mapXboxInput(readLivePad(), padEdgesRef.current);
+      padEdgesRef.current = next;
+      padInputRef.current = input;
+
+      // Right trigger — roll toward windows-up (the R key).
+      if (input.rollCommanded !== padRollCommanded) {
+        padRollCommanded = input.rollCommanded;
+        dispatchRoll({ kind: "roll", active: input.rollCommanded });
+      }
+      // Right bumper — cancel the program alarm in one press.
+      if (input.cancelAlarmPressed && alarmsRef.current.active !== null) {
+        dispatchAlarm({
+          kind: "cancel",
+          sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+        });
+        hapticsRef.current.pulse("alarm");
+      }
+      // A — DPS on/off, but only once the crew actually has the vehicle.
+      if (
+        input.enginePressed &&
+        procedureRef.current.manualControlUnlocked &&
+        crewHasVehicleRef.current
+      ) {
+        engineRef.current = !engineRef.current;
+      }
+      // B — ABORT STAGE.
+      if (input.abortPressed && !abortedRef.current && flightRef.current.terminalState === null) {
+        abortedRef.current = true;
+        setAborted(true);
+        hapticsRef.current.pulse("abort");
+      }
+      if (input.rodTrim !== 0) {
+        rodTargetRef.current += input.rodTrim * ROD_INCREMENT_MPS;
+      }
+    };
+
+    // --- M4.30 haptics ------------------------------------------------------
+    // Continuous engine bed plus a pulse on every event the crew would feel.
+    let hadAlarm = alarmsRef.current.active !== null;
+    let wasBurning = false;
+    let hadContact = false;
+    let hadTerminal = flightRef.current.terminalState !== null;
+    const updateHaptics = (state: LunarFlightState) => {
+      const haptics = hapticsRef.current;
+      const burning = state.mainEngine !== "off" && throttleRef.current > 0;
+      if (burning && !wasBurning) haptics.pulse("ignition");
+      wasBurning = burning;
+
+      const alarmActive = alarmsRef.current.active !== null;
+      if (alarmActive && !hadAlarm) haptics.pulse("alarm");
+      hadAlarm = alarmActive;
+
+      const contact =
+        contactLightState({
+          altitudeM: computeOrbitalValues(state).altitudeM,
+          terminalState: state.terminalState,
+        }).on && state.terminalState === null;
+      if (contact && !hadContact) haptics.pulse("contact");
+      hadContact = contact;
+
+      const terminal = state.terminalState;
+      if (terminal !== null && !hadTerminal) {
+        haptics.pulse(
+          terminal === "landed"
+            ? "touchdown"
+            : terminal === "hard-landing"
+              ? "hard-landing"
+              : "crash",
+        );
+      }
+      hadTerminal = terminal !== null;
+
+      haptics.tick(throttleRef.current, state.mainEngine !== "off");
     };
 
     const resolveInput = (state: LunarFlightState): LunarControlInput => {
@@ -597,11 +701,10 @@ export function usePlaySession(
         if (held.has("ArrowLeft")) stick -= 1;
         if (held.has("ArrowRight")) stick += 1;
 
-        const pad = readGamepad();
-        if (pad) {
-          if (Math.abs(pad.attitude) > 0.12) stick = pad.attitude;
-          if (pad.throttle !== null) throttleRef.current = pad.throttle;
-        }
+        // M4.30 — Xbox: left stick winds the throttle, right stick pitches.
+        const pad = padInputRef.current;
+        if (pad.thrustRate !== 0) throttleRef.current += pad.thrustRate * 1.8 * STEP_S;
+        if (pad.pitch !== 0) stick = pad.pitch;
 
         // M4.10 rate-command / attitude-hold: the stick commands a body rate,
         // and a released stick commands zero rate so the RCS nulls rotation
@@ -624,7 +727,7 @@ export function usePlaySession(
         // P66 rate-of-descent: with no direct thrust input, the throttle is
         // servoed onto the ROD target (as the real ROD switch trimmed it).
         const noThrustInput =
-          !held.has("ArrowUp") && !held.has("ArrowDown") && (!pad || pad.throttle === null);
+          !held.has("ArrowUp") && !held.has("ArrowDown") && pad.thrustRate === 0;
         if (noThrustInput && engineRef.current) {
           const o = computeOrbitalValues(state);
           const mass = totalMassKg(state);
@@ -747,9 +850,11 @@ export function usePlaySession(
     }, 100);
 
     raf = requestAnimationFrame(frame);
+    const haptics = hapticsRef.current;
     return () => {
       cancelAnimationFrame(raf);
       window.clearInterval(publish);
+      haptics.stop();
     };
   }, [
     running, timeScale, apollo11Timeline, mission,
@@ -962,6 +1067,10 @@ export function usePlaySession(
       acknowledgeHouston: (id: string) => {
         setAcknowledgedHouston((prev) => (prev.includes(id) ? prev : [...prev, id]));
       },
+      setHaptics: (on: boolean) => {
+        hapticsRef.current.setEnabled(on);
+        setHapticsEnabled(on);
+      },
       abortStage: () => {
         if (abortedRef.current) return;
         if (flightRef.current.terminalState !== null) return;
@@ -1099,6 +1208,7 @@ export function usePlaySession(
     scriptTerminated,
     aborted,
     highGateStatus: currentHighGateStatus,
+    hapticsEnabled,
     actions,
 
   };
@@ -1110,17 +1220,4 @@ function clamp01(x: number): number {
 
 function clampSigned(x: number): number {
   return x < -1 ? -1 : x > 1 ? 1 : x;
-}
-
-function readGamepad(): { attitude: number; throttle: number | null } | null {
-  if (typeof navigator === "undefined" || !navigator.getGamepads) return null;
-  for (const pad of navigator.getGamepads()) {
-    if (!pad) continue;
-    const attitude = pad.axes[0] ?? 0;
-    const rt = pad.buttons[7]?.value ?? 0;
-    const lt = pad.buttons[6]?.value ?? 0;
-    const throttle = rt > 0.02 || lt > 0.02 ? clamp01(rt - lt) : null;
-    return { attitude, throttle };
-  }
-  return null;
 }

@@ -102,3 +102,33 @@ describe("program alarms", () => {
     expect(a).toEqual(b);
   });
 });
+
+// M4.30 — controller shortcut (RB) clears the alarm in one press.
+describe("controller alarm cancel", () => {
+  it("clears an active alarm, records it and marks the shortcut", () => {
+    let s = tick(createProgramAlarmState(), 10);
+    expect(s.active).not.toBeNull();
+    expect(s.lampOn).toBe(true);
+
+    s = reduceProgramAlarms(s, { kind: "cancel", sinceIgnitionUs: 14 * S }, TIMELINE);
+    expect(s.active).toBeNull();
+    expect(s.lampOn).toBe(false);
+    expect(s.history).toHaveLength(1);
+    expect(s.history[0]!.shortcutCleared).toBe(true);
+    expect(s.history[0]!.codeRead).toBe(true);
+    expect(s.history[0]!.clearedAfterUs).toBe(4 * S);
+  });
+
+  it("is a no-op with no alarm on the panel", () => {
+    const s = createProgramAlarmState();
+    expect(reduceProgramAlarms(s, { kind: "cancel", sinceIgnitionUs: 0 }, TIMELINE)).toBe(s);
+  });
+
+  it("does not stop a later alarm from being raised", () => {
+    let s = tick(createProgramAlarmState(), 10);
+    s = reduceProgramAlarms(s, { kind: "cancel", sinceIgnitionUs: 12 * S }, TIMELINE);
+    s = tick(s, 60);
+    expect(s.active).not.toBeNull();
+    expect(s.lampOn).toBe(true);
+  });
+});
