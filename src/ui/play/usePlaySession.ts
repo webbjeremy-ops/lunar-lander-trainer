@@ -101,6 +101,7 @@ import {
 
 import {
   createGamepadEdgeState,
+  NEUTRAL_INPUT,
   mapXboxInput,
   readLivePad,
   type GamepadEdgeState,
@@ -353,6 +354,7 @@ export function usePlaySession(
   // M4.30 — Xbox controller: button-edge state and the haptics driver. Both
   // live in refs because the 50 Hz loop reads them without re-rendering.
   const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
+  const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
   const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
 
   const engineRef = useRef(false);
@@ -467,6 +469,7 @@ export function usePlaySession(
       raf = requestAnimationFrame(frame);
       const dtMs = Math.min(250, now - last);
       last = now;
+      pollGamepad();
       if (timeScale <= 0) return;
       accumulatorUs += dtMs * 1000 * timeScale;
 
@@ -556,11 +559,91 @@ export function usePlaySession(
       }
       if (steps > 0) {
         flightRef.current = state;
+        updateHaptics(state);
         setFlight(state);
         setDescentClock(descentClockRef.current);
         setEscalation(escalationRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
+    };
+
+    // --- M4.30 Xbox controller ---------------------------------------------
+    // Polled once per animation frame (the Gamepad API is poll-only), turned
+    // into cockpit inputs by the pure mapper, and applied as edge actions.
+    // Stick/trigger axes are consumed inside the physics step via padInputRef.
+    let padRollCommanded = false;
+    const pollGamepad = () => {
+      const { input, next } = mapXboxInput(readLivePad(), padEdgesRef.current);
+      padEdgesRef.current = next;
+      padInputRef.current = input;
+
+      // Right trigger — roll toward windows-up (the R key).
+      if (input.rollCommanded !== padRollCommanded) {
+        padRollCommanded = input.rollCommanded;
+        dispatchRoll({ kind: "roll", active: input.rollCommanded });
+      }
+      // Right bumper — cancel the program alarm in one press.
+      if (input.cancelAlarmPressed && alarmsRef.current.active !== null) {
+        dispatchAlarm({
+          kind: "cancel",
+          sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+        });
+        hapticsRef.current.pulse("alarm");
+      }
+      // A — DPS on/off, but only once the crew actually has the vehicle.
+      if (
+        input.enginePressed &&
+        procedureRef.current.manualControlUnlocked &&
+        crewHasVehicleRef.current
+      ) {
+        engineRef.current = !engineRef.current;
+      }
+      // B — ABORT STAGE.
+      if (input.abortPressed && !abortedRef.current && flightRef.current.terminalState === null) {
+        abortedRef.current = true;
+        setAborted(true);
+        hapticsRef.current.pulse("abort");
+      }
+      if (input.rodTrim !== 0) {
+        rodTargetRef.current += input.rodTrim * ROD_INCREMENT_MPS;
+      }
+    };
+
+    // --- M4.30 haptics ------------------------------------------------------
+    // Continuous engine bed plus a pulse on every event the crew would feel.
+    let hadAlarm = alarmsRef.current.active !== null;
+    let wasBurning = false;
+    let hadContact = false;
+    let hadTerminal = flightRef.current.terminalState !== null;
+    const updateHaptics = (state: LunarFlightState) => {
+      const haptics = hapticsRef.current;
+      const burning = state.mainEngine !== "off" && throttleRef.current > 0;
+      if (burning && !wasBurning) haptics.pulse("ignition");
+      wasBurning = burning;
+
+      const alarmActive = alarmsRef.current.active !== null;
+      if (alarmActive && !hadAlarm) haptics.pulse("alarm");
+      hadAlarm = alarmActive;
+
+      const contact =
+        computeOrbitalValues(state).altitudeM <= CONTACT_LIGHT_ALTITUDE_M &&
+        state.terminalState === null;
+      if (contact && !hadContact) haptics.pulse("contact");
+      hadContact = contact;
+
+      const terminal = state.terminalState;
+      if (terminal !== null && !hadTerminal) {
+        haptics.pulse(
+          terminal === "landed"
+            ? "touchdown"
+            : terminal === "hard-landing"
+              ? "hard-landing"
+              : "crash",
+        );
+      }
+      hadTerminal = terminal !== null;
+
+      haptics.tick(throttleRef.current, state.mainEngine !== "off");
     };
 
     const resolveInput = (state: LunarFlightState): LunarControlInput => {
@@ -759,9 +842,11 @@ export function usePlaySession(
     }, 100);
 
     raf = requestAnimationFrame(frame);
+    const haptics = hapticsRef.current;
     return () => {
       cancelAnimationFrame(raf);
       window.clearInterval(publish);
+      haptics.stop();
     };
   }, [
     running, timeScale, apollo11Timeline, mission,
