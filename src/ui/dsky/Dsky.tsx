@@ -15,6 +15,17 @@ import { makeEmptyDecodedDsky } from "@/agc/dsky/DskyDecoder";
 
 type LampName = keyof typeof DSKY_LAMPS;
 
+interface BridgedRegisters {
+  readonly program: string;
+  readonly verb: string;
+  readonly noun: string;
+  readonly r1: string;
+  readonly r2: string;
+  readonly r3: string;
+  readonly units: readonly [string, string, string];
+  readonly caption: string;
+}
+
 const LAMP_LAYOUT: readonly { name: LampName; label: string; color: string }[] = [
   { name: "UPLINK_ACTY", label: "UPLINK ACTY", color: "amber" },
   { name: "TEMP", label: "TEMP", color: "amber" },
@@ -99,19 +110,9 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
     /** Program-alarm code shown in the R1 position for the alarm variant. */
     readonly code?: string;
   } | null;
-  /** HISTORICALLY GROUNDED PROCEDURE BRIDGE: descent-monitor register content
-   *  produced by the game (not by the rope) and drawn as a labelled strip
-   *  BELOW the authentic registers. Never injected into the AGC. */
-  bridgedRegisters?: {
-    readonly program: string;
-    readonly verb: string;
-    readonly noun: string;
-    readonly r1: string;
-    readonly r2: string;
-    readonly r3: string;
-    readonly units: readonly [string, string, string];
-    readonly caption: string;
-  } | null;
+  /** Game-flight descent output patched onto the visible DSKY face while the
+   *  authentic rope remains isolated from the simulation physics. */
+  bridgedRegisters?: BridgedRegisters | null;
 }) {
 
   const clientRef = useRef<AgcWorkerClient | null>(null);
@@ -446,7 +447,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
         </div>
 
         <div className="relative">
-          <RegistersPanel decoded={decoded} />
+          <RegistersPanel decoded={decoded} patched={bridgedRegisters} />
           {bridgedRequest && (
             <div
               data-testid="dsky-bridged-request"
@@ -487,47 +488,6 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
             </div>
           )}
         </div>
-
-        {bridgedRegisters && (
-          <div
-            data-testid="dsky-bridged-registers"
-            className="mt-2 rounded border border-amber-700/60 bg-amber-950/20 p-2"
-          >
-            <div className="mb-1 flex items-center justify-between text-[9px] uppercase tracking-[0.16em] text-amber-400/90">
-              <span>{bridgedRegisters.caption}</span>
-              <span className="text-amber-500/70">bridged — not rope output</span>
-            </div>
-            <div className="mb-1 flex gap-4 font-mono text-[11px] text-amber-200/90">
-              <span data-testid="bridged-prog">PROG {bridgedRegisters.program}</span>
-              <span data-testid="bridged-verb">VERB {bridgedRegisters.verb}</span>
-              <span data-testid="bridged-noun">NOUN {bridgedRegisters.noun}</span>
-            </div>
-            <div className="grid gap-0.5">
-              {([
-                ["R1", bridgedRegisters.r1, bridgedRegisters.units[0], "bridged-r1"],
-                ["R2", bridgedRegisters.r2, bridgedRegisters.units[1], "bridged-r2"],
-                ["R3", bridgedRegisters.r3, bridgedRegisters.units[2], "bridged-r3"],
-              ] as const).map(([label, value, unit, testid]) => (
-                <div key={label} className="flex items-baseline gap-2">
-                  <span className="w-6 font-mono text-[10px] uppercase tracking-widest text-amber-500/80">
-                    {label}
-                  </span>
-                  <span
-                    data-testid={testid}
-                    className="font-mono text-xl tabular-nums tracking-[0.12em] text-emerald-300"
-                  >
-                    {value}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-widest text-neutral-500">
-                    {unit}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-
 
         <div className={compact ? "hidden" : undefined}>
         <div className="mt-3 flex flex-wrap items-center gap-1">
@@ -703,7 +663,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           Keyboard: 0–9, V, N, +, −, Enter, C, R, K, P (PRO). All key events
           are forwarded to the AGC worker over the typed protocol.
         </p>
-        <DskyLiveRegion decoded={decoded} />
+        <DskyLiveRegion decoded={decoded} patched={bridgedRegisters} />
       </div>
     </div>
   );
@@ -757,7 +717,41 @@ function Register({ label, reg, testid }: { label: string; reg: DskyRegister; te
   );
 }
 
-function RegistersPanel({ decoded }: { decoded: DecodedDsky }) {
+function PatchedRegister({ label, value, unit, testid }: {
+  label: string;
+  value: string;
+  unit?: string;
+  testid: string;
+}) {
+  return (
+    <div className="flex min-h-7 items-center gap-1" data-testid={testid}>
+      <span className="w-10 text-right font-mono text-[10px] uppercase tracking-widest text-neutral-500">{label}</span>
+      <span className="min-w-[6.5rem] font-mono text-xl tabular-nums tracking-[0.12em] text-emerald-300">{value}</span>
+      {unit && <span className="text-[8px] uppercase tracking-wider text-neutral-600">{unit}</span>}
+    </div>
+  );
+}
+
+function RegistersPanel({ decoded, patched }: { decoded: DecodedDsky; patched: BridgedRegisters | null }) {
+  if (patched) {
+    return (
+      <div className="mt-3 rounded border border-neutral-800 bg-black p-3" data-testid="dsky-registers" data-output="flight-patched">
+        <div className="grid gap-1.5">
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
+            <PatchedRegister label="PROG" value={patched.program} testid="reg-prog" />
+            <PatchedRegister label="VERB" value={patched.verb} testid="reg-verb" />
+            <PatchedRegister label="NOUN" value={patched.noun} testid="reg-noun" />
+          </div>
+          <PatchedRegister label="R1" value={patched.r1} unit={patched.units[0]} testid="reg-r1" />
+          <PatchedRegister label="R2" value={patched.r2} unit={patched.units[1]} testid="reg-r2" />
+          <PatchedRegister label="R3" value={patched.r3} unit={patched.units[2]} testid="reg-r3" />
+          <div data-testid="dsky-flight-output" className="pl-11 text-[8px] uppercase tracking-wider text-amber-500/70">
+            {patched.caption} · flight-data patch
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="mt-3 rounded border border-neutral-800 bg-black p-3" data-testid="dsky-registers">
       <div className="grid gap-1.5">
@@ -774,7 +768,7 @@ function RegistersPanel({ decoded }: { decoded: DecodedDsky }) {
   );
 }
 
-function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
+function DskyLiveRegion({ decoded, patched }: { decoded: DecodedDsky; patched: BridgedRegisters | null }) {
   // Consolidated ARIA live region — the only accessible mirror of DSKY output.
   // MUST derive from the SAME `decoded` value in the SAME React commit as the
   // visible register digits, so screen-reader text and rendered digits never
@@ -789,10 +783,12 @@ function DskyLiveRegion({ decoded }: { decoded: DecodedDsky }) {
     .filter(([, v]) => v)
     .map(([k]) => k)
     .join(", ") || "none";
-  const text =
-    `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
-    `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
-    `Indicators: ${on}.`;
+  const text = patched
+    ? `Program ${patched.program}, Verb ${patched.verb}, Noun ${patched.noun}. ` +
+      `R1 ${patched.r1}. R2 ${patched.r2}. R3 ${patched.r3}. Flight-data patch. Indicators: ${on}.`
+    : `Program ${digits(decoded.program)}, Verb ${digits(decoded.verb)}, Noun ${digits(decoded.noun)}. ` +
+      `R1 ${sign(decoded.r1)}${digits(decoded.r1)}. R2 ${sign(decoded.r2)}${digits(decoded.r2)}. R3 ${sign(decoded.r3)}${digits(decoded.r3)}. ` +
+      `Indicators: ${on}.`;
   return (
     <div
       role="status"
