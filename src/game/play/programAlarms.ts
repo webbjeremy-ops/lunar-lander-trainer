@@ -60,6 +60,8 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1202-first",
     code: "1202",
     atSinceIgnitionSec: timelineSeconds("alarm-1202-first", "102:38:23"),
+    // Telemetry-derived altitude at the first 1202 (mission log row 101).
+    belowAltitudeFt: 34_069,
     label: "1202 — Executive overflow, no core sets",
     teaching:
       "More jobs were queued than the Executive had core sets to hold. It " +
@@ -69,6 +71,7 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1202-second",
     code: "1202",
     atSinceIgnitionSec: timelineSeconds("alarm-1202-second", "102:39:02"),
+    belowAltitudeFt: 26_977,
     label: "1202 — Executive overflow (recurring)",
     teaching:
       "Recurring overload. Houston's call was based on whether guidance and " +
@@ -78,6 +81,8 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1201-first",
     code: "1201",
     atSinceIgnitionSec: getToSeconds("102:42:18") - PDI_GET_SEC,
+    // Between the P64 entry (7,129 ft) and ATT HOLD (513 ft) anchors.
+    belowAltitudeFt: 3_000,
     label: "1201 — Executive overflow, no VAC areas",
     teaching:
       "Same overload, different exhausted resource: vector accumulator areas " +
@@ -87,6 +92,7 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
     id: "alarm-1201-second",
     code: "1201",
     atSinceIgnitionSec: getToSeconds("102:42:43") - PDI_GET_SEC,
+    belowAltitudeFt: 1_600,
     label: "1201 — Executive overflow (recurring)",
     teaching:
       "The last of the descent alarms, taken low in the approach phase with " +
