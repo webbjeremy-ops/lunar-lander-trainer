@@ -174,8 +174,12 @@ export function computeReferenceGuidance(
   if (fixed !== null && fixed > 0 && state.configuration !== "ascent-stage") {
     // Thrust magnitude is pinned: pitch is the only vertical control left.
     const aTotal = (maxThrust * fixed) / mass;
-    const cosTilt = Math.max(-1, Math.min(1, aRadial / aTotal));
-    const magnitude = Math.acos(cosTilt);
+    // Pitch splits the fixed thrust vector. Tilt far enough to make the
+    // downrange deceleration the profile asks for, but never so far that the
+    // vertical component falls below what the altitude profile needs.
+    const wanted = Math.asin(Math.max(-1, Math.min(1, Math.abs(aHorizontal) / aTotal)));
+    const verticalLimit = Math.acos(Math.max(-1, Math.min(1, aRadial / aTotal)));
+    const magnitude = Math.min(wanted, verticalLimit);
     const sign = aHorizontal < 0 ? -1 : 1;
     attitude = sign * magnitude;
     recommendedThrottle = fixed;
