@@ -144,7 +144,12 @@ export interface PlaySessionApi {
   readonly bridgedAlarm: BridgedAlarmOverlay | null;
   /** M4.13 — the crew callout the cockpit should be showing, if any. */
   readonly callout: DescentCallout | null;
+  /** M4.18 — improvised Houston call when the flight goes off-script. */
+  readonly houston: HoustonCall | null;
+  readonly landingClearance: LandingClearance;
+  readonly aborted: boolean;
   readonly actions: {
+
     readonly setRunning: (v: boolean) => void;
     readonly setTimeScale: (v: number) => void;
     readonly restart: () => void;
