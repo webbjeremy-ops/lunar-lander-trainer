@@ -23,6 +23,8 @@ import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
 import { AttitudePanel } from "@/ui/play/AttitudePanel";
 import { FdaiBall } from "@/ui/play/FdaiBall";
 import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
+import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
+
 import { CautionWarningPanel } from "@/ui/play/CautionWarningPanel";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
@@ -310,6 +312,26 @@ function PlayClient() {
         >
           {session.descentClockLabel} · {session.descentClockStatus}
         </span>
+        <span
+          data-testid="landing-clearance"
+          data-clear={session.landingClearance.clear ? "yes" : "no"}
+          title={session.landingClearance.reasons.join(" · ") || "No standing deviations."}
+          className={`rounded border px-2 py-1 font-mono text-[10px] uppercase tracking-widest ${
+            session.landingClearance.clear
+              ? "border-emerald-700 bg-emerald-950/40 text-emerald-300"
+              : "border-red-700 bg-red-950/50 text-red-300"
+          }`}
+        >
+          {session.landingClearance.label}
+        </span>
+        <button
+          onClick={() => session.actions.abortStage()}
+          disabled={session.aborted || session.flight.terminalState !== null}
+          data-testid="play-abort"
+          className="rounded border-2 border-red-600 bg-red-950/60 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-red-200 hover:bg-red-900/70 disabled:opacity-40"
+        >
+          {session.aborted ? "Aborted" : "Abort stage"}
+        </button>
         <button
           onClick={() => session.actions.restart()}
           data-testid="play-restart"
@@ -318,6 +340,7 @@ function PlayClient() {
           Restart
         </button>
       </div>
+
 
       {!session.flightLockReleased && (
         <div
@@ -337,10 +360,15 @@ function PlayClient() {
             step={session.step}
             manual={session.manualUnlocked}
           />
+          <HoustonOverlay
+            call={session.houston}
+            onAcknowledge={session.actions.acknowledgeHouston}
+          />
           <CalloutOverlay
             callout={session.callout}
             onAcknowledge={session.actions.acknowledgeCallout}
           />
+
           <LunarScene
             flight={session.flight}
             orbit={session.orbit}

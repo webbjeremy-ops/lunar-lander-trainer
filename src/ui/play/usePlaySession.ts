@@ -27,9 +27,17 @@ import {
   angleForRange,
   bridgedAlarmFor,
   activeCallout,
+  activeHoustonCall,
+  isOffScript,
+  landingClearance,
+  HOUSTON_ABORT_CALL,
+  type HoustonCall,
+  type LandingClearance,
+  type FlightDeviationInput,
   bridgedRequestFor,
   createDescentClockState,
   createDescentRollState,
+
   descentClockStatusLabel,
   formatDescentClock,
   stepDescentClock,
@@ -136,7 +144,12 @@ export interface PlaySessionApi {
   readonly bridgedAlarm: BridgedAlarmOverlay | null;
   /** M4.13 — the crew callout the cockpit should be showing, if any. */
   readonly callout: DescentCallout | null;
+  /** M4.18 — improvised Houston call when the flight goes off-script. */
+  readonly houston: HoustonCall | null;
+  readonly landingClearance: LandingClearance;
+  readonly aborted: boolean;
   readonly actions: {
+
     readonly setRunning: (v: boolean) => void;
     readonly setTimeScale: (v: number) => void;
     readonly restart: () => void;
@@ -155,6 +168,11 @@ export interface PlaySessionApi {
     readonly setRollCommand: (active: boolean) => void;
     /** Acknowledge ("copy that") the currently displayed crew callout. */
     readonly acknowledgeCallout: (id: string) => void;
+    /** Acknowledge an improvised Houston caution. */
+    readonly acknowledgeHouston: (id: string) => void;
+    /** M4.18 — ABORT STAGE: jettison the descent stage, fly the ascent engine. */
+    readonly abortStage: () => void;
+
   };
 }
 
@@ -194,6 +212,11 @@ export function usePlaySession(
   const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
   const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
+  const [acknowledgedHouston, setAcknowledgedHouston] = useState<readonly string[]>([]);
+  /** M4.18 — ABORT STAGE latched by the crew. */
+  const [aborted, setAborted] = useState(false);
+  const abortedRef = useRef(false);
+
   /**
    * M4.13B — Ignition-relative descent clock, owned by a pure state machine
    * (`stepDescentClock`). Normally the PDI sequence drives it; otherwise it
@@ -299,6 +322,10 @@ export function usePlaySession(
     alarmsRef.current = a;
     setAlarms(a);
     setAcknowledgedCallouts([]);
+    setAcknowledgedHouston([]);
+    setAborted(false);
+    abortedRef.current = false;
+
     descentClockRef.current = createDescentClockState();
     setDescentClock(descentClockRef.current);
   }, [makeInitial, script, generation]);
@@ -373,7 +400,7 @@ export function usePlaySession(
       // The vehicle coasts through the PDI countdown, so the clock runs as
       // soon as the countdown is armed — not only after PROCEED.
       const countdownRunning = ignitionRef.current.phase !== "standby";
-      if (!proc.flightLockReleased && !countdownRunning) {
+      if (!proc.flightLockReleased && !countdownRunning && !abortedRef.current) {
         accumulatorUs = 0;
         return;
       }
@@ -423,7 +450,25 @@ export function usePlaySession(
     };
 
     const resolveInput = (state: LunarFlightState): LunarControlInput => {
+      // M4.18 — ABORT STAGE overrides everything: jettison the descent stage
+      // and fly the fixed-thrust ascent engine up and downrange.
+      if (abortedRef.current) {
+        const staged = state.configuration !== "complete-lm";
+        const desired = 1.2; // rad from local vertical — pitch over for orbit
+        const err = desired - state.attitudeRad;
+        const cmd = clampSigned(err * 3 - state.angularRateRadPerSec * 2.5);
+        throttleRef.current = 1;
+        attitudeRef.current = cmd;
+        engineRef.current = true;
+        return {
+          throttle: 1,
+          engineCommand: "ascent",
+          attitudeCommand: cmd,
+          stageSeparation: !staged,
+        };
+      }
       const manual = procedureRef.current.manualControlUnlocked;
+
       let throttle: number;
       let attitudeCommand: number;
 
@@ -725,9 +770,20 @@ export function usePlaySession(
       acknowledgeCallout: (id: string) => {
         setAcknowledgedCallouts((prev) => (prev.includes(id) ? prev : [...prev, id]));
       },
+      acknowledgeHouston: (id: string) => {
+        setAcknowledgedHouston((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      },
+      abortStage: () => {
+        if (abortedRef.current) return;
+        if (flightRef.current.terminalState !== null) return;
+        abortedRef.current = true;
+        setAborted(true);
+        setRunning(true);
+      },
     }),
     [onDskyKey, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
+
 
   const descentMonitor = useMemo(
     () =>
@@ -743,9 +799,47 @@ export function usePlaySession(
     [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
 
+  // M4.18 — deviation snapshot feeding the improvised Houston calls and the
+  // go/no-go for landing. Pure inputs; no timers, no AGC.
+  const deviation: FlightDeviationInput = useMemo(
+    () => ({
+      altitudeM: orbit.altitudeM,
+      radialSpeedMps: orbit.radialSpeedMps,
+      horizontalSpeedMps: orbit.tangentialSpeedMps,
+      attitudeRad: flight.attitudeRad,
+      angularRateRadPerSec: flight.angularRateRadPerSec,
+      propellantFraction:
+        mission.initial.descentPropellantKg > 0
+          ? flight.descentPropellantKg / mission.initial.descentPropellantKg
+          : 0,
+      windowsUp: radarAvailable(roll),
+      engineBurning: flight.mainEngine !== "off",
+      terminal: flight.terminalState !== null,
+    }),
+    [orbit, flight, mission, roll],
+  );
+
+  const offScript = aborted || isOffScript(deviation);
+
+  const houston = useMemo(
+    () =>
+      aborted
+        ? HOUSTON_ABORT_CALL
+        : activeHoustonCall(deviation, acknowledgedHouston),
+    [aborted, deviation, acknowledgedHouston],
+  );
+
+  const clearance = useMemo(
+    () =>
+      aborted
+        ? { clear: false, reasons: [HOUSTON_ABORT_CALL.guidance], label: "ABORT — NO LANDING" }
+        : landingClearance(deviation),
+    [aborted, deviation],
+  );
+
   const callout = useMemo(
     () =>
-      apollo11Timeline
+      apollo11Timeline && !offScript
         ? activeCallout(
             {
               sinceIgnitionUs: descentClockUs,
@@ -757,6 +851,7 @@ export function usePlaySession(
         : null,
     [
       apollo11Timeline,
+      offScript,
       descentClockUs,
       orbit.altitudeM,
       flight.mainEngine,
@@ -766,6 +861,7 @@ export function usePlaySession(
 
 
   return {
+
     flight,
     orbit,
     guidance,
@@ -795,7 +891,11 @@ export function usePlaySession(
     alarms,
     bridgedAlarm: apollo11Timeline ? bridgedAlarmFor(alarms) : null,
     callout,
+    houston,
+    landingClearance: clearance,
+    aborted,
     actions,
+
   };
 }
 
