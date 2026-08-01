@@ -272,6 +272,7 @@ export function usePlaySession(
     const a = createProgramAlarmState();
     alarmsRef.current = a;
     setAlarms(a);
+    setAcknowledgedCallouts([]);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -361,7 +362,16 @@ export function usePlaySession(
         const sinceIgnitionUs = ignitionRef.current.sinceIgnitionUs;
         if (sinceIgnitionUs > 0) {
           dispatchRoll({ kind: "tick", dtUs: STEP_US, sinceIgnitionUs });
-          if (apollo11Timeline) dispatchAlarm({ kind: "tick", sinceIgnitionUs });
+          if (apollo11Timeline) {
+            // Alarms are keyed to the flown timeline AND to the telemetry
+            // altitudes they were taken at, so they still occur when the
+            // game's trajectory runs faster or slower than the real descent.
+            dispatchAlarm({
+              kind: "tick",
+              sinceIgnitionUs,
+              altitudeFt: computeOrbitalValues(state).altitudeM / 0.3048,
+            });
+          }
         }
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
