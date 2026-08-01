@@ -260,6 +260,7 @@ function PlayClient() {
             mission={mission}
             limits={limits}
             manual={session.manualUnlocked}
+            rollDeg={session.roll.rollDeg}
           />
           <FlightInstruments
             flight={session.flight}

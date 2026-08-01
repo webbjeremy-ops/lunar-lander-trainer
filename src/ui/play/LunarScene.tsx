@@ -322,6 +322,18 @@ function referenceAltitudeM(
   return knots[knots.length - 1]![1];
 }
 
+function rollLabel(rollDeg: number): string {
+  if (rollDeg <= 5) return "WINDOWS UP";
+  if (rollDeg >= 175) return "WINDOWS DOWN";
+  return `ROLLING ${rollDeg.toFixed(0)}\u00b0`;
+}
+
+function cwLabelColor(rollDeg: number): string {
+  if (rollDeg <= 5) return "#41e08a";
+  if (rollDeg >= 175) return "#fbbf24";
+  return "#7dd3fc";
+}
+
 function drawProfile(
   ctx: CanvasRenderingContext2D,
   x0: number,
@@ -470,6 +482,12 @@ function drawProfile(
     ctx.fill();
   }
   ctx.restore();
+
+  // Roll state caption: the vehicle starts the braking phase windows-down and
+  // the player rolls it windows-up before the radar can look at the surface.
+  ctx.fillStyle = cwLabelColor(rollDeg);
+  ctx.font = "9px ui-monospace, monospace";
+  ctx.fillText(rollLabel(rollDeg), vx + 12, vy - 6);
 
   // Velocity vector.
   ctx.strokeStyle = "#60a5fa";
