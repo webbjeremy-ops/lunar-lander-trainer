@@ -81,6 +81,7 @@ export const FIXED_THROTTLE_FRACTION = 0.1;
 /** Ramp from FTP to guidance throttle, seconds. */
 const THROTTLE_UP_RAMP_US = 2 * S;
 
+
 export const IGNITION_CITATION = {
   label: "Apollo 11 Flight Plan / LM Timeline Book / Apollo 11 air-to-ground transcript",
   detail:
@@ -299,12 +300,67 @@ export function throttleCeiling(state: IgnitionSequenceState): number {
  * matches the "ignition, ten percent" call.
  */
 export function throttleCeilingForSinceIgnition(sinceIgnitionUs: number): number {
+  return dpsThrottleEnvelope(sinceIgnitionUs).max;
+}
+
+/**
+ * Thrust at the fixed throttle point. The DPS was flown at maximum rated
+ * thrust for the braking phase, which Luminary commands as 92.5 %.
+ */
+export const FTP_FRACTION = 0.925;
+
+/**
+ * The descent engine could not be run continuously between about 65 % and the
+ * fixed throttle point: sustained operation in that band eroded the nozzle.
+ * Guidance therefore only modulates between 10 % and 60 %.
+ */
+export const MIN_VARIABLE_THROTTLE = 0.1;
+export const MAX_VARIABLE_THROTTLE = 0.6;
+
+/**
+ * "Throttle recovery": guidance leaves the fixed throttle point and steps the
+ * engine straight down into the variable range (about 57 %), at T+6:26.
+ */
+export const THROTTLE_RECOVERY_SINCE_IGNITION_US =
+  milestoneSec("throttle-down") * S;
+
+export interface DpsThrottleEnvelope {
+  readonly min: number;
+  readonly max: number;
+  readonly label: string;
+}
+
+/**
+ * The flown DPS throttle profile as a pure function of ignition-relative time:
+ *
+ *   T+00:00  10 % for 26 s while the engine settles and the gimbal trims
+ *   T+00:26  ramp to the fixed throttle point, 92.5 %, and hold it
+ *   T+06:26  throttle recovery — straight down to the 10-60 % variable range,
+ *            skipping the erosion band, and modulated from there on
+ */
+export function dpsThrottleEnvelope(sinceIgnitionUs: number): DpsThrottleEnvelope {
   const t = sinceIgnitionUs;
-  if (t < 0) return 0;
-  if (t < FIXED_THROTTLE_DURATION_US) return FIXED_THROTTLE_FRACTION;
+  if (t < 0) return { min: 0, max: 0, label: "ENGINE OFF" };
+  if (t < FIXED_THROTTLE_DURATION_US) {
+    return {
+      min: FIXED_THROTTLE_FRACTION,
+      max: FIXED_THROTTLE_FRACTION,
+      label: "10 % · GIMBAL TRIM",
+    };
+  }
+  if (t >= THROTTLE_RECOVERY_SINCE_IGNITION_US) {
+    return {
+      min: MIN_VARIABLE_THROTTLE,
+      max: MAX_VARIABLE_THROTTLE,
+      label: "THROTTLE RECOVERY · 10-60 % VARIABLE",
+    };
+  }
   const ramp = (t - FIXED_THROTTLE_DURATION_US) / THROTTLE_UP_RAMP_US;
-  if (ramp >= 1) return 1;
-  return FIXED_THROTTLE_FRACTION + (1 - FIXED_THROTTLE_FRACTION) * ramp;
+  const level =
+    ramp >= 1
+      ? FTP_FRACTION
+      : FIXED_THROTTLE_FRACTION + (FTP_FRACTION - FIXED_THROTTLE_FRACTION) * ramp;
+  return { min: level, max: level, label: "FTP · 92.5 %" };
 }
 
 /** "T-01:05" / "T+00:26" clock face for the countdown. */
