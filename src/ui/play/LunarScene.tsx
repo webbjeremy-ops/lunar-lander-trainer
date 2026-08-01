@@ -466,7 +466,9 @@ function drawProfile(
   const vy = yFor(orbit.altitudeM);
   ctx.save();
   ctx.translate(vx, vy);
-  ctx.rotate(flight.attitudeRad);
+  // Pitch from local vertical: near 90 deg on its back through braking, then
+  // pitch-over at high gate, then near upright for the landing phase.
+  ctx.rotate(displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual));
   // M4.8 — roll about the thrust axis. cos(roll) = +1 windows-up (crew and
   // landing radar looking at the surface), -1 windows-down (the PDI attitude
   // Eagle flew before the windows-up roll).
