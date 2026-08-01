@@ -58,6 +58,9 @@ export class DescentScoreEngine {
   private rumbleGain: GainNode | null = null;
   private melodyGain: GainNode | null = null;
   private bedFilter: BiquadFilterNode | null = null;
+  private muffle: BiquadFilterNode | null = null;
+  private dryOut: GainNode | null = null;
+  private zone = false;
   private pulseTimer: number | null = null;
   private melodyTimer: number | null = null;
   private melodyStep = 0;
@@ -91,10 +94,24 @@ export class DescentScoreEngine {
     this.ctx = ctx;
     void ctx.resume();
 
+    // Everything musical runs through `muffle`; the heartbeat bypasses it via
+    // `dryOut` so it stays present when the mix goes underwater ("in the zone").
+    const muffle = ctx.createBiquadFilter();
+    muffle.type = "lowpass";
+    muffle.frequency.value = 18_000;
+    muffle.Q.value = 0.5;
+    muffle.connect(ctx.destination);
+    this.muffle = muffle;
+
     const master = ctx.createGain();
     master.gain.value = 0;
-    master.connect(ctx.destination);
+    master.connect(muffle);
     this.master = master;
+
+    const dryOut = ctx.createGain();
+    dryOut.gain.value = 0;
+    dryOut.connect(ctx.destination);
+    this.dryOut = dryOut;
 
     const bedFilter = ctx.createBiquadFilter();
     bedFilter.type = "lowpass";
@@ -177,7 +194,7 @@ export class DescentScoreEngine {
     // --- pulse bus ---------------------------------------------------------
     const pulseGain = ctx.createGain();
     pulseGain.gain.value = 0;
-    pulseGain.connect(master);
+    pulseGain.connect(dryOut);
     this.pulseGain = pulseGain;
 
     // --- under-melody bus (organ) -------------------------------------------
@@ -198,6 +215,7 @@ export class DescentScoreEngine {
     this.started = true;
     this.applyLayers();
     ramp(master.gain, this.volume, ctx, 2.5);
+    ramp(dryOut.gain, this.volume, ctx, 2.5);
     this.scheduleNextPulse();
     this.scheduleNextNote();
   }
@@ -212,6 +230,7 @@ export class DescentScoreEngine {
     if (ctx && this.master) {
 
       ramp(this.master.gain, 0, ctx, 0.6);
+      if (this.dryOut) ramp(this.dryOut.gain, 0, ctx, 0.6);
       window.setTimeout(() => void ctx.close().catch(() => undefined), 900);
     }
     this.ctx = null;
@@ -222,6 +241,7 @@ export class DescentScoreEngine {
   setVolume(v: number): void {
     this.volume = Math.max(0, Math.min(1, v));
     if (this.ctx && this.master) ramp(this.master.gain, this.volume, this.ctx, 0.4);
+    if (this.ctx && this.dryOut) ramp(this.dryOut.gain, this.volume, this.ctx, 0.4);
   }
 
   /** Feed the current tension (0..1); the engine re-balances its layers. */
@@ -230,16 +250,31 @@ export class DescentScoreEngine {
     this.applyLayers();
   }
 
+  /**
+   * "In the zone" — the final seconds before contact. The score sinks behind a
+   * lowpass and drops back; only the heartbeat stays dry and up front.
+   */
+  setZone(zone: boolean): void {
+    if (zone === this.zone) return;
+    this.zone = zone;
+    this.applyLayers();
+  }
+
   private applyLayers(): void {
     const ctx = this.ctx;
     if (!ctx || !this.started) return;
     const l = this.layers;
-    if (this.droneGain) ramp(this.droneGain.gain, 0.22 * l.drone, ctx, 1.5);
-    if (this.stringsGain) ramp(this.stringsGain.gain, 0.3 * l.strings, ctx, 2.5);
-    if (this.dissonanceGain) ramp(this.dissonanceGain.gain, 0.4 * l.dissonance, ctx, 0.8);
-    if (this.rumbleGain) ramp(this.rumbleGain.gain, 0.1 + 0.16 * l.drone, ctx, 1.5);
+    // Musical layers duck hard in the zone; the ramp is slow so it feels like
+    // the world receding rather than a mute button.
+    const duck = this.zone ? 0.18 : 1;
+    if (this.muffle) ramp(this.muffle.frequency, this.zone ? 320 : 18_000, ctx, 2.2);
+    if (this.dryOut) ramp(this.dryOut.gain, this.volume * (this.zone ? 1.15 : 1), ctx, 1.5);
+    if (this.droneGain) ramp(this.droneGain.gain, 0.22 * l.drone * duck, ctx, 1.5);
+    if (this.stringsGain) ramp(this.stringsGain.gain, 0.3 * l.strings * duck, ctx, 2.5);
+    if (this.dissonanceGain) ramp(this.dissonanceGain.gain, 0.4 * l.dissonance * duck, ctx, 0.8);
+    if (this.rumbleGain) ramp(this.rumbleGain.gain, (0.1 + 0.16 * l.drone) * duck, ctx, 1.5);
     if (this.bedFilter) ramp(this.bedFilter.frequency, l.cutoffHz, ctx, 1.5);
-    if (this.melodyGain) ramp(this.melodyGain.gain, 0.26 * l.melody, ctx, 2.0);
+    if (this.melodyGain) ramp(this.melodyGain.gain, 0.26 * l.melody * duck, ctx, 2.0);
   }
 
   /**
@@ -343,12 +378,28 @@ export class DescentScoreEngine {
     osc.frequency.exponentialRampToValueAtTime(42, now + 0.28);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(Math.max(0.02, 0.5 * this.layers.pulse), now + 0.012);
+    const peak = Math.max(0.02, 0.5 * this.layers.pulse) * (this.zone ? 1.9 : 1);
+    g.gain.exponentialRampToValueAtTime(peak, now + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, now + 0.34);
     osc.connect(g).connect(bus);
     bus.gain.setValueAtTime(1, now);
     osc.start(now);
     osc.stop(now + 0.4);
+    // Lub-dub: in the zone the heartbeat gets its second, softer beat.
+    if (this.zone) {
+      const t2 = now + 0.21;
+      const osc2 = ctx.createOscillator();
+      osc2.type = "sine";
+      osc2.frequency.setValueAtTime(78, t2);
+      osc2.frequency.exponentialRampToValueAtTime(38, t2 + 0.22);
+      const g2 = ctx.createGain();
+      g2.gain.setValueAtTime(0.0001, t2);
+      g2.gain.exponentialRampToValueAtTime(peak * 0.6, t2 + 0.012);
+      g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.3);
+      osc2.connect(g2).connect(bus);
+      osc2.start(t2);
+      osc2.stop(t2 + 0.36);
+    }
   }
 
   /** Chord root under the melody: a long, swelling low note on each change. */
