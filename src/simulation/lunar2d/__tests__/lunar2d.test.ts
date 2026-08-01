@@ -263,6 +263,37 @@ describe("lunar2d: attitude and RCS", () => {
     expect(next.attitudeRad).toBeGreaterThan(0);
   });
 
+  // M4.10 — a released control is an active command to hold attitude.
+  it("nulls the angular rate to exactly zero once the command is released", () => {
+    const state = createLunarFlightState({ altitudeM: 50_000 });
+    const spun = stepLunarFlight(
+      state,
+      { throttle: 0, engineCommand: "off", attitudeCommand: 1 },
+      1_000_000,
+      P,
+    );
+    expect(Math.abs(spun.angularRateRadPerSec)).toBeGreaterThan(0.05);
+
+    const settled = stepLunarFlight(spun, IDLE, 2_000_000, P);
+    expect(settled.angularRateRadPerSec).toBe(0);
+    // Braking costs RCS propellant, like the real jets.
+    expect(settled.rcsPropellantKg).toBeLessThan(spun.rcsPropellantKg);
+  });
+
+  it("holds attitude steady after settling with no command", () => {
+    const state = createLunarFlightState({ altitudeM: 50_000 });
+    const spun = stepLunarFlight(
+      state,
+      { throttle: 0, engineCommand: "off", attitudeCommand: 1 },
+      500_000,
+      P,
+    );
+    const settled = stepLunarFlight(spun, IDLE, 3_000_000, P);
+    const later = stepLunarFlight(settled, IDLE, 3_000_000, P);
+    expect(later.attitudeRad).toBeCloseTo(settled.attitudeRad, 12);
+  });
+
+
   it("clamps angular rate to the configured maximum", () => {
     const state = createLunarFlightState({ altitudeM: 50_000 });
     const next = stepLunarFlight(
