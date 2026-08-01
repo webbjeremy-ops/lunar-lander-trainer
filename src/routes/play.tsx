@@ -130,6 +130,10 @@ function PlayClient() {
 
   const [started, setStarted] = useState(false);
 
+  // M4.34 — out-the-window first-person view toggle.
+  const [firstPerson, setFirstPerson] = useState(false);
+
+
   const mission = MISSIONS[missionId];
   const limits = LANDING_LIMITS[assistance];
   const session = usePlaySession(mission, controlMode, assistance);
