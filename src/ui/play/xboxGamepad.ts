@@ -12,8 +12,10 @@
 //   Right stick (horizontal) pitch — rate command to the attitude controller
 //   Right trigger            roll toward windows-up (the R key)
 //   Right bumper (RB)        cancel the program alarm
+//   Left bumper (LB)         easy program acceptance — key the pending DSKY
+//                            step for the crew (M4.31)
 //   A                        DPS engine on/off
-//   Left trigger             rate-of-descent trim down, LB trim up
+//   D-pad up / down          rate-of-descent trim (left trigger also trims down)
 //
 // Standard-mapping indices are used throughout; every Xbox pad reports the
 // standard mapping in Chromium and Firefox.
@@ -37,6 +39,8 @@ export const BUTTON = {
   leftTrigger: 6,
   rightTrigger: 7,
   start: 9,
+  dpadUp: 12,
+  dpadDown: 13,
 } as const;
 
 /** Sticks rest slightly off-centre; ignore anything inside this. */
@@ -62,9 +66,11 @@ export interface XboxCockpitInput {
   readonly rollPull: number;
   /** True while the right trigger is past the roll threshold. */
   readonly rollCommanded: boolean;
-  /** Rate-of-descent trim steps requested this frame (LB up, LT down). */
+  /** Rate-of-descent trim steps requested this frame (D-pad up/down, LT down). */
   readonly rodTrim: number;
   readonly cancelAlarmPressed: boolean;
+  /** M4.31 — LB: key the pending DSKY step for the crew. */
+  readonly acceptProgramPressed: boolean;
   readonly enginePressed: boolean;
   readonly abortPressed: boolean;
 }
@@ -76,6 +82,7 @@ export const NEUTRAL_INPUT: XboxCockpitInput = {
   rollCommanded: false,
   rodTrim: 0,
   cancelAlarmPressed: false,
+  acceptProgramPressed: false,
   enginePressed: false,
   abortPressed: false,
 };
@@ -137,10 +144,12 @@ export function mapXboxInput(
   const cancelAlarmPressed = edge(BUTTON.rightBumper);
   const enginePressed = edge(BUTTON.a);
   const abortPressed = edge(BUTTON.b);
-  const trimUp = edge(BUTTON.leftBumper);
+  const acceptProgramPressed = edge(BUTTON.leftBumper);
+  const trimUp = edge(BUTTON.dpadUp);
+  const dpadTrimDown = edge(BUTTON.dpadDown);
   const leftTriggerDown = buttonValue(pad, BUTTON.leftTrigger) > TRIGGER_THRESHOLD;
   if (leftTriggerDown) held.add(BUTTON.leftTrigger);
-  const trimDown = leftTriggerDown && !wasHeld(BUTTON.leftTrigger);
+  const trimDown = (leftTriggerDown && !wasHeld(BUTTON.leftTrigger)) || dpadTrimDown;
 
   const rollPull = Math.max(0, Math.min(1, buttonValue(pad, BUTTON.rightTrigger)));
 
@@ -153,6 +162,7 @@ export function mapXboxInput(
       rollCommanded: rollPull > TRIGGER_THRESHOLD,
       rodTrim: (trimUp ? 1 : 0) - (trimDown ? 1 : 0),
       cancelAlarmPressed,
+      acceptProgramPressed,
       enginePressed,
       abortPressed,
     },
