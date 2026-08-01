@@ -53,6 +53,7 @@ import {
   type BridgedDskyRequest,
   type ControlModeId,
   type DescentRollState,
+  type DescentMonitorView,
   type FlightSummary,
   type IgnitionSequenceState,
   type MissionDefinition,
