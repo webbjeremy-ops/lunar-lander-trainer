@@ -5,4 +5,5 @@ export * from "./types";
 export * from "./missions";
 export * from "./procedures";
 export * from "./procedureEngine";
+export * from "./ignitionSequence";
 export * from "./scoring";

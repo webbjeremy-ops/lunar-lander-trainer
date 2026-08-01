@@ -18,6 +18,7 @@ import { LunarScene } from "@/ui/play/LunarScene";
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
 import { FlightControls } from "@/ui/play/FlightControls";
 import { ProcedurePanel } from "@/ui/play/ProcedurePanel";
+import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
@@ -272,6 +273,14 @@ function PlayClient() {
         </div>
 
         <div className="space-y-3">
+          {session.ignition.phase !== "standby" && (
+            <IgnitionPanel
+              state={session.ignition}
+              clock={session.ignitionClock}
+              onArm={session.actions.setEngineArm}
+            />
+          )}
+
           <ProcedurePanel
             script={session.script}
             state={session.procedure}
@@ -293,6 +302,7 @@ function PlayClient() {
                 sharedClient={agc.client}
                 sharedReady={agc.ready}
                 onKeyPress={handleKey}
+                bridgedRequest={session.bridgedDskyRequest}
                 compact
               />
             ) : (

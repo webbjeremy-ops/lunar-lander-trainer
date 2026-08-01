@@ -60,7 +60,7 @@ function tapKeys(client: AgcWorkerClient, codes: number[], delayMs = 120) {
   });
 }
 
-export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null, onKeyPress, compact = false }: {
+export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sharedClient = null, sharedReady = null, onKeyPress, compact = false, bridgedRequest = null }: {
   rope: RopeImage;
   onClient?: (client: AgcWorkerClient | null) => void;
   onSnapshot?: (snap: StateSnapshot) => void;
@@ -85,6 +85,16 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
   /** Hide the laboratory diagnostics (channel watch, erasable dump, event
    *  log, provenance) and leave only the DSKY face + keypad. */
   compact?: boolean;
+  /** HISTORICALLY GROUNDED PROCEDURE BRIDGE: a game-generated flashing
+   *  verb/noun request (e.g. V99 N62 ignition) that the rope cannot raise in
+   *  this configuration. It is drawn as a clearly-labelled overlay ON TOP of
+   *  the authentic registers and never alters decoded AGC output. */
+  bridgedRequest?: {
+    readonly verb: string;
+    readonly noun: string;
+    readonly flashing: boolean;
+    readonly label: string;
+  } | null;
 }) {
 
   const clientRef = useRef<AgcWorkerClient | null>(null);
@@ -417,7 +427,30 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           })}
         </div>
 
-        <RegistersPanel decoded={decoded} />
+        <div className="relative">
+          <RegistersPanel decoded={decoded} />
+          {bridgedRequest && (
+            <div
+              data-testid="dsky-bridged-request"
+              className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 rounded bg-background/85 backdrop-blur-[1px] ring-1 ring-amber-400/70"
+            >
+              <span className="text-[9px] uppercase tracking-[0.18em] text-amber-400/90">
+                Bridged overlay — not rope output
+              </span>
+              <span
+                className={`font-mono text-2xl tabular-nums text-amber-300 ${
+                  bridgedRequest.flashing ? "animate-pulse" : ""
+                }`}
+              >
+                V{bridgedRequest.verb} N{bridgedRequest.noun}
+              </span>
+              <span className="text-[10px] uppercase tracking-[0.14em] text-amber-200/80">
+                {bridgedRequest.label}
+              </span>
+            </div>
+          )}
+        </div>
+
 
         <div className={compact ? "hidden" : undefined}>
         <div className="mt-3 flex flex-wrap items-center gap-1">

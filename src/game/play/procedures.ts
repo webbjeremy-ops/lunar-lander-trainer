@@ -52,6 +52,13 @@ export interface DskyProcedureStep {
   readonly bridged: boolean;
   /** Completing this step hands manual flight control to the player. */
   readonly unlocksManualControl?: boolean;
+  /**
+   * The step is refused unless the descent engine has been armed on the
+   * cockpit panel first (Aldrin's ENG ARM — DESCENT switch).
+   */
+  readonly requiresEngineArm?: boolean;
+  /** Completing this step starts the PDI countdown clock. */
+  readonly startsIgnitionCountdown?: boolean;
   /** Completing this step releases the flight-control lock for guided flight. */
   readonly releasesFlightLock?: boolean;
 }
@@ -141,20 +148,23 @@ const POWERED_DESCENT_STEPS: readonly DskyProcedureStep[] = [
     hint: "VERB · 1 · 6 · NOUN · 6 · 2 · ENTR.",
     citation: GSOP,
     bridged: false,
+    startsIgnitionCountdown: true,
   },
   {
     id: "pdi-proceed",
-    title: "Enable engine ignition",
+    title: "Arm the descent engine, then enable ignition",
     instruction:
-      "The crew answered the ignition request with PROCEED. Press PRO to " +
-      "commit to powered descent.",
-    keystrokes: "PRO",
+      "Aldrin's job: set ENG ARM to DESCENT on the cockpit panel. At TIG-35 s " +
+      "the computer flashes V99 N62 asking permission to ignite — answer it " +
+      "with PROCEED. PRO is refused while ENG ARM is off.",
+    keystrokes: "ENG ARM · DES, then PRO",
     expected: [...PROCEED_KEYS],
     phase: "procedure",
     programLabel: "P63 · PDI",
-    hint: "Press the PRO key (keyboard: P).",
+    hint: "Throw ENG ARM to DESCENT in the ignition panel, then press PRO (keyboard: P).",
     citation: FLIGHT_PLAN,
     bridged: true,
+    requiresEngineArm: true,
     releasesFlightLock: true,
   },
   {
@@ -191,7 +201,8 @@ const POWERED_DESCENT_STEPS: readonly DskyProcedureStep[] = [
 
 const TERMINAL_STEPS: readonly DskyProcedureStep[] = [
   POWERED_DESCENT_STEPS[0]!,
-  POWERED_DESCENT_STEPS[1]!,
+  // Terminal descent begins below high gate: there is no PDI countdown here.
+  { ...POWERED_DESCENT_STEPS[1]!, startsIgnitionCountdown: false },
   {
     ...POWERED_DESCENT_STEPS[4]!,
     instruction:

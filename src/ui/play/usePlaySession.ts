@@ -25,18 +25,25 @@ import {
 } from "@/simulation/lunar2d";
 import {
   angleForRange,
+  bridgedRequestFor,
+  createIgnitionState,
   createProcedureState,
   currentStep,
   downrangeToLandingZoneM,
+  formatTig,
   LANDING_LIMITS,
   LANDING_ZONE_ANGLE_RAD,
   meanResponseSeconds,
+  reduceIgnition,
   reduceProcedure,
   scoreMission,
   scriptFor,
+  throttleCeiling,
   type AssistanceLevel,
+  type BridgedDskyRequest,
   type ControlModeId,
   type FlightSummary,
+  type IgnitionSequenceState,
   type MissionDefinition,
   type MissionScore,
   type ProcedureState,
@@ -84,6 +91,10 @@ export interface PlaySessionApi {
   readonly manualUnlocked: boolean;
   readonly flightLockReleased: boolean;
   readonly gamepadConnected: boolean;
+  /** M4.7 — PDI ignition ritual (countdown, ENG ARM, V99 request, FTP). */
+  readonly ignition: IgnitionSequenceState;
+  readonly ignitionClock: string;
+  readonly bridgedDskyRequest: BridgedDskyRequest | null;
   readonly actions: {
     readonly setRunning: (v: boolean) => void;
     readonly setTimeScale: (v: number) => void;
@@ -96,6 +107,7 @@ export interface PlaySessionApi {
     readonly setAttitudeCommand: (v: number) => void;
     readonly setEngine: (on: boolean) => void;
     readonly trimRod: (steps: number) => void;
+    readonly setEngineArm: (on: boolean) => void;
   };
 }
 
@@ -128,11 +140,26 @@ export function usePlaySession(
   const [gamepadConnected, setGamepadConnected] = useState(false);
   const [takeover, setTakeover] = useState<TakeoverRecord | null>(null);
   const [generation, setGeneration] = useState(0);
+  const [ignition, setIgnition] = useState<IgnitionSequenceState>(createIgnitionState);
 
   const flightRef = useRef(flight);
   flightRef.current = flight;
   const procedureRef = useRef(procedure);
   procedureRef.current = procedure;
+  const ignitionRef = useRef(ignition);
+  ignitionRef.current = ignition;
+
+  const dispatchIgnition = useCallback(
+    (event: Parameters<typeof reduceIgnition>[1]) => {
+      const next = reduceIgnition(ignitionRef.current, event);
+      if (next === ignitionRef.current) return next;
+      ignitionRef.current = next;
+      setIgnition(next);
+      return next;
+    },
+    [],
+  );
+
 
   const throttleRef = useRef(0);
   const attitudeRef = useRef(0);
@@ -164,6 +191,9 @@ export function usePlaySession(
     rodTargetRef.current = -1;
     roughnessRef.current = 0;
     lastCmdRef.current = { throttle: 0, attitude: 0 };
+    const ign = createIgnitionState();
+    ignitionRef.current = ign;
+    setIgnition(ign);
   }, [makeInitial, script, generation]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -211,7 +241,10 @@ export function usePlaySession(
       accumulatorUs += dtMs * 1000 * timeScale;
 
       const proc = procedureRef.current;
-      if (!proc.flightLockReleased) {
+      // The vehicle coasts through the PDI countdown, so the clock runs as
+      // soon as the countdown is armed — not only after PROCEED.
+      const countdownRunning = ignitionRef.current.phase !== "standby";
+      if (!proc.flightLockReleased && !countdownRunning) {
         accumulatorUs = 0;
         return;
       }
@@ -222,6 +255,7 @@ export function usePlaySession(
         accumulatorUs -= STEP_US;
         steps += 1;
         if (state.terminalState !== null) break;
+        if (countdownRunning) dispatchIgnition({ kind: "tick", dtUs: STEP_US });
         const input = resolveInput(state);
         state = stepLunarFlight(state, input, STEP_US);
       }
@@ -281,6 +315,28 @@ export function usePlaySession(
       }
 
       engineRef.current = manual ? engineRef.current : throttle > 0;
+
+      // DPS start profile: the engine is cold until TIG, then held at the
+      // 10 % fixed-throttle point for 26 s before throttle-up. While the
+      // countdown is armed this ceiling overrides player and guidance alike.
+      const ign = ignitionRef.current;
+      let ceilingLimited = false;
+      if (ign.phase !== "standby") {
+        const ceiling = throttleCeiling(ign);
+        if (ceiling <= 0) {
+          throttle = 0;
+          engineRef.current = false;
+        } else if (throttle > ceiling) {
+          throttle = ceiling;
+          ceilingLimited = true;
+        }
+        if (ign.phase === "burning" && !manual) engineRef.current = throttle > 0;
+      }
+      void ceilingLimited;
+      // Keep the published instruments honest about the commanded throttle.
+      throttleRef.current = throttle;
+
+
       const engineOn = engineRef.current && state.descentPropellantKg > 0;
 
       // Control-roughness metric (mean |d(command)/dt| over the flight).
@@ -397,23 +453,37 @@ export function usePlaySession(
 
   const onDskyKey = useCallback(
     (code: number | "PRO") => {
+      // The AGC already received this keystroke upstream. Here we only run the
+      // bridged cockpit ritual: PRO answers the flashing V99 request.
+      if (code === "PRO") dispatchIgnition({ kind: "proceed" });
       setProcedure((prev) => {
         const next = reduceProcedure(script, prev, {
           kind: "key",
           code,
           missionTimeUs: flightRef.current.missionTimeUs,
+          gates: { engineArmed: ignitionRef.current.engineArmed },
         });
         procedureRef.current = next;
         if (!prev.manualControlUnlocked && next.manualControlUnlocked) {
           const o = computeOrbitalValues(flightRef.current);
           recordTakeover(o.altitudeM > 300);
         }
+        // A step may arm the PDI countdown clock on completion.
+        const done = currentStep(script, prev);
+        if (
+          done?.startsIgnitionCountdown === true &&
+          next.stepIndex > prev.stepIndex
+        ) {
+          dispatchIgnition({ kind: "start" });
+          setRunning(true);
+        }
         if (!prev.flightLockReleased && next.flightLockReleased) setRunning(true);
         return next;
       });
     },
-    [script, recordTakeover],
+    [script, recordTakeover, dispatchIgnition],
   );
+
 
   const actions = useMemo(
     () => ({
@@ -457,8 +527,9 @@ export function usePlaySession(
       },
       setEngine: (on: boolean) => { engineRef.current = on; },
       trimRod: (steps: number) => { rodTargetRef.current += steps * ROD_INCREMENT_MPS; },
+      setEngineArm: (on: boolean) => { dispatchIgnition({ kind: "arm", on }); },
     }),
-    [onDskyKey, script, recordTakeover],
+    [onDskyKey, script, recordTakeover, dispatchIgnition],
   );
 
   return {
@@ -476,8 +547,11 @@ export function usePlaySession(
     summary,
     score,
     manualUnlocked: procedure.manualControlUnlocked,
-    flightLockReleased: procedure.flightLockReleased,
+    flightLockReleased: procedure.flightLockReleased || ignition.phase !== "standby",
     gamepadConnected,
+    ignition,
+    ignitionClock: formatTig(ignition),
+    bridgedDskyRequest: bridgedRequestFor(ignition),
     actions,
   };
 }

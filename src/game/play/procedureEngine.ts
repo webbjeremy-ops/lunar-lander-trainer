@@ -13,8 +13,22 @@ import { describeKey } from "./procedures";
 
 export type ProcedureKeyInput = number | "PRO";
 
+/**
+ * Cockpit state the reducer may consult when a step declares a hardware
+ * pre-condition (e.g. Aldrin's ENG ARM switch before PROCEED). Purely an
+ * input: the reducer never mutates the cockpit.
+ */
+export interface ProcedureGates {
+  readonly engineArmed?: boolean;
+}
+
 export type ProcedureEvent =
-  | { readonly kind: "key"; readonly code: ProcedureKeyInput; readonly missionTimeUs: number }
+  | {
+      readonly kind: "key";
+      readonly code: ProcedureKeyInput;
+      readonly missionTimeUs: number;
+      readonly gates?: ProcedureGates;
+    }
   | { readonly kind: "hint"; readonly missionTimeUs: number }
   | { readonly kind: "reset-entry"; readonly missionTimeUs: number };
 
@@ -138,6 +152,24 @@ export function reduceProcedure(
       kind: "reset-entry",
       missionTimeUs: event.missionTimeUs,
     });
+  }
+
+  // Hardware pre-condition: PROCEED is refused while the descent engine is
+  // unarmed, exactly as the real ENG ARM switch gated ignition. The AGC still
+  // received the keystroke; only the procedure refuses to advance.
+  if (step.requiresEngineArm === true && event.gates?.engineArmed !== true) {
+    return {
+      ...state,
+      lastMessage:
+        "ENG ARM is OFF — arm the descent engine before PROCEED. " +
+        "(Aldrin threw ENG ARM to DESCENT before Armstrong keyed PRO.)",
+      log: push(state.log, {
+        missionTimeUs: event.missionTimeUs,
+        stepId: step.id,
+        outcome: "incorrect",
+        message: "PROCEED refused — ENG ARM off",
+      }),
+    };
   }
 
   // After a wrong key the player must clear before the machine re-arms. The
