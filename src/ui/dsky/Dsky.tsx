@@ -99,6 +99,19 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
     /** Program-alarm code shown in the R1 position for the alarm variant. */
     readonly code?: string;
   } | null;
+  /** HISTORICALLY GROUNDED PROCEDURE BRIDGE: descent-monitor register content
+   *  produced by the game (not by the rope) and drawn as a labelled strip
+   *  BELOW the authentic registers. Never injected into the AGC. */
+  bridgedRegisters?: {
+    readonly program: string;
+    readonly verb: string;
+    readonly noun: string;
+    readonly r1: string;
+    readonly r2: string;
+    readonly r3: string;
+    readonly units: readonly [string, string, string];
+    readonly caption: string;
+  } | null;
 }) {
 
   const clientRef = useRef<AgcWorkerClient | null>(null);
