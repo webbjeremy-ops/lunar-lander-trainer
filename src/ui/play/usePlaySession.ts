@@ -99,6 +99,15 @@ import {
   LUNAR_ENVIRONMENT,
 } from "@/simulation/lunar2d/LunarMissionConstants";
 
+import {
+  createGamepadEdgeState,
+  mapXboxInput,
+  readLivePad,
+  type GamepadEdgeState,
+  type XboxCockpitInput,
+} from "./xboxGamepad";
+import { GamepadHaptics } from "./gamepadHaptics";
+
 const MU_M3S2 = LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value;
 const MAX_DPS_THRUST_N = DESCENT_ENGINE.maxThrustN.value;
 const STEP_US = 20_000;
@@ -341,6 +350,10 @@ export function usePlaySession(
   const attitudeRef = useRef(0);
   /** One-shot rate kick consumed by the attitude controller on key press. */
   const attitudeKickRef = useRef(0);
+  // M4.30 — Xbox controller: button-edge state and the haptics driver. Both
+  // live in refs because the 50 Hz loop reads them without re-rendering.
+  const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
+  const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
 
   const engineRef = useRef(false);
   const rodTargetRef = useRef(-mission.initial.radialSpeedMps > 0 ? -1 : -1);
@@ -597,11 +610,10 @@ export function usePlaySession(
         if (held.has("ArrowLeft")) stick -= 1;
         if (held.has("ArrowRight")) stick += 1;
 
-        const pad = readGamepad();
-        if (pad) {
-          if (Math.abs(pad.attitude) > 0.12) stick = pad.attitude;
-          if (pad.throttle !== null) throttleRef.current = pad.throttle;
-        }
+        // M4.30 — Xbox: left stick winds the throttle, right stick pitches.
+        const pad = padInputRef.current;
+        if (pad.thrustRate !== 0) throttleRef.current += pad.thrustRate * 1.8 * STEP_S;
+        if (pad.pitch !== 0) stick = pad.pitch;
 
         // M4.10 rate-command / attitude-hold: the stick commands a body rate,
         // and a released stick commands zero rate so the RCS nulls rotation
@@ -624,7 +636,7 @@ export function usePlaySession(
         // P66 rate-of-descent: with no direct thrust input, the throttle is
         // servoed onto the ROD target (as the real ROD switch trimmed it).
         const noThrustInput =
-          !held.has("ArrowUp") && !held.has("ArrowDown") && (!pad || pad.throttle === null);
+          !held.has("ArrowUp") && !held.has("ArrowDown") && pad.thrustRate === 0;
         if (noThrustInput && engineRef.current) {
           const o = computeOrbitalValues(state);
           const mass = totalMassKg(state);
@@ -1110,17 +1122,4 @@ function clamp01(x: number): number {
 
 function clampSigned(x: number): number {
   return x < -1 ? -1 : x > 1 ? 1 : x;
-}
-
-function readGamepad(): { attitude: number; throttle: number | null } | null {
-  if (typeof navigator === "undefined" || !navigator.getGamepads) return null;
-  for (const pad of navigator.getGamepads()) {
-    if (!pad) continue;
-    const attitude = pad.axes[0] ?? 0;
-    const rt = pad.buttons[7]?.value ?? 0;
-    const lt = pad.buttons[6]?.value ?? 0;
-    const throttle = rt > 0.02 || lt > 0.02 ? clamp01(rt - lt) : null;
-    return { attitude, throttle };
-  }
-  return null;
 }
