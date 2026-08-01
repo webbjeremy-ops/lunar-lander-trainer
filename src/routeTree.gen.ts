@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SourcesRouteImport } from './routes/sources'
 import { Route as SimRouteImport } from './routes/sim'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PlayRouteImport } from './routes/play'
 import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as LearnRouteImport } from './routes/learn'
@@ -30,6 +31,11 @@ const SourcesRoute = SourcesRouteImport.update({
 const SimRoute = SimRouteImport.update({
   id: '/sim',
   path: '/sim',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PlayRoute = PlayRouteImport.update({
@@ -91,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/learn': typeof LearnRoute
   '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
+  '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -105,6 +112,7 @@ export interface FileRoutesByTo {
   '/learn': typeof LearnRoute
   '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
+  '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -120,6 +128,7 @@ export interface FileRoutesById {
   '/learn': typeof LearnRoute
   '/missions': typeof MissionsRoute
   '/play': typeof PlayRoute
+  '/settings': typeof SettingsRoute
   '/sim': typeof SimRoute
   '/sources': typeof SourcesRoute
   '/dev/lm-physics': typeof DevLmPhysicsRoute
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/missions'
     | '/play'
+    | '/settings'
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/missions'
     | '/play'
+    | '/settings'
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
@@ -164,6 +175,7 @@ export interface FileRouteTypes {
     | '/learn'
     | '/missions'
     | '/play'
+    | '/settings'
     | '/sim'
     | '/sources'
     | '/dev/lm-physics'
@@ -179,6 +191,7 @@ export interface RootRouteChildren {
   LearnRoute: typeof LearnRoute
   MissionsRoute: typeof MissionsRoute
   PlayRoute: typeof PlayRoute
+  SettingsRoute: typeof SettingsRoute
   SimRoute: typeof SimRoute
   SourcesRoute: typeof SourcesRoute
   DevLmPhysicsRoute: typeof DevLmPhysicsRoute
@@ -200,6 +213,13 @@ declare module '@tanstack/react-router' {
       path: '/sim'
       fullPath: '/sim'
       preLoaderRoute: typeof SimRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/play': {
@@ -283,6 +303,7 @@ const rootRouteChildren: RootRouteChildren = {
   LearnRoute: LearnRoute,
   MissionsRoute: MissionsRoute,
   PlayRoute: PlayRoute,
+  SettingsRoute: SettingsRoute,
   SimRoute: SimRoute,
   SourcesRoute: SourcesRoute,
   DevLmPhysicsRoute: DevLmPhysicsRoute,
