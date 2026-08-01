@@ -185,6 +185,13 @@ export function usePlaySession(
   const [roll, setRoll] = useState<DescentRollState>(createDescentRollState);
   const [alarms, setAlarms] = useState<ProgramAlarmState>(createProgramAlarmState);
   const [acknowledgedCallouts, setAcknowledgedCallouts] = useState<readonly string[]>([]);
+  /**
+   * Ignition-relative descent clock. Normally the PDI sequence drives it, but
+   * it falls back to the first burning step so the roll cue, the crew callouts
+   * and the 1201/1202 alarms still occur if the player skipped the ritual.
+   */
+  const descentClockRef = useRef(0);
+  const [descentClockUs, setDescentClockUs] = useState(0);
   // The Apollo 11 mission always flies the historical roll / alarm / callout
   // timeline, whatever control mode the player picked — the alarms are part of
   // the flight, not part of the DSKY procedure script.
@@ -393,6 +400,7 @@ export function usePlaySession(
       if (steps > 0) {
         flightRef.current = state;
         setFlight(state);
+        setDescentClockUs(descentClockRef.current);
         if (state.terminalState !== null) setRunning(false);
       }
     };
