@@ -98,7 +98,33 @@ export const ROLL_COMPLETE_CALLOUT: RollCallout = {
 
 // --- Reducer -----------------------------------------------------------------
 
-export function createDescentRollState(): DescentRollState {
+/**
+ * Altitude at which Eagle had already completed the windows-up roll. The
+ * maneuver was flown at T+200 s, high in the braking phase (~13 km). Any
+ * scenario that starts the crew below this altitude begins AFTER the roll, so
+ * the vehicle is already windows-up with the landing radar at the surface —
+ * there is nothing left to cue.
+ */
+export const ROLL_COMPLETE_ALTITUDE_M = 12_000;
+
+/** True when a scenario starting at this altitude is already windows-up. */
+export function startsWindowsUp(initialAltitudeM: number): boolean {
+  return initialAltitudeM < ROLL_COMPLETE_ALTITUDE_M;
+}
+
+export function createDescentRollState(
+  options: { readonly windowsUp?: boolean } = {},
+): DescentRollState {
+  if (options.windowsUp) {
+    return {
+      rollDeg: 0,
+      phase: "windows-up",
+      commanded: false,
+      cueGiven: true,
+      completedSinceIgnitionUs: 0,
+      lastMessage: "Windows-up — the roll was flown before this point in the descent.",
+    };
+  }
   return {
     rollDeg: INITIAL_ROLL_DEG,
     phase: "windows-down",

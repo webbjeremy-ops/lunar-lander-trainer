@@ -132,21 +132,33 @@ export function AttitudePanel({
 }
 
 function RollDial({ rollDeg }: { rollDeg: number }) {
-  // 0° draws the LM upright (windows up); 180° draws it inverted.
+  // Roll is rotation ABOUT the thrust (longitudinal) axis, so the dial is an
+  // aft view looking straight down that axis: the body stays a circle and only
+  // the crew-window face and the landing-radar antenna swing around it. A
+  // side-profile silhouette that tipped over would depict an attitude tumble,
+  // which is not what this maneuver is. 0° = windows toward the surface
+  // (bottom of the dial), 180° = windows toward space.
   return (
     <svg
       viewBox="0 0 48 48"
       width={48}
       height={48}
       role="img"
-      aria-label={`Vehicle roll ${rollDeg.toFixed(0)} degrees`}
+      aria-label={`Vehicle roll ${rollDeg.toFixed(0)} degrees about the thrust axis`}
       className="shrink-0"
     >
+      {/* Fixed surface reference: the ground is always at the bottom. */}
       <circle cx="24" cy="24" r="21" className="fill-muted stroke-border" strokeWidth="1.5" />
-      <g transform={`rotate(${rollDeg} 24 24)`}>
-        <path d="M24 9 L31 22 L17 22 Z" className="fill-foreground" />
-        <rect x="16" y="22" width="16" height="11" rx="2" className="fill-foreground/70" />
-        <line x1="24" y1="33" x2="24" y2="39" className="stroke-foreground" strokeWidth="2" />
+      <line x1="3" y1="42" x2="45" y2="42" className="stroke-border" strokeWidth="2" />
+      {/* Rolling body, viewed end-on. */}
+      <g transform={`rotate(${-rollDeg} 24 24)`}>
+        <circle cx="24" cy="24" r="13" className="fill-foreground/25 stroke-foreground/60" strokeWidth="1.5" />
+        {/* Crew window band on one face… */}
+        <rect x="17" y="32" width="14" height="4" rx="1.5" className="fill-sky-300" />
+        {/* …landing-radar antenna on the opposite face. */}
+        <rect x="20" y="11" width="8" height="3" rx="1" className="fill-amber-400" />
+        {/* Roll index mark, so the rotation itself is readable. */}
+        <line x1="24" y1="24" x2="24" y2="37" className="stroke-foreground/70" strokeWidth="1.5" />
       </g>
     </svg>
   );
