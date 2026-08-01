@@ -76,6 +76,11 @@ export interface ScoreLayers {
   readonly pulseBpm: number;
   /** Seconds between under-melody notes — shortens as tension rises. */
   readonly melodyNoteSec: number;
+  /**
+   * 0 = simple sustained pedal tones, 1 = fully arpeggiated running line.
+   * Selects the melodic pattern and the note articulation.
+   */
+  readonly melodyArp: number;
   /** Low-pass cutoff on the bed, Hz — opens up as tension rises. */
   readonly cutoffHz: number;
 }
@@ -83,6 +88,7 @@ export interface ScoreLayers {
 /** Layer gains for a tension value. Monotonic in tension by construction. */
 export function scoreLayers(tension: number): ScoreLayers {
   const t = clamp01(tension);
+  const arp = clamp01((t - 0.22) / 0.55);
   return {
     drone: 0.5 + 0.35 * t,
     pulse: t < 0.25 ? 0 : 0.18 + 0.5 * (t - 0.25),
@@ -90,8 +96,11 @@ export function scoreLayers(tension: number): ScoreLayers {
     dissonance: t < 0.78 ? 0 : (t - 0.78) * 3.2,
     melody: t < 0.12 ? 0 : clamp01(0.35 + 0.75 * (t - 0.12)),
     pulseBpm: 44 + 76 * t,
-    melodyNoteSec: 2.4 - 1.5 * t,
+    // 3.2 s pedal tones early, down to ~0.32 s sixteenth-feel arpeggios late.
+    melodyNoteSec: 3.2 - 2.88 * arp,
+    melodyArp: arp,
     cutoffHz: 220 + 1_600 * t * t,
   };
+
 }
 
