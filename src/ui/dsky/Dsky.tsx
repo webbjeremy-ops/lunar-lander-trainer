@@ -93,6 +93,10 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
    *  to the AGC worker, so observers can never alter what the AGC sees.
    *  Used by /play to drive the DSKY procedure state machine. */
   onKeyPress?: (code: number | "PRO") => void;
+  /** M4.31 — hands the parent a function that taps a key exactly as the
+   *  keypad does (AGC first, observers after). /play uses it for controller
+   *  program acceptance; the AGC still receives every individual keystroke. */
+  onKeyInjector?: (send: ((code: number | "PRO") => void) | null) => void;
   /** Hide the laboratory diagnostics (channel watch, erasable dump, event
    *  log, provenance) and leave only the DSKY face + keypad. */
   compact?: boolean;
@@ -301,6 +305,13 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
     onKeyPressRef.current?.(code);
   }, []);
 
+
+  const onKeyInjectorRef = useRef(onKeyInjector);
+  useEffect(() => { onKeyInjectorRef.current = onKeyInjector; }, [onKeyInjector]);
+  useEffect(() => {
+    onKeyInjectorRef.current?.(sendKey);
+    return () => onKeyInjectorRef.current?.(null);
+  }, [sendKey]);
 
   const disabledRef = useRef(disabled);
   useEffect(() => { disabledRef.current = disabled; }, [disabled]);
