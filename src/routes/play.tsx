@@ -159,6 +159,16 @@ function PlayClient() {
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     running: session.running,
   });
+
+  // M4.31 — restored Apollo 11 air-to-ground recordings, cued by story beat.
+  useMissionAudio({
+    enabled: musicScore.enabled,
+    engineOn: session.controls.engineOn,
+    activeAlarmId: session.alarms.active?.id ?? null,
+    calloutId: session.callout?.id ?? null,
+    contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
+  });
+
   const agc = useAgcSession();
 
   // "The Eagle has landed" — plays once on a successful touchdown.
