@@ -330,6 +330,7 @@ function PlayClient() {
                 sharedReady={agc.ready}
                 onKeyPress={handleKey}
                 bridgedRequest={session.bridgedAlarm ?? session.bridgedDskyRequest}
+                bridgedRegisters={session.descentMonitor}
                 compact
               />
             ) : (
