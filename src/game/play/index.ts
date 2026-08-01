@@ -10,6 +10,7 @@ export * from "./ignitionSequence";
 export * from "./descentRoll";
 export * from "./descentClock";
 export * from "./descentPhase";
+export * from "./windowLandmarks";
 export * from "./descentTimeline";
 export * from "./descentMonitor";
 export * from "./descentCallouts";
