@@ -33,7 +33,7 @@ export const LEARNING_TRACKS: readonly LearningTrack[] = [
       "lesson-12-high-gate-to-low-gate",
       "lesson-13-fly-the-terminal-descent",
     ],
-    unlocksMissions: ["landing-fundamentals"],
+    unlocksMissions: ["full-descent"],
   },
   {
     id: TRACK_ROCKET,
