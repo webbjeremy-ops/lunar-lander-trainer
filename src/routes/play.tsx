@@ -253,6 +253,10 @@ function PlayClient() {
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
         <div className="space-y-3">
+          <CalloutOverlay
+            callout={session.callout}
+            onAcknowledge={session.actions.acknowledgeCallout}
+          />
           <LunarScene
             flight={session.flight}
             orbit={session.orbit}
