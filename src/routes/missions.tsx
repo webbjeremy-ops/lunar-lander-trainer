@@ -2,8 +2,7 @@
 //
 // M4.4 — /missions : the single hub for every playable mission.
 //
-// This route only presents the existing frozen registries (M4.1 descent,
-// M4.3 ascent). It defines no new mission and changes no flight mechanics.
+// This route presents the frozen M4.1 lunar-descent registry only.
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { MISSIONS } from "@/game/play";
