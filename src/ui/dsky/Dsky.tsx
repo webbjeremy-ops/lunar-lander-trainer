@@ -622,8 +622,9 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
       </div>
 
 
-      <div className="rounded border border-neutral-800 bg-neutral-950 p-3" data-testid="dsky-keypad">
-        <div className="grid w-64 grid-cols-4 gap-1" onPointerLeave={releaseAll} onBlur={releaseAll}>
+      <div className="min-w-0 rounded border border-neutral-800 bg-neutral-950 p-3" data-testid="dsky-keypad">
+        <div className="grid w-full max-w-[16rem] grid-cols-4 gap-1" onPointerLeave={releaseAll} onBlur={releaseAll}>
+
           {KEY_LAYOUT.map(({ label, code }) => (
             <button
               key={label}
