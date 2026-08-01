@@ -1,0 +1,146 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+//
+// M4.30 — Controller haptics for the LM cockpit.
+//
+// Two kinds of feedback:
+//   * a CONTINUOUS engine bed whose magnitude tracks the DPS throttle, so the
+//     crew feels the burn build at ignition and ease off at throttle recovery;
+//   * discrete PULSES for the events that are felt in the cabin — ignition,
+//     the program alarm, probe contact, touchdown, a hard landing, abort.
+//
+// The magnitude maths is pure and unit-tested; only `GamepadHaptics` touches
+// the browser's vibration actuator, which is a no-op on pads that lack one.
+
+export type HapticEvent =
+  | "ignition"
+  | "alarm"
+  | "contact"
+  | "touchdown"
+  | "hard-landing"
+  | "crash"
+  | "abort"
+  | "throttle-recovery";
+
+export interface RumbleEffect {
+  readonly durationMs: number;
+  readonly weakMagnitude: number;
+  readonly strongMagnitude: number;
+}
+
+/** Discrete event feedback, tuned so each event feels distinct. */
+export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
+  // Ignition: a hard shove, then the engine bed takes over.
+  ignition: { durationMs: 700, weakMagnitude: 0.6, strongMagnitude: 1 },
+  // Master alarm: sharp and high-frequency, unmistakably a warning.
+  alarm: { durationMs: 320, weakMagnitude: 1, strongMagnitude: 0.25 },
+  // Probe contact: the light and the bump the crew actually felt.
+  contact: { durationMs: 220, weakMagnitude: 0.45, strongMagnitude: 0.7 },
+  touchdown: { durationMs: 550, weakMagnitude: 0.5, strongMagnitude: 0.85 },
+  "hard-landing": { durationMs: 900, weakMagnitude: 0.9, strongMagnitude: 1 },
+  crash: { durationMs: 1200, weakMagnitude: 1, strongMagnitude: 1 },
+  abort: { durationMs: 800, weakMagnitude: 0.8, strongMagnitude: 1 },
+  // Throttle recovery out of the fixed throttle point: a short notch.
+  "throttle-recovery": { durationMs: 200, weakMagnitude: 0.35, strongMagnitude: 0.2 },
+};
+
+/** Engine bed refresh period, ms. Effects are re-armed slightly early. */
+export const ENGINE_BED_PERIOD_MS = 180;
+
+/**
+ * Engine rumble for a commanded throttle. Silent with the engine off; a floor
+ * of idle vibration once it is lit so the pad is never dead during a burn.
+ */
+export function engineRumble(throttle: number, engineOn: boolean): RumbleEffect | null {
+  if (!engineOn || throttle <= 0.001) return null;
+  const t = Math.max(0, Math.min(1, throttle));
+  return {
+    durationMs: ENGINE_BED_PERIOD_MS + 60,
+    weakMagnitude: 0.08 + 0.32 * t,
+    strongMagnitude: 0.1 + 0.55 * t,
+  };
+}
+
+interface VibrationActuatorLike {
+  playEffect(type: string, params: Record<string, number>): Promise<unknown>;
+  reset?(): Promise<unknown>;
+}
+
+interface PadWithHaptics {
+  readonly vibrationActuator?: VibrationActuatorLike | null;
+}
+
+function actuatorOf(pad: unknown): VibrationActuatorLike | null {
+  const a = (pad as PadWithHaptics | null)?.vibrationActuator;
+  return a && typeof a.playEffect === "function" ? a : null;
+}
+
+/**
+ * Drives the pad. `tick` is called from the flight loop with the live throttle;
+ * `pulse` is called from event edges. Event pulses take priority: the engine
+ * bed is suppressed until the pulse has played out, so a landing thump is not
+ * washed out by the burn.
+ */
+export class GamepadHaptics {
+  private enabled = true;
+  private nextBedAtMs = 0;
+  private pulseUntilMs = 0;
+
+  setEnabled(enabled: boolean): void {
+    this.enabled = enabled;
+    if (!enabled) this.stop();
+  }
+
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
+  private play(effect: RumbleEffect): void {
+    if (!this.enabled) return;
+    if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+    for (const pad of navigator.getGamepads()) {
+      const actuator = actuatorOf(pad);
+      if (!actuator) continue;
+      void actuator
+        .playEffect("dual-rumble", {
+          startDelay: 0,
+          duration: effect.durationMs,
+          weakMagnitude: effect.weakMagnitude,
+          strongMagnitude: effect.strongMagnitude,
+        })
+        .catch(() => undefined);
+    }
+  }
+
+  /** Discrete event feedback. */
+  pulse(event: HapticEvent, nowMs: number = Date.now()): void {
+    const effect = HAPTIC_EVENTS[event];
+    this.play(effect);
+    this.pulseUntilMs = nowMs + effect.durationMs;
+    this.nextBedAtMs = this.pulseUntilMs;
+  }
+
+  /** Continuous engine bed; safe to call every frame. */
+  tick(throttle: number, engineOn: boolean, nowMs: number = Date.now()): void {
+    if (!this.enabled) return;
+    if (nowMs < this.pulseUntilMs) return;
+    const effect = engineRumble(throttle, engineOn);
+    if (effect === null) {
+      if (this.nextBedAtMs !== 0) {
+        this.stop();
+        this.nextBedAtMs = 0;
+      }
+      return;
+    }
+    if (nowMs < this.nextBedAtMs) return;
+    this.nextBedAtMs = nowMs + ENGINE_BED_PERIOD_MS;
+    this.play(effect);
+  }
+
+  stop(): void {
+    if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+    for (const pad of navigator.getGamepads()) {
+      const actuator = actuatorOf(pad);
+      if (actuator?.reset) void actuator.reset().catch(() => undefined);
+    }
+  }
+}
