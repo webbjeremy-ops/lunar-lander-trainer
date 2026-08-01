@@ -626,8 +626,10 @@ export function usePlaySession(
       hadAlarm = alarmActive;
 
       const contact =
-        computeOrbitalValues(state).altitudeM <= CONTACT_LIGHT_ALTITUDE_M &&
-        state.terminalState === null;
+        contactLightState({
+          altitudeM: computeOrbitalValues(state).altitudeM,
+          terminalState: state.terminalState,
+        }).on && state.terminalState === null;
       if (contact && !hadContact) haptics.pulse("contact");
       hadContact = contact;
 
