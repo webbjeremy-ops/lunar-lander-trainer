@@ -33,7 +33,7 @@ export const LEARNING_TRACKS: readonly LearningTrack[] = [
       "lesson-12-high-gate-to-low-gate",
       "lesson-13-fly-the-terminal-descent",
     ],
-    unlocksMissions: ["terminal-descent", "high-gate-challenge"],
+    unlocksMissions: ["landing-fundamentals"],
   },
   {
     id: TRACK_ROCKET,
@@ -58,7 +58,7 @@ export const LEARNING_TRACKS: readonly LearningTrack[] = [
       "lesson-14-pipa-and-landing-radar",
       "lesson-07-powered-descent-timeline",
     ],
-    unlocksMissions: ["apollo11-powered-descent"],
+    unlocksMissions: ["full-descent"],
   },
   {
     id: TRACK_ORBITAL,

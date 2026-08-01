@@ -18,9 +18,7 @@ export type ControlModeId = "quick-manual" | "agc-assisted" | "training";
 
 export type MissionId =
   | "landing-fundamentals"
-  | "terminal-descent"
-  | "high-gate-challenge"
-  | "apollo11-powered-descent"
+  | "full-descent"
   | "free-flight";
 
 /** Coarse phase of the player experience (distinct from AGC major modes). */
