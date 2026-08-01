@@ -514,8 +514,9 @@ function PlayClient() {
             />
           )}
 
-          {(session.ignition.phase !== "standby" ||
-            session.descentClock.mode === "running") && (
+          {session.descentClock.mode === "running" &&
+            session.descentClock.sinceIgnitionUs >=
+              (milestoneSec("yaw-around") - 60) * 1_000_000 && (
             <AttitudePanel
               roll={session.roll}
               alarms={session.alarms}
