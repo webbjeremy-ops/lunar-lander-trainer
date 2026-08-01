@@ -62,24 +62,32 @@ function PlayPage() {
     <main className="min-h-screen bg-neutral-900 text-neutral-100">
       <header className="border-b border-neutral-800 px-4 py-3">
         <h1 className="text-sm font-semibold uppercase tracking-widest text-emerald-400">
-          AGC — Tranquility · Lunar Descent
+          Lunar descent · fly the landing
         </h1>
         <p className="mt-1 text-xs text-neutral-400">
           Fly the descent with the real Apollo Guidance Computer beside you.{" "}
+          <Link className="text-emerald-400" to="/missions">All missions</Link> ·{" "}
           <Link className="text-emerald-400" to="/play/ascent">Lunar ascent</Link> ·{" "}
-          <Link className="text-emerald-400" to="/sim">Laboratory</Link> ·{" "}
-          <Link className="text-emerald-400" to="/learn">Learn the DSKY</Link> ·{" "}
+          <Link className="text-emerald-400" to="/sim">AGC Lab</Link> ·{" "}
+          <Link className="text-emerald-400" to="/learn">Learn</Link> ·{" "}
           <Link className="text-emerald-400" to="/sources">Sources</Link>
         </p>
       </header>
-      <ClientOnly fallback={<div className="p-6 text-xs text-neutral-500">Loading cockpit…</div>}>
-        <PlayClient />
-      </ClientOnly>
+      <p className="orientation-hint border-b border-amber-900/60 bg-amber-950/30 px-4 py-2 text-xs text-amber-200">
+        Rotate your device to landscape — the cockpit needs the width.
+      </p>
+      <RouteErrorBoundary title="The cockpit stopped responding">
+        <ClientOnly fallback={<div className="p-6 text-xs text-neutral-500">Loading cockpit…</div>}>
+          <PlayClient />
+        </ClientOnly>
+      </RouteErrorBoundary>
     </main>
   );
 }
 
 function PlayClient() {
+  const { settings } = useSettings();
+
   // M4.2 — an incoming lesson challenge preselects and auto-starts the flight.
   const challenge = useMemo<ChallengeRequest | null>(() => {
     if (typeof window === "undefined") return null;
@@ -94,9 +102,12 @@ function PlayClient() {
   const [controlMode, setControlMode] = useState<ControlModeId>(
     (challenge?.controlMode as ControlModeId) ?? "quick-manual",
   );
+  // Onboarding / Settings choose the starting assistance level; a lesson
+  // challenge always wins, because its score threshold assumes that level.
   const [assistance, setAssistance] = useState<AssistanceLevel>(
-    (challenge?.assistance as AssistanceLevel) ?? "instructor",
+    (challenge?.assistance as AssistanceLevel) ?? (settings.assistance as AssistanceLevel),
   );
+
   const [started, setStarted] = useState(false);
 
   const mission = MISSIONS[missionId];
