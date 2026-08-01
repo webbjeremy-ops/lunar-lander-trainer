@@ -8,6 +8,7 @@
 // but its output never reaches `stepLunarFlight`.
 
 import type { LunarFlightState } from "@/simulation/lunar2d/types";
+import type { AlarmScoreInput } from "./programAlarms";
 
 /** How much cueing the game provides. Cues are advisory only. */
 export type AssistanceLevel = "instructor" | "pilot" | "commander";
@@ -102,6 +103,10 @@ export interface FlightSummary {
   readonly controlRoughness: number;
   readonly takeover: TakeoverRecord | null;
   readonly procedure: ProcedureScoreInput;
+  /** M4.8 — program-alarm handling, when the mission raises alarms. */
+  readonly alarms?: AlarmScoreInput;
+  /** M4.8 — true when the crew rolled windows-up before radar acquisition. */
+  readonly rolledWindowsUp?: boolean;
   readonly limits: LandingLimits;
 }
 

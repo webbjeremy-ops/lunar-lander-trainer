@@ -57,6 +57,13 @@ export interface DskyProcedureStep {
    * cockpit panel first (Aldrin's ENG ARM — DESCENT switch).
    */
   readonly requiresEngineArm?: boolean;
+  /**
+   * The step is refused until the vehicle has been rolled windows-up, because
+   * the landing radar cannot see the surface while the vehicle is face-down.
+   */
+  readonly requiresWindowsUp?: boolean;
+  /** The step is refused unless a program alarm is currently lit. */
+  readonly requiresAlarm?: boolean;
   /** Completing this step starts the PDI countdown clock. */
   readonly startsIgnitionCountdown?: boolean;
   /** Completing this step releases the flight-control lock for guided flight. */
@@ -88,6 +95,11 @@ export function majorModeKeys(program: number): ProcedureKey[] {
     ...digits(program, 2),
     AGC_KEY.ENTR,
   ];
+}
+
+/** Vvv E — a verb with no noun (e.g. V57 landing-radar acceptance). */
+export function verbKeys(verb: number): ProcedureKey[] {
+  return [AGC_KEY.VERB, ...digits(verb, 2), AGC_KEY.ENTR];
 }
 
 /** Vvv Nnn E — verb/noun display request. */
@@ -199,6 +211,65 @@ const POWERED_DESCENT_STEPS: readonly DskyProcedureStep[] = [
   },
 ];
 
+// M4.8 — Apollo 11 only: the windows-up roll, radar acceptance and the
+// program-alarm response. These sit between ignition and the approach phase.
+const APOLLO11_EXTRA_STEPS: readonly DskyProcedureStep[] = [
+  {
+    id: "roll-windows-up",
+    title: "Roll windows-up, then check Delta-H",
+    instruction:
+      "Eagle flew the early braking phase face-down. Roll 180° to windows-up " +
+      "on the cockpit ROLL control so the landing-radar antenna looks at the " +
+      "surface, then call the Delta-H display to compare radar altitude with " +
+      "the computer's estimate.",
+    keystrokes: "ROLL · WINDOWS UP, then V16 N68 E",
+    expected: verbNounKeys(16, 68),
+    phase: "guided-flight",
+    programLabel: "P63 · roll",
+    hint: "Hold ROLL (keyboard: R) until the indicator reads WINDOWS UP, then VERB · 1 · 6 · NOUN · 6 · 8 · ENTR.",
+    citation: FLIGHT_PLAN,
+    bridged: true,
+    requiresWindowsUp: true,
+  },
+  {
+    id: "lr-accept",
+    title: "Accept the landing radar",
+    instruction:
+      "With Delta-H small enough to trust, tell the computer to start " +
+      "incorporating radar altitude into its state estimate.",
+    keystrokes: "V57 E",
+    expected: verbKeys(57),
+    phase: "guided-flight",
+    programLabel: "P63 · LR",
+    hint: "VERB · 5 · 7 · ENTR.",
+    citation: FLIGHT_PLAN,
+    bridged: true,
+    requiresWindowsUp: true,
+  },
+  {
+    id: "alarm-response",
+    title: "Answer the program alarm",
+    instruction:
+      "A program alarm will light during the braking phase. Read the code " +
+      "with V05 N09 E, then clear the lamp with RSET. Keep flying: the call " +
+      "is made on whether guidance and the displays stay healthy.",
+    keystrokes: "V05 N09 E, then RSET",
+    expected: [...verbNounKeys(5, 9), AGC_KEY.RSET],
+    phase: "guided-flight",
+    programLabel: "P63 · alarm",
+    hint: "Wait for the PROG lamp, then VERB · 0 · 5 · NOUN · 0 · 9 · ENTR, then RSET.",
+    citation: FLIGHT_PLAN,
+    bridged: true,
+    requiresAlarm: true,
+  },
+];
+
+const APOLLO11_STEPS: readonly DskyProcedureStep[] = [
+  ...POWERED_DESCENT_STEPS.slice(0, 3),
+  ...APOLLO11_EXTRA_STEPS,
+  ...POWERED_DESCENT_STEPS.slice(3),
+];
+
 const TERMINAL_STEPS: readonly DskyProcedureStep[] = [
   POWERED_DESCENT_STEPS[0]!,
   // Terminal descent begins below high gate: there is no PDI countdown here.
@@ -217,6 +288,18 @@ export const POWERED_DESCENT_SCRIPT: DskyProcedureScript = {
   steps: POWERED_DESCENT_STEPS,
 };
 
+/**
+ * M4.8 — the full Apollo 11 flight, including the windows-up roll, landing-
+ * radar acceptance and the 1201/1202 program-alarm response. Other missions
+ * keep the shorter POWERED_DESCENT_SCRIPT.
+ */
+export const APOLLO11_DESCENT_SCRIPT: DskyProcedureScript = {
+  id: "apollo11-powered-descent-v2",
+  version: 2,
+  title: "Apollo 11 powered descent — roll, radar, alarms",
+  steps: APOLLO11_STEPS,
+};
+
 export const TERMINAL_DESCENT_SCRIPT: DskyProcedureScript = {
   id: "terminal-descent-v1",
   version: 1,
@@ -233,6 +316,7 @@ export const EMPTY_SCRIPT: DskyProcedureScript = {
 
 export const PROCEDURE_SCRIPTS: readonly DskyProcedureScript[] = [
   POWERED_DESCENT_SCRIPT,
+  APOLLO11_DESCENT_SCRIPT,
   TERMINAL_DESCENT_SCRIPT,
   EMPTY_SCRIPT,
 ];
@@ -243,11 +327,15 @@ export function scriptFor(
   mode: ControlModeId,
 ): DskyProcedureScript {
   if (mode === "quick-manual") return EMPTY_SCRIPT;
-  if (missionId === "apollo11-powered-descent" || missionId === "high-gate-challenge") {
-    return POWERED_DESCENT_SCRIPT;
-  }
+  if (missionId === "apollo11-powered-descent") return APOLLO11_DESCENT_SCRIPT;
+  if (missionId === "high-gate-challenge") return POWERED_DESCENT_SCRIPT;
   if (missionId === "free-flight") return EMPTY_SCRIPT;
   return TERMINAL_DESCENT_SCRIPT;
+}
+
+/** True when this mission flies the Apollo 11 roll + program-alarm timeline. */
+export function usesApollo11Timeline(script: DskyProcedureScript): boolean {
+  return script.id === APOLLO11_DESCENT_SCRIPT.id;
 }
 
 export function describeKey(code: ProcedureKey): string {
