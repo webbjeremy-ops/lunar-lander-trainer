@@ -27,6 +27,8 @@ import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
 
 import { CautionWarningPanel } from "@/ui/play/CautionWarningPanel";
+import { ContactLight } from "@/ui/play/ContactLight";
+import { contactLightState } from "@/game/play/contactLight";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
@@ -214,6 +216,11 @@ function PlayClient() {
     mission.initial.descentPropellantKg > 0
       ? session.flight.descentPropellantKg / mission.initial.descentPropellantKg
       : 0;
+  // Blue LUNAR CONTACT lamps: lit by the footpad probes, not by the computer.
+  const contact = contactLightState({
+    altitudeM: session.orbit.altitudeM,
+    terminalState: session.flight.terminalState,
+  });
   const cautionLamps = [
     {
       id: "prog",
@@ -472,6 +479,8 @@ function PlayClient() {
 
         <div className="space-y-3">
           <CautionWarningPanel lamps={cautionLamps} />
+
+          <ContactLight on={contact.on} />
 
           <FdaiBall
             pitchDeg={(session.flight.attitudeRad * 180) / Math.PI}
