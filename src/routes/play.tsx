@@ -16,7 +16,7 @@ import { Dsky } from "@/ui/dsky/Dsky";
 import { useAgcSession } from "@/agc/AgcSession";
 import { LunarScene } from "@/ui/play/LunarScene";
 import { CockpitWindowView } from "@/ui/play/CockpitWindowView";
-import { CockpitPanel1 } from "@/ui/play/CockpitPanel1";
+import { CockpitStation } from "@/ui/play/CockpitStation";
 
 
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
