@@ -42,6 +42,8 @@ export interface MissionAudioInput {
   readonly calloutId: string | null;
   /** Footpad probes have touched the surface. */
   readonly contact: boolean;
+  /** The vehicle hit the surface too hard — no touchdown call is earned. */
+  readonly crashed?: boolean;
 }
 
 /**
