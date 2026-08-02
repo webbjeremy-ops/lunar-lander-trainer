@@ -133,6 +133,13 @@ function PlayClient() {
 
   const [started, setStarted] = useState(false);
 
+  // M4.43 — controller rumble is a cockpit cue, so it must be silent while the
+  // player is still on the mission-select screen (the session simulates behind
+  // it). The player's preference is kept here and applied to the session only
+  // once the mission is under way.
+  const [hapticsPref, setHapticsPref] = useState(true);
+
+
   // M4.34 — out-the-window first-person view toggle.
   // The commander's window is the default view: it is the only one that shows
   // the surface actually moving (crater field sweeping aft) during braking.
@@ -174,13 +181,29 @@ function PlayClient() {
     duck: missionDuck,
   });
 
+  // M4.43 — cockpit audio only exists once the crew is actually flying. The
+  // session simulates behind the mission-select screen, so without the
+  // `started` gate the ignition recording and the DPS bed fired while the
+  // player was still choosing a mission. And the DPS counts as lit only once
+  // the descent clock runs: during the pre-TIG coast the engine command can
+  // flicker on for a frame before the countdown gate clamps it cold.
+  const audioLive = musicScore.enabled && started;
+
+  const setHaptics = session.actions.setHaptics;
+  useEffect(() => {
+    setHaptics(hapticsPref && started);
+  }, [setHaptics, hapticsPref, started]);
+
+  const engineLit =
+    audioLive && session.controls.engineOn && session.descentClock.mode === "running";
+
   // M4.26 — cockpit sound effects share the score's on/off state: DPS bed and
   // ignition swell from the live throttle, master alarm from the 1201/1202
   // lamp, contact chime from the footpad probes.
   useDescentSfx({
-    enabled: musicScore.enabled,
-    throttle: session.controls.throttle,
-    engineOn: session.controls.engineOn,
+    enabled: audioLive,
+    throttle: engineLit ? session.controls.throttle : 0,
+    engineOn: engineLit,
     alarmActive: session.alarms.lampOn,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     running: session.running,
@@ -189,13 +212,16 @@ function PlayClient() {
 
   // M4.31 — restored Apollo 11 air-to-ground recordings, cued by story beat.
   const missionAudio = useMissionAudio({
-    enabled: musicScore.enabled,
-    engineOn: session.controls.engineOn,
+    enabled: audioLive,
+    engineOn: engineLit,
     activeAlarmId: session.alarms.active?.id ?? null,
     calloutId: session.callout?.id ?? null,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
   });
+
+
+
 
   useEffect(() => {
     setMissionDuck(missionAudio.duck);
@@ -603,9 +629,10 @@ function PlayClient() {
             onRod={session.actions.trimRod}
           />
           <GamepadLegend
-            haptics={session.hapticsEnabled}
-            onHaptics={session.actions.setHaptics}
+            haptics={hapticsPref}
+            onHaptics={(on) => setHapticsPref(on)}
           />
+
         </div>
 
         <div className="space-y-3">
