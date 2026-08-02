@@ -47,6 +47,19 @@ export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
 export const ENGINE_BED_PERIOD_MS = 180;
 
 /**
+ * M4.45 — "motion" texture. With the DPS cold (coast, pre-TIG countdown, P66
+ * float) the pad would otherwise be dead. A soft irregular tremor keeps the
+ * vehicle feeling alive without masking the event pulses.
+ */
+export const MOTION_MIN_GAP_MS = 2200;
+export const MOTION_MAX_GAP_MS = 5200;
+export const MOTION_EFFECT: RumbleEffect = {
+  durationMs: 260,
+  weakMagnitude: 0.18,
+  strongMagnitude: 0.1,
+};
+
+/**
  * Engine rumble for a commanded throttle. Silent with the engine off; a floor
  * of idle vibration once it is lit so the pad is never dead during a burn.
  */
@@ -55,24 +68,35 @@ export function engineRumble(throttle: number, engineOn: boolean): RumbleEffect 
   const t = Math.max(0, Math.min(1, throttle));
   return {
     durationMs: ENGINE_BED_PERIOD_MS + 60,
-    weakMagnitude: 0.08 + 0.32 * t,
-    strongMagnitude: 0.1 + 0.55 * t,
+    weakMagnitude: 0.16 + 0.34 * t,
+    strongMagnitude: 0.22 + 0.6 * t,
   };
 }
+
 
 interface VibrationActuatorLike {
   playEffect(type: string, params: Record<string, number>): Promise<unknown>;
   reset?(): Promise<unknown>;
+  /** Older Firefox / WebKit surface. */
+  pulse?(value: number, durationMs: number): Promise<unknown>;
 }
 
 interface PadWithHaptics {
   readonly vibrationActuator?: VibrationActuatorLike | null;
+  readonly hapticActuators?: readonly VibrationActuatorLike[];
 }
 
 function actuatorOf(pad: unknown): VibrationActuatorLike | null {
-  const a = (pad as PadWithHaptics | null)?.vibrationActuator;
-  return a && typeof a.playEffect === "function" ? a : null;
+  const p = pad as PadWithHaptics | null;
+  const a = p?.vibrationActuator;
+  if (a && (typeof a.playEffect === "function" || typeof a.pulse === "function")) return a;
+  const legacy = p?.hapticActuators?.[0];
+  if (legacy && (typeof legacy.playEffect === "function" || typeof legacy.pulse === "function")) {
+    return legacy;
+  }
+  return null;
 }
+
 
 /**
  * Drives the pad. `tick` is called from the flight loop with the live throttle;
@@ -84,6 +108,7 @@ export class GamepadHaptics {
   private enabled = true;
   private nextBedAtMs = 0;
   private pulseUntilMs = 0;
+  private nextMotionAtMs = 0;
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -97,17 +122,33 @@ export class GamepadHaptics {
   private play(effect: RumbleEffect): void {
     if (!this.enabled) return;
     if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+    // Chrome hands out fresh Gamepad objects each poll; re-read every time so
+    // the actuator we talk to is never a stale one from a previous frame.
     for (const pad of navigator.getGamepads()) {
       const actuator = actuatorOf(pad);
       if (!actuator) continue;
-      void actuator
-        .playEffect("dual-rumble", {
-          startDelay: 0,
-          duration: effect.durationMs,
-          weakMagnitude: effect.weakMagnitude,
-          strongMagnitude: effect.strongMagnitude,
-        })
-        .catch(() => undefined);
+      const fallback = () => {
+        if (typeof actuator.pulse === "function") {
+          void actuator.pulse(effect.strongMagnitude, effect.durationMs).catch(() => undefined);
+        }
+      };
+      if (typeof actuator.playEffect === "function") {
+        try {
+          void actuator
+            .playEffect("dual-rumble", {
+              startDelay: 0,
+              duration: effect.durationMs,
+              weakMagnitude: effect.weakMagnitude,
+              strongMagnitude: effect.strongMagnitude,
+            })
+            .catch(fallback);
+        } catch {
+          fallback();
+        }
+      } else {
+        fallback();
+      }
+
     }
   }
 
@@ -117,6 +158,7 @@ export class GamepadHaptics {
     this.play(effect);
     this.pulseUntilMs = nowMs + effect.durationMs;
     this.nextBedAtMs = this.pulseUntilMs;
+    this.nextMotionAtMs = this.pulseUntilMs + MOTION_MIN_GAP_MS;
   }
 
   /** Continuous engine bed; safe to call every frame. */
@@ -129,11 +171,28 @@ export class GamepadHaptics {
         this.stop();
         this.nextBedAtMs = 0;
       }
+      this.tickMotion(nowMs);
       return;
     }
     if (nowMs < this.nextBedAtMs) return;
     this.nextBedAtMs = nowMs + ENGINE_BED_PERIOD_MS;
+    this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS;
     this.play(effect);
+  }
+
+  /**
+   * Occasional coast tremor. Only runs with the DPS cold, so it never fights
+   * the engine bed; the gap wanders so it does not read as a metronome.
+   */
+  private tickMotion(nowMs: number): void {
+    if (this.nextMotionAtMs === 0) {
+      this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS;
+      return;
+    }
+    if (nowMs < this.nextMotionAtMs) return;
+    const span = MOTION_MAX_GAP_MS - MOTION_MIN_GAP_MS;
+    this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS + Math.random() * span;
+    this.play(MOTION_EFFECT);
   }
 
   stop(): void {
@@ -144,3 +203,4 @@ export class GamepadHaptics {
     }
   }
 }
+

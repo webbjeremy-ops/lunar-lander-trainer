@@ -134,6 +134,25 @@ const ATTITUDE_TAP_RATE = 0.02;
 /** Rate-of-descent trim increment: 1 ft/s, as in the real P66 ROD switch. */
 export const ROD_INCREMENT_MPS = 0.3048;
 
+/**
+ * M4.45 — the A button acknowledges whichever affirmative call is on screen
+ * ("Got it" on the procedure coach, "Copy that" on a callout or a Houston
+ * call). Program alarms are deliberately excluded: those stay on RB.
+ * Presentation-level glue — it clicks the same control the mouse would.
+ */
+function acknowledgeOnScreenCall(): void {
+  if (typeof document === "undefined") return;
+  for (const id of ["procedure-coach-ack", "callout-ack", "houston-ack"]) {
+    const el = document.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`);
+    if (el && !el.disabled) {
+      el.click();
+      return;
+    }
+  }
+}
+
+
+
 
 export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
 
@@ -400,6 +419,10 @@ export function usePlaySession(
   const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
   const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
   const acceptProgramRef = useRef<() => void>(() => {});
+  // M4.45 — pad shortcuts for cockpit switches that live in React actions.
+  const takeoverRef = useRef<() => void>(() => {});
+  const setEngineArmRef = useRef<() => void>(() => {});
+
   const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   // M4.31 — easy program acceptance.
@@ -661,7 +684,14 @@ export function usePlaySession(
       }
       // Left bumper — easy program acceptance: key the pending DSKY step.
       if (input.acceptProgramPressed) acceptProgramRef.current();
-      // A — DPS on/off, but only once the crew actually has the vehicle.
+      // A — acknowledge the on-screen call ("Got it" / "Copy that"). Alarms are
+      // deliberately NOT dismissible this way; they stay on RB.
+      if (input.acknowledgePressed) acknowledgeOnScreenCall();
+      // X — ENG ARM, the PDI descent-arm switch.
+      if (input.armEnginePressed) setEngineArmRef.current();
+      // Left trigger — take manual control of the vehicle.
+      if (input.takeoverPressed) takeoverRef.current();
+      // Y — DPS on/off, but only once the crew actually has the vehicle.
       if (
         input.enginePressed &&
         procedureRef.current.manualControlUnlocked &&
@@ -679,6 +709,7 @@ export function usePlaySession(
         rodTargetRef.current += input.rodTrim * ROD_INCREMENT_MPS;
       }
     };
+
 
     // --- M4.30 haptics ------------------------------------------------------
     // Continuous engine bed plus a pulse on every event the crew would feel.
@@ -1136,6 +1167,8 @@ export function usePlaySession(
     acceptProgramRef.current = acceptProgram;
   }, [acceptProgram]);
 
+
+
   const actions = useMemo(
     () => ({
       setRunning,
@@ -1219,6 +1252,14 @@ export function usePlaySession(
     }),
     [onDskyKey, acceptProgram, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
+
+  // M4.45 — the pad drives the same cockpit switches the mouse does.
+  useEffect(() => {
+    takeoverRef.current = actions.takeover;
+    setEngineArmRef.current = () => {
+      actions.setEngineArm(!ignitionRef.current.engineArmed);
+    };
+  }, [actions]);
 
 
   const descentMonitor = useMemo(

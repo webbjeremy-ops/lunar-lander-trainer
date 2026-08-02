@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// M4.30 — Xbox controller mapping for the LM cockpit.
+// M4.30 / M4.45 — Xbox controller mapping for the LM cockpit.
 //
 // This module is PURE: it turns a raw gamepad snapshot into a cockpit input
 // record and tracks button edges. It never touches the flight kernel, the AGC
 // or React. The physical mapping the crew asked for:
 //
-//   Left stick (vertical)   thrust — pushed forward the throttle winds up,
-//                           pulled back it winds down (rate control, exactly
-//                           like holding the arrow keys)
+//   Left stick (vertical)    thrust — pushed forward the throttle winds up,
+//                            pulled back it winds down (rate control, exactly
+//                            like holding the arrow keys)
 //   Right stick (horizontal) pitch — rate command to the attitude controller
 //   Right trigger            roll toward windows-up (the R key)
+//   Left trigger             TAKE MANUAL CONTROL (crew handover)
+//   A                        acknowledge the on-screen call — "Got it" /
+//                            "Copy that" (never an alarm)
+//   X                        ENG ARM — the PDI descent-arm switch
+//   Y                        DPS engine on/off
+//   B                        ABORT STAGE
 //   Right bumper (RB)        cancel the program alarm
 //   Left bumper (LB)         easy program acceptance — key the pending DSKY
 //                            step for the crew (M4.31)
-//   A                        DPS engine on/off
-//   D-pad up / down          rate-of-descent trim (left trigger also trims down)
+//   D-pad up / down          rate-of-descent trim
+
 //
 // Standard-mapping indices are used throughout; every Xbox pad reports the
 // standard mapping in Chromium and Firefox.
@@ -66,11 +72,18 @@ export interface XboxCockpitInput {
   readonly rollPull: number;
   /** True while the right trigger is past the roll threshold. */
   readonly rollCommanded: boolean;
-  /** Rate-of-descent trim steps requested this frame (D-pad up/down, LT down). */
+  /** Rate-of-descent trim steps requested this frame (D-pad up/down). */
   readonly rodTrim: number;
   readonly cancelAlarmPressed: boolean;
   /** M4.31 — LB: key the pending DSKY step for the crew. */
   readonly acceptProgramPressed: boolean;
+  /** M4.45 — A: acknowledge the on-screen call ("Got it" / "Copy that"). */
+  readonly acknowledgePressed: boolean;
+  /** M4.45 — X: the PDI ENG ARM switch. */
+  readonly armEnginePressed: boolean;
+  /** M4.45 — left trigger: take manual control of the vehicle. */
+  readonly takeoverPressed: boolean;
+  /** Y: DPS engine on/off. */
   readonly enginePressed: boolean;
   readonly abortPressed: boolean;
 }
@@ -83,9 +96,13 @@ export const NEUTRAL_INPUT: XboxCockpitInput = {
   rodTrim: 0,
   cancelAlarmPressed: false,
   acceptProgramPressed: false,
+  acknowledgePressed: false,
+  armEnginePressed: false,
+  takeoverPressed: false,
   enginePressed: false,
   abortPressed: false,
 };
+
 
 /** Applies a deadzone and rescales the remainder to the full [-1, 1] range. */
 export function applyDeadzone(value: number, deadzone = STICK_DEADZONE): number {
@@ -142,14 +159,17 @@ export function mapXboxInput(
   };
 
   const cancelAlarmPressed = edge(BUTTON.rightBumper);
-  const enginePressed = edge(BUTTON.a);
+  const acknowledgePressed = edge(BUTTON.a);
+  const armEnginePressed = edge(BUTTON.x);
+  const enginePressed = edge(BUTTON.y);
   const abortPressed = edge(BUTTON.b);
   const acceptProgramPressed = edge(BUTTON.leftBumper);
   const trimUp = edge(BUTTON.dpadUp);
-  const dpadTrimDown = edge(BUTTON.dpadDown);
+  const trimDown = edge(BUTTON.dpadDown);
+  // Left trigger — manual takeover, on the pull edge only.
   const leftTriggerDown = buttonValue(pad, BUTTON.leftTrigger) > TRIGGER_THRESHOLD;
   if (leftTriggerDown) held.add(BUTTON.leftTrigger);
-  const trimDown = (leftTriggerDown && !wasHeld(BUTTON.leftTrigger)) || dpadTrimDown;
+  const takeoverPressed = leftTriggerDown && !wasHeld(BUTTON.leftTrigger);
 
   const rollPull = Math.max(0, Math.min(1, buttonValue(pad, BUTTON.rightTrigger)));
 
@@ -163,9 +183,13 @@ export function mapXboxInput(
       rodTrim: (trimUp ? 1 : 0) - (trimDown ? 1 : 0),
       cancelAlarmPressed,
       acceptProgramPressed,
+      acknowledgePressed,
+      armEnginePressed,
+      takeoverPressed,
       enginePressed,
       abortPressed,
     },
+
     next: { held },
   };
 }
