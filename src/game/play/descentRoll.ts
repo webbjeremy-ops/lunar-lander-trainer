@@ -67,7 +67,7 @@ export const WINDOWS_UP_TOLERANCE_DEG = 5;
 
 /**
  * The crew cue to roll windows-up is given at the canonical yaw-around
- * milestone (T+200 s), the SAME timebase entry the Aldrin transcript call and
+ * milestone (T+221 s, Armstrong's "rolling over" call at GET 102:36:46), the SAME timebase entry the Aldrin transcript call and
  * the procedure step use, so the cockpit cue can never precede the callout.
  */
 export const ROLL_CUE_SINCE_IGNITION_US = milestoneSec("yaw-around") * S;
@@ -100,7 +100,7 @@ export const ROLL_COMPLETE_CALLOUT: RollCallout = {
 
 /**
  * Altitude at which Eagle had already completed the windows-up roll. The
- * maneuver was flown at T+200 s, high in the braking phase (~13 km). Any
+ * maneuver was flown at T+221 s, high in the braking phase (~12.5 km). Any
  * scenario that starts the crew below this altitude begins AFTER the roll, so
  * the vehicle is already windows-up with the landing radar at the surface —
  * there is nothing left to cue.
