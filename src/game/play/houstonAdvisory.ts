@@ -137,8 +137,13 @@ export function houstonDeviations(
     );
   }
 
+  // M4.39 — The sink-rate rule of thumb is a *landing-phase* rule. During the
+  // computer-flown braking phase the nominal profile is deliberately hot
+  // (well over 100 ft/s), so calling it a deviation there — and escalating it
+  // to an abort — punishes the crew for the guidance program's own trajectory.
+  const sinkRuleApplies = !input.autoGuidanceActive && alt <= 2_316;
   const sinkLimit = sinkRateLimitMps(alt);
-  if (sink > sinkLimit * 2) {
+  if (sinkRuleApplies && sink > sinkLimit * 2) {
     out.push(
       call(
         "sink-excessive",
@@ -148,7 +153,7 @@ export function houstonDeviations(
         "Roughly three feet per second per hundred feet of altitude is the rule that keeps the gear inside its stroke.",
       ),
     );
-  } else if (sink > sinkLimit) {
+  } else if (sinkRuleApplies && sink > sinkLimit) {
     out.push(
       call(
         "sink-high",
@@ -159,6 +164,7 @@ export function houstonDeviations(
       ),
     );
   }
+
 
   const transLimit = translationLimitMps(alt);
   if (speed > transLimit * 2 && alt < 2_000) {
