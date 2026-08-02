@@ -112,6 +112,10 @@ export function useGamepadUiNavigation(): void {
         move(dir);
       }
 
+      // Bumpers tab one element per press (no auto-repeat).
+      if (tab !== 0 && !tabHeld) move(tab);
+      tabHeld = tab !== 0;
+
       if (select && !selectHeld) activate();
       selectHeld = select;
     };
