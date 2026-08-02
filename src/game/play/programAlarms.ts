@@ -189,6 +189,7 @@ export function createProgramAlarmState(): ProgramAlarmState {
     history: [],
     readBuffer: 0,
     lastMessage: "No program alarms.",
+    lastRaisedSinceIgnitionUs: null,
   };
 }
 
@@ -205,8 +206,21 @@ export function reduceProgramAlarms(
       const dueByAltitude =
         def.belowAltitudeFt !== undefined &&
         event.altitudeFt !== undefined &&
-        event.altitudeFt <= def.belowAltitudeFt;
+        event.altitudeFt <= def.belowAltitudeFt &&
+        event.sinceIgnitionUs >=
+          (def.atSinceIgnitionSec - ALARM_ALTITUDE_LEAD_SEC) * S;
       if (!dueByTime && !dueByAltitude) return state;
+
+      // Never stack two alarms on top of each other: a low trajectory can
+      // satisfy several altitude triggers at once, which would re-light the
+      // lamp on the tick after the crew cleared it.
+      if (
+        state.lastRaisedSinceIgnitionUs !== null &&
+        event.sinceIgnitionUs - state.lastRaisedSinceIgnitionUs <
+          ALARM_MIN_SPACING_SEC * S
+      ) {
+        return state;
+      }
 
       // A new alarm supersedes an unanswered one; the unanswered alarm is
       // recorded as such.
@@ -227,8 +241,10 @@ export function reduceProgramAlarms(
         history,
         readBuffer: 0,
         lastMessage: `PROG — ${def.label}. Key V05 N09 E to read the code, then RSET.`,
+        lastRaisedSinceIgnitionUs: event.sinceIgnitionUs,
       };
     }
+
 
     case "cancel": {
       const active = state.active;
