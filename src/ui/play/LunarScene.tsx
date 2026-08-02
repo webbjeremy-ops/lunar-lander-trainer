@@ -518,11 +518,15 @@ function drawProfile(
 
   ctx.save();
   ctx.translate(vx, vy);
-  // Pitch from local vertical: near 90 deg on its back through braking, then
-  // pitch-over at high gate, then near upright for the landing phase.
+  // Pitch from local vertical, drawn so the engine bell points along the thrust
+  // direction. Through braking the DPS thrusts retrograde — engine forward,
+  // into the direction of travel (downrange, to the right of the plot) — so the
+  // rotation is negative in canvas (clockwise-positive) coordinates. At pitch 0
+  // the vehicle is upright with the plume straight down.
   ctx.rotate(
-    displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual, { p64Selected }),
+    -displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual, { p64Selected }),
   );
+
   // M4.8 — roll about the thrust axis. cos(roll) = +1 windows-up (crew and
   // landing radar looking at the surface), -1 windows-down (the PDI attitude
   // Eagle flew before the windows-up roll).
