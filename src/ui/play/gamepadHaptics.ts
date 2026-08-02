@@ -47,6 +47,19 @@ export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
 export const ENGINE_BED_PERIOD_MS = 180;
 
 /**
+ * M4.45 — "motion" texture. With the DPS cold (coast, pre-TIG countdown, P66
+ * float) the pad would otherwise be dead. A soft irregular tremor keeps the
+ * vehicle feeling alive without masking the event pulses.
+ */
+export const MOTION_MIN_GAP_MS = 2200;
+export const MOTION_MAX_GAP_MS = 5200;
+export const MOTION_EFFECT: RumbleEffect = {
+  durationMs: 260,
+  weakMagnitude: 0.18,
+  strongMagnitude: 0.1,
+};
+
+/**
  * Engine rumble for a commanded throttle. Silent with the engine off; a floor
  * of idle vibration once it is lit so the pad is never dead during a burn.
  */
@@ -55,10 +68,11 @@ export function engineRumble(throttle: number, engineOn: boolean): RumbleEffect 
   const t = Math.max(0, Math.min(1, throttle));
   return {
     durationMs: ENGINE_BED_PERIOD_MS + 60,
-    weakMagnitude: 0.08 + 0.32 * t,
-    strongMagnitude: 0.1 + 0.55 * t,
+    weakMagnitude: 0.16 + 0.34 * t,
+    strongMagnitude: 0.22 + 0.6 * t,
   };
 }
+
 
 interface VibrationActuatorLike {
   playEffect(type: string, params: Record<string, number>): Promise<unknown>;
