@@ -19,6 +19,8 @@ import {
   earthDisk,
   horizonY,
   nearFieldPocks,
+  trackFieldFeatures,
+
   projectSurfacePoint,
   shadowEnvelope,
   type EarthDisk,
