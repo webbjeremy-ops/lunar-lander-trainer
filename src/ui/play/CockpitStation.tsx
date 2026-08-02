@@ -63,7 +63,7 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
           data-testid="station-mission-timer"
           className="font-mono tabular-nums leading-none"
           style={{
-            fontSize: "clamp(8px, 2cqw, 22px)",
+            fontSize: "clamp(8px, 1.5vw, 20px)",
             color: "#5cff62",
             textShadow: "0 0 6px rgba(92,255,98,0.55)",
             background: "#050705",
