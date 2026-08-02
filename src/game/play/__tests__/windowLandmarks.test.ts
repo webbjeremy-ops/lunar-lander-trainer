@@ -150,12 +150,23 @@ describe("window motion fidelity", () => {
     expect(upright.y).toBeLessThan(pitchedBack.y);
   });
 
-  it("inverts the scene when the vehicle is rolled windows-down", () => {
-    const up = projectSurfacePoint(800, 120, { ...base, rollRad: 0 });
-    const down = projectSurfacePoint(800, 120, { ...base, rollRad: Math.PI });
-    expect(down.x).toBeCloseTo(base.width - up.x, 4);
-    expect(down.y).toBeCloseTo(base.height - up.y, 4);
+  it("looks at the surface face-down and at the sky once rolled over", () => {
+    // Pitched well back through braking, as Eagle was between PDI and the
+    // yaw-around.
+    const braking = { ...base, pitchRad: 1.35, altitudeM: 12_000 };
+    const faceDown = horizonY({ ...braking, rollRad: Math.PI });
+    const rolledOver = horizonY({ ...braking, rollRad: 0 });
+    // Face-down the boresight is close to nadir, so the limb is far above the
+    // pane and the window is full of regolith.
+    expect(faceDown).toBeLessThan(0);
+    // Rolled over at the same pitch the limb drops into the pane, leaving black
+    // sky (and the Earth) above it.
+    expect(rolledOver).toBeGreaterThan(faceDown);
+    // Rolling also turns the scene in the pane.
+    const p = projectSurfacePoint(800, 120, { ...braking, rollRad: Math.PI });
+    expect(p.x).toBeLessThan(base.width / 2);
   });
+
 
   it("raises the horizon toward the pane centre as altitude falls", () => {
     const high = horizonY({ ...base, altitudeM: 15_000 });

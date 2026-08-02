@@ -155,6 +155,33 @@ const DEFAULT_HALF_FOV = 32 * (Math.PI / 180);
 export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
 
 /**
+ * Angle of the window boresight from straight down (nadir), radians.
+ *
+ * The commander's panes look perpendicular to the thrust axis, so WHICH WAY
+ * the vehicle is rolled about that axis decides what fills the window:
+ *
+ * - Face-down (roll 180 deg, the PDI attitude): with Eagle pitched ~77 deg back
+ *   the window looks only ~13 deg off nadir and the pane is filled with
+ *   regolith running away beneath the feet toward the landing site. This is the
+ *   attitude Armstrong flew through early braking.
+ * - Rolled over (roll 0 deg, from the yaw-around at T+221 s): the same pitch now
+ *   points the panes away from the surface, so the pane goes to black sky with
+ *   the Earth in it — Aldrin's "Earth straight out our front window".
+ * - Pitch-over for the approach then walks the look direction back down toward
+ *   nadir, so the landing site rises into the pane and the Earth climbs out of
+ *   it.
+ *
+ * The two ends are exact and the roll fraction blends between them, so the
+ * horizon sweeps continuously through the pane while the player rolls.
+ */
+export function boresightFromNadirRad(pitchRad: number, rollRad = 0): number {
+  const faceUp = pitchRad + WINDOW_UP_CANT_RAD;
+  const faceDown = Math.abs(Math.PI / 2 - pitchRad);
+  const u = (1 + Math.cos(rollRad)) / 2; // 1 = rolled over, 0 = face-down
+  return u * faceUp + (1 - u) * faceDown;
+}
+
+/**
  * Project a point on the surface into window coordinates.
  *
  * The commander looks out along the vehicle's +Z window axis. With the vehicle
@@ -174,10 +201,11 @@ export function projectSurfacePoint(
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const roll = p.rollRad ?? 0;
 
-  // Camera frame: look direction pitched `pitchRad` off nadir, toward +ahead.
-  const pitch = p.pitchRad + WINDOW_UP_CANT_RAD;
+  // Camera frame: look direction pitched `pitch` off nadir, toward +ahead.
+  const pitch = boresightFromNadirRad(p.pitchRad, roll);
   const cp = Math.cos(pitch);
   const sp = Math.sin(pitch);
+
 
   // Vehicle-relative vector to the surface point, in a frame where
   // x = right, y = down (toward the surface), z = along the ground track.
@@ -233,12 +261,17 @@ export function horizonDipRad(altitudeM: number): number {
   return Math.acos(LUNAR_RADIUS_M / (LUNAR_RADIUS_M + alt));
 }
 
-/** Screen y of the horizon for the current pitch, in window pixels. */
+/**
+ * Screen y of the horizon for the current attitude, in window pixels, measured
+ * in the unrotated pane (callers apply the roll rotation themselves).
+ */
 export function horizonY(p: WindowProjection): number {
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const focal = p.width / 2 / Math.tan(halfFov);
   // The limb sits `dip` below level, so it enters the frame like extra pitch.
-  const theta = p.pitchRad + WINDOW_UP_CANT_RAD + horizonDipRad(p.altitudeM);
+  const theta =
+    boresightFromNadirRad(p.pitchRad, p.rollRad ?? 0) + horizonDipRad(p.altitudeM);
+
   const forward = Math.sin(theta);
   if (forward <= 1e-3) return -1e6;
   return p.height / 2 + (-Math.cos(theta) / forward) * focal;
@@ -429,7 +462,7 @@ export function earthDisk(
   // the unrolled disk would fall on or below the limb, it has already set.
   const unrolledY = p.height / 2 + sy;
   const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
-  const limbY = horizonY({ ...p, rollRad: 0 });
+  const limbY = horizonY(p);
   if (unrolledY + radiusPx * 1.4 > limbY) return EARTH_HIDDEN;
 
   if (roll !== 0) {

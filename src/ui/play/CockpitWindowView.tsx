@@ -202,9 +202,10 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     pitchRad: Math.max(0.02, pitch),
     rollRad,
   };
-  // The horizon line itself is computed in the unrolled frame, then rotated
-  // with everything else below.
-  const hy = horizonY({ ...proj, rollRad: 0 });
+  // The horizon line is computed in the unrotated pane (roll still decides how
+  // far the boresight is off nadir) and rotated with everything else below.
+  const hy = horizonY(proj);
+
 
 
   // Space and surface, painted in the unrolled frame and then rotated with the
