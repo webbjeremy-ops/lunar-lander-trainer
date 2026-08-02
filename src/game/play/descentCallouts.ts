@@ -284,7 +284,7 @@ export function triggeredCallouts(
         input.rangeToLzM <= 2 * 4.1 * 1852 &&
         input.altitudeM <= 1.5 * 7_600 * FT);
     const fired = ALTITUDE_PRIMARY_IDS.includes(call.id)
-      ? atAltitude
+      ? atAltitude && highGateGeometryReady
       : t >= call.atSinceIgnitionSec && highGateGeometryReady;
     // Strict order: a later call can never overtake an earlier one.
     if (!fired) break;
