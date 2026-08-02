@@ -133,6 +133,13 @@ function PlayClient() {
 
   const [started, setStarted] = useState(false);
 
+  // M4.43 — controller rumble is a cockpit cue, so it must be silent while the
+  // player is still on the mission-select screen (the session simulates behind
+  // it). The player's preference is kept here and applied to the session only
+  // once the mission is under way.
+  const [hapticsPref, setHapticsPref] = useState(true);
+
+
   // M4.34 — out-the-window first-person view toggle.
   // The commander's window is the default view: it is the only one that shows
   // the surface actually moving (crater field sweeping aft) during braking.
