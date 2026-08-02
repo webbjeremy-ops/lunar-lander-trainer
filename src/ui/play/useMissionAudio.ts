@@ -135,6 +135,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
   const queueRef = useRef<MissionAudioBeat[]>([]);
   const currentRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<number | null>(null);
+  const startedRef = useRef<Set<MissionAudioBeat>>(new Set());
   const [speaking, setSpeaking] = useState(false);
   const [played, setPlayed] = useState<Set<MissionAudioBeat>>(new Set());
 
@@ -155,10 +156,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
 
     const start = () => {
       timerRef.current = null;
-      if (startedRef.current.has(chosen)) {
-        drainRef.current();
-        return;
-      }
+      if (startedRef.current.has(chosen)) return;
       startedRef.current.add(chosen);
       const el = new Audio(MISSION_AUDIO_URLS[chosen]);
       el.volume = 1;
@@ -176,7 +174,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       void el.play().catch(done);
     };
 
-    const gap = GAP_MS[beat] ?? 350;
+    const gap = GAP_MS[chosen] ?? 350;
     timerRef.current = window.setTimeout(start, gap);
   }, []);
 
