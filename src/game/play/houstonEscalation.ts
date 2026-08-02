@@ -11,11 +11,12 @@
 //   clear          nothing standing
 //   correct        Houston has called the fix; the clock is running
 //   final-warning  the fix has not taken; last call before the directive
-//   abort          Houston directs ABORT STAGE — the scripted descent is over
+//   abort          Houston RECOMMENDS ABORT STAGE — advice only
 //
-// Once the abort directive is issued the flight is latched off-script:
-// the remaining Apollo 11 transcript and the remaining procedure steps are
-// NOT played, because they never happened on this flight.
+// M4.54 — Houston never takes the vehicle away from the crew. The ladder tops
+// out at a recommendation: the crew can fly on, correct, or hit ABORT STAGE
+// themselves. If the conditions are unsurvivable, the vehicle crashes. Only a
+// crew-commanded abort terminates the scripted flight.
 //
 // PURE MODULE: no timers, no side effects, no AGC access.
 
@@ -40,7 +41,7 @@ export interface HoustonEscalationState {
   readonly activeId: string | null;
   /** Microseconds the active deviation has been inside the correction window. */
   readonly elapsedUs: number;
-  /** Latched once Houston directs the abort. */
+  /** Latched once the crew commands the abort (Houston never does). */
   readonly abortDirected: boolean;
   /** Latched: the remaining transcript / procedure script is abandoned. */
   readonly scriptTerminated: boolean;
@@ -152,13 +153,14 @@ export function reduceHoustonEscalation(
     stage,
     activeId: active.id,
     elapsedUs: Math.max(0, elapsed),
-    abortDirected: stage === "abort",
-    scriptTerminated: stage === "abort",
+    // Houston only recommends: the flight is never taken off-script for them.
+    abortDirected: false,
+    scriptTerminated: false,
     correctedIds,
   };
 }
 
-/** Seconds left before Houston directs the abort (0 once directed). */
+/** Seconds left before Houston recommends an abort (0 once recommended). */
 export function secondsToAbort(state: HoustonEscalationState): number {
   if (state.stage === "clear") return Number.POSITIVE_INFINITY;
   if (state.stage === "abort") return 0;
@@ -178,14 +180,15 @@ export function escalatedCall(
       id: `${base.id}-abort-directive`,
       severity: "no-go",
       text:
-        "Eagle, Houston. Negative on the correction — ABORT, ABORT STAGE. " +
-        "Get off the descent stage and fly the ascent engine.",
-      guidance: "Hit ABORT STAGE now. The landing is off.",
+        "Eagle, Houston. The correction has not taken — our recommendation is " +
+        "ABORT STAGE. It's your call down there.",
+      guidance: `${base.guidance} If you can't make that stick, hit ABORT STAGE — otherwise you are landing on this state.`,
       teaching:
         "Mission rules gave the crew a bounded window to correct a departure " +
-        "from the descent profile. Past it, the safe outcome is a staged abort " +
-        "to orbit, not a landing attempt — and the rest of the flown timeline " +
-        "simply does not happen.",
+        "from the descent profile. Past it, the recommended outcome is a staged " +
+        "abort to orbit — but the recommendation is advice, not a command: the " +
+        "crew flew the vehicle, and an uncorrected state ends the way physics " +
+        "says it ends.",
       blocksLanding: true,
     };
   }
@@ -195,7 +198,7 @@ export function escalatedCall(
       ...base,
       id: `${base.id}-final`,
       severity: "no-go",
-      text: `Eagle, Houston. Last call — ${base.text} You have about ${secs} seconds before we call an abort.`,
+      text: `Eagle, Houston. Last call — ${base.text} You have about ${secs} seconds before we recommend an abort.`,
       guidance: base.guidance,
       teaching: base.teaching,
       blocksLanding: true,

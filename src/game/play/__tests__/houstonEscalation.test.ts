@@ -64,11 +64,11 @@ describe("houston escalation ladder", () => {
     expect(s.abortDirected).toBe(false);
   });
 
-  it("directs the abort and terminates the script when uncorrected", () => {
+  it("recommends the abort but never takes the flight off the crew", () => {
     const s = run(inverted, CORRECTION_WINDOW_US / S + 1);
     expect(s.stage).toBe("abort");
-    expect(s.abortDirected).toBe(true);
-    expect(s.scriptTerminated).toBe(true);
+    expect(s.abortDirected).toBe(false);
+    expect(s.scriptTerminated).toBe(false);
     expect(secondsToAbort(s)).toBe(0);
   });
 
@@ -87,7 +87,7 @@ describe("houston escalation ladder", () => {
     expect(s.scriptTerminated).toBe(false);
   });
 
-  it("escalates the wording from advisory text to an abort directive", () => {
+  it("escalates the wording from advisory text to an abort recommendation", () => {
     const base = houstonDeviations(inverted)[0]!;
     const corrected = escalatedCall(run(inverted, 4), base);
     expect(corrected?.text).toBe(base.text);
