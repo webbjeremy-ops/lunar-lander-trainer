@@ -845,10 +845,19 @@ export function usePlaySession(
         if (held.has("ArrowLeft")) stick -= 1;
         if (held.has("ArrowRight")) stick += 1;
 
-        // M4.30 — Xbox: left stick winds the throttle, right stick pitches.
+        // M4.30 / M4.49 — Xbox in manual flight: right stick pitches, the
+        // right trigger is the throttle (analogue boost), RB gives a short
+        // thrust burst, and the left stick still trims the throttle by rate.
         const pad = padInputRef.current;
         if (pad.thrustRate !== 0) throttleRef.current += pad.thrustRate * 1.8 * STEP_S;
         if (pad.pitch !== 0) stick = pad.pitch;
+        const triggerThrottle = pad.rollPull > 0.02 ? pad.rollPull : null;
+        if (triggerThrottle !== null) {
+          throttleRef.current = triggerThrottle;
+          engineRef.current = true;
+        }
+        const bursting = Date.now() < throttleBurstUntilMsRef.current;
+        if (bursting) throttleRef.current = Math.max(throttleRef.current, 0.55);
 
         // M4.10 rate-command / attitude-hold: the stick commands a body rate,
         // and a released stick commands zero rate so the RCS nulls rotation
@@ -874,6 +883,8 @@ export function usePlaySession(
           !held.has("ArrowUp") &&
           !held.has("ArrowDown") &&
           pad.thrustRate === 0 &&
+          triggerThrottle === null &&
+          !bursting &&
           Date.now() >= manualThrottleHoldUntilMsRef.current;
         if (noThrustInput && engineRef.current) {
           const o = computeOrbitalValues(state);
