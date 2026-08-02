@@ -106,7 +106,10 @@ export function CockpitWindowView(props: CockpitWindowViewProps) {
     <canvas
       ref={ref}
       data-testid="cockpit-window-view"
-      className="h-[380px] w-full rounded border border-neutral-800 bg-black"
+      className={
+        props.className ??
+        "h-[380px] w-full rounded border border-neutral-800 bg-black"
+      }
       aria-label="First-person view from the commander's forward window"
     />
   );
