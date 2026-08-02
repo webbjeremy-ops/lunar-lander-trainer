@@ -20,6 +20,10 @@ const APERTURE = { left: 12.62, top: 23.07, right: 62.34, bottom: 71.82 };
 const LED = { left: 79.0, top: 17.1, width: 14.6, height: 2.8 };
 /** Attitude-ball well: centre and radius as a share of the artwork width. */
 const BALL = { cx: 79.19, cy: 52.49, r: 5.52 };
+/** Pane outline inside the aperture box, matching the artwork's glass edge. */
+const PANE_CLIP =
+  "polygon(5% 30%, 11% 19%, 88% 31%, 96% 41%, 95% 52%, 46% 95%, 33% 94%)";
+
 
 export interface CockpitStationProps extends CockpitWindowViewProps {
   missionElapsedSec: number;
@@ -121,17 +125,22 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
       className="relative w-full overflow-hidden rounded border border-neutral-800 bg-black"
       style={{ aspectRatio: "1086 / 1448" }}
     >
+      {/* The console PNG's glass is not fully transparent, so the live scene
+          sits ABOVE the artwork and is clipped to the pane outline instead.
+          The frame, rivets and sill still read as structure around it. */}
       <div
-        className="absolute"
+        className="pointer-events-none absolute z-10"
         style={{
           left: `${APERTURE.left}%`,
           top: `${APERTURE.top}%`,
           width: `${APERTURE.right - APERTURE.left}%`,
           height: `${APERTURE.bottom - APERTURE.top}%`,
+          clipPath: PANE_CLIP,
         }}
       >
         <CockpitWindowView {...view} bare className="h-full w-full bg-black" />
       </div>
+
 
       <img
         src={consoleArt.url}

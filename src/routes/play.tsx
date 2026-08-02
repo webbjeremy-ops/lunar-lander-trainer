@@ -134,7 +134,9 @@ function PlayClient() {
   const [started, setStarted] = useState(false);
 
   // M4.34 — out-the-window first-person view toggle.
-  const [firstPerson, setFirstPerson] = useState(false);
+  // The commander's window is the default view: it is the only one that shows
+  // the surface actually moving (crater field sweeping aft) during braking.
+  const [firstPerson, setFirstPerson] = useState(true);
 
   // "V" toggles the commander's window view without leaving the controls.
   useEffect(() => {

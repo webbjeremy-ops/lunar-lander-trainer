@@ -204,11 +204,16 @@ export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
  * horizon sweeps continuously through the pane while the player rolls.
  */
 export function boresightFromNadirRad(pitchRad: number, rollRad = 0): number {
-  const faceUp = pitchRad + WINDOW_UP_CANT_RAD;
-  const faceDown = Math.abs(Math.PI / 2 - pitchRad);
+  const faceUp = Math.abs(pitchRad) + WINDOW_UP_CANT_RAD;
+  // Thrust-axis pitch is reported signed (it reads -90 deg when the vehicle is
+  // pitched fully back), so the face-down boresight has to work off the
+  // magnitude: without it the horizon is pushed a full pi off nadir and the
+  // whole crater field lands below the window sill.
+  const faceDown = Math.abs(Math.PI / 2 - Math.abs(pitchRad));
   const u = (1 + Math.cos(rollRad)) / 2; // 1 = rolled over, 0 = face-down
   return u * faceUp + (1 - u) * faceDown;
 }
+
 
 /**
  * Project a point on the surface into window coordinates.
@@ -448,16 +453,18 @@ export function trackFieldFeatures(
   options: { readonly cellM?: number; readonly spanCells?: number } = {},
 ): readonly SurfaceLandmark[] {
   const alt = Math.max(50, altitudeM);
-  // One feature every ~0.35 altitudes: dense enough to read as motion, coarse
-  // enough that the count stays bounded at any height.
-  const cell = options.cellM ?? Math.max(180, alt * 0.55);
-  const spanCells = options.spanCells ?? 26;
+  // Cell size scales with altitude so the pane always holds a few dozen
+  // features: at 16 km that is ~2.4 km craters, at 300 m it is ~120 m pocks.
+  // Coarser than this and braking shows two or three blobs, which reads as a
+  // still image rather than 1,700 m/s of ground track.
+  const cell = options.cellM ?? Math.max(80, alt * 0.13);
+  const spanCells = options.spanCells ?? 55;
   const centre = Math.round(rangeToGoM / cell);
   const out: SurfaceLandmark[] = [];
-  for (let i = centre - 2; i <= centre + spanCells; i += 1) {
-    for (let j = -6; j <= 6; j += 1) {
+  for (let i = centre - 20; i <= centre + spanCells; i += 1) {
+    for (let j = -18; j <= 18; j += 1) {
       const r = hash2(i * 7 + 13, j * 11 + 5);
-      if (r < 0.4) continue;
+      if (r < 0.62) continue;
       const kind: LandmarkKind = r > 0.965 ? "rille" : "crater";
       out.push({
         id: `field-${i}-${j}`,
@@ -467,11 +474,12 @@ export function trackFieldFeatures(
         radiusM:
           kind === "rille"
             ? cell * (0.5 + hash2(i + 2, j) * 1.2)
-            : cell * (0.05 + hash2(i + 9, j + 4) * 0.22),
+            : cell * (0.08 + hash2(i + 9, j + 4) * 0.34),
         albedo: 0.3 + hash2(i, j + 7) * 0.55,
       });
     }
   }
+
   out.sort((a, b) => b.trackRangeM - a.trackRangeM);
   return out;
 }
