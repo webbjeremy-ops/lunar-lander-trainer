@@ -155,6 +155,13 @@ function draw(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawArgs) 
   ctx.fillStyle = "#101211";
   ctx.fillRect(0, 0, w, h);
 
+  if (a.bare) {
+    // The photographic console supplies the aperture; paint the scene edge to
+    // edge behind it.
+    drawScene(ctx, w, h, a);
+    return;
+  }
+
   const panelX = Math.round(w * 0.72);
   const glassW = panelX;
 
