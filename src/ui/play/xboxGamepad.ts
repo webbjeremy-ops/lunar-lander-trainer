@@ -159,14 +159,17 @@ export function mapXboxInput(
   };
 
   const cancelAlarmPressed = edge(BUTTON.rightBumper);
-  const enginePressed = edge(BUTTON.a);
+  const acknowledgePressed = edge(BUTTON.a);
+  const armEnginePressed = edge(BUTTON.x);
+  const enginePressed = edge(BUTTON.y);
   const abortPressed = edge(BUTTON.b);
   const acceptProgramPressed = edge(BUTTON.leftBumper);
   const trimUp = edge(BUTTON.dpadUp);
-  const dpadTrimDown = edge(BUTTON.dpadDown);
+  const trimDown = edge(BUTTON.dpadDown);
+  // Left trigger — manual takeover, on the pull edge only.
   const leftTriggerDown = buttonValue(pad, BUTTON.leftTrigger) > TRIGGER_THRESHOLD;
   if (leftTriggerDown) held.add(BUTTON.leftTrigger);
-  const trimDown = (leftTriggerDown && !wasHeld(BUTTON.leftTrigger)) || dpadTrimDown;
+  const takeoverPressed = leftTriggerDown && !wasHeld(BUTTON.leftTrigger);
 
   const rollPull = Math.max(0, Math.min(1, buttonValue(pad, BUTTON.rightTrigger)));
 
@@ -180,9 +183,13 @@ export function mapXboxInput(
       rodTrim: (trimUp ? 1 : 0) - (trimDown ? 1 : 0),
       cancelAlarmPressed,
       acceptProgramPressed,
+      acknowledgePressed,
+      armEnginePressed,
+      takeoverPressed,
       enginePressed,
       abortPressed,
     },
+
     next: { held },
   };
 }
