@@ -261,12 +261,17 @@ export function horizonDipRad(altitudeM: number): number {
   return Math.acos(LUNAR_RADIUS_M / (LUNAR_RADIUS_M + alt));
 }
 
-/** Screen y of the horizon for the current pitch, in window pixels. */
+/**
+ * Screen y of the horizon for the current attitude, in window pixels, measured
+ * in the unrotated pane (callers apply the roll rotation themselves).
+ */
 export function horizonY(p: WindowProjection): number {
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const focal = p.width / 2 / Math.tan(halfFov);
   // The limb sits `dip` below level, so it enters the frame like extra pitch.
-  const theta = p.pitchRad + WINDOW_UP_CANT_RAD + horizonDipRad(p.altitudeM);
+  const theta =
+    boresightFromNadirRad(p.pitchRad, p.rollRad ?? 0) + horizonDipRad(p.altitudeM);
+
   const forward = Math.sin(theta);
   if (forward <= 1e-3) return -1e6;
   return p.height / 2 + (-Math.cos(theta) / forward) * focal;
