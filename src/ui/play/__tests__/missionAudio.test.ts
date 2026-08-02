@@ -81,8 +81,8 @@ describe("mission audio story beats", () => {
 
   it("has a distinct recording for every beat", () => {
     const urls = Object.values(MISSION_AUDIO_URLS);
-    expect(urls).toHaveLength(13);
-    expect(new Set(urls).size).toBe(13);
+    expect(urls).toHaveLength(14);
+    expect(new Set(urls).size).toBe(14);
     for (const url of urls) expect(url).toMatch(/\.mp3$/);
   });
 
@@ -93,9 +93,10 @@ describe("mission audio story beats", () => {
 });
 
 describe("training missions", () => {
-  it("stays off the loop until touchdown", () => {
+  it("stays off the loop until touchdown, then calls the landing", () => {
     const training = { ...base, touchdownOnly: true, engineOn: true, rollComplete: true };
     expect(dueBeats(training)).toEqual([]);
-    expect(dueBeats({ ...training, contact: true, altitudeM: 1 })).toEqual(["contact"]);
+    expect(dueBeats({ ...training, contact: true, altitudeM: 1 })).toEqual(["eagle-landed"]);
+    expect(dueBeats({ ...training, contact: true, crashed: true })).toEqual([]);
   });
 });
