@@ -524,15 +524,12 @@ export function usePlaySession(
       if (timeScale <= 0) return;
       accumulatorUs += dtMs * 1000 * timeScale;
 
-      const proc = procedureRef.current;
-      // The ritual clock runs as soon as the countdown is armed. Full Descent
-      // is initialized at TIG/PDI, so its physical state remains fixed until
-      // ignition rather than receiving an unmodelled minute of orbital coast.
+      // M4.41 — the vehicle is never frozen, not even before the countdown is
+      // armed: Eagle is on the descent orbit doing ~1,698 m/s with the engine
+      // cold, so range to the landing site closes and the surface moves in the
+      // window the whole time the crew works the pre-PDI checklist.
       const countdownRunning = ignitionRef.current.phase !== "standby";
-      if (!proc.flightLockReleased && !countdownRunning && !abortedRef.current) {
-        accumulatorUs = 0;
-        return;
-      }
+
 
       let steps = 0;
       let state = flightRef.current;
