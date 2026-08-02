@@ -243,7 +243,7 @@ export const APOLLO11_DESCENT_TIMELINE: readonly DescentTimelineEvent[] = [
   ev(
     "alarm-1202-first",
     "1202 program alarm (Executive overflow — no core sets)",
-    "102:38:23",
+    "102:38:22",
     "telemetry-derived",
     "The Executive ran out of core sets: more jobs were requested than the AGC could hold. It restarts, sheds low-priority work, and keeps guidance running.",
     101,

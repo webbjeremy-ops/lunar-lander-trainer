@@ -59,7 +59,7 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
   {
     id: "alarm-1202-first",
     code: "1202",
-    atSinceIgnitionSec: timelineSeconds("alarm-1202-first", "102:38:23"),
+    atSinceIgnitionSec: timelineSeconds("alarm-1202-first", "102:38:22"),
     // Telemetry-derived altitude at the first 1202 (mission log row 101).
     belowAltitudeFt: 34_069,
     label: "1202 — Executive overflow, no core sets",

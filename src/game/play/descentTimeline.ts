@@ -16,7 +16,8 @@
 //   T+221  yaw-around: windows up, landing radar looking at the surface
 //          (Armstrong's "rolling over" call, GET 102:36:46)
 //   T+300  radar lock / Delta-H converged
-//   T+321  first 1202 (102:38:26), T+357 second 1202 (102:39:02)
+//   T+317  first 1202 (102:38:22, Mission Report event table),
+//          T+357 second 1202 (102:39:02)
 //   T+386  THROTTLE RECOVERY: guidance leaves the 92.5 % fixed throttle point
 //          and drops straight to ~57 %, below the 65-92.5 % erosion band
 //   T+506  HIGH GATE — P63 hands to P64, pitch-over, SETPOS2 (radar to
@@ -76,7 +77,7 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
     "Roll face-up so the landing radar sees the surface."),
   m("radar-lock", 300, "LANDING RADAR LOCK · DELTA-H", "P63", 37_462, 58,
     "Radar altitude agrees with the state vector; V57 accepts it."),
-  m("alarm-1202-first", 321, "1202 PROGRAM ALARM", "P63", 34_069, 51,
+  m("alarm-1202-first", 317, "1202 PROGRAM ALARM", "P63", 34_069, 51,
     "Executive overflow — no core sets. Read it, reset it, keep flying."),
   m("alarm-1202-second", 357, "1202 PROGRAM ALARM", "P63", 26_977, 37,
     "Recurring overload; guidance and displays stay healthy."),
