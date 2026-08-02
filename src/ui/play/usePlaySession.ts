@@ -1234,6 +1234,14 @@ export function usePlaySession(
     [onDskyKey, acceptProgram, script, recordTakeover, dispatchIgnition, dispatchRoll],
   );
 
+  // M4.45 — the pad drives the same cockpit switches the mouse does.
+  useEffect(() => {
+    takeoverRef.current = actions.takeover;
+    setEngineArmRef.current = () => {
+      actions.setEngineArm(!ignitionRef.current.engineArmed);
+    };
+  }, [actions]);
+
 
   const descentMonitor = useMemo(
     () =>
