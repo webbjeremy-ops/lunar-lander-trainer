@@ -189,8 +189,13 @@ export const LANDING_ZONE_ANGLE_RAD = 0;
 // flown on a live, fast-moving vehicle that arrives at the PDI state exactly
 // at TIG.
 
-/** Seconds of engine-off descent-orbit coast before TIG. Matches the countdown. */
-export const PRE_IGNITION_COAST_SEC = 150;
+/**
+ * Seconds of engine-off descent-orbit coast before TIG. This is DERIVED from
+ * the PDI countdown length: the coast and the countdown are the same clock, so
+ * the vehicle reaches the PDI state at exactly T-0 and every downstream cue
+ * (roll, alarms, high gate, low gate) keeps its historical timing.
+ */
+export const PRE_IGNITION_COAST_SEC = COUNTDOWN_LENGTH_US / 1_000_000;
 
 /**
  * Back-propagate a mission's PDI state along an engine-off Keplerian coast.
