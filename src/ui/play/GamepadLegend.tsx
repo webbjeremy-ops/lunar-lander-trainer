@@ -92,7 +92,7 @@ export function GamepadLegend({ haptics, onHaptics, phase = "guided" }: {
         </button>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[10px]">
-        {BINDINGS.map(([control, action]) => (
+        {bindings.map(([control, action]) => (
           <div key={control} className="contents">
             <dt className="text-neutral-500">{control}</dt>
             <dd className="text-neutral-300">{action}</dd>
