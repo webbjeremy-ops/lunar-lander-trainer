@@ -19,6 +19,8 @@ import {
   earthDisk,
   horizonY,
   nearFieldPocks,
+  trackFieldFeatures,
+
   projectSurfacePoint,
   shadowEnvelope,
   type EarthDisk,
@@ -273,6 +275,19 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   const onPane = (x: number, y: number) =>
     x > -margin && x < w + margin && y > -margin && y < h + margin;
 
+  // Broad crater field over the whole ground track, scaled to altitude. This
+  // is what gives braking its sense of motion: at 12 km the pane is filled
+  // with kilometre-scale craters sweeping aft, long before the seeded
+  // approach-field landmarks come within range.
+  for (const mark of trackFieldFeatures(rangeToGoM, alt)) {
+    const aheadM = rangeToGoM - mark.trackRangeM;
+    const p = projectSurfacePoint(aheadM, mark.lateralM, proj);
+    if (!p.visible) continue;
+    const rx = mark.radiusM * p.scale;
+    if (rx < 0.9 || rx > 4 * diag || !onPane(p.x, p.y)) continue;
+    drawLandmark(ctx, p.x, p.y, rx, mark);
+  }
+
   // Near-field regolith texture, so the ground reads as moving even in a hover.
   if (alt < 3_000) {
     for (const pock of nearFieldPocks(rangeToGoM)) {
@@ -286,15 +301,20 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
 
   // Landmarks: far to near so nearer features overpaint.
+  const farCull = Math.max(40_000, alt * 12);
   for (const mark of a.landmarks) {
     const aheadM = rangeToGoM - mark.trackRangeM;
-    if (aheadM < -400 || aheadM > 40_000) continue;
+    if (aheadM < -400 || aheadM > farCull) continue;
     const p = projectSurfacePoint(aheadM, mark.lateralM, proj);
     if (!p.visible) continue;
     const rx = mark.radiusM * p.scale;
     if (rx < 0.6 || !onPane(p.x, p.y)) continue;
     drawLandmark(ctx, p.x, p.y, rx, mark);
+    if (mark.id === "west-crater" && rx > 6) {
+      drawWestCraterCallout(ctx, p.x, p.y, rx);
+    }
   }
+
 
   // Landing zone in the reticle.
   const lz = projectSurfacePoint(rangeToGoM, 0, proj);
@@ -510,7 +530,43 @@ function drawGlassReflections(
 }
 
 
+/**
+ * West Crater, called out as the crew saw it on pitch-over: a blocky, shadowed
+ * hole with an ejecta apron of boulders, which is precisely why Armstrong took
+ * over and flew long past it rather than landing in it.
+ */
+function drawWestCraterCallout(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+) {
+  const flat = 0.34;
+  ctx.save();
+  // Deep shadowed floor and a bright sunlit west rim.
+  ctx.fillStyle = "rgba(16,15,13,0.82)";
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 0.92, r * flat * 0.92, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(238,229,208,0.9)";
+  ctx.lineWidth = Math.max(1.2, r * 0.13);
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * flat, 0, Math.PI * 0.02, Math.PI * 0.98);
+  ctx.stroke();
+  ctx.restore();
+
+  if (r > 16) {
+    ctx.save();
+    ctx.fillStyle = "rgba(240,197,106,0.85)";
+    ctx.font = "9px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("WEST CRATER", x, y - r * flat - 8);
+    ctx.restore();
+  }
+}
+
 function drawLandmark(
+
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,

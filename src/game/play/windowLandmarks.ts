@@ -57,6 +57,44 @@ export function seedForMission(missionId: string): number {
 }
 
 /**
+ * West Crater — the ~180 m boulder-strewn crater Armstrong overflew, deciding
+ * on the way past that its blocky ejecta field was no place to set down. It is
+ * always seeded just uprange of the landing zone so every mission flies the
+ * same bypass the crew flew.
+ */
+export const WEST_CRATER: SurfaceLandmark = {
+  id: "west-crater",
+  kind: "crater",
+  trackRangeM: 620,
+  lateralM: -40,
+  radiusM: 90,
+  albedo: 0.9,
+};
+
+/**
+ * The blocky ejecta apron around West Crater: football-to-Volkswagen sized
+ * boulders scattered a crater-diameter out, which is what made the site
+ * unlandable and forced the manual redesignation past it.
+ */
+export function westCraterBoulders(): readonly SurfaceLandmark[] {
+  const out: SurfaceLandmark[] = [];
+  for (let i = 0; i < 22; i += 1) {
+    const r = hash2(i + 3, 71);
+    const ang = (i / 22) * Math.PI * 2 + r * 0.5;
+    const dist = WEST_CRATER.radiusM * (1.05 + hash2(i, 12) * 1.35);
+    out.push({
+      id: `west-boulder-${i}`,
+      kind: "boulder-field",
+      trackRangeM: WEST_CRATER.trackRangeM + Math.cos(ang) * dist,
+      lateralM: WEST_CRATER.lateralM + Math.sin(ang) * dist,
+      radiusM: 2.5 + hash2(i + 40, 9) * 7,
+      albedo: 0.5 + hash2(i, 55) * 0.4,
+    });
+  }
+  return out;
+}
+
+/**
  * Landmarks along the last stretch of the ground track.
  *
  * Placed from the LZ backwards so the field the crew sees on final approach is
@@ -72,17 +110,8 @@ export function buildLandmarks(
   const maxRangeM = options.maxRangeM ?? 12_000;
   const rand = mulberry32(seedForMission(missionId));
 
-  const marks: SurfaceLandmark[] = [
-    // The boulder-strewn crater Armstrong overflew on the way to Tranquility.
-    {
-      id: "west-crater",
-      kind: "boulder-field",
-      trackRangeM: 620,
-      lateralM: -40,
-      radiusM: 90,
-      albedo: 0.85,
-    },
-  ];
+  const marks: SurfaceLandmark[] = [WEST_CRATER, ...westCraterBoulders()];
+
 
   for (let i = 0; i < count; i += 1) {
     const t = (i + rand() * 0.8) / count;
@@ -401,6 +430,52 @@ export function nearFieldPocks(
   out.sort((a, b) => b.trackRangeM - a.trackRangeM);
   return out;
 }
+
+/**
+ * Broad, altitude-scaled crater field covering the whole ground track.
+ *
+ * The seeded landmark table only spans the last ~12 km, so through braking —
+ * hundreds of kilometres uprange at 10–15 km altitude — the pane had nothing in
+ * it and the descent looked static. This tiles deterministic craters whose cell
+ * size grows with altitude, so there are always a few dozen features sweeping
+ * through the window and the crew can see the ground track moving from PDI on.
+ *
+ * Pure function of the world cell indices: the same patch always looks the same.
+ */
+export function trackFieldFeatures(
+  rangeToGoM: number,
+  altitudeM: number,
+  options: { readonly cellM?: number; readonly spanCells?: number } = {},
+): readonly SurfaceLandmark[] {
+  const alt = Math.max(50, altitudeM);
+  // One feature every ~0.35 altitudes: dense enough to read as motion, coarse
+  // enough that the count stays bounded at any height.
+  const cell = options.cellM ?? Math.max(180, alt * 0.55);
+  const spanCells = options.spanCells ?? 26;
+  const centre = Math.round(rangeToGoM / cell);
+  const out: SurfaceLandmark[] = [];
+  for (let i = centre - 2; i <= centre + spanCells; i += 1) {
+    for (let j = -6; j <= 6; j += 1) {
+      const r = hash2(i * 7 + 13, j * 11 + 5);
+      if (r < 0.4) continue;
+      const kind: LandmarkKind = r > 0.965 ? "rille" : "crater";
+      out.push({
+        id: `field-${i}-${j}`,
+        kind,
+        trackRangeM: (i + hash2(i, j + 33)) * cell,
+        lateralM: (j + hash2(i + 61, j)) * cell,
+        radiusM:
+          kind === "rille"
+            ? cell * (0.5 + hash2(i + 2, j) * 1.2)
+            : cell * (0.05 + hash2(i + 9, j + 4) * 0.22),
+        albedo: 0.3 + hash2(i, j + 7) * 0.55,
+      });
+    }
+  }
+  out.sort((a, b) => b.trackRangeM - a.trackRangeM);
+  return out;
+}
+
 
 // ---------------------------------------------------------------------------
 // Earth in the window
