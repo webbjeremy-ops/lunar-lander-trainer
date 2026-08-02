@@ -423,7 +423,8 @@ export function usePlaySession(
     setRunning(false);
     throttleRef.current = 0;
     attitudeRef.current = 0;
-    engineRef.current = false;
+    engineRef.current = startsUnderPower;
+
     rodTargetRef.current = -1;
     roughnessRef.current = 0;
     lastCmdRef.current = { throttle: 0, attitude: 0 };
@@ -446,7 +447,7 @@ export function usePlaySession(
     escalationRef.current = createHoustonEscalationState();
     setEscalation(escalationRef.current);
     crewHasVehicleRef.current = false;
-  }, [makeInitial, script, generation, windowsUpAtStart]);
+  }, [makeInitial, script, generation, windowsUpAtStart, startsUnderPower]);
 
   // --- Keyboard -------------------------------------------------------------
   const heldRef = useRef<Set<string>>(new Set());
