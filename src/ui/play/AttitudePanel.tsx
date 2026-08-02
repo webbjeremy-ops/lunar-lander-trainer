@@ -81,11 +81,20 @@ export function AttitudePanel({
         type="button"
         data-testid="roll-control"
         disabled={up}
-        onPointerDown={() => onRoll(true)}
-        onPointerUp={() => onRoll(false)}
-        onPointerLeave={() => onRoll(false)}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture?.(e.pointerId);
+          onRoll(true);
+        }}
+        onPointerUp={(e) => {
+          e.currentTarget.releasePointerCapture?.(e.pointerId);
+          onRoll(false);
+        }}
         onPointerCancel={() => onRoll(false)}
-        className="mt-2 w-full rounded border border-border bg-secondary px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+        onLostPointerCapture={() => onRoll(false)}
+        onContextMenu={(e) => e.preventDefault()}
+        className="mt-2 w-full touch-none select-none rounded border border-border bg-secondary px-3 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-secondary-foreground transition-colors hover:bg-secondary/80 disabled:cursor-not-allowed disabled:opacity-50"
+
       >
         {up ? "Windows up — radar has the surface" : "Hold to roll windows-up (R)"}
       </button>
