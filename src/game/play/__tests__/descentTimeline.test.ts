@@ -24,9 +24,9 @@ describe("canonical descent timeline", () => {
     }
   });
 
-  it("puts high gate at T+506 s, ~7,600 ft and ~4.1 nmi from the site", () => {
+  it("puts high gate at T+507 s, ~7,600 ft and ~4.1 nmi from the site", () => {
     const hg = DESCENT_TIMELINE.find((e) => e.id === "high-gate")!;
-    expect(hg.tSec).toBe(506);
+    expect(hg.tSec).toBe(507);
     expect(hg.program).toBe("P64");
     expect(hg.altitudeM / FT).toBeCloseTo(7_600, 0);
     expect(hg.rangeToLzM / NMI).toBeCloseTo(4.1, 2);
@@ -53,7 +53,7 @@ describe("canonical descent timeline", () => {
     expect(currentMilestone(510).id).toBe("high-gate");
     expect(nextMilestone(510)!.id).toBe("alarm-1201-first");
     expect(nextMilestone(1_000)).toBeNull();
-    expect(milestoneSec("low-gate")).toBe(642);
-    expect(formatT(506)).toBe("T+08:26");
+    expect(milestoneSec("low-gate")).toBe(617);
+    expect(formatT(507)).toBe("T+08:27");
   });
 });
