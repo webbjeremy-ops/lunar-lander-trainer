@@ -121,3 +121,45 @@ describe("shadow and dust envelopes", () => {
     expect(dustDensity(2, 1)).toBeLessThanOrEqual(1);
   });
 });
+
+// --- M4.38: motion and attitude fidelity of the commander's window ---------
+
+describe("window motion fidelity", () => {
+  const base = { width: 400, height: 300, altitudeM: 300, pitchRad: 0.9 } as const;
+
+  it("walks the landing zone down the pane as the range closes", () => {
+    const far = projectSurfacePoint(2_000, 0, base);
+    const near = projectSurfacePoint(400, 0, base);
+    expect(far.visible).toBe(true);
+    expect(near.visible).toBe(true);
+    // Closing range brings the site lower in the window and makes it bigger.
+    expect(near.y).toBeGreaterThan(far.y);
+    expect(near.scale).toBeGreaterThan(far.scale);
+  });
+
+  it("puts an overshot landing zone behind the camera", () => {
+    const behind = projectSurfacePoint(-1_500, 0, { ...base, pitchRad: 0.2 });
+    expect(behind.visible).toBe(false);
+  });
+
+  it("drops the view toward nadir as pitch comes upright", () => {
+    const pitchedBack = projectSurfacePoint(1_000, 0, { ...base, pitchRad: 1.3 });
+    const upright = projectSurfacePoint(1_000, 0, { ...base, pitchRad: 0.3 });
+    // Upright means looking down: the same point sits higher (further up-range).
+    expect(upright.y).toBeLessThan(pitchedBack.y);
+  });
+
+  it("inverts the scene when the vehicle is rolled windows-down", () => {
+    const up = projectSurfacePoint(800, 120, { ...base, rollRad: 0 });
+    const down = projectSurfacePoint(800, 120, { ...base, rollRad: Math.PI });
+    expect(down.x).toBeCloseTo(base.width - up.x, 4);
+    expect(down.y).toBeCloseTo(base.height - up.y, 4);
+  });
+
+  it("raises the horizon toward the pane centre as altitude falls", () => {
+    const high = horizonY({ ...base, altitudeM: 15_000 });
+    const low = horizonY({ ...base, altitudeM: 100 });
+    // More curvature dip at altitude pushes the limb further down the pane.
+    expect(high).toBeGreaterThan(low);
+  });
+});
