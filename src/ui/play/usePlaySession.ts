@@ -438,7 +438,16 @@ export function usePlaySession(
     rodTargetRef.current = -1;
     roughnessRef.current = 0;
     lastCmdRef.current = { throttle: 0, attitude: 0 };
-    const ign = createIgnitionState();
+    // M4.42 — the pre-TIG coast and the PDI countdown are ONE clock. The
+    // scenario inserts Eagle exactly COUNTDOWN_LENGTH_US of coast uprange of
+    // PDI, so the countdown has to be running from the moment the mission
+    // opens; otherwise the vehicle keeps coasting past the PDI point while the
+    // crew works the checklist, ignition happens low and downrange, and every
+    // geometry-gated cue after it (high gate / P64 pitch-over, low gate,
+    // manual handover) never fires.
+    const ign = coastsToTig
+      ? reduceIgnition(createIgnitionState(), { kind: "start" })
+      : createIgnitionState();
     ignitionRef.current = ign;
     setIgnition(ign);
     const r = createDescentRollState({ windowsUp: windowsUpAtStart });
