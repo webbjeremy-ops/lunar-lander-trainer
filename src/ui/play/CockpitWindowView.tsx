@@ -349,12 +349,16 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
 
 
-  // Dust streaming radially outward under the engine.
+  // Dust streaming radially outward from the point directly beneath the engine
+  // bell, not from a fixed spot on the glass: at high pitch the blast sheet
+  // sits low and off-frame, and it rises into view as the vehicle comes
+  // upright over the site.
   const dust = dustDensity(alt, a.flight.throttle);
   if (dust > 0) {
+    const nadir = projectSurfacePoint(0, 0, proj);
+    const cx = nadir.visible ? nadir.x : w * 0.5;
+    const cy = nadir.visible ? Math.min(nadir.y, h * 1.15) : h * 0.94;
     ctx.save();
-    const cx = w * 0.5;
-    const cy = h * 0.94;
     ctx.globalAlpha = Math.min(0.6, dust * 0.7);
     ctx.strokeStyle = "#b9ad9a";
     ctx.lineWidth = 1;
@@ -367,14 +371,16 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
       ctx.lineTo(cx + Math.cos(ang) * len, cy + Math.sin(ang) * len * 0.28);
       ctx.stroke();
     }
-    const veil = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    const veilTop = Math.max(0, Math.min(h * 0.75, cy - h * 0.34));
+    const veil = ctx.createLinearGradient(0, veilTop, 0, h);
     veil.addColorStop(0, "rgba(190,178,158,0)");
     veil.addColorStop(1, `rgba(190,178,158,${(0.55 * dust).toFixed(3)})`);
     ctx.globalAlpha = 1;
     ctx.fillStyle = veil;
-    ctx.fillRect(0, h * 0.6, w, h * 0.4);
+    ctx.fillRect(0, veilTop, w, h - veilTop);
     ctx.restore();
   }
+
 
   // In bare mode the photographic console carries its own etched LPD scale.
   if (!a.bare) drawLpdReticle(ctx, w, h, proj);
