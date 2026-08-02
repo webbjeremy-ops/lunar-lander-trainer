@@ -273,6 +273,19 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   const onPane = (x: number, y: number) =>
     x > -margin && x < w + margin && y > -margin && y < h + margin;
 
+  // Broad crater field over the whole ground track, scaled to altitude. This
+  // is what gives braking its sense of motion: at 12 km the pane is filled
+  // with kilometre-scale craters sweeping aft, long before the seeded
+  // approach-field landmarks come within range.
+  for (const mark of trackFieldFeatures(rangeToGoM, alt)) {
+    const aheadM = rangeToGoM - mark.trackRangeM;
+    const p = projectSurfacePoint(aheadM, mark.lateralM, proj);
+    if (!p.visible) continue;
+    const rx = mark.radiusM * p.scale;
+    if (rx < 0.9 || rx > 4 * diag || !onPane(p.x, p.y)) continue;
+    drawLandmark(ctx, p.x, p.y, rx, mark);
+  }
+
   // Near-field regolith texture, so the ground reads as moving even in a hover.
   if (alt < 3_000) {
     for (const pock of nearFieldPocks(rangeToGoM)) {
@@ -286,15 +299,20 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
 
   // Landmarks: far to near so nearer features overpaint.
+  const farCull = Math.max(40_000, alt * 12);
   for (const mark of a.landmarks) {
     const aheadM = rangeToGoM - mark.trackRangeM;
-    if (aheadM < -400 || aheadM > 40_000) continue;
+    if (aheadM < -400 || aheadM > farCull) continue;
     const p = projectSurfacePoint(aheadM, mark.lateralM, proj);
     if (!p.visible) continue;
     const rx = mark.radiusM * p.scale;
     if (rx < 0.6 || !onPane(p.x, p.y)) continue;
     drawLandmark(ctx, p.x, p.y, rx, mark);
+    if (mark.id === "west-crater" && rx > 6) {
+      drawWestCraterCallout(ctx, p.x, p.y, rx);
+    }
   }
+
 
   // Landing zone in the reticle.
   const lz = projectSurfacePoint(rangeToGoM, 0, proj);
