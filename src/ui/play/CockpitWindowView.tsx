@@ -258,7 +258,17 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   ctx.restore();
 
 
-  const rangeToGoM = Math.abs(a.downrangeM);
+  // Signed range to the landing zone: positive = still short of it, negative =
+  // the LZ is already behind the vehicle. Taking the magnitude here would make
+  // an overshoot look like a fresh approach, so the sign is preserved and the
+  // projection simply drops the LZ behind the camera.
+  const rangeToGoM = a.downrangeM;
+
+  // Surface features are only ever below the true horizon, so screen culling
+  // just needs to be generous enough to survive roll.
+  const margin = diag;
+  const onPane = (x: number, y: number) =>
+    x > -margin && x < w + margin && y > -margin && y < h + margin;
 
   // Near-field regolith texture, so the ground reads as moving even in a hover.
   if (alt < 3_000) {
@@ -267,7 +277,7 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
       const p = projectSurfacePoint(aheadM, pock.lateralM, proj);
       if (!p.visible) continue;
       const rx = pock.radiusM * p.scale;
-      if (rx < 0.8 || p.x < -40 || p.x > w + 40 || p.y < top || p.y > h + 40) continue;
+      if (rx < 0.8 || !onPane(p.x, p.y)) continue;
       drawLandmark(ctx, p.x, p.y, rx, pock);
     }
   }
@@ -279,13 +289,14 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     const p = projectSurfacePoint(aheadM, mark.lateralM, proj);
     if (!p.visible) continue;
     const rx = mark.radiusM * p.scale;
-    if (rx < 0.6 || p.x < -w || p.x > 2 * w || p.y < top - 40 || p.y > h + 200) continue;
+    if (rx < 0.6 || !onPane(p.x, p.y)) continue;
     drawLandmark(ctx, p.x, p.y, rx, mark);
   }
 
   // Landing zone in the reticle.
   const lz = projectSurfacePoint(rangeToGoM, 0, proj);
-  if (lz.visible && lz.y > top) {
+  if (lz.visible && onPane(lz.x, lz.y)) {
+
     const r = Math.max(4, 60 * lz.scale);
     ctx.strokeStyle = "#f0c56a";
     ctx.lineWidth = 1.4;
