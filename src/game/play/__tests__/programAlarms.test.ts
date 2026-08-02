@@ -132,3 +132,40 @@ describe("controller alarm cancel", () => {
     expect(s.lampOn).toBe(true);
   });
 });
+
+// Regression: a low trajectory satisfied several altitude triggers at once, so
+// the next alarm re-lit on the tick after RSET and the lamp never went dark.
+describe("alarm spacing", () => {
+  const CASCADE: readonly ProgramAlarmDefinition[] = [
+    { ...APOLLO11_ALARM_TIMELINE[0]!, atSinceIgnitionSec: 10, belowAltitudeFt: 5_000 },
+    { ...APOLLO11_ALARM_TIMELINE[1]!, atSinceIgnitionSec: 12, belowAltitudeFt: 4_000 },
+  ];
+
+  function low(s: ProgramAlarmState, sec: number): ProgramAlarmState {
+    return reduceProgramAlarms(
+      s,
+      { kind: "tick", sinceIgnitionUs: sec * S, altitudeFt: 1_000 },
+      CASCADE,
+    );
+  }
+
+  it("stays dark after the crew clears an alarm", () => {
+    let s = low(createProgramAlarmState(), 10);
+    expect(s.lampOn).toBe(true);
+    s = reduceProgramAlarms(s, { kind: "cancel", sinceIgnitionUs: 12 * S }, CASCADE);
+    expect(s.lampOn).toBe(false);
+    s = low(s, 13);
+    expect(s.lampOn).toBe(false);
+    s = low(s, 31);
+    expect(s.lampOn).toBe(true);
+  });
+
+  it("ignores an altitude trigger long before its scheduled time", () => {
+    const s = reduceProgramAlarms(
+      createProgramAlarmState(),
+      { kind: "tick", sinceIgnitionUs: 0, altitudeFt: 100 },
+      [{ ...APOLLO11_ALARM_TIMELINE[0]!, atSinceIgnitionSec: 300 }],
+    );
+    expect(s.lampOn).toBe(false);
+  });
+});

@@ -135,7 +135,24 @@ export interface ProgramAlarmState {
   /** Keys accepted so far toward the V05 N09 E read sequence. */
   readonly readBuffer: number;
   readonly lastMessage: string;
+  /** Ignition-relative time the last alarm was raised; null before the first. */
+  readonly lastRaisedSinceIgnitionUs: number | null;
 }
+
+/**
+ * Minimum spacing between two raised alarms. Without it a trajectory that is
+ * lower than the flown one satisfies several `belowAltitudeFt` triggers at
+ * once and the next alarm re-lights on the tick after RSET, so the lamp looks
+ * as if it will not silence. Apollo 11's closest pair was ~25 s apart.
+ */
+export const ALARM_MIN_SPACING_SEC = 20;
+
+/**
+ * How early the altitude trigger may pre-empt the scheduled time. It exists to
+ * keep alarms in the right part of the descent, not to fire them minutes early.
+ */
+export const ALARM_ALTITUDE_LEAD_SEC = 60;
+
 
 export type ProgramAlarmEvent =
   | {
@@ -172,6 +189,7 @@ export function createProgramAlarmState(): ProgramAlarmState {
     history: [],
     readBuffer: 0,
     lastMessage: "No program alarms.",
+    lastRaisedSinceIgnitionUs: null,
   };
 }
 
@@ -188,8 +206,21 @@ export function reduceProgramAlarms(
       const dueByAltitude =
         def.belowAltitudeFt !== undefined &&
         event.altitudeFt !== undefined &&
-        event.altitudeFt <= def.belowAltitudeFt;
+        event.altitudeFt <= def.belowAltitudeFt &&
+        event.sinceIgnitionUs >=
+          (def.atSinceIgnitionSec - ALARM_ALTITUDE_LEAD_SEC) * S;
       if (!dueByTime && !dueByAltitude) return state;
+
+      // Never stack two alarms on top of each other: a low trajectory can
+      // satisfy several altitude triggers at once, which would re-light the
+      // lamp on the tick after the crew cleared it.
+      if (
+        state.lastRaisedSinceIgnitionUs !== null &&
+        event.sinceIgnitionUs - state.lastRaisedSinceIgnitionUs <
+          ALARM_MIN_SPACING_SEC * S
+      ) {
+        return state;
+      }
 
       // A new alarm supersedes an unanswered one; the unanswered alarm is
       // recorded as such.
@@ -210,8 +241,10 @@ export function reduceProgramAlarms(
         history,
         readBuffer: 0,
         lastMessage: `PROG — ${def.label}. Key V05 N09 E to read the code, then RSET.`,
+        lastRaisedSinceIgnitionUs: event.sinceIgnitionUs,
       };
     }
+
 
     case "cancel": {
       const active = state.active;
