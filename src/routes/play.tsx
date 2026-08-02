@@ -401,7 +401,9 @@ function PlayClient() {
             <option key={s} value={s}>{s === 0 ? "HOLD" : `${s}×`}</option>
           ))}
         </select>
-        {session.ignition.phase === "standby" && session.flight.terminalState === null && (
+        {mission.id === "full-descent" &&
+          session.ignition.phase === "standby" &&
+          session.flight.terminalState === null && (
           <button
             onClick={() => session.actions.startIgnitionCountdown()}
             data-testid="play-start-pdi"

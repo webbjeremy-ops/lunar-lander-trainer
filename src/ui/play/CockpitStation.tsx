@@ -19,7 +19,7 @@ const APERTURE = { left: 12.62, top: 23.07, right: 62.34, bottom: 71.82 };
 /** MISSION TIMER LED window. */
 const LED = { left: 79.0, top: 17.1, width: 14.6, height: 2.8 };
 /** Attitude-ball well: centre and radius as a share of the artwork width. */
-const BALL = { cx: 80.3, cy: 52.7, r: 5.4 };
+const BALL = { cx: 79.19, cy: 52.49, r: 5.52 };
 
 export interface CockpitStationProps extends CockpitWindowViewProps {
   missionElapsedSec: number;
