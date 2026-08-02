@@ -205,6 +205,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     altitudeM,
     contact,
     crashed,
+    touchdownOnly,
   } = input;
 
   useEffect(() => {
@@ -219,6 +220,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       altitudeM,
       contact,
       crashed,
+      touchdownOnly,
     });
     let queued = false;
     for (const beat of due) {
@@ -240,6 +242,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     altitudeM,
     contact,
     crashed,
+    touchdownOnly,
     drain,
   ]);
 
