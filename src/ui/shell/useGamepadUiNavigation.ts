@@ -62,6 +62,7 @@ export function useGamepadUiNavigation(): void {
     let frame = 0;
     let nextMoveAt = 0;
     let selectHeld = false;
+    let tabHeld = false;
 
     const poll = () => {
       frame = window.requestAnimationFrame(poll);
@@ -69,6 +70,7 @@ export function useGamepadUiNavigation(): void {
       if (document.body.dataset["gamepadOwner"] === "gameplay") {
         nextMoveAt = 0;
         selectHeld = false;
+        tabHeld = false;
         return;
       }
 
@@ -76,6 +78,8 @@ export function useGamepadUiNavigation(): void {
       let dir = 0;
       let select = false;
       let scroll = 0;
+      // LB tabs forward, RB tabs backward (shift-tab).
+      let tab = 0;
       for (const pad of pads) {
         if (!pad?.connected) continue;
         const b = pad.buttons;
