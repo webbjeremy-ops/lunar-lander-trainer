@@ -10,16 +10,16 @@
 // overlays sit on top: the MISSION TIMER LED readout and the attitude ball
 // in its octagonal well. Pure presentation.
 
-import consoleArt from "@/assets/cdr-console6.png.asset.json";
+import consoleArt from "@/assets/cdr-console7.png.asset.json";
 import { displayPitchRad } from "@/game/play/descentPhase";
 import { CockpitWindowView, type CockpitWindowViewProps } from "@/ui/play/CockpitWindowView";
 
-/** Aperture bounding box, measured from the console artwork (896x1195). */
-const APERTURE = { left: 12.72, top: 24.27, right: 63.84, bottom: 72.14 };
+/** Aperture bounding box, measured from the console artwork (1086x1448). */
+const APERTURE = { left: 12.62, top: 23.07, right: 62.34, bottom: 71.82 };
 /** MISSION TIMER LED window. */
-const LED = { left: 77.6, top: 20.6, width: 15.7, height: 2.7 };
+const LED = { left: 79.0, top: 17.1, width: 14.6, height: 2.8 };
 /** Attitude-ball well: centre and radius as a share of the artwork width. */
-const BALL = { cx: 78.13, cy: 53.97, r: 5.0 };
+const BALL = { cx: 80.3, cy: 52.7, r: 5.4 };
 
 export interface CockpitStationProps extends CockpitWindowViewProps {
   missionElapsedSec: number;
@@ -120,7 +120,7 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
     <div
       data-testid="cockpit-station"
       className="relative w-full overflow-hidden rounded border border-neutral-800 bg-black"
-      style={{ aspectRatio: "896 / 1195" }}
+      style={{ aspectRatio: "1086 / 1448" }}
     >
       <div
         className="absolute"
@@ -171,9 +171,9 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
         className="pointer-events-none absolute"
         style={{
           left: `${BALL.cx - BALL.r}%`,
-          top: `${BALL.cy - BALL.r * (896 / 1195)}%`,
+          top: `${BALL.cy - BALL.r * (1086 / 1448)}%`,
           width: `${BALL.r * 2}%`,
-          height: `${BALL.r * 2 * (896 / 1195)}%`,
+          height: `${BALL.r * 2 * (1086 / 1448)}%`,
         }}
       >
         <StationBall pitchDeg={pitchDeg} rollDeg={view.rollDeg ?? 0} />
