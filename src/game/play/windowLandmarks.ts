@@ -424,6 +424,14 @@ export function earthDisk(
   const wob = options.wobbleRad ?? 0;
   let sx = Math.tan(EARTH_BEARING_RAD + wob * 0.6) * focal;
   let sy = Math.tan(dPitch + wob) * focal;
+
+  // The Earth is a sky object: it can never be painted over the regolith. If
+  // the unrolled disk would fall on or below the limb, it has already set.
+  const unrolledY = p.height / 2 + sy;
+  const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
+  const limbY = horizonY({ ...p, rollRad: 0 });
+  if (unrolledY + radiusPx * 1.4 > limbY) return EARTH_HIDDEN;
+
   if (roll !== 0) {
     const cr = Math.cos(roll);
     const sr = Math.sin(roll);
@@ -432,7 +440,6 @@ export function earthDisk(
     sx = rx;
     sy = ry;
   }
-  const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
   const x = p.width / 2 + sx;
   const y = p.height / 2 + sy;
   const onPane = y > -radiusPx && y < p.height + radiusPx && x > -radiusPx && x < p.width + radiusPx;
