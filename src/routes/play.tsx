@@ -504,7 +504,7 @@ function PlayClient() {
             }`}
           >
             {session.escalation.stage === "abort"
-              ? "Houston: abort directed"
+              ? "Houston: abort recommended"
               : `Correct within ${Math.ceil(session.secondsToAbort)} s`}
           </span>
         )}

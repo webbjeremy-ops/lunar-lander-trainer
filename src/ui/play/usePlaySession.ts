@@ -1387,14 +1387,16 @@ export function usePlaySession(
     () =>
       aborted
         ? { clear: false, reasons: [HOUSTON_ABORT_CALL.guidance], label: "ABORT — NO LANDING" }
-        : escalation.abortDirected
+        : escalation.stage === "abort"
           ? {
               clear: false,
-              reasons: ["Houston has directed an abort — hit ABORT STAGE."],
-              label: "ABORT DIRECTED",
+              reasons: [
+                "Houston recommends ABORT STAGE — correct the state or abort; the landing is not cleared.",
+              ],
+              label: "ABORT RECOMMENDED",
             }
           : landingClearance(deviation),
-    [aborted, deviation, escalation.abortDirected],
+    [aborted, deviation, escalation.stage],
   );
 
   const callout = useMemo(
