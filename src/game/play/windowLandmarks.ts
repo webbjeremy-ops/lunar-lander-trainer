@@ -457,14 +457,14 @@ export function trackFieldFeatures(
   // features: at 16 km that is ~2.4 km craters, at 300 m it is ~120 m pocks.
   // Coarser than this and braking shows two or three blobs, which reads as a
   // still image rather than 1,700 m/s of ground track.
-  const cell = options.cellM ?? Math.max(60, alt * 0.045);
-  const spanCells = options.spanCells ?? 70;
+  const cell = options.cellM ?? Math.max(70, alt * 0.085);
+  const spanCells = options.spanCells ?? 55;
   const centre = Math.round(rangeToGoM / cell);
   const out: SurfaceLandmark[] = [];
   for (let i = centre - 20; i <= centre + spanCells; i += 1) {
     for (let j = -18; j <= 18; j += 1) {
       const r = hash2(i * 7 + 13, j * 11 + 5);
-      if (r < 0.4) continue;
+      if (r < 0.58) continue;
       const kind: LandmarkKind = r > 0.965 ? "rille" : "crater";
       out.push({
         id: `field-${i}-${j}`,
