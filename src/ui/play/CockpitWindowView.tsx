@@ -187,22 +187,42 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   const pitch = displayPitchRad(a.flight.attitudeRad, alt, a.manual, {
     p64Selected: a.p64Selected,
   });
+  // Roll about the thrust axis rotates the whole outside world in the pane:
+  // windows-down (180 deg) puts the surface overhead, exactly as the crew saw
+  // it before the yaw-around. The scene must honour it or the view contradicts
+  // the FDAI and the roll dial.
+  const rollRad = (a.rollDeg * Math.PI) / 180;
   const proj: WindowProjection = {
     width: w,
     height: h,
     altitudeM: alt,
     pitchRad: Math.max(0.02, pitch),
-    rollRad: 0,
+    rollRad,
   };
-  const hy = horizonY(proj);
+  // The horizon line itself is computed in the unrolled frame, then rotated
+  // with everything else below.
+  const hy = horizonY({ ...proj, rollRad: 0 });
 
-  // Space and surface.
+
+  // Space and surface, painted in the unrolled frame and then rotated with the
+  // vehicle so sky, limb and ground stay locked to the projected features.
   ctx.fillStyle = "#04060a";
   ctx.fillRect(0, 0, w, h);
   const top = Math.max(-h, Math.min(h, hy));
+  // Overscan so the rotated fills still cover the corners of the pane.
+  const diag = Math.hypot(w, h);
+  const pad = diag;
 
-  // Black lunar sky above the limb: a scatter of fixed stars, deterministic
-  // in screen space so they hold still while the surface streams past.
+  ctx.save();
+  if (rollRad !== 0) {
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(rollRad);
+    ctx.translate(-w / 2, -h / 2);
+  }
+
+  // Black lunar sky above the limb: a scatter of fixed stars, deterministic in
+  // the vehicle frame so they hold still while the surface streams past and
+  // sweep with the vehicle when it rolls.
   if (top > 2) {
     ctx.save();
     ctx.fillStyle = "#cdd6e6";
@@ -225,19 +245,30 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   grad.addColorStop(0.55, "#6c6a64");
   grad.addColorStop(1, "#4c4a45");
   ctx.fillStyle = grad;
-  ctx.fillRect(0, top, w, h - top);
-
+  ctx.fillRect(-pad, top, w + 2 * pad, h - top + pad);
 
   if (hy > -h && hy < h) {
     ctx.strokeStyle = "#cfc4b0";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, hy);
-    ctx.lineTo(w, hy);
+    ctx.moveTo(-pad, hy);
+    ctx.lineTo(w + pad, hy);
     ctx.stroke();
   }
+  ctx.restore();
 
-  const rangeToGoM = Math.abs(a.downrangeM);
+
+  // Signed range to the landing zone: positive = still short of it, negative =
+  // the LZ is already behind the vehicle. Taking the magnitude here would make
+  // an overshoot look like a fresh approach, so the sign is preserved and the
+  // projection simply drops the LZ behind the camera.
+  const rangeToGoM = a.downrangeM;
+
+  // Surface features are only ever below the true horizon, so screen culling
+  // just needs to be generous enough to survive roll.
+  const margin = diag;
+  const onPane = (x: number, y: number) =>
+    x > -margin && x < w + margin && y > -margin && y < h + margin;
 
   // Near-field regolith texture, so the ground reads as moving even in a hover.
   if (alt < 3_000) {
@@ -246,7 +277,7 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
       const p = projectSurfacePoint(aheadM, pock.lateralM, proj);
       if (!p.visible) continue;
       const rx = pock.radiusM * p.scale;
-      if (rx < 0.8 || p.x < -40 || p.x > w + 40 || p.y < top || p.y > h + 40) continue;
+      if (rx < 0.8 || !onPane(p.x, p.y)) continue;
       drawLandmark(ctx, p.x, p.y, rx, pock);
     }
   }
@@ -258,13 +289,14 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     const p = projectSurfacePoint(aheadM, mark.lateralM, proj);
     if (!p.visible) continue;
     const rx = mark.radiusM * p.scale;
-    if (rx < 0.6 || p.x < -w || p.x > 2 * w || p.y < top - 40 || p.y > h + 200) continue;
+    if (rx < 0.6 || !onPane(p.x, p.y)) continue;
     drawLandmark(ctx, p.x, p.y, rx, mark);
   }
 
   // Landing zone in the reticle.
   const lz = projectSurfacePoint(rangeToGoM, 0, proj);
-  if (lz.visible && lz.y > top) {
+  if (lz.visible && onPane(lz.x, lz.y)) {
+
     const r = Math.max(4, 60 * lz.scale);
     ctx.strokeStyle = "#f0c56a";
     ctx.lineWidth = 1.4;
@@ -317,12 +349,16 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
 
 
-  // Dust streaming radially outward under the engine.
+  // Dust streaming radially outward from the point directly beneath the engine
+  // bell, not from a fixed spot on the glass: at high pitch the blast sheet
+  // sits low and off-frame, and it rises into view as the vehicle comes
+  // upright over the site.
   const dust = dustDensity(alt, a.flight.throttle);
   if (dust > 0) {
+    const nadir = projectSurfacePoint(0, 0, proj);
+    const cx = nadir.visible ? nadir.x : w * 0.5;
+    const cy = nadir.visible ? Math.min(nadir.y, h * 1.15) : h * 0.94;
     ctx.save();
-    const cx = w * 0.5;
-    const cy = h * 0.94;
     ctx.globalAlpha = Math.min(0.6, dust * 0.7);
     ctx.strokeStyle = "#b9ad9a";
     ctx.lineWidth = 1;
@@ -335,14 +371,16 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
       ctx.lineTo(cx + Math.cos(ang) * len, cy + Math.sin(ang) * len * 0.28);
       ctx.stroke();
     }
-    const veil = ctx.createLinearGradient(0, h * 0.6, 0, h);
+    const veilTop = Math.max(0, Math.min(h * 0.75, cy - h * 0.34));
+    const veil = ctx.createLinearGradient(0, veilTop, 0, h);
     veil.addColorStop(0, "rgba(190,178,158,0)");
     veil.addColorStop(1, `rgba(190,178,158,${(0.55 * dust).toFixed(3)})`);
     ctx.globalAlpha = 1;
     ctx.fillStyle = veil;
-    ctx.fillRect(0, h * 0.6, w, h * 0.4);
+    ctx.fillRect(0, veilTop, w, h - veilTop);
     ctx.restore();
   }
+
 
   // In bare mode the photographic console carries its own etched LPD scale.
   if (!a.bare) drawLpdReticle(ctx, w, h, proj);
