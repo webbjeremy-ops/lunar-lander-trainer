@@ -682,9 +682,10 @@ function PlayClient() {
           <ContactLight on={contact.on} />
 
           <FdaiBall
-            pitchDeg={(session.flight.attitudeRad * 180) / Math.PI}
+            pitchDeg={(-session.flight.attitudeRad * 180) / Math.PI}
             rollDeg={session.roll.rollDeg}
-            pitchRateDegPerSec={(session.flight.angularRateRadPerSec * 180) / Math.PI}
+            pitchRateDegPerSec={(-session.flight.angularRateRadPerSec * 180) / Math.PI}
+
             rollRateDegPerSec={session.roll.phase === "rolling" ? -10 : 0}
             valid={session.flight.terminalState !== "crashed"}
           />

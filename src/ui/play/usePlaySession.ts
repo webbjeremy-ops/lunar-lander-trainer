@@ -948,13 +948,20 @@ export function usePlaySession(
         // nulled: no authority above ~30 m/s, full pitch-over below ~4 m/s.
         let aimAttitudeRad = cue.recommendedAttitudeRad;
         if (o.altitudeM <= PHASE_HIGH_GATE_M) {
-          const phasePitch = descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad;
+          // M4.52 — the phase table is a PRESENTATION angle (positive = pitched
+          // back for braking); the kernel's attitude is signed the other way
+          // (negative = thrust tilted retrograde). Convert before using it as a
+          // guidance aim, otherwise the pitch-over commanded PROGRADE thrust
+          // and drove the vehicle away from the site.
+          const phasePitch = -descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad;
           const speed = Math.abs(o.tangentialSpeedMps);
           const blend = Math.max(0, Math.min(1, (30 - speed) / 26));
-          if (phasePitch < aimAttitudeRad) {
+          // Only ever blend toward a MORE upright attitude — never add tilt.
+          if (Math.abs(phasePitch) < Math.abs(aimAttitudeRad)) {
             aimAttitudeRad = aimAttitudeRad + (phasePitch - aimAttitudeRad) * blend;
           }
         }
+
         // Simple proportional attitude autopilot onto the advisory angle.
         const err = aimAttitudeRad - state.attitudeRad;
         attitudeCommand = clampSigned(err * 3 - state.angularRateRadPerSec * 2.5);

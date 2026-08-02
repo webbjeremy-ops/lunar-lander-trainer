@@ -117,6 +117,13 @@ export function displayPitchRad(
 ): number {
   const nominal = descentPhaseFor(altitudeM, options).pitchRad;
   if (!manual) return nominal;
-  return attitudeRad + (nominal - attitudeRad) * 0.35;
+  // M4.52 — the kernel signs attitude the other way round from this
+  // presentation model: negative attitude is thrust tilted retrograde, which
+  // IS the pitched-back braking posture drawn as a positive display pitch.
+  // Without this flip the picture inverted the moment the crew took over, so
+  // "pitched forward at the site" was really thrust prograde.
+  const shown = -attitudeRad;
+  return shown + (nominal - shown) * 0.35;
 }
+
 
