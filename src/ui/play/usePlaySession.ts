@@ -684,6 +684,16 @@ export function usePlaySession(
       }
       // Left bumper — easy program acceptance: key the pending DSKY step.
       if (input.acceptProgramPressed) acceptProgramRef.current();
+      // View button — toggle the commander's first-person window view.
+      if (input.toggleViewPressed && typeof window !== "undefined") {
+        window.dispatchEvent(new Event("tranquility:toggle-view"));
+      }
+      // Right stick vertical — scroll the page, so the crew can reach panels
+      // below the fold without a mouse.
+      if (input.scrollRate !== 0 && typeof window !== "undefined") {
+        window.scrollBy({ top: input.scrollRate * 24, behavior: "auto" });
+      }
+
       // A — acknowledge the on-screen call ("Got it" / "Copy that"). Alarms are
       // deliberately NOT dismissible this way; they stay on RB.
       if (input.acknowledgePressed) acknowledgeOnScreenCall();
