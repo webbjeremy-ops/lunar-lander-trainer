@@ -400,6 +400,10 @@ export function usePlaySession(
   const padEdgesRef = useRef<GamepadEdgeState>(createGamepadEdgeState());
   const padInputRef = useRef<XboxCockpitInput>(NEUTRAL_INPUT);
   const acceptProgramRef = useRef<() => void>(() => {});
+  // M4.45 — pad shortcuts for cockpit switches that live in React actions.
+  const takeoverRef = useRef<() => void>(() => {});
+  const setEngineArmRef = useRef<() => void>(() => {});
+
   const hapticsRef = useRef<GamepadHaptics>(new GamepadHaptics());
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   // M4.31 — easy program acceptance.
