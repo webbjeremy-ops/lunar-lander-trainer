@@ -134,6 +134,25 @@ const ATTITUDE_TAP_RATE = 0.02;
 /** Rate-of-descent trim increment: 1 ft/s, as in the real P66 ROD switch. */
 export const ROD_INCREMENT_MPS = 0.3048;
 
+/**
+ * M4.45 — the A button acknowledges whichever affirmative call is on screen
+ * ("Got it" on the procedure coach, "Copy that" on a callout or a Houston
+ * call). Program alarms are deliberately excluded: those stay on RB.
+ * Presentation-level glue — it clicks the same control the mouse would.
+ */
+function acknowledgeOnScreenCall(): void {
+  if (typeof document === "undefined") return;
+  for (const id of ["procedure-coach-ack", "callout-ack", "houston-ack"]) {
+    const el = document.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`);
+    if (el && !el.disabled) {
+      el.click();
+      return;
+    }
+  }
+}
+
+
+
 
 export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
 
