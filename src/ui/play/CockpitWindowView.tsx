@@ -32,10 +32,16 @@ export interface CockpitWindowViewProps {
   manual: boolean;
   rollDeg?: number;
   p64Selected?: boolean;
+  /** Paint only the out-the-window scene: no drawn frame, panel slice or sill
+   *  readouts. Used when a real cockpit image supplies the aperture. */
+  bare?: boolean;
+  className?: string;
 }
 
-interface DrawArgs extends Required<Omit<CockpitWindowViewProps, "mission">> {
+interface DrawArgs
+  extends Required<Omit<CockpitWindowViewProps, "mission" | "className">> {
   mission: MissionDefinition;
+  className?: string;
   landmarks: readonly SurfaceLandmark[];
 }
 
