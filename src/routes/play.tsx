@@ -239,13 +239,16 @@ function PlayClient() {
     altitudeM: session.orbit.altitudeM,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
+    touchdownOnly: missionId !== "full-descent",
   });
 
   // The PDI card keys up with Houston's "Go for PDI" call.
   // The PDI card keys up with Houston's "Go for PDI" call, and only inside the
   // final minute of the countdown (TIG-60 s), when arming actually matters.
   const pdiCardReady =
-    (!audioLive || missionAudio.played.has("go-for-pdi")) &&
+    (!audioLive ||
+      missionId !== "full-descent" ||
+      missionAudio.played.has("go-for-pdi")) &&
     session.ignition.tigOffsetUs <= 60 * 1_000_000;
 
 

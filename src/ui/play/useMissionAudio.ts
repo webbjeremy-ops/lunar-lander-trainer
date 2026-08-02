@@ -73,6 +73,12 @@ export interface MissionAudioInput {
   readonly contact: boolean;
   /** The vehicle hit the surface too hard — no touchdown call is earned. */
   readonly crashed?: boolean;
+  /**
+   * M4.50 — training missions (Landing Fundamentals, Free Flight) fly without
+   * the air-to-ground loop: no Houston chatter at all, just the touchdown call
+   * once the footpads are down. Only Full Descent carries the whole tape.
+   */
+  readonly touchdownOnly?: boolean;
 }
 
 /** Silence between the previous clip ending and this one keying up. */
@@ -109,6 +115,7 @@ const BEATS: ReadonlyArray<{
 /** Every beat this state satisfies, in loop order. */
 export function dueBeats(input: MissionAudioInput): MissionAudioBeat[] {
   if (input.crashed === true) return [];
+  if (input.touchdownOnly === true) return input.contact ? ["contact"] : [];
   return BEATS.filter((b) => b.due(input)).map((b) => b.id);
 }
 
