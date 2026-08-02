@@ -346,7 +346,78 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
 
   // In bare mode the photographic console carries its own etched LPD scale.
   if (!a.bare) drawLpdReticle(ctx, w, h, proj);
+
+  // Glass last: faint reflections on the inner pane.
+  drawGlassReflections(ctx, w, h, hy);
 }
+
+/**
+ * Subtle inner-pane reflections.
+ *
+ * Apollo 11 landed with the Sun low (10.65 deg) and *behind* the LM, so no
+ * direct solar glare enters the commander's forward window. What the crew saw
+ * was a faint sheen: sunlit regolith bouncing up into the glass plus a dim
+ * reflection of the lit cockpit interior. Everything here is drawn additively
+ * at very low alpha (<= 0.06) so the surface, landmarks and LPD scale stay
+ * fully readable.
+ */
+function drawGlassReflections(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  horizon: number,
+) {
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+
+  // 1. Regolith bounce: the bright surface below the horizon lights the lower
+  //    pane from underneath.
+  const bounceTop = Math.max(0, Math.min(h, horizon));
+  const bounce = ctx.createLinearGradient(0, bounceTop, 0, h);
+  bounce.addColorStop(0, "rgba(214,205,186,0)");
+  bounce.addColorStop(1, "rgba(214,205,186,0.05)");
+  ctx.fillStyle = bounce;
+  ctx.fillRect(0, bounceTop, w, h - bounceTop);
+
+  // 2. Back-lit sheen from the Sun aft of the vehicle, grazing the upper
+  //    outboard corner of the pane.
+  const sheen = ctx.createRadialGradient(
+    w * 0.86,
+    h * 0.14,
+    0,
+    w * 0.86,
+    h * 0.14,
+    w * 0.62,
+  );
+  sheen.addColorStop(0, "rgba(236,231,214,0.055)");
+  sheen.addColorStop(0.45, "rgba(236,231,214,0.018)");
+  sheen.addColorStop(1, "rgba(236,231,214,0)");
+  ctx.fillStyle = sheen;
+  ctx.fillRect(0, 0, w, h);
+
+  // 3. Two soft ghost streaks: the cockpit's lit panel edges mirrored in the
+  //    glass, running parallel to the window's inboard rail.
+  ctx.lineCap = "round";
+  const streaks: readonly [number, number, number, number, number][] = [
+    [0.1, 0.24, 0.52, 0.06, 0.035],
+    [0.18, 0.44, 0.44, 0.24, 0.022],
+  ];
+  for (const [x0, y0, x1, y1, alpha] of streaks) {
+    const g = ctx.createLinearGradient(x0 * w, y0 * h, x1 * w, y1 * h);
+    g.addColorStop(0, "rgba(226,231,236,0)");
+    g.addColorStop(0.5, `rgba(226,231,236,${alpha})`);
+    g.addColorStop(1, "rgba(226,231,236,0)");
+    ctx.strokeStyle = g;
+    ctx.lineWidth = Math.max(2, h * 0.02);
+    ctx.beginPath();
+    ctx.moveTo(x0 * w, y0 * h);
+    ctx.lineTo(x1 * w, y1 * h);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 
 function drawLandmark(
   ctx: CanvasRenderingContext2D,
