@@ -263,6 +263,9 @@ export function usePlaySession(
   const script = useMemo(() => scriptFor(mission.id, controlMode), [mission.id, controlMode]);
   const limits = LANDING_LIMITS[assistance];
 
+  /** This scenario is inserted uprange of PDI and coasts in to TIG. */
+  const coastsToTig = mission.id === "full-descent";
+
   const makeInitial = useCallback(
     () =>
       // M4.41 — Full Descent starts UPRANGE of PDI, already moving at descent-
