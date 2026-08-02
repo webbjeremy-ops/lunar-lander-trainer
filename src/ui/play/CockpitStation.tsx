@@ -10,7 +10,7 @@
 // overlays sit on top: the MISSION TIMER LED readout and the attitude ball
 // in its octagonal well. Pure presentation.
 
-import consoleArt from "@/assets/cdr-console2.png.asset.json";
+import consoleArt from "@/assets/cdr-console3.png.asset.json";
 import { displayPitchRad } from "@/game/play/descentPhase";
 import { CockpitWindowView, type CockpitWindowViewProps } from "@/ui/play/CockpitWindowView";
 
