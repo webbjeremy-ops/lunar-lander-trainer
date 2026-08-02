@@ -667,7 +667,9 @@ function PlayClient() {
           <GamepadLegend
             haptics={hapticsPref}
             onHaptics={(on) => setHapticsPref(on)}
+            phase={session.manualUnlocked ? "manual" : "guided"}
           />
+
 
         </div>
 
