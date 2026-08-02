@@ -431,6 +431,52 @@ export function nearFieldPocks(
   return out;
 }
 
+/**
+ * Broad, altitude-scaled crater field covering the whole ground track.
+ *
+ * The seeded landmark table only spans the last ~12 km, so through braking —
+ * hundreds of kilometres uprange at 10–15 km altitude — the pane had nothing in
+ * it and the descent looked static. This tiles deterministic craters whose cell
+ * size grows with altitude, so there are always a few dozen features sweeping
+ * through the window and the crew can see the ground track moving from PDI on.
+ *
+ * Pure function of the world cell indices: the same patch always looks the same.
+ */
+export function trackFieldFeatures(
+  rangeToGoM: number,
+  altitudeM: number,
+  options: { readonly cellM?: number; readonly spanCells?: number } = {},
+): readonly SurfaceLandmark[] {
+  const alt = Math.max(50, altitudeM);
+  // One feature every ~0.35 altitudes: dense enough to read as motion, coarse
+  // enough that the count stays bounded at any height.
+  const cell = options.cellM ?? Math.max(180, alt * 0.55);
+  const spanCells = options.spanCells ?? 26;
+  const centre = Math.round(rangeToGoM / cell);
+  const out: SurfaceLandmark[] = [];
+  for (let i = centre - 2; i <= centre + spanCells; i += 1) {
+    for (let j = -6; j <= 6; j += 1) {
+      const r = hash2(i * 7 + 13, j * 11 + 5);
+      if (r < 0.4) continue;
+      const kind: LandmarkKind = r > 0.965 ? "rille" : "crater";
+      out.push({
+        id: `field-${i}-${j}`,
+        kind,
+        trackRangeM: (i + hash2(i, j + 33)) * cell,
+        lateralM: (j + hash2(i + 61, j)) * cell,
+        radiusM:
+          kind === "rille"
+            ? cell * (0.5 + hash2(i + 2, j) * 1.2)
+            : cell * (0.05 + hash2(i + 9, j + 4) * 0.22),
+        albedo: 0.3 + hash2(i, j + 7) * 0.55,
+      });
+    }
+  }
+  out.sort((a, b) => b.trackRangeM - a.trackRangeM);
+  return out;
+}
+
+
 // ---------------------------------------------------------------------------
 // Earth in the window
 // ---------------------------------------------------------------------------
