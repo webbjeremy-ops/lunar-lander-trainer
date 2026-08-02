@@ -22,7 +22,7 @@ describe("descent callouts", () => {
 
   it("raises the roll call on the time trigger", () => {
     const call = activeCallout(
-      { sinceIgnitionUs: 210 * S, altitudeM: 12_000, burning: true },
+      { sinceIgnitionUs: 231 * S, altitudeM: 12_000, burning: true },
       [],
     );
     expect(call?.id).toBe("roll-windows-up");
