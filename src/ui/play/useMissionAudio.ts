@@ -22,6 +22,7 @@ import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
 import final100Clip from "@/assets/a11-final-100ft.mp3.asset.json";
 import dustClip from "@/assets/a11-dust-30ft.mp3.asset.json";
 import contactClip from "@/assets/a11-touchdown-contact.mp3.asset.json";
+import eagleLandedClip from "@/assets/eagle-has-landed.mp3.asset.json";
 
 export type MissionAudioBeat =
   | "game-open"
@@ -36,7 +37,8 @@ export type MissionAudioBeat =
   | "sixty-seconds"
   | "final-100"
   | "dust-30"
-  | "contact";
+  | "contact"
+  | "eagle-landed";
 
 export const MISSION_AUDIO_URLS: Record<MissionAudioBeat, string> = {
   "game-open": openClip.url,
@@ -52,6 +54,7 @@ export const MISSION_AUDIO_URLS: Record<MissionAudioBeat, string> = {
   "final-100": final100Clip.url,
   "dust-30": dustClip.url,
   contact: contactClip.url,
+  "eagle-landed": eagleLandedClip.url,
 };
 
 export interface MissionAudioInput {
@@ -115,7 +118,8 @@ const BEATS: ReadonlyArray<{
 /** Every beat this state satisfies, in loop order. */
 export function dueBeats(input: MissionAudioInput): MissionAudioBeat[] {
   if (input.crashed === true) return [];
-  if (input.touchdownOnly === true) return input.contact ? ["contact"] : [];
+  // M4.53 — training missions get the "Eagle has landed" call, nothing else.
+  if (input.touchdownOnly === true) return input.contact ? ["eagle-landed"] : [];
   return BEATS.filter((b) => b.due(input)).map((b) => b.id);
 }
 
@@ -227,7 +231,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       if (claimedRef.current.has(beat)) continue;
       claimedRef.current.add(beat);
       // Touchdown outranks anything still waiting to be said.
-      if (beat === "contact") queueRef.current.length = 0;
+      if (beat === "contact" || beat === "eagle-landed") queueRef.current.length = 0;
       queueRef.current.push(beat);
       queued = true;
     }
