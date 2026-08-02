@@ -96,7 +96,7 @@ import {
   type ProgramAlarmState,
   type TakeoverRecord,
 } from "@/game/play";
-import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
+import { PHASE_HIGH_GATE_M, descentPhaseFor } from "@/game/play/descentPhase";
 import { contactLightState } from "@/game/play/contactLight";
 import {
   ACCEPTANCE_KEY_INTERVAL_MS,
@@ -409,6 +409,11 @@ export function usePlaySession(
    * the very next frame, so on mobile the thrust buttons did nothing.
    */
   const manualThrottleHoldUntilMsRef = useRef(0);
+  /**
+   * M4.49 — RB fires a short throttle burst once the crew has the vehicle:
+   * a brief kick of thrust, the way a commander taps the DPS to arrest sink.
+   */
+  const throttleBurstUntilMsRef = useRef(0);
   /** Latched once the vehicle drops below low gate: terminal (P66) guidance. */
   const terminalGuidanceRef = useRef(false);
   const attitudeRef = useRef(0);
@@ -669,18 +674,32 @@ export function usePlaySession(
       padEdgesRef.current = next;
       padInputRef.current = input;
 
-      // Right trigger — roll toward windows-up (the R key).
-      if (input.rollCommanded !== padRollCommanded) {
-        padRollCommanded = input.rollCommanded;
-        dispatchRoll({ kind: "roll", active: input.rollCommanded });
+      // M4.49 — the pad remaps at manual takeover: while the computer flies,
+      // RT rolls the vehicle and RB clears an alarm; once the crew has the
+      // vehicle RT becomes the throttle and RB a short thrust burst.
+      const crewFlying =
+        procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
+
+      // Right trigger — roll toward windows-up (the R key), guided flight only.
+      const rollWanted = input.rollCommanded && !crewFlying;
+      if (rollWanted !== padRollCommanded) {
+        padRollCommanded = rollWanted;
+        dispatchRoll({ kind: "roll", active: rollWanted });
       }
-      // Right bumper — cancel the program alarm in one press.
-      if (input.cancelAlarmPressed && alarmsRef.current.active !== null) {
-        dispatchAlarm({
-          kind: "cancel",
-          sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
-        });
-        hapticsRef.current.pulse("alarm");
+      // Right bumper — alarm reset under guidance, throttle burst in manual.
+      if (input.cancelAlarmPressed) {
+        if (crewFlying && alarmsRef.current.active === null) {
+          throttleBurstUntilMsRef.current = Date.now() + 900;
+          manualThrottleHoldUntilMsRef.current = Date.now() + 900;
+          engineRef.current = true;
+          hapticsRef.current.pulse("ignition");
+        } else if (alarmsRef.current.active !== null) {
+          dispatchAlarm({
+            kind: "cancel",
+            sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+          });
+          hapticsRef.current.pulse("alarm");
+        }
       }
       // Left bumper — easy program acceptance: key the pending DSKY step.
       if (input.acceptProgramPressed) acceptProgramRef.current();
@@ -690,8 +709,6 @@ export function usePlaySession(
       }
       // Right stick vertical — page scroll, but only while the computer still
       // flies: once the crew has the vehicle the same axis commands pitch.
-      const crewFlying =
-        procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
       if (!crewFlying && input.scrollRate !== 0 && typeof window !== "undefined") {
         window.scrollBy({ top: input.scrollRate * 24, behavior: "auto" });
       }
@@ -828,10 +845,19 @@ export function usePlaySession(
         if (held.has("ArrowLeft")) stick -= 1;
         if (held.has("ArrowRight")) stick += 1;
 
-        // M4.30 — Xbox: left stick winds the throttle, right stick pitches.
+        // M4.30 / M4.49 — Xbox in manual flight: right stick pitches, the
+        // right trigger is the throttle (analogue boost), RB gives a short
+        // thrust burst, and the left stick still trims the throttle by rate.
         const pad = padInputRef.current;
         if (pad.thrustRate !== 0) throttleRef.current += pad.thrustRate * 1.8 * STEP_S;
         if (pad.pitch !== 0) stick = pad.pitch;
+        const triggerThrottle = pad.rollPull > 0.02 ? pad.rollPull : null;
+        if (triggerThrottle !== null) {
+          throttleRef.current = triggerThrottle;
+          engineRef.current = true;
+        }
+        const bursting = Date.now() < throttleBurstUntilMsRef.current;
+        if (bursting) throttleRef.current = Math.max(throttleRef.current, 0.55);
 
         // M4.10 rate-command / attitude-hold: the stick commands a body rate,
         // and a released stick commands zero rate so the RCS nulls rotation
@@ -857,6 +883,8 @@ export function usePlaySession(
           !held.has("ArrowUp") &&
           !held.has("ArrowDown") &&
           pad.thrustRate === 0 &&
+          triggerThrottle === null &&
+          !bursting &&
           Date.now() >= manualThrottleHoldUntilMsRef.current;
         if (noThrustInput && engineRef.current) {
           const o = computeOrbitalValues(state);
@@ -912,8 +940,18 @@ export function usePlaySession(
           throttleMaxFraction: guidanceEnv ? guidanceEnv.max : null,
         });
         throttle = cue.recommendedThrottle;
+        // M4.49 — automatic pitch-over at high gate. Below ~7,600 ft the
+        // computer flies the approach attitude profile (55 deg at the gate
+        // easing upright through low gate) rather than holding the braking
+        // posture, so the vehicle arrives on the landing attitude even if the
+        // crew never takes P64 manually.
+        let aimAttitudeRad = cue.recommendedAttitudeRad;
+        if (o.altitudeM <= PHASE_HIGH_GATE_M) {
+          const phasePitch = descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad;
+          aimAttitudeRad = Math.min(aimAttitudeRad, phasePitch);
+        }
         // Simple proportional attitude autopilot onto the advisory angle.
-        const err = cue.recommendedAttitudeRad - state.attitudeRad;
+        const err = aimAttitudeRad - state.attitudeRad;
         attitudeCommand = clampSigned(err * 3 - state.angularRateRadPerSec * 2.5);
         throttleRef.current = throttle;
         attitudeRef.current = attitudeCommand;

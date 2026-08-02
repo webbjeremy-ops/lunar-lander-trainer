@@ -1,13 +1,18 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// M4.30 — Xbox controller legend. Appears only once a pad is connected, and
-// mirrors the mapping implemented in `xboxGamepad.ts`.
+// M4.30 / M4.49 — Xbox controller legend. Appears only once a pad is
+// connected, and mirrors the mapping implemented in `xboxGamepad.ts` and
+// `usePlaySession.ts`. The mapping changes at manual takeover, so the legend
+// changes with it.
 
 import { useEffect, useState } from "react";
 
-const BINDINGS: readonly (readonly [string, string])[] = [
+export type LegendPhase = "guided" | "manual";
+
+type Binding = readonly [string, string];
+
+const GUIDED: readonly Binding[] = [
   ["Left stick ↑/↓", "DPS throttle"],
-  ["Right stick ↕", "Pitch attitude (manual)"],
   ["Right trigger", "Roll to windows-up"],
   ["Left trigger", "Take manual control"],
   ["A", "Got it / Copy that"],
@@ -18,14 +23,26 @@ const BINDINGS: readonly (readonly [string, string])[] = [
   ["Left bumper", "Accept pending DSKY program"],
   ["D-pad ↑/↓", "Rate-of-descent trim"],
   ["View (⧉)", "Window view on / off"],
-  ["Right stick ↕", "Scroll the page (before manual takeover)"],
-
+  ["Right stick ↕", "Scroll the page"],
 ];
 
+const MANUAL: readonly Binding[] = [
+  ["Right stick ↕", "Pitch forward / back"],
+  ["Right trigger", "Throttle / boost"],
+  ["Right bumper", "Short throttle burst"],
+  ["Y", "Engine off"],
+  ["Left stick ↑/↓", "Fine throttle trim"],
+  ["D-pad ↑/↓", "Rate-of-descent trim"],
+  ["A", "Got it / Copy that"],
+  ["Left bumper", "Accept pending DSKY program"],
+  ["B", "Abort stage"],
+  ["View (⧉)", "Window view on / off"],
+];
 
-export function GamepadLegend({ haptics, onHaptics }: {
+export function GamepadLegend({ haptics, onHaptics, phase = "guided" }: {
   haptics: boolean;
   onHaptics: (on: boolean) => void;
+  phase?: LegendPhase;
 }) {
   const [connected, setConnected] = useState(false);
 
@@ -46,6 +63,9 @@ export function GamepadLegend({ haptics, onHaptics }: {
   }, []);
 
   if (!connected) return null;
+
+  const bindings = phase === "manual" ? MANUAL : GUIDED;
+
 
   return (
     <div
@@ -72,7 +92,7 @@ export function GamepadLegend({ haptics, onHaptics }: {
         </button>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 font-mono text-[10px]">
-        {BINDINGS.map(([control, action]) => (
+        {bindings.map(([control, action]) => (
           <div key={control} className="contents">
             <dt className="text-neutral-500">{control}</dt>
             <dd className="text-neutral-300">{action}</dd>

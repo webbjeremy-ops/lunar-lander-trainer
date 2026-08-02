@@ -68,7 +68,7 @@ describe("descent callouts", () => {
   it("fires high gate only when time and geometry agree", () => {
     const fired = triggeredCallouts({
       sinceIgnitionUs: 506 * S,
-      altitudeM: 7_600 * 0.3048,
+      altitudeM: 4_900 * 0.3048,
       burning: true,
       rangeToLzM: 4.1 * 1852,
     }).map((c) => c.id);

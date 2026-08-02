@@ -155,7 +155,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "High gate (~7,600 ft) is where P64 takes over and the landing-point designator angle becomes meaningful.",
     "dsky",
     milestoneSec("high-gate"),
-    7_600,
+    5_000,
     "P64",
   ),
   c(
@@ -166,7 +166,7 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "In position 1 the antenna looks along the braking-phase velocity vector. Coming through high gate the beam has to point down the descent path, so the crew reposition it (SETPOS2) as P64 takes over — otherwise altitude and velocity updates drop out at the worst moment.",
     "none",
     milestoneSec("high-gate") + 4,
-    7_400,
+    4_200,
     "P64 · LR POS 2",
   ),
   c(
@@ -239,7 +239,16 @@ export interface CalloutInput {
  * contact light is a physical event, so it fires whenever a probe touches,
  * whatever the clock says.
  */
-const ALTITUDE_PRIMARY_IDS: readonly string[] = ["contact"];
+//
+// M4.49 — the two P64 cards are altitude-primary as well, so the cue cards
+// key up on exactly the altitudes the restored air-to-ground clips do
+// (5,000 ft for the P64 pitch-over call, 4,200 ft for "you're go for
+// landing"). Card and recording now arrive together.
+const ALTITUDE_PRIMARY_IDS: readonly string[] = [
+  "contact",
+  "high-gate",
+  "radar-position-2",
+];
 
 /**
  * How long a call will wait for the vehicle to reach the altitude it was made
@@ -275,7 +284,7 @@ export function triggeredCallouts(
         input.rangeToLzM <= 2 * 4.1 * 1852 &&
         input.altitudeM <= 1.5 * 7_600 * FT);
     const fired = ALTITUDE_PRIMARY_IDS.includes(call.id)
-      ? atAltitude
+      ? atAltitude && highGateGeometryReady
       : t >= call.atSinceIgnitionSec && highGateGeometryReady;
     // Strict order: a later call can never overtake an earlier one.
     if (!fired) break;
