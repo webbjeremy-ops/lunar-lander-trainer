@@ -10,6 +10,10 @@ import {
   sinkRateLimitMps,
   type FlightDeviationInput,
 } from "../houstonAdvisory";
+import {
+  createHoustonEscalationState,
+  reduceHoustonEscalation,
+} from "../houstonEscalation";
 
 const nominal: FlightDeviationInput = {
   altitudeM: 1_000,
