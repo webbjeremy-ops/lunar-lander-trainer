@@ -469,7 +469,7 @@ export function usePlaySession(
     escalationRef.current = createHoustonEscalationState();
     setEscalation(escalationRef.current);
     crewHasVehicleRef.current = false;
-  }, [makeInitial, script, generation, windowsUpAtStart, startsUnderPower]);
+  }, [makeInitial, script, generation, windowsUpAtStart, startsUnderPower, coastsToTig]);
 
   // --- Keyboard -------------------------------------------------------------
   const heldRef = useRef<Set<string>>(new Set());
