@@ -72,11 +72,18 @@ export interface XboxCockpitInput {
   readonly rollPull: number;
   /** True while the right trigger is past the roll threshold. */
   readonly rollCommanded: boolean;
-  /** Rate-of-descent trim steps requested this frame (D-pad up/down, LT down). */
+  /** Rate-of-descent trim steps requested this frame (D-pad up/down). */
   readonly rodTrim: number;
   readonly cancelAlarmPressed: boolean;
   /** M4.31 — LB: key the pending DSKY step for the crew. */
   readonly acceptProgramPressed: boolean;
+  /** M4.45 — A: acknowledge the on-screen call ("Got it" / "Copy that"). */
+  readonly acknowledgePressed: boolean;
+  /** M4.45 — X: the PDI ENG ARM switch. */
+  readonly armEnginePressed: boolean;
+  /** M4.45 — left trigger: take manual control of the vehicle. */
+  readonly takeoverPressed: boolean;
+  /** Y: DPS engine on/off. */
   readonly enginePressed: boolean;
   readonly abortPressed: boolean;
 }
@@ -89,9 +96,13 @@ export const NEUTRAL_INPUT: XboxCockpitInput = {
   rodTrim: 0,
   cancelAlarmPressed: false,
   acceptProgramPressed: false,
+  acknowledgePressed: false,
+  armEnginePressed: false,
+  takeoverPressed: false,
   enginePressed: false,
   abortPressed: false,
 };
+
 
 /** Applies a deadzone and rescales the remainder to the full [-1, 1] range. */
 export function applyDeadzone(value: number, deadzone = STICK_DEADZONE): number {
