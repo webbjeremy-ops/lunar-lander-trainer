@@ -35,9 +35,11 @@ export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
   alarm: { durationMs: 320, weakMagnitude: 1, strongMagnitude: 0.25 },
   // Probe contact: the light and the bump the crew actually felt.
   contact: { durationMs: 220, weakMagnitude: 0.45, strongMagnitude: 0.7 },
-  touchdown: { durationMs: 550, weakMagnitude: 0.5, strongMagnitude: 0.85 },
-  "hard-landing": { durationMs: 900, weakMagnitude: 0.9, strongMagnitude: 1 },
-  crash: { durationMs: 1200, weakMagnitude: 1, strongMagnitude: 1 },
+  // A good landing is a soft settle, not a slam.
+  touchdown: { durationMs: 600, weakMagnitude: 0.22, strongMagnitude: 0.3 },
+  "hard-landing": { durationMs: 700, weakMagnitude: 0.85, strongMagnitude: 1 },
+  // Crash: heavy, but brief — no battery-draining long buzz.
+  crash: { durationMs: 800, weakMagnitude: 1, strongMagnitude: 1 },
   abort: { durationMs: 800, weakMagnitude: 0.8, strongMagnitude: 1 },
   // Throttle recovery out of the fixed throttle point: a short notch.
   "throttle-recovery": { durationMs: 200, weakMagnitude: 0.35, strongMagnitude: 0.2 },
