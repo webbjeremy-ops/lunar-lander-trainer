@@ -83,10 +83,10 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     [],
   );
 
-  const { enabled, engineOn, activeAlarmId, calloutId, contact } = input;
+  const { enabled, engineOn, activeAlarmId, calloutId, contact, crashed } = input;
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
-    const beat = beatFor({ enabled, engineOn, activeAlarmId, calloutId, contact });
+    const beat = beatFor({ enabled, engineOn, activeAlarmId, calloutId, contact, crashed });
     if (beat === null || playedRef.current.has(beat)) return;
 
     const playing = currentRef.current;
@@ -107,15 +107,15 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     void el.play().catch(() => {
       done();
     });
-  }, [enabled, engineOn, activeAlarmId, calloutId, contact]);
+  }, [enabled, engineOn, activeAlarmId, calloutId, contact, crashed]);
 
-  // Muting the cockpit audio also silences the comm loop.
+  // Muting the cockpit audio — or crashing — silences the comm loop.
   useEffect(() => {
-    if (enabled) return;
+    if (enabled && crashed !== true) return;
     currentRef.current?.pause();
     currentRef.current = null;
     setSpeaking(false);
-  }, [enabled]);
+  }, [enabled, crashed]);
 
   return { speaking, duck: speaking ? MISSION_AUDIO_DUCK : 1 };
 }
