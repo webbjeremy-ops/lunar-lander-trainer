@@ -155,6 +155,33 @@ const DEFAULT_HALF_FOV = 32 * (Math.PI / 180);
 export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
 
 /**
+ * Angle of the window boresight from straight down (nadir), radians.
+ *
+ * The commander's panes look perpendicular to the thrust axis, so WHICH WAY
+ * the vehicle is rolled about that axis decides what fills the window:
+ *
+ * - Face-down (roll 180 deg, the PDI attitude): with Eagle pitched ~77 deg back
+ *   the window looks only ~13 deg off nadir and the pane is filled with
+ *   regolith running away beneath the feet toward the landing site. This is the
+ *   attitude Armstrong flew through early braking.
+ * - Rolled over (roll 0 deg, from the yaw-around at T+221 s): the same pitch now
+ *   points the panes away from the surface, so the pane goes to black sky with
+ *   the Earth in it — Aldrin's "Earth straight out our front window".
+ * - Pitch-over for the approach then walks the look direction back down toward
+ *   nadir, so the landing site rises into the pane and the Earth climbs out of
+ *   it.
+ *
+ * The two ends are exact and the roll fraction blends between them, so the
+ * horizon sweeps continuously through the pane while the player rolls.
+ */
+export function boresightFromNadirRad(pitchRad: number, rollRad = 0): number {
+  const faceUp = pitchRad + WINDOW_UP_CANT_RAD;
+  const faceDown = Math.abs(Math.PI / 2 - pitchRad);
+  const u = (1 + Math.cos(rollRad)) / 2; // 1 = rolled over, 0 = face-down
+  return u * faceUp + (1 - u) * faceDown;
+}
+
+/**
  * Project a point on the surface into window coordinates.
  *
  * The commander looks out along the vehicle's +Z window axis. With the vehicle
@@ -174,10 +201,11 @@ export function projectSurfacePoint(
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const roll = p.rollRad ?? 0;
 
-  // Camera frame: look direction pitched `pitchRad` off nadir, toward +ahead.
-  const pitch = p.pitchRad + WINDOW_UP_CANT_RAD;
+  // Camera frame: look direction pitched `pitch` off nadir, toward +ahead.
+  const pitch = boresightFromNadirRad(p.pitchRad, roll);
   const cp = Math.cos(pitch);
   const sp = Math.sin(pitch);
+
 
   // Vehicle-relative vector to the surface point, in a frame where
   // x = right, y = down (toward the surface), z = along the ground track.
