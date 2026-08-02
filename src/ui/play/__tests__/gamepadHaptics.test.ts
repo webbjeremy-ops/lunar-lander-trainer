@@ -64,6 +64,7 @@ describe("GamepadHaptics", () => {
   it("throttles engine bed effects to the refresh period", () => {
     const played = installFakePad();
     const haptics = new GamepadHaptics();
+    haptics.engineBurst(60_000, 0);
     haptics.tick(0.5, true, 0);
     haptics.tick(0.5, true, 10);
     haptics.tick(0.5, true, 50);
@@ -75,6 +76,7 @@ describe("GamepadHaptics", () => {
   it("suppresses the engine bed while an event pulse is playing", () => {
     const played = installFakePad();
     const haptics = new GamepadHaptics();
+    haptics.engineBurst(60_000, 0);
     haptics.pulse("touchdown", 0);
     expect(played).toHaveLength(1);
     expect(played[0]!.duration).toBe(HAPTIC_EVENTS.touchdown.durationMs);
@@ -104,5 +106,25 @@ describe("GamepadHaptics", () => {
       haptics.tick(1, true, 0);
       haptics.stop();
     }).not.toThrow();
+  });
+});
+
+describe("engine bed burst window", () => {
+  it("stays silent outside a burst even with the DPS at full throttle", () => {
+    const played = installFakePad();
+    const haptics = new GamepadHaptics();
+    haptics.tick(1, true, 0);
+    haptics.tick(1, true, ENGINE_BED_PERIOD_MS + 1);
+    expect(played).toHaveLength(0);
+  });
+
+  it("stops the bed once the burst window expires", () => {
+    const played = installFakePad();
+    const haptics = new GamepadHaptics();
+    haptics.engineBurst(1000, 0);
+    haptics.tick(1, true, 0);
+    expect(played).toHaveLength(1);
+    haptics.tick(1, true, 1001);
+    expect(played).toHaveLength(1);
   });
 });
