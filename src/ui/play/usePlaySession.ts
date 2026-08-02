@@ -96,7 +96,7 @@ import {
   type ProgramAlarmState,
   type TakeoverRecord,
 } from "@/game/play";
-import { PHASE_HIGH_GATE_M } from "@/game/play/descentPhase";
+import { PHASE_HIGH_GATE_M, descentPhaseFor } from "@/game/play/descentPhase";
 import { contactLightState } from "@/game/play/contactLight";
 import {
   ACCEPTANCE_KEY_INTERVAL_MS,
