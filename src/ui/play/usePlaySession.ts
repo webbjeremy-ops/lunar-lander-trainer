@@ -731,7 +731,14 @@ export function usePlaySession(
       // timeline, the computer flies P63 exactly as it did in 1969 — which is
       // what keeps the burn on range instead of sailing past the site.
       const autoBrakingMission = apollo11Timeline && mission.id === "full-descent";
-      if (!crewHasVehicleRef.current) {
+      // M4.41 — during the pre-TIG coast the countdown is still running, so the
+      // absence of a burn must NOT be read as "the crew has the vehicle".
+      const preTigCoast =
+        autoBrakingMission &&
+        ignitionRef.current.phase !== "aborted" &&
+        !isBurning(ignitionRef.current) &&
+        descentClockRef.current.mode !== "running";
+      if (!crewHasVehicleRef.current && !preTigCoast) {
         const o = computeOrbitalValues(state);
         const braking =
           autoBrakingMission &&
@@ -740,6 +747,7 @@ export function usePlaySession(
             descentClockRef.current.mode === "running");
         if (!braking) crewHasVehicleRef.current = true;
       }
+
       const manual =
         procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
 
