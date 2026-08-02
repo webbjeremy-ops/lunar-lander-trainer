@@ -16,13 +16,16 @@ import { displayPitchRad } from "@/game/play/descentPhase";
 import {
   buildLandmarks,
   dustDensity,
+  earthDisk,
   horizonY,
   nearFieldPocks,
   projectSurfacePoint,
   shadowEnvelope,
+  type EarthDisk,
   type SurfaceLandmark,
   type WindowProjection,
 } from "@/game/play/windowLandmarks";
+
 
 export interface CockpitWindowViewProps {
   flight: LunarFlightState;
