@@ -201,7 +201,11 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     width: w,
     height: h,
     altitudeM: alt,
-    pitchRad: Math.max(0.02, pitch),
+    // Thrust-axis pitch is signed (-90 deg when pitched fully back). Clamping
+    // the raw signed value pinned the boresight near the horizon and threw the
+    // whole crater field below the sill, so the magnitude is what matters.
+    pitchRad: Math.max(0.02, Math.abs(pitch)),
+
     rollRad,
   };
   // The horizon line is computed in the unrotated pane (roll still decides how
