@@ -246,33 +246,39 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     ctx.fillText("LZ", lz.x, lz.y - r * 0.9);
   }
 
-  // LM shadow — the last-few-feet cue.
+  // LM shadow — sun low behind the vehicle, so the shadow lies ahead and
+  // sweeps back toward the LM (growing fast) as it settles.
   const shadow = shadowEnvelope(alt);
   if (shadow.intensity > 0) {
-    const s = projectSurfacePoint(shadow.offsetM * 0.35, -shadow.offsetM * 0.9, proj);
+    const s = projectSurfacePoint(shadow.offsetM, shadow.lateralM, proj);
     if (s.visible) {
-      const r = Math.max(6, shadow.radiusM * s.scale);
+      const r = Math.max(3, shadow.radiusM * s.scale);
+      const gear = Math.max(0, Math.min(1, (12 - alt) / 12));
       ctx.save();
-      ctx.globalAlpha = Math.min(0.85, 0.25 + shadow.intensity * 0.7);
+      ctx.globalAlpha = Math.min(0.9, 0.12 + shadow.intensity * 0.78);
       ctx.fillStyle = "#050604";
+      // Descent-stage body.
       ctx.beginPath();
-      ctx.ellipse(s.x, s.y, r * 1.35, r * 0.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(s.x, s.y, r * 0.9, r * 0.34, 0, 0, Math.PI * 2);
       ctx.fill();
-      // Coarse LM silhouette: descent stage body plus splayed legs.
-      ctx.beginPath();
-      ctx.ellipse(s.x, s.y, r * 0.55, r * 0.22, 0, 0, Math.PI * 2);
-      ctx.fill();
+      // Splayed landing gear, prominent in the last forty feet.
       ctx.strokeStyle = "#050604";
-      ctx.lineWidth = Math.max(1, r * 0.09);
-      for (const ang of [0.6, 2.5, 3.8, 5.7]) {
+      ctx.lineWidth = Math.max(1, r * (0.07 + gear * 0.09));
+      for (const ang of [0.7, 2.44, 3.84, 5.58]) {
+        const legX = s.x + Math.cos(ang) * r * (1.5 + gear * 0.5);
+        const legY = s.y + Math.sin(ang) * r * (0.55 + gear * 0.2);
         ctx.beginPath();
         ctx.moveTo(s.x, s.y);
-        ctx.lineTo(s.x + Math.cos(ang) * r * 1.25, s.y + Math.sin(ang) * r * 0.46);
+        ctx.lineTo(legX, legY);
         ctx.stroke();
+        ctx.beginPath();
+        ctx.ellipse(legX, legY, r * 0.2, r * 0.09, 0, 0, Math.PI * 2);
+        ctx.fill();
       }
       ctx.restore();
     }
   }
+
 
   // Dust streaming radially outward under the engine.
   const dust = dustDensity(alt, a.flight.throttle);
