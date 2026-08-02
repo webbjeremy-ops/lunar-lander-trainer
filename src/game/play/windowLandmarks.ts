@@ -175,7 +175,7 @@ export function projectSurfacePoint(
   const roll = p.rollRad ?? 0;
 
   // Camera frame: look direction pitched `pitchRad` off nadir, toward +ahead.
-  const pitch = p.pitchRad;
+  const pitch = p.pitchRad + WINDOW_UP_CANT_RAD;
   const cp = Math.cos(pitch);
   const sp = Math.sin(pitch);
 
@@ -238,7 +238,7 @@ export function horizonY(p: WindowProjection): number {
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const focal = p.width / 2 / Math.tan(halfFov);
   // The limb sits `dip` below level, so it enters the frame like extra pitch.
-  const theta = p.pitchRad + horizonDipRad(p.altitudeM);
+  const theta = p.pitchRad + WINDOW_UP_CANT_RAD + horizonDipRad(p.altitudeM);
   const forward = Math.sin(theta);
   if (forward <= 1e-3) return -1e6;
   return p.height / 2 + (-Math.cos(theta) / forward) * focal;
