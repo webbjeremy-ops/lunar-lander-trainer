@@ -171,9 +171,9 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
         className="pointer-events-none absolute"
         style={{
           left: `${BALL.cx - BALL.r}%`,
-          top: `calc(${BALL.cy}% - ${BALL.r}% * 896 / 1195)`,
+          top: `${BALL.cy - BALL.r * (896 / 1195)}%`,
           width: `${BALL.r * 2}%`,
-          aspectRatio: "1 / 1",
+          height: `${BALL.r * 2 * (896 / 1195)}%`,
         }}
       >
         <StationBall pitchDeg={pitchDeg} rollDeg={view.rollDeg ?? 0} />
