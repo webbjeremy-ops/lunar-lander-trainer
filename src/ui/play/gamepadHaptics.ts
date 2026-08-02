@@ -127,24 +127,28 @@ export class GamepadHaptics {
     for (const pad of navigator.getGamepads()) {
       const actuator = actuatorOf(pad);
       if (!actuator) continue;
+      const fallback = () => {
+        if (typeof actuator.pulse === "function") {
+          void actuator.pulse(effect.strongMagnitude, effect.durationMs).catch(() => undefined);
+        }
+      };
       if (typeof actuator.playEffect === "function") {
-        void Promise.resolve()
-          .then(() =>
-            actuator.playEffect("dual-rumble", {
+        try {
+          void actuator
+            .playEffect("dual-rumble", {
               startDelay: 0,
               duration: effect.durationMs,
               weakMagnitude: effect.weakMagnitude,
               strongMagnitude: effect.strongMagnitude,
-            }),
-          )
-          .catch(() => {
-            if (typeof actuator.pulse === "function") {
-              void actuator.pulse(effect.strongMagnitude, effect.durationMs).catch(() => undefined);
-            }
-          });
-      } else if (typeof actuator.pulse === "function") {
-        void actuator.pulse(effect.strongMagnitude, effect.durationMs).catch(() => undefined);
+            })
+            .catch(fallback);
+        } catch {
+          fallback();
+        }
+      } else {
+        fallback();
       }
+
     }
   }
 
