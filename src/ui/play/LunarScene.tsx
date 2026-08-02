@@ -405,7 +405,8 @@ function drawProfile(
   // domain puts it rather than being pinned to the right edge, so an overshoot
   // is visible instead of clamped off the plot.
   const aheadSpan = snapSpan(Math.max(0, downrangeM) * 1.15, 60);
-  const behindSpan = snapSpan(Math.max(0, -downrangeM) * 1.3, 0);
+  const behindSpan =
+    downrangeM < 0 ? snapSpan(-downrangeM * 1.3, 30) : aheadSpan * 0.06;
   const plotLeft = padLeft;
   const plotRight = w - 10;
   const plotW = Math.max(40, plotRight - plotLeft);
