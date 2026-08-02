@@ -17,6 +17,9 @@ const BINDINGS: readonly (readonly [string, string])[] = [
   ["Right bumper", "Cancel program alarm"],
   ["Left bumper", "Accept pending DSKY program"],
   ["D-pad ↑/↓", "Rate-of-descent trim"],
+  ["View (⧉)", "Window view on / off"],
+  ["Right stick ↕", "Scroll the page"],
+
 ];
 
 
