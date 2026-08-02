@@ -204,15 +204,33 @@ export function projectSurfacePoint(
   };
 }
 
+/** Mean lunar radius, metres. */
+const LUNAR_RADIUS_M = 1_737_400;
+
+/**
+ * Angle by which the true horizon lies below the local level plane, radians.
+ *
+ * On a sphere the visible limb drops as you climb: acos(R / (R + h)). At the
+ * high gate (~2.3 km) that is about 3 deg, and at PDI altitude (~15 km) close
+ * to 5 deg — enough that black sky shows above the limb when the vehicle is
+ * pitched well back early in the descent.
+ */
+export function horizonDipRad(altitudeM: number): number {
+  const alt = Math.max(0, altitudeM);
+  return Math.acos(LUNAR_RADIUS_M / (LUNAR_RADIUS_M + alt));
+}
+
 /** Screen y of the horizon for the current pitch, in window pixels. */
 export function horizonY(p: WindowProjection): number {
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const focal = p.width / 2 / Math.tan(halfFov);
-  // Horizon direction is level: forward component sin(pitch), up cos(pitch).
-  const forward = Math.sin(p.pitchRad);
+  // The limb sits `dip` below level, so it enters the frame like extra pitch.
+  const theta = p.pitchRad + horizonDipRad(p.altitudeM);
+  const forward = Math.sin(theta);
   if (forward <= 1e-3) return -1e6;
-  return p.height / 2 + (-Math.cos(p.pitchRad) / forward) * focal;
+  return p.height / 2 + (-Math.cos(theta) / forward) * focal;
 }
+
 
 // ---------------------------------------------------------------------------
 // Shadow and dust envelopes
