@@ -25,15 +25,16 @@ describe("mission audio story beats", () => {
     expect(dueBeats(base)).toEqual(["game-open", "go-for-pdi"]);
   });
 
-  it("fires ignition when the DPS lights", () => {
-    expect(dueBeats({ ...base, engineOn: true })).toContain("ignition");
+  it("fires ignition a few seconds after the DPS lights", () => {
+    expect(dueBeats({ ...base, engineOn: true, sinceIgnitionSec: 2 })).not.toContain("ignition");
+    expect(dueBeats({ ...base, engineOn: true, sinceIgnitionSec: 8 })).toContain("ignition");
   });
 
-  it("fires the AC-voltage call a minute into the braking burn", () => {
-    expect(dueBeats({ ...base, engineOn: true, sinceIgnitionSec: 30 })).not.toContain(
+  it("fires the AC-voltage call at T+161 s in the braking burn", () => {
+    expect(dueBeats({ ...base, engineOn: true, sinceIgnitionSec: 75 })).not.toContain(
       "ac-voltage",
     );
-    expect(dueBeats({ ...base, engineOn: true, sinceIgnitionSec: 75 })).toContain("ac-voltage");
+    expect(dueBeats({ ...base, engineOn: true, sinceIgnitionSec: 165 })).toContain("ac-voltage");
   });
 
   it("fires the 1202 clip on the first executive alarm", () => {
@@ -46,10 +47,10 @@ describe("mission audio story beats", () => {
     expect(due.indexOf("earth-window")).toBeGreaterThan(due.indexOf("radar-lock"));
   });
 
-  it("fires the P64 call at 5 000 ft and the go-for-landing call at 4 200 ft", () => {
+  it("fires the P64 call at 5 000 ft and the go-for-landing call at 3 500 ft", () => {
     expect(dueBeats({ ...base, altitudeM: 1_500 })).toContain("p64-5000");
     expect(dueBeats({ ...base, altitudeM: 1_500 })).not.toContain("go-for-landing-1201");
-    expect(dueBeats({ ...base, altitudeM: 1_200 })).toContain("go-for-landing-1201");
+    expect(dueBeats({ ...base, altitudeM: 1_000 })).toContain("go-for-landing-1201");
   });
 
   it("fires the sixty-second call on the quantity light", () => {

@@ -90,13 +90,23 @@ export const APOLLO11_ALARM_TIMELINE: readonly ProgramAlarmDefinition[] = [
   },
   {
     id: "alarm-1201-second",
-    code: "1201",
+    code: "1202",
     atSinceIgnitionSec: getToSeconds("102:42:43") - PDI_GET_SEC,
-    belowAltitudeFt: 1_600,
-    label: "1201 — Executive overflow (recurring)",
+    belowAltitudeFt: 1_000,
+    label: "1202 — Executive overflow (recurring)",
     teaching:
-      "The last of the descent alarms, taken low in the approach phase with " +
-      "the landing point already in the window.",
+      "The overload returns in the approach phase with the landing point " +
+      "already in the window; guidance and displays stay healthy.",
+  },
+  {
+    id: "alarm-1201-third",
+    code: "1202",
+    atSinceIgnitionSec: getToSeconds("102:42:58") - PDI_GET_SEC,
+    belowAltitudeFt: 800,
+    label: "1202 — Executive overflow (recurring)",
+    teaching:
+      "The last of the descent alarms, taken low on the approach with the " +
+      "site in the window.",
   },
 ] as const;
 
