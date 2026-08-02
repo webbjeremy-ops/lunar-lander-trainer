@@ -15,6 +15,7 @@ import type {
   MissionId,
 } from "./types";
 import { LUNAR_ENVIRONMENT } from "@/simulation/lunar2d/LunarMissionConstants";
+import { COUNTDOWN_LENGTH_US } from "./ignitionSequence";
 import {
   createLunarFlightState,
   stepLunarFlight,
