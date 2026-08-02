@@ -204,11 +204,16 @@ export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
  * horizon sweeps continuously through the pane while the player rolls.
  */
 export function boresightFromNadirRad(pitchRad: number, rollRad = 0): number {
-  const faceUp = pitchRad + WINDOW_UP_CANT_RAD;
-  const faceDown = Math.abs(Math.PI / 2 - pitchRad);
+  const faceUp = Math.abs(pitchRad) + WINDOW_UP_CANT_RAD;
+  // Thrust-axis pitch is reported signed (it reads -90 deg when the vehicle is
+  // pitched fully back), so the face-down boresight has to work off the
+  // magnitude: without it the horizon is pushed a full pi off nadir and the
+  // whole crater field lands below the window sill.
+  const faceDown = Math.abs(Math.PI / 2 - Math.abs(pitchRad));
   const u = (1 + Math.cos(rollRad)) / 2; // 1 = rolled over, 0 = face-down
   return u * faceUp + (1 - u) * faceDown;
 }
+
 
 /**
  * Project a point on the surface into window coordinates.
