@@ -18,17 +18,14 @@ export interface CockpitStationProps extends CockpitWindowViewProps {
   missionElapsedSec: number;
 }
 
+/** MISSION TIMER columns: hours, minutes, seconds. */
 function timerText(totalSec: number) {
-  const s = Math.max(0, totalSec);
+  const s = Math.max(0, Math.floor(totalSec));
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  return `${String(h).padStart(3, "0")} ${String(m).padStart(2, "0")}${sec
-    .toFixed(1)
-    .padStart(4, "0")
-    .slice(0, 2) === "" ? "" : ""}${String(Math.floor(sec)).padStart(2, "0")}.${Math.floor(
-    (sec % 1) * 10,
-  )}`;
+  return `${String(h).padStart(3, "0")} ${String(m).padStart(2, "0")} ${String(
+    s % 60,
+  ).padStart(2, "0")}`;
 }
 
 export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationProps) {
