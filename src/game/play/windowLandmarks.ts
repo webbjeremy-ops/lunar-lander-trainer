@@ -352,3 +352,73 @@ export function nearFieldPocks(
   out.sort((a, b) => b.trackRangeM - a.trackRangeM);
   return out;
 }
+
+// ---------------------------------------------------------------------------
+// Earth in the window
+// ---------------------------------------------------------------------------
+
+/** Earth's apparent diameter from lunar distance: ~2 deg (12,750 km @ 385,000 km). */
+export const EARTH_ANGULAR_DIAMETER_RAD = 1.9 * (Math.PI / 180);
+/** Pitch at which Earth sits centred in the forward pane.
+ *  At 102:38:20, just after the yaw-around and still pitched ~77 deg back,
+ *  Aldrin called "got the Earth straight out our front window". */
+export const EARTH_CENTRED_PITCH_RAD = 77 * (Math.PI / 180);
+/** Earth stood 23 deg west of the lunar zenith: slightly off the track axis. */
+export const EARTH_BEARING_RAD = -6 * (Math.PI / 180);
+/** Below this altitude the crew is head-down on the landing area; Earth has
+ *  long since climbed out of the forward window. */
+export const EARTH_MIN_ALTITUDE_M = 1_500;
+
+export interface EarthDisk {
+  readonly visible: boolean;
+  readonly x: number;
+  readonly y: number;
+  /** Apparent radius in window pixels. */
+  readonly radiusPx: number;
+  /** Illuminated fraction, gibbous (~0.7) during the landing. */
+  readonly phase: number;
+}
+
+const EARTH_HIDDEN: EarthDisk = { visible: false, x: 0, y: 0, radiusPx: 0, phase: 0.7 };
+
+/**
+ * Where the Earth appears in the commander's window.
+ *
+ * A small, intensely bright gibbous disk in pure blackness — about 2 deg
+ * across, four Moon-widths, but easily missed against the size of the pane.
+ * It is only in view while the vehicle is still pitched well back and
+ * windows-up: as Eagle comes upright the Earth climbs out of the top of the
+ * window while the lunar surface rises into the bottom.
+ */
+export function earthDisk(
+  p: WindowProjection,
+  options: { readonly wobbleRad?: number } = {},
+): EarthDisk {
+  if (p.altitudeM < EARTH_MIN_ALTITUDE_M) return EARTH_HIDDEN;
+  const roll = p.rollRad ?? 0;
+  // Windows-down (engine-first, face-down braking): the crew is looking at the
+  // ground, Earth is behind the cabin roof.
+  if (Math.cos(roll) <= 0.2) return EARTH_HIDDEN;
+
+  const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
+  const focal = p.width / 2 / Math.tan(halfFov);
+  const dPitch = p.pitchRad - EARTH_CENTRED_PITCH_RAD;
+  if (Math.abs(dPitch) > 1.0) return EARTH_HIDDEN;
+
+  const wob = options.wobbleRad ?? 0;
+  let sx = Math.tan(EARTH_BEARING_RAD + wob * 0.6) * focal;
+  let sy = Math.tan(dPitch + wob) * focal;
+  if (roll !== 0) {
+    const cr = Math.cos(roll);
+    const sr = Math.sin(roll);
+    const rx = sx * cr - sy * sr;
+    const ry = sx * sr + sy * cr;
+    sx = rx;
+    sy = ry;
+  }
+  const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
+  const x = p.width / 2 + sx;
+  const y = p.height / 2 + sy;
+  const onPane = y > -radiusPx && y < p.height + radiusPx && x > -radiusPx && x < p.width + radiusPx;
+  return { visible: onPane, x, y, radiusPx, phase: 0.7 };
+}

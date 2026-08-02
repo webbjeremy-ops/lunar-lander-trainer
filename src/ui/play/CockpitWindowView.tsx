@@ -16,13 +16,16 @@ import { displayPitchRad } from "@/game/play/descentPhase";
 import {
   buildLandmarks,
   dustDensity,
+  earthDisk,
   horizonY,
   nearFieldPocks,
   projectSurfacePoint,
   shadowEnvelope,
+  type EarthDisk,
   type SurfaceLandmark,
   type WindowProjection,
 } from "@/game/play/windowLandmarks";
+
 
 export interface CockpitWindowViewProps {
   flight: LunarFlightState;
@@ -257,6 +260,18 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
   ctx.restore();
 
+  // Earth: a small, brilliant gibbous disk, in view only while the vehicle is
+  // still pitched well back and windows-up, drifting a couple of degrees with
+  // propellant slosh and RCS trim. It climbs out of the pane as Eagle comes
+  // upright and the surface rises into the bottom of the window.
+  const wobble =
+    (typeof performance === "undefined" ? 0 : Math.sin(performance.now() / 2600)) *
+    0.018;
+  const earth = earthDisk(proj, { wobbleRad: wobble });
+  if (earth.visible) drawEarth(ctx, earth);
+
+
+
 
   // Signed range to the landing zone: positive = still short of it, negative =
   // the LZ is already behind the vehicle. Taking the magnitude here would make
@@ -374,7 +389,7 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     const veilTop = Math.max(0, Math.min(h * 0.75, cy - h * 0.34));
     const veil = ctx.createLinearGradient(0, veilTop, 0, h);
     veil.addColorStop(0, "rgba(190,178,158,0)");
-    veil.addColorStop(1, `rgba(190,178,158,${(0.55 * dust).toFixed(3)})`);
+    veil.addColorStop(1, `rgba(190,178,158,${(0.3 * dust).toFixed(3)})`);
     ctx.globalAlpha = 1;
     ctx.fillStyle = veil;
     ctx.fillRect(0, veilTop, w, h - veilTop);
@@ -387,6 +402,56 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
 
   // Glass last: faint reflections on the inner pane.
   drawGlassReflections(ctx, w, h, hy);
+}
+
+/**
+ * The Earth out the front window.
+ *
+ * Roughly 2 deg across — four Moon-widths, still small in the pane — about 70%
+ * illuminated (complementary to the Moon's ~30% phase that day), showing the
+ * cloud-covered southwestern Pacific hemisphere. No stars around it: the crew
+ * was never dark-adapted.
+ */
+function drawEarth(ctx: CanvasRenderingContext2D, e: EarthDisk) {
+  const r = e.radiusPx;
+  ctx.save();
+  // Faint bloom, the way a very bright source spills in the glass.
+  const bloom = ctx.createRadialGradient(e.x, e.y, r * 0.6, e.x, e.y, r * 3.4);
+  bloom.addColorStop(0, "rgba(150,185,225,0.30)");
+  bloom.addColorStop(1, "rgba(150,185,225,0)");
+  ctx.fillStyle = bloom;
+  ctx.beginPath();
+  ctx.arc(e.x, e.y, r * 3.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Full disk in ocean blue, then the terminator shaved off one limb.
+  ctx.beginPath();
+  ctx.arc(e.x, e.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = "#3f7ec4";
+  ctx.fill();
+
+  // Cloud systems: a few soft white bands, deterministic.
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = "rgba(240,246,252,0.85)";
+  for (const [dx, dy, rx, ry] of [
+    [-0.35, -0.30, 0.55, 0.24],
+    [0.20, 0.05, 0.62, 0.20],
+    [-0.10, 0.48, 0.70, 0.26],
+    [0.45, -0.45, 0.35, 0.18],
+  ] as const) {
+    ctx.beginPath();
+    ctx.ellipse(e.x + dx * r, e.y + dy * r, rx * r, ry * r, 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Night side: the unlit crescent along the trailing limb.
+  const shade = 1 - Math.max(0, Math.min(1, e.phase));
+  ctx.fillStyle = "rgba(4,6,10,0.94)";
+  ctx.beginPath();
+  ctx.ellipse(e.x - r * (1 - shade * 1.6), e.y, r * 0.9, r, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.restore();
 }
 
 /**
