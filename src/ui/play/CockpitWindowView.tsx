@@ -200,12 +200,33 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   ctx.fillStyle = "#04060a";
   ctx.fillRect(0, 0, w, h);
   const top = Math.max(-h, Math.min(h, hy));
+
+  // Black lunar sky above the limb: a scatter of fixed stars, deterministic
+  // in screen space so they hold still while the surface streams past.
+  if (top > 2) {
+    ctx.save();
+    ctx.fillStyle = "#cdd6e6";
+    let seed = 0x2f6e2b1;
+    for (let i = 0; i < 90; i += 1) {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const sx = ((seed >>> 8) % 10_000) / 10_000;
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      const sy = ((seed >>> 8) % 10_000) / 10_000;
+      const y = sy * top;
+      if (y > top - 2) continue;
+      ctx.globalAlpha = 0.25 + ((seed >>> 20) % 60) / 100;
+      ctx.fillRect(sx * w, y, 1, 1);
+    }
+    ctx.restore();
+  }
+
   const grad = ctx.createLinearGradient(0, top, 0, h);
   grad.addColorStop(0, "#8d8b85");
   grad.addColorStop(0.55, "#6c6a64");
   grad.addColorStop(1, "#4c4a45");
   ctx.fillStyle = grad;
   ctx.fillRect(0, top, w, h - top);
+
 
   if (hy > -h && hy < h) {
     ctx.strokeStyle = "#cfc4b0";
