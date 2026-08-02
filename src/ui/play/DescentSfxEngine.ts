@@ -156,8 +156,12 @@ export class DescentSfxEngine {
     const bus = this.master;
     if (!ctx || !bus || !this.started) return;
     const now = ctx.currentTime;
-    const amp = 0.26 * Math.max(0.15, Math.min(1, strength));
-    const tail = 8; // seconds to fade out
+    const s = Math.max(0.15, Math.min(1, strength));
+    const amp = 0.26 * s;
+    // Full-volume plateau, then a fade so the score comes back through.
+    const hold = 5 + 3 * s; // 5..8 s at full level
+    const fade = 4; // seconds to fade out
+    const tail = hold + fade;
 
     // Noise swell.
     const noise = ctx.createBufferSource();
@@ -167,13 +171,14 @@ export class DescentSfxEngine {
     nf.type = "lowpass";
     nf.frequency.setValueAtTime(140, now);
     nf.frequency.linearRampToValueAtTime(900, now + 0.9);
+    nf.frequency.setValueAtTime(900, now + hold);
     nf.frequency.linearRampToValueAtTime(220, now + tail);
     const ng = ctx.createGain();
     ng.gain.setValueAtTime(0.0001, now);
     ng.gain.exponentialRampToValueAtTime(amp, now + 0.22);
-    // Long exponential tail: audible swell, then gone by ~8 s.
-    ng.gain.setTargetAtTime(0.0001, now + 0.6, tail / 4);
-    ng.gain.linearRampToValueAtTime(0, now + tail);
+    ng.gain.setValueAtTime(amp, now + hold);
+    ng.gain.exponentialRampToValueAtTime(0.0001, now + tail);
+    ng.gain.linearRampToValueAtTime(0, now + tail + 0.05);
     noise.connect(nf).connect(ng).connect(bus);
     noise.start(now);
     noise.stop(now + tail + 0.1);
@@ -186,8 +191,9 @@ export class DescentSfxEngine {
     const og = ctx.createGain();
     og.gain.setValueAtTime(0.0001, now);
     og.gain.exponentialRampToValueAtTime(amp * 0.8, now + 0.18);
-    og.gain.setTargetAtTime(0.0001, now + 0.5, tail / 5);
-    og.gain.linearRampToValueAtTime(0, now + tail);
+    og.gain.setValueAtTime(amp * 0.8, now + hold);
+    og.gain.exponentialRampToValueAtTime(0.0001, now + tail);
+    og.gain.linearRampToValueAtTime(0, now + tail + 0.05);
     osc.connect(og).connect(bus);
     osc.start(now);
     osc.stop(now + tail + 0.1);
