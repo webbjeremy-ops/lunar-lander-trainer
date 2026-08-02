@@ -35,9 +35,11 @@ export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
   alarm: { durationMs: 320, weakMagnitude: 1, strongMagnitude: 0.25 },
   // Probe contact: the light and the bump the crew actually felt.
   contact: { durationMs: 220, weakMagnitude: 0.45, strongMagnitude: 0.7 },
-  touchdown: { durationMs: 550, weakMagnitude: 0.5, strongMagnitude: 0.85 },
-  "hard-landing": { durationMs: 900, weakMagnitude: 0.9, strongMagnitude: 1 },
-  crash: { durationMs: 1200, weakMagnitude: 1, strongMagnitude: 1 },
+  // A good landing is a soft settle, not a slam.
+  touchdown: { durationMs: 600, weakMagnitude: 0.22, strongMagnitude: 0.3 },
+  "hard-landing": { durationMs: 700, weakMagnitude: 0.85, strongMagnitude: 1 },
+  // Crash: heavy, but brief — no battery-draining long buzz.
+  crash: { durationMs: 800, weakMagnitude: 1, strongMagnitude: 1 },
   abort: { durationMs: 800, weakMagnitude: 0.8, strongMagnitude: 1 },
   // Throttle recovery out of the fixed throttle point: a short notch.
   "throttle-recovery": { durationMs: 200, weakMagnitude: 0.35, strongMagnitude: 0.2 },
@@ -45,6 +47,15 @@ export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
 
 /** Engine bed refresh period, ms. Effects are re-armed slightly early. */
 export const ENGINE_BED_PERIOD_MS = 180;
+
+/**
+ * M4.46 — The steady engine bed is a BURST, not a permanent state. Holding the
+ * motors on for the whole braking burn flattens a controller battery, so the
+ * bed only runs for a window after ignition and after the throttle-up to FTP.
+ */
+export const ENGINE_BURST_MS = 8000;
+
+
 
 /**
  * M4.45 — "motion" texture. With the DPS cold (coast, pre-TIG countdown, P66
@@ -109,6 +120,7 @@ export class GamepadHaptics {
   private nextBedAtMs = 0;
   private pulseUntilMs = 0;
   private nextMotionAtMs = 0;
+  private bedUntilMs = 0;
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -161,11 +173,20 @@ export class GamepadHaptics {
     this.nextMotionAtMs = this.pulseUntilMs + MOTION_MIN_GAP_MS;
   }
 
-  /** Continuous engine bed; safe to call every frame. */
+  /**
+   * Open an engine-bed window: the steady throttle-tracking rumble runs for
+   * `durationMs` and then stops until the next burst (ignition, throttle-up).
+   */
+  engineBurst(durationMs: number = ENGINE_BURST_MS, nowMs: number = Date.now()): void {
+    this.bedUntilMs = nowMs + durationMs;
+  }
+
+  /** Engine bed; safe to call every frame, but only sounds inside a burst. */
   tick(throttle: number, engineOn: boolean, nowMs: number = Date.now()): void {
     if (!this.enabled) return;
     if (nowMs < this.pulseUntilMs) return;
-    const effect = engineRumble(throttle, engineOn);
+    const inBurst = nowMs < this.bedUntilMs;
+    const effect = inBurst ? engineRumble(throttle, engineOn) : null;
     if (effect === null) {
       if (this.nextBedAtMs !== 0) {
         this.stop();
@@ -179,6 +200,7 @@ export class GamepadHaptics {
     this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS;
     this.play(effect);
   }
+
 
   /**
    * Occasional coast tremor. Only runs with the DPS cold, so it never fights

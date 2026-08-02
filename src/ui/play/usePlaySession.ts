@@ -717,11 +717,22 @@ export function usePlaySession(
     let wasBurning = false;
     let hadContact = false;
     let hadTerminal = flightRef.current.terminalState !== null;
+    let lastThrottle = 0;
     const updateHaptics = (state: LunarFlightState) => {
       const haptics = hapticsRef.current;
       const burning = state.mainEngine !== "off" && throttleRef.current > 0;
-      if (burning && !wasBurning) haptics.pulse("ignition");
+      if (burning && !wasBurning) {
+        haptics.pulse("ignition");
+        // Steady bed only for the ignition swell, then it stops.
+        haptics.engineBurst(8000);
+      }
+      // Throttle-up to full: a second, more intense burst.
+      if (burning && throttleRef.current > 0.85 && lastThrottle <= 0.85) {
+        haptics.engineBurst(9000);
+      }
+      lastThrottle = burning ? throttleRef.current : 0;
       wasBurning = burning;
+
 
       const alarmActive = alarmsRef.current.active !== null;
       if (alarmActive && !hadAlarm) haptics.pulse("alarm");
