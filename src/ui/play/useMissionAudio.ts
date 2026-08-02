@@ -1,33 +1,56 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// M4.31 — Apollo 11 air-to-ground recordings, cued by story beat.
+// M4.44 — Apollo 11 air-to-ground recordings, cued by story beat.
 //
-// Five restored clips from the landing tape play when the flight reaches the
-// moment they belong to, not on a wall clock: ignition/throttle-up, the first
-// 1202, "go for landing" with the first 1201, the sixty-second fuel call and
-// contact light / engine shutdown. Each clip fires once per flight, and a clip
-// already playing is never talked over — the later beat is dropped rather than
-// doubled, exactly as the loop would have sounded on the comm channel.
+// Restored clips from the landing tape play when the flight reaches the moment
+// they belong to, not on a wall clock. The comm loop is a single channel: when
+// two beats come due at once the later one waits in a queue rather than being
+// talked over or dropped, which is how the loop actually sounded. Each clip
+// fires once per flight.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import openClip from "@/assets/a11-open-looking-good.mp3.asset.json";
+import goForPdiClip from "@/assets/a11-go-for-pdi.mp3.asset.json";
 import ignitionClip from "@/assets/a11-ignition-throttle-up.mp3.asset.json";
+import acVoltageClip from "@/assets/a11-ac-voltage.mp3.asset.json";
 import alarm1202Clip from "@/assets/a11-1202-alarm.mp3.asset.json";
-import goForLandingClip from "@/assets/a11-go-for-landing-1201.mp3.asset.json";
+import radarLockClip from "@/assets/a11-radar-lock.mp3.asset.json";
+import earthWindowClip from "@/assets/a11-earth-window.mp3.asset.json";
+import p64Clip from "@/assets/a11-p64-5000.mp3.asset.json";
+import goForLandingClip from "@/assets/a11-1201-were-go.mp3.asset.json";
 import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
-import contactClip from "@/assets/a11-contact-shutdown.mp3.asset.json";
+import final100Clip from "@/assets/a11-final-100ft.mp3.asset.json";
+import dustClip from "@/assets/a11-dust-30ft.mp3.asset.json";
+import contactClip from "@/assets/a11-touchdown-contact.mp3.asset.json";
 
 export type MissionAudioBeat =
+  | "game-open"
+  | "go-for-pdi"
   | "ignition"
+  | "ac-voltage"
   | "alarm-1202"
+  | "radar-lock"
+  | "earth-window"
+  | "p64-5000"
   | "go-for-landing-1201"
   | "sixty-seconds"
+  | "final-100"
+  | "dust-30"
   | "contact";
 
 export const MISSION_AUDIO_URLS: Record<MissionAudioBeat, string> = {
+  "game-open": openClip.url,
+  "go-for-pdi": goForPdiClip.url,
   ignition: ignitionClip.url,
+  "ac-voltage": acVoltageClip.url,
   "alarm-1202": alarm1202Clip.url,
+  "radar-lock": radarLockClip.url,
+  "earth-window": earthWindowClip.url,
+  "p64-5000": p64Clip.url,
   "go-for-landing-1201": goForLandingClip.url,
   "sixty-seconds": sixtySecondsClip.url,
+  "final-100": final100Clip.url,
+  "dust-30": dustClip.url,
   contact: contactClip.url,
 };
 
@@ -36,28 +59,63 @@ export interface MissionAudioInput {
   readonly enabled: boolean;
   /** DPS is lit — ignition and the throttle-up call. */
   readonly engineOn: boolean;
+  /** Seconds since TIG (0 while the DPS is cold). */
+  readonly sinceIgnitionSec?: number;
   /** Id of the currently lit program alarm, or null. */
   readonly activeAlarmId: string | null;
   /** Id of the crew callout the cockpit is showing, or null. */
   readonly calloutId: string | null;
+  /** The windows-up roll has been flown. */
+  readonly rollComplete?: boolean;
+  /** Radar altitude, metres. */
+  readonly altitudeM?: number;
   /** Footpad probes have touched the surface. */
   readonly contact: boolean;
   /** The vehicle hit the surface too hard — no touchdown call is earned. */
   readonly crashed?: boolean;
 }
 
-/**
- * Pure beat selection: which recording (if any) this state edge should fire.
- * Exported for tests; the hook below owns the playback side effects.
- */
+/** Silence between the previous clip ending and this one keying up. */
+const GAP_MS: Partial<Record<MissionAudioBeat, number>> = {
+  "go-for-pdi": 2_500, // ~10 s after the opening call keys up
+  "earth-window": 3_000,
+};
+
+/** Ordered beat table; each predicate is a one-way gate on the flight state. */
+const BEATS: ReadonlyArray<{
+  readonly id: MissionAudioBeat;
+  readonly due: (i: MissionAudioInput) => boolean;
+}> = [
+  { id: "game-open", due: () => true },
+  { id: "go-for-pdi", due: () => true },
+  { id: "ignition", due: (i) => i.engineOn },
+  { id: "ac-voltage", due: (i) => i.engineOn && (i.sinceIgnitionSec ?? 0) >= 60 },
+  { id: "alarm-1202", due: (i) => i.activeAlarmId === "alarm-1202-first" },
+  { id: "radar-lock", due: (i) => i.rollComplete === true },
+  { id: "earth-window", due: (i) => i.rollComplete === true },
+  // 5 000 ft — P64 pitch-over and the manual attitude check.
+  { id: "p64-5000", due: (i) => (i.altitudeM ?? Infinity) <= 1_524 },
+  // 4 200 ft — "same type, we're go" over the first 1201.
+  {
+    id: "go-for-landing-1201",
+    due: (i) => (i.altitudeM ?? Infinity) <= 1_280 || i.activeAlarmId === "alarm-1201-first",
+  },
+  { id: "sixty-seconds", due: (i) => i.calloutId === "quantity-light" },
+  { id: "final-100", due: (i) => (i.altitudeM ?? Infinity) <= 33 },
+  { id: "dust-30", due: (i) => (i.altitudeM ?? Infinity) <= 13 },
+  { id: "contact", due: (i) => i.contact },
+];
+
+/** Every beat this state satisfies, in loop order. */
+export function dueBeats(input: MissionAudioInput): MissionAudioBeat[] {
+  if (input.crashed === true) return [];
+  return BEATS.filter((b) => b.due(input)).map((b) => b.id);
+}
+
+/** Highest-priority beat for this state, or null. Kept for tests. */
 export function beatFor(input: MissionAudioInput): MissionAudioBeat | null {
-  if (input.crashed === true) return null;
-  if (input.contact) return "contact";
-  if (input.activeAlarmId === "alarm-1201-first") return "go-for-landing-1201";
-  if (input.activeAlarmId === "alarm-1202-first") return "alarm-1202";
-  if (input.calloutId === "quantity-light") return "sixty-seconds";
-  if (input.engineOn) return "ignition";
-  return null;
+  const due = dueBeats(input);
+  return due.length > 0 ? due[due.length - 1]! : null;
 }
 
 export interface MissionAudioApi {
@@ -65,57 +123,119 @@ export interface MissionAudioApi {
   readonly speaking: boolean;
   /** Multiplier other cockpit audio should apply while a clip plays. */
   readonly duck: number;
+  /** Beats that have already keyed up this flight. */
+  readonly played: ReadonlySet<MissionAudioBeat>;
 }
 
 /** Everything else drops to this fraction while the crew loop is talking. */
 export const MISSION_AUDIO_DUCK = 0.25;
 
 export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
-  const playedRef = useRef<Set<MissionAudioBeat>>(new Set());
+  const claimedRef = useRef<Set<MissionAudioBeat>>(new Set());
+  const queueRef = useRef<MissionAudioBeat[]>([]);
   const currentRef = useRef<HTMLAudioElement | null>(null);
+  const timerRef = useRef<number | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [played, setPlayed] = useState<Set<MissionAudioBeat>>(new Set());
+
+  const drain = useCallback(() => {
+    if (typeof window === "undefined") return;
+    if (timerRef.current !== null) return;
+    const playing = currentRef.current;
+    if (playing && !playing.paused && !playing.ended) return;
+    const beat = queueRef.current.shift();
+    if (beat === undefined) return;
+
+    const start = () => {
+      timerRef.current = null;
+      const el = new Audio(MISSION_AUDIO_URLS[beat]);
+      el.volume = 1;
+      currentRef.current = el;
+      setPlayed((prev) => new Set(prev).add(beat));
+      const done = () => {
+        if (currentRef.current !== el) return;
+        setSpeaking(false);
+        currentRef.current = null;
+        drain();
+      };
+      el.addEventListener("ended", done);
+      el.addEventListener("error", done);
+      setSpeaking(true);
+      void el.play().catch(done);
+    };
+
+    const gap = GAP_MS[beat] ?? 350;
+    timerRef.current = window.setTimeout(start, gap);
+  }, []);
 
   useEffect(
     () => () => {
       currentRef.current?.pause();
       currentRef.current = null;
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+      timerRef.current = null;
     },
     [],
   );
 
-  const { enabled, engineOn, activeAlarmId, calloutId, contact, crashed } = input;
+  const {
+    enabled,
+    engineOn,
+    sinceIgnitionSec,
+    activeAlarmId,
+    calloutId,
+    rollComplete,
+    altitudeM,
+    contact,
+    crashed,
+  } = input;
+
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
-    const beat = beatFor({ enabled, engineOn, activeAlarmId, calloutId, contact, crashed });
-    if (beat === null || playedRef.current.has(beat)) return;
-
-    const playing = currentRef.current;
-    // The comm loop is one channel: never talk over a clip still running.
-    if (playing && !playing.paused && !playing.ended) return;
-
-    playedRef.current.add(beat);
-    const el = new Audio(MISSION_AUDIO_URLS[beat]);
-    el.volume = 1;
-    currentRef.current = el;
-    const done = () => {
-      if (currentRef.current === el) setSpeaking(false);
-    };
-    el.addEventListener("ended", done);
-    el.addEventListener("pause", done);
-    el.addEventListener("error", done);
-    setSpeaking(true);
-    void el.play().catch(() => {
-      done();
+    const due = dueBeats({
+      enabled,
+      engineOn,
+      sinceIgnitionSec,
+      activeAlarmId,
+      calloutId,
+      rollComplete,
+      altitudeM,
+      contact,
+      crashed,
     });
-  }, [enabled, engineOn, activeAlarmId, calloutId, contact, crashed]);
+    let queued = false;
+    for (const beat of due) {
+      if (claimedRef.current.has(beat)) continue;
+      claimedRef.current.add(beat);
+      // Touchdown outranks anything still waiting to be said.
+      if (beat === "contact") queueRef.current.length = 0;
+      queueRef.current.push(beat);
+      queued = true;
+    }
+    if (queued) drain();
+  }, [
+    enabled,
+    engineOn,
+    sinceIgnitionSec,
+    activeAlarmId,
+    calloutId,
+    rollComplete,
+    altitudeM,
+    contact,
+    crashed,
+    drain,
+  ]);
 
   // Muting the cockpit audio — or crashing — silences the comm loop.
   useEffect(() => {
     if (enabled && crashed !== true) return;
     currentRef.current?.pause();
     currentRef.current = null;
+    queueRef.current.length = 0;
+    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    timerRef.current = null;
     setSpeaking(false);
   }, [enabled, crashed]);
 
-  return { speaking, duck: speaking ? MISSION_AUDIO_DUCK : 1 };
+  return { speaking, duck: speaking ? MISSION_AUDIO_DUCK : 1, played };
 }
