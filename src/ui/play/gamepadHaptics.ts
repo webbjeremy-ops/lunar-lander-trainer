@@ -49,6 +49,15 @@ export const HAPTIC_EVENTS: Record<HapticEvent, RumbleEffect> = {
 export const ENGINE_BED_PERIOD_MS = 180;
 
 /**
+ * M4.46 — The steady engine bed is a BURST, not a permanent state. Holding the
+ * motors on for the whole braking burn flattens a controller battery, so the
+ * bed only runs for a window after ignition and after the throttle-up to FTP.
+ */
+export const ENGINE_BURST_MS = 8000;
+
+
+
+/**
  * M4.45 — "motion" texture. With the DPS cold (coast, pre-TIG countdown, P66
  * float) the pad would otherwise be dead. A soft irregular tremor keeps the
  * vehicle feeling alive without masking the event pulses.
