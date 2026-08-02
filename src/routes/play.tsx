@@ -27,6 +27,8 @@ import { IgnitionPanel } from "@/ui/play/IgnitionPanel";
 import { AttitudePanel } from "@/ui/play/AttitudePanel";
 import { FdaiBall } from "@/ui/play/FdaiBall";
 import { CalloutOverlay } from "@/ui/play/CalloutOverlay";
+import { V99CueOverlay } from "@/ui/play/V99CueOverlay";
+
 import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
 import { useDescentSfx } from "@/ui/play/useDescentSfx";
@@ -224,7 +226,12 @@ function PlayClient() {
   });
 
   // The PDI card keys up with Houston's "Go for PDI" call.
-  const pdiCardReady = !audioLive || missionAudio.played.has("go-for-pdi");
+  // The PDI card keys up with Houston's "Go for PDI" call, and only inside the
+  // final minute of the countdown (TIG-60 s), when arming actually matters.
+  const pdiCardReady =
+    (!audioLive || missionAudio.played.has("go-for-pdi")) &&
+    session.ignition.tigOffsetUs <= 60 * 1_000_000;
+
 
 
 
@@ -555,6 +562,12 @@ function PlayClient() {
             callout={session.callout}
             onAcknowledge={session.actions.acknowledgeCallout}
           />
+          <V99CueOverlay
+            flashing={session.ignition.requestFlashing}
+            engineArmed={session.ignition.engineArmed}
+            proAccepted={session.ignition.proAccepted}
+          />
+
 
           {(() => {
             // Pitch-over is withheld until the crew takes the approach
