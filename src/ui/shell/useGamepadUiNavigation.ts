@@ -93,6 +93,9 @@ export function useGamepadUiNavigation(): void {
         else if (up || left || y < -AXIS_DEADZONE || x < -AXIS_DEADZONE) dir = -1;
         // A (0) and X (2) both select.
         if ((b[0]?.pressed ?? false) || (b[2]?.pressed ?? false)) select = true;
+        // LB (4) tabs forward, RB (5) tabs backward.
+        if (b[4]?.pressed ?? false) tab = 1;
+        else if (b[5]?.pressed ?? false) tab = -1;
         // Right stick vertical scrolls the page.
         const ry = pad.axes[3] ?? 0;
         if (Math.abs(ry) > 0.15) scroll = ry;
