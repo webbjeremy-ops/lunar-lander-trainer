@@ -91,3 +91,11 @@ describe("mission audio story beats", () => {
     expect(MISSION_AUDIO_DUCK).toBeLessThan(1);
   });
 });
+
+describe("training missions", () => {
+  it("stays off the loop until touchdown", () => {
+    const training = { ...base, touchdownOnly: true, engineOn: true, rollComplete: true };
+    expect(dueBeats(training)).toEqual([]);
+    expect(dueBeats({ ...training, contact: true, altitudeM: 1 })).toEqual(["contact"]);
+  });
+});
