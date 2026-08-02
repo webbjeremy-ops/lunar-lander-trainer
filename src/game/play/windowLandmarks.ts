@@ -316,10 +316,10 @@ export function horizonY(p: WindowProjection): number {
 // Shadow and dust envelopes
 // ---------------------------------------------------------------------------
 
-/** Altitude below which the LM's own shadow is discernible (m ≈ 400 ft).
- *  Buzz first called the shadow around 260 ft and said in debrief he could
- *  probably have picked it up near 400 ft — so that is where it fades in. */
-export const SHADOW_ONSET_M = 122;
+/** Altitude below which the LM's own shadow is discernible (m ≈ 1,000 ft).
+ *  Above ~260 ft it is only a small, indistinct, fast-moving dark patch; the
+ *  crew could not read its shape until much lower. */
+export const SHADOW_ONSET_M = 305;
 /** Altitude at which the shadow is unmistakable (m ≈ 260 ft). */
 export const SHADOW_CLEAR_M = 79;
 /** Altitude below which surface dust begins to stream (m ≈ 100 ft). */
@@ -342,6 +342,12 @@ export interface ShadowEnvelope {
   readonly lateralM: number;
   /** Apparent shadow radius on the surface, metres. */
   readonly radiusM: number;
+  /** How much silhouette structure is readable, 0..1:
+   *  0 = shapeless patch, ~0.35 = broad body, ~0.7 = four legs separated,
+   *  1 = legs, footpads and antenna spikes all distinct. */
+  readonly detail: number;
+  /** Edge hardness, 0..1 — vacuum shadows go nearly hard-edged up close. */
+  readonly edgeHardness: number;
 }
 
 /**
@@ -359,15 +365,28 @@ export function shadowEnvelope(
 ): ShadowEnvelope {
   const alt = Math.max(0, altitudeM);
   if (alt > SHADOW_ONSET_M) {
-    return { intensity: 0, offsetM: 0, lateralM: 0, radiusM: 0 };
+    return {
+      intensity: 0,
+      offsetM: 0,
+      lateralM: 0,
+      radiusM: 0,
+      detail: 0,
+      edgeHardness: 0,
+    };
   }
   const sunElevation = options.sunElevationRad ?? SUN_ELEVATION_RAD;
   const cot = 1 / Math.tan(sunElevation);
 
-  // Faint from 400 ft, clearly usable by 260 ft, dominant in the last 40 ft.
+  // A faint smudge from 1,000 ft, clearly usable by 260 ft, dominant last 40 ft.
   const fade = Math.min(1, (SHADOW_ONSET_M - alt) / (SHADOW_ONSET_M - SHADOW_CLEAR_M));
   const near = Math.max(0, Math.min(1, 1 - alt / SHADOW_CLEAR_M));
-  const intensity = Math.min(1, 0.18 * fade + 0.82 * near * near);
+  const intensity = Math.min(1, 0.14 * Math.pow(fade, 2.5) + 0.86 * near);
+
+  // Structure resolves late: body at ~500 ft, legs by ~250 ft, spikes below 50 ft.
+  const detail = Math.max(
+    0,
+    Math.min(1, 1 - (alt - 15) / (SHADOW_ONSET_M * 0.62 - 15)),
+  );
 
   // The whole vehicle casts the shadow, so the throw never reaches zero.
   const offsetM = cot * (alt + VEHICLE_HEIGHT_M);
@@ -376,8 +395,11 @@ export function shadowEnvelope(
     offsetM,
     lateralM: offsetM * Math.sin(YAW_LEFT_RAD),
     radiusM: 4.6 + (alt + VEHICLE_HEIGHT_M) * 0.35,
+    detail,
+    edgeHardness: Math.max(0, Math.min(1, 1 - alt / 120)),
   };
 }
+
 
 
 /** Dust density in [0, 1]; zero above the onset altitude, 1 at contact. */
