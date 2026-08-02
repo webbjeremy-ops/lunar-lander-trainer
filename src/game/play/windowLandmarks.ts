@@ -448,14 +448,16 @@ export function trackFieldFeatures(
   options: { readonly cellM?: number; readonly spanCells?: number } = {},
 ): readonly SurfaceLandmark[] {
   const alt = Math.max(50, altitudeM);
-  // One feature every ~0.35 altitudes: dense enough to read as motion, coarse
-  // enough that the count stays bounded at any height.
-  const cell = options.cellM ?? Math.max(180, alt * 0.55);
-  const spanCells = options.spanCells ?? 26;
+  // Cell size scales with altitude so the pane always holds a few dozen
+  // features: at 16 km that is ~2.4 km craters, at 300 m it is ~120 m pocks.
+  // Coarser than this and braking shows two or three blobs, which reads as a
+  // still image rather than 1,700 m/s of ground track.
+  const cell = options.cellM ?? Math.max(90, alt * 0.15);
+  const spanCells = options.spanCells ?? 40;
   const centre = Math.round(rangeToGoM / cell);
   const out: SurfaceLandmark[] = [];
-  for (let i = centre - 2; i <= centre + spanCells; i += 1) {
-    for (let j = -6; j <= 6; j += 1) {
+  for (let i = centre - 8; i <= centre + spanCells; i += 1) {
+    for (let j = -10; j <= 10; j += 1) {
       const r = hash2(i * 7 + 13, j * 11 + 5);
       if (r < 0.4) continue;
       const kind: LandmarkKind = r > 0.965 ? "rille" : "crater";
@@ -467,11 +469,12 @@ export function trackFieldFeatures(
         radiusM:
           kind === "rille"
             ? cell * (0.5 + hash2(i + 2, j) * 1.2)
-            : cell * (0.05 + hash2(i + 9, j + 4) * 0.22),
+            : cell * (0.08 + hash2(i + 9, j + 4) * 0.34),
         albedo: 0.3 + hash2(i, j + 7) * 0.55,
       });
     }
   }
+
   out.sort((a, b) => b.trackRangeM - a.trackRangeM);
   return out;
 }
