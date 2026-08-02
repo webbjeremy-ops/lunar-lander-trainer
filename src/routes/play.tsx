@@ -655,7 +655,7 @@ function PlayClient() {
             valid={session.flight.terminalState !== "crashed"}
           />
 
-          {session.ignition.phase !== "standby" && (
+          {session.ignition.phase !== "standby" && pdiCardReady && (
             <IgnitionPanel
               state={session.ignition}
               clock={session.ignitionClock}
