@@ -22,7 +22,7 @@ const LED = { left: 79.0, top: 17.1, width: 14.6, height: 2.8 };
 const BALL = { cx: 79.19, cy: 52.49, r: 5.52 };
 /** Pane outline inside the aperture box, traced from the artwork's alpha hole. */
 const PANE_CLIP =
-  "polygon(94.5% 0%, 99.8% 2%, 94.3% 23.5%, 90.2% 37.6%, 82.1% 65.9%, 73.2% 94.2%, 68% 100%, 61% 98.4%, 56.4% 94.2%, 28.1% 65.9%, 10% 23.5%, 0% 32.7%, 0.7% 37.6%, 0% 32.7%)";
+  "polygon(94.5% 0%, 99.8% 2%, 94.3% 23.5%, 90.2% 37.6%, 82.1% 65.9%, 73.2% 94.2%, 68% 100%, 61% 98.4%, 56.4% 94.2%, 28.1% 65.9%, 0.7% 37.6%, 0% 32.7%, 10% 23.5%)";
 
 
 export interface CockpitStationProps extends CockpitWindowViewProps {
