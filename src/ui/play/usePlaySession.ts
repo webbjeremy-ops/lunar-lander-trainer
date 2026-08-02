@@ -377,6 +377,12 @@ export function usePlaySession(
 
 
   const throttleRef = useRef(0);
+  /**
+   * Touch/pointer throttle commands arrive as discrete steps, not held keys.
+   * Without this latch the ROD servo below immediately overwrote the value on
+   * the very next frame, so on mobile the thrust buttons did nothing.
+   */
+  const manualThrottleHoldUntilMsRef = useRef(0);
   /** Latched once the vehicle drops below low gate: terminal (P66) guidance. */
   const terminalGuidanceRef = useRef(false);
   const attitudeRef = useRef(0);
