@@ -25,6 +25,9 @@ import {
 } from "@/simulation/lunar2d";
 import {
   angleForRange,
+  insertionStateForMission,
+  PRE_IGNITION_COAST_SEC,
+
   bridgedAlarmFor,
   activeCallout,
   activeHoustonCall,
