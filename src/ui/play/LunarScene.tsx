@@ -397,17 +397,27 @@ function drawProfile(
   // descends, so the altitude on screen always agrees with the readout
   // instead of the vehicle floating at a fixed height on an elastic axis.
   const altSpan = snapSpan(Math.max(orbit.altitudeM, 0) * 1.25, 30);
-  const rangeSpan = snapSpan(Math.abs(downrangeM) * 1.3, 60);
 
-  // The landing zone is anchored near the right edge and the range axis runs
-  // back from it, so the vehicle and its target are always framed together.
-  const lzAnchorX = w - 30;
+  // Framing rule: BOTH the vehicle and the landing zone stay on screen for the
+  // whole descent. The horizontal domain therefore spans from the vehicle's
+  // range-to-go (ahead of the site) through the site itself, plus whatever
+  // overshoot the vehicle has flown past it. The site is placed wherever that
+  // domain puts it rather than being pinned to the right edge, so an overshoot
+  // is visible instead of clamped off the plot.
+  const aheadSpan = snapSpan(Math.max(0, downrangeM) * 1.15, 60);
+  const behindSpan =
+    downrangeM < 0 ? snapSpan(-downrangeM * 1.3, 30) : aheadSpan * 0.06;
+  const plotLeft = padLeft;
+  const plotRight = w - 10;
+  const plotW = Math.max(40, plotRight - plotLeft);
+  const pxPerM = plotW / Math.max(1, aheadSpan + behindSpan);
+  const lzAnchorX = plotLeft + aheadSpan * pxPerM;
   const yFor = (altM: number) =>
     groundLine - (Math.max(0, altM) / altSpan) * (groundLine - padTop);
-  const xFor = (rangeM: number) =>
-    lzAnchorX - (rangeM / rangeSpan) * (lzAnchorX - padLeft);
+  const xFor = (rangeM: number) => lzAnchorX - rangeM * pxPerM;
   const clampX = (px: number) => Math.max(padLeft + 6, Math.min(w - 8, px));
   const clampY = (py: number) => Math.max(padTop + 6, Math.min(groundLine - 2, py));
+  const rangeSpan = aheadSpan;
 
 
   // Altitude grid with labels — these are the numbers the altimeter shows.
