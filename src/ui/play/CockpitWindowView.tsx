@@ -204,13 +204,25 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   const hy = horizonY({ ...proj, rollRad: 0 });
 
 
-  // Space and surface.
+  // Space and surface, painted in the unrolled frame and then rotated with the
+  // vehicle so sky, limb and ground stay locked to the projected features.
   ctx.fillStyle = "#04060a";
   ctx.fillRect(0, 0, w, h);
   const top = Math.max(-h, Math.min(h, hy));
+  // Overscan so the rotated fills still cover the corners of the pane.
+  const diag = Math.hypot(w, h);
+  const pad = diag;
 
-  // Black lunar sky above the limb: a scatter of fixed stars, deterministic
-  // in screen space so they hold still while the surface streams past.
+  ctx.save();
+  if (rollRad !== 0) {
+    ctx.translate(w / 2, h / 2);
+    ctx.rotate(rollRad);
+    ctx.translate(-w / 2, -h / 2);
+  }
+
+  // Black lunar sky above the limb: a scatter of fixed stars, deterministic in
+  // the vehicle frame so they hold still while the surface streams past and
+  // sweep with the vehicle when it rolls.
   if (top > 2) {
     ctx.save();
     ctx.fillStyle = "#cdd6e6";
@@ -233,17 +245,18 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   grad.addColorStop(0.55, "#6c6a64");
   grad.addColorStop(1, "#4c4a45");
   ctx.fillStyle = grad;
-  ctx.fillRect(0, top, w, h - top);
-
+  ctx.fillRect(-pad, top, w + 2 * pad, h - top + pad);
 
   if (hy > -h && hy < h) {
     ctx.strokeStyle = "#cfc4b0";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    ctx.moveTo(0, hy);
-    ctx.lineTo(w, hy);
+    ctx.moveTo(-pad, hy);
+    ctx.lineTo(w + pad, hy);
     ctx.stroke();
   }
+  ctx.restore();
+
 
   const rangeToGoM = Math.abs(a.downrangeM);
 
