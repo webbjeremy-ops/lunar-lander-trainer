@@ -688,9 +688,11 @@ export function usePlaySession(
       if (input.toggleViewPressed && typeof window !== "undefined") {
         window.dispatchEvent(new Event("tranquility:toggle-view"));
       }
-      // Right stick vertical — scroll the page, so the crew can reach panels
-      // below the fold without a mouse.
-      if (input.scrollRate !== 0 && typeof window !== "undefined") {
+      // Right stick vertical — page scroll, but only while the computer still
+      // flies: once the crew has the vehicle the same axis commands pitch.
+      const crewFlying =
+        procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
+      if (!crewFlying && input.scrollRate !== 0 && typeof window !== "undefined") {
         window.scrollBy({ top: input.scrollRate * 24, behavior: "auto" });
       }
 
