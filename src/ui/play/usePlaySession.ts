@@ -779,7 +779,10 @@ export function usePlaySession(
         // P66 rate-of-descent: with no direct thrust input, the throttle is
         // servoed onto the ROD target (as the real ROD switch trimmed it).
         const noThrustInput =
-          !held.has("ArrowUp") && !held.has("ArrowDown") && pad.thrustRate === 0;
+          !held.has("ArrowUp") &&
+          !held.has("ArrowDown") &&
+          pad.thrustRate === 0 &&
+          Date.now() >= manualThrottleHoldUntilMsRef.current;
         if (noThrustInput && engineRef.current) {
           const o = computeOrbitalValues(state);
           const mass = totalMassKg(state);
