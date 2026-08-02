@@ -120,6 +120,7 @@ export class GamepadHaptics {
   private nextBedAtMs = 0;
   private pulseUntilMs = 0;
   private nextMotionAtMs = 0;
+  private bedUntilMs = 0;
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
