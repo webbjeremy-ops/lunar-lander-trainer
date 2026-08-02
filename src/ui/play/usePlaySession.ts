@@ -377,6 +377,12 @@ export function usePlaySession(
 
 
   const throttleRef = useRef(0);
+  /**
+   * Touch/pointer throttle commands arrive as discrete steps, not held keys.
+   * Without this latch the ROD servo below immediately overwrote the value on
+   * the very next frame, so on mobile the thrust buttons did nothing.
+   */
+  const manualThrottleHoldUntilMsRef = useRef(0);
   /** Latched once the vehicle drops below low gate: terminal (P66) guidance. */
   const terminalGuidanceRef = useRef(false);
   const attitudeRef = useRef(0);
@@ -773,7 +779,10 @@ export function usePlaySession(
         // P66 rate-of-descent: with no direct thrust input, the throttle is
         // servoed onto the ROD target (as the real ROD switch trimmed it).
         const noThrustInput =
-          !held.has("ArrowUp") && !held.has("ArrowDown") && pad.thrustRate === 0;
+          !held.has("ArrowUp") &&
+          !held.has("ArrowDown") &&
+          pad.thrustRate === 0 &&
+          Date.now() >= manualThrottleHoldUntilMsRef.current;
         if (noThrustInput && engineRef.current) {
           const o = computeOrbitalValues(state);
           const mass = totalMassKg(state);
@@ -1137,8 +1146,17 @@ export function usePlaySession(
         recordTakeover(o.altitudeM > 300);
         setRunning(true);
       },
-      setThrottle: (v: number) => { throttleRef.current = clamp01(v); },
-      adjustThrottle: (d: number) => { throttleRef.current = clamp01(throttleRef.current + d); },
+      setThrottle: (v: number) => {
+        throttleRef.current = clamp01(v);
+        manualThrottleHoldUntilMsRef.current = Date.now() + 400;
+        if (throttleRef.current > 0) engineRef.current = true;
+      },
+      adjustThrottle: (d: number) => {
+        throttleRef.current = clamp01(throttleRef.current + d);
+        manualThrottleHoldUntilMsRef.current = Date.now() + 400;
+        // Winding the throttle up implies the crew wants the DPS burning.
+        if (d > 0 && throttleRef.current > 0) engineRef.current = true;
+      },
       setAttitudeCommand: (v: number) => {
         attitudeRef.current = clampSigned(v);
         // Touch/pointer hold: mirror into the held-key set so the loop honours it.
