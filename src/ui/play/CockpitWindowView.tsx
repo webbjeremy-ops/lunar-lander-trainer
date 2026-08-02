@@ -32,10 +32,16 @@ export interface CockpitWindowViewProps {
   manual: boolean;
   rollDeg?: number;
   p64Selected?: boolean;
+  /** Paint only the out-the-window scene: no drawn frame, panel slice or sill
+   *  readouts. Used when a real cockpit image supplies the aperture. */
+  bare?: boolean;
+  className?: string;
 }
 
-interface DrawArgs extends Required<Omit<CockpitWindowViewProps, "mission">> {
+interface DrawArgs
+  extends Required<Omit<CockpitWindowViewProps, "mission" | "className">> {
   mission: MissionDefinition;
+  className?: string;
   landmarks: readonly SurfaceLandmark[];
 }
 
@@ -52,18 +58,15 @@ export function CockpitWindowView(props: CockpitWindowViewProps) {
     };
   }
 
-  const argsRef = useRef<DrawArgs>({
+  const makeArgs = (): DrawArgs => ({
     ...props,
     rollDeg: props.rollDeg ?? 0,
     p64Selected: props.p64Selected ?? true,
+    bare: props.bare ?? false,
     landmarks: landmarksRef.current.marks,
   });
-  argsRef.current = {
-    ...props,
-    rollDeg: props.rollDeg ?? 0,
-    p64Selected: props.p64Selected ?? true,
-    landmarks: landmarksRef.current.marks,
-  };
+  const argsRef = useRef<DrawArgs>(makeArgs());
+  argsRef.current = makeArgs();
 
   useEffect(() => {
     const canvas = ref.current;
@@ -103,7 +106,10 @@ export function CockpitWindowView(props: CockpitWindowViewProps) {
     <canvas
       ref={ref}
       data-testid="cockpit-window-view"
-      className="h-[380px] w-full rounded border border-neutral-800 bg-black"
+      className={
+        props.className ??
+        "h-[380px] w-full rounded border border-neutral-800 bg-black"
+      }
       aria-label="First-person view from the commander's forward window"
     />
   );
@@ -148,6 +154,13 @@ function draw(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawArgs) 
   // Cockpit interior behind everything.
   ctx.fillStyle = "#101211";
   ctx.fillRect(0, 0, w, h);
+
+  if (a.bare) {
+    // The photographic console supplies the aperture; paint the scene edge to
+    // edge behind it.
+    drawScene(ctx, w, h, a);
+    return;
+  }
 
   const panelX = Math.round(w * 0.72);
   const glassW = panelX;
