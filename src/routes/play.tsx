@@ -174,13 +174,21 @@ function PlayClient() {
     duck: missionDuck,
   });
 
+  // M4.43 — the DPS is only "lit" for audio purposes once the descent clock is
+  // actually running. During the pre-TIG coast the engine command can flicker
+  // on for a frame before the countdown gate clamps it cold, and that was
+  // enough to fire the ignition recording and the boost swell 2.5 minutes
+  // early. The descent clock holds at T-0 until TIG, so it is the honest gate.
+  const engineLit =
+    session.controls.engineOn && session.descentClock.mode === "running";
+
   // M4.26 — cockpit sound effects share the score's on/off state: DPS bed and
   // ignition swell from the live throttle, master alarm from the 1201/1202
   // lamp, contact chime from the footpad probes.
   useDescentSfx({
     enabled: musicScore.enabled,
-    throttle: session.controls.throttle,
-    engineOn: session.controls.engineOn,
+    throttle: engineLit ? session.controls.throttle : 0,
+    engineOn: engineLit,
     alarmActive: session.alarms.lampOn,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     running: session.running,
@@ -190,12 +198,14 @@ function PlayClient() {
   // M4.31 — restored Apollo 11 air-to-ground recordings, cued by story beat.
   const missionAudio = useMissionAudio({
     enabled: musicScore.enabled,
-    engineOn: session.controls.engineOn,
+    engineOn: engineLit,
     activeAlarmId: session.alarms.active?.id ?? null,
     calloutId: session.callout?.id ?? null,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
   });
+
+
 
   useEffect(() => {
     setMissionDuck(missionAudio.duck);
