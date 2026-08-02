@@ -142,6 +142,19 @@ export interface ProjectedPoint {
 const DEFAULT_HALF_FOV = 32 * (Math.PI / 180);
 
 /**
+ * Upward cant of the commander's window boresight from the vehicle's forward
+ * axis, radians.
+ *
+ * The LM's forward panes are set high in the cabin and the crew flew them
+ * standing: with Eagle pitched well back the window is filled with black sky
+ * and the limb sits low in the pane — which is why Aldrin could call the Earth
+ * "straight out our front window" while the surface was still below the frame.
+ * Without this cant the horizon rides above the pane centre and the view is
+ * nearly all regolith.
+ */
+export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
+
+/**
  * Project a point on the surface into window coordinates.
  *
  * The commander looks out along the vehicle's +Z window axis. With the vehicle
@@ -162,7 +175,7 @@ export function projectSurfacePoint(
   const roll = p.rollRad ?? 0;
 
   // Camera frame: look direction pitched `pitchRad` off nadir, toward +ahead.
-  const pitch = p.pitchRad;
+  const pitch = p.pitchRad + WINDOW_UP_CANT_RAD;
   const cp = Math.cos(pitch);
   const sp = Math.sin(pitch);
 
@@ -225,7 +238,7 @@ export function horizonY(p: WindowProjection): number {
   const halfFov = p.halfFovRad ?? DEFAULT_HALF_FOV;
   const focal = p.width / 2 / Math.tan(halfFov);
   // The limb sits `dip` below level, so it enters the frame like extra pitch.
-  const theta = p.pitchRad + horizonDipRad(p.altitudeM);
+  const theta = p.pitchRad + WINDOW_UP_CANT_RAD + horizonDipRad(p.altitudeM);
   const forward = Math.sin(theta);
   if (forward <= 1e-3) return -1e6;
   return p.height / 2 + (-Math.cos(theta) / forward) * focal;
@@ -411,6 +424,14 @@ export function earthDisk(
   const wob = options.wobbleRad ?? 0;
   let sx = Math.tan(EARTH_BEARING_RAD + wob * 0.6) * focal;
   let sy = Math.tan(dPitch + wob) * focal;
+
+  // The Earth is a sky object: it can never be painted over the regolith. If
+  // the unrolled disk would fall on or below the limb, it has already set.
+  const unrolledY = p.height / 2 + sy;
+  const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
+  const limbY = horizonY({ ...p, rollRad: 0 });
+  if (unrolledY + radiusPx * 1.4 > limbY) return EARTH_HIDDEN;
+
   if (roll !== 0) {
     const cr = Math.cos(roll);
     const sr = Math.sin(roll);
@@ -419,7 +440,6 @@ export function earthDisk(
     sx = rx;
     sy = ry;
   }
-  const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
   const x = p.width / 2 + sx;
   const y = p.height / 2 + sy;
   const onPane = y > -radiusPx && y < p.height + radiusPx && x > -radiusPx && x < p.width + radiusPx;
