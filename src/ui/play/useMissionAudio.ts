@@ -143,15 +143,27 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     if (timerRef.current !== null) return;
     const playing = currentRef.current;
     if (playing && !playing.paused && !playing.ended) return;
-    const beat = queueRef.current.shift();
+    let beat = queueRef.current.shift();
+    // M4.49 — a beat can only ever key up once per flight. Without this guard
+    // a re-entrant drain (or a re-queued beat) could play the same recording
+    // twice, which is how the Earth-in-the-window call was heard doubled.
+    while (beat !== undefined && startedRef.current.has(beat)) {
+      beat = queueRef.current.shift();
+    }
     if (beat === undefined) return;
+    const chosen = beat;
 
     const start = () => {
       timerRef.current = null;
-      const el = new Audio(MISSION_AUDIO_URLS[beat]);
+      if (startedRef.current.has(chosen)) {
+        drainRef.current();
+        return;
+      }
+      startedRef.current.add(chosen);
+      const el = new Audio(MISSION_AUDIO_URLS[chosen]);
       el.volume = 1;
       currentRef.current = el;
-      setPlayed((prev) => new Set(prev).add(beat));
+      setPlayed((prev) => new Set(prev).add(chosen));
       const done = () => {
         if (currentRef.current !== el) return;
         setSpeaking(false);
