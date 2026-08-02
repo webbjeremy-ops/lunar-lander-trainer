@@ -20,6 +20,10 @@ const APERTURE = { left: 12.62, top: 23.07, right: 62.34, bottom: 71.82 };
 const LED = { left: 79.0, top: 17.1, width: 14.6, height: 2.8 };
 /** Attitude-ball well: centre and radius as a share of the artwork width. */
 const BALL = { cx: 79.19, cy: 52.49, r: 5.52 };
+/** Pane outline inside the aperture box, matching the artwork's glass edge. */
+const PANE_CLIP =
+  "polygon(5% 30%, 11% 19%, 88% 31%, 96% 41%, 95% 52%, 46% 95%, 33% 94%)";
+
 
 export interface CockpitStationProps extends CockpitWindowViewProps {
   missionElapsedSec: number;
