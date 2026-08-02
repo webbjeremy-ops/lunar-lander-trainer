@@ -110,6 +110,21 @@ describe("shadow and dust envelopes", () => {
     expect(shadowEnvelope(0).radiusM).toBeGreaterThan(6);
   });
 
+  it("resolves silhouette structure only as the vehicle gets low", () => {
+    expect(shadowEnvelope(300).detail).toBeLessThan(0.05);
+    expect(shadowEnvelope(150).detail).toBeGreaterThan(0.2);
+    expect(shadowEnvelope(80).detail).toBeGreaterThan(0.6);
+    expect(shadowEnvelope(10).detail).toBe(1);
+    expect(shadowEnvelope(10).edgeHardness).toBeGreaterThan(
+      shadowEnvelope(110).edgeHardness,
+    );
+  });
+
+  it("shows a faint patch as high as 1,000 ft", () => {
+    expect(shadowEnvelope(300).intensity).toBeGreaterThan(0);
+    expect(shadowEnvelope(300).intensity).toBeLessThan(0.05);
+  });
+
   it("displaces the shadow toward the right window for the 13 deg left yaw", () => {
     expect(shadowEnvelope(30).lateralM).toBeGreaterThan(0);
   });

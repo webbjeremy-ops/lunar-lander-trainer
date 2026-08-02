@@ -344,36 +344,13 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
 
   // LM shadow — sun low behind the vehicle, so the shadow lies ahead and
   // sweeps back toward the LM (growing fast) as it settles.
-  const shadow = shadowEnvelope(alt);
-  if (shadow.intensity > 0) {
-    const s = projectSurfacePoint(shadow.offsetM, shadow.lateralM, proj);
-    if (s.visible) {
-      const r = Math.max(3, shadow.radiusM * s.scale);
-      const gear = Math.max(0, Math.min(1, (12 - alt) / 12));
-      ctx.save();
-      ctx.globalAlpha = Math.min(0.9, 0.12 + shadow.intensity * 0.78);
-      ctx.fillStyle = "#050604";
-      // Descent-stage body.
-      ctx.beginPath();
-      ctx.ellipse(s.x, s.y, r * 0.9, r * 0.34, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // Splayed landing gear, prominent in the last forty feet.
-      ctx.strokeStyle = "#050604";
-      ctx.lineWidth = Math.max(1, r * (0.07 + gear * 0.09));
-      for (const ang of [0.7, 2.44, 3.84, 5.58]) {
-        const legX = s.x + Math.cos(ang) * r * (1.5 + gear * 0.5);
-        const legY = s.y + Math.sin(ang) * r * (0.55 + gear * 0.2);
-        ctx.beginPath();
-        ctx.moveTo(s.x, s.y);
-        ctx.lineTo(legX, legY);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.ellipse(legX, legY, r * 0.2, r * 0.09, 0, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-  }
+  drawLmShadow(ctx, proj, {
+    alt,
+    rangeToGoM,
+    throttle: a.flight.throttle,
+    contact: a.flight.terminalState !== null,
+  });
+
 
 
   // Dust streaming radially outward from the point directly beneath the engine
@@ -796,6 +773,192 @@ function drawReadouts(ctx: CanvasRenderingContext2D, w: number, h: number, a: Dr
     ctx.fillStyle = "#5df2a3";
     ctx.fillText(v, 46, y);
     y -= 13;
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// The LM's own shadow
+// ---------------------------------------------------------------------------
+
+/** Body outline in shadow-local units: u along the shadow axis (0 = nearest
+ *  point, connected to the vehicle's ground projection, 1 = the cabin tip
+ *  farthest from the LM), v across it in half-widths. Broad, squat, slightly
+ *  asymmetric bell — it should read as a beetle, not an aircraft. */
+const SHADOW_BODY: readonly (readonly [number, number])[] = [
+  [0.02, -0.16],
+  [0.16, -0.62],
+  [0.38, -0.95],
+  [0.62, -1.0],
+  [0.83, -0.66],
+  [0.97, -0.2],
+  [1.0, 0.04],
+  [0.9, 0.4],
+  [0.7, 0.92],
+  [0.44, 1.05],
+  [0.2, 0.74],
+  [0.04, 0.24],
+];
+
+/** Landing-gear legs: [body attach u, body attach v, footpad u, footpad v]. */
+const SHADOW_LEGS: readonly (readonly [number, number, number, number])[] = [
+  [0.28, -0.55, -0.24, -1.9],
+  [0.3, 0.55, -0.2, 2.0],
+  [0.78, -0.5, 1.34, -1.72],
+  [0.74, 0.52, 1.4, 1.86],
+];
+
+/** Antennae and protruding equipment — only readable in the last fifty feet. */
+const SHADOW_SPIKES: readonly (readonly [number, number, number, number])[] = [
+  [0.86, -0.5, 1.28, -0.86],
+  [0.92, 0.28, 1.3, 0.62],
+  [0.5, -0.9, 0.58, -1.42],
+];
+
+function shadowNoise(a: number, b: number): number {
+  let h = Math.imul(Math.floor(a) | 0, 668265263) ^ Math.imul(Math.floor(b) | 0, 374761393);
+  h = Math.imul(h ^ (h >>> 15), 1274126177);
+  return (((h ^ (h >>> 16)) >>> 0) / 4294967296) * 2 - 1;
+}
+
+/**
+ * Paint the vehicle's shadow thrown forward across the regolith.
+ *
+ * At an ~11 deg Sun the ground offset is about five times the height, so the
+ * silhouette lies far ahead of the LM and sweeps back as it settles. The shape
+ * resolves with altitude: a shapeless patch high up, a broad body by ~500 ft,
+ * separated legs by ~250 ft, spikes and terrain distortion below 100 ft.
+ */
+function drawLmShadow(
+  ctx: CanvasRenderingContext2D,
+  proj: WindowProjection,
+  s: {
+    readonly alt: number;
+    readonly rangeToGoM: number;
+    readonly throttle: number;
+    readonly contact: boolean;
+  },
+) {
+  const env = shadowEnvelope(s.alt);
+  if (env.intensity <= 0) return;
+
+  // Ground extent of the silhouette: the cabin throws the far tip, the
+  // footpads the near end.
+  const lengthM = Math.max(18, env.radiusM * 3.4);
+  const halfWidthM = Math.max(4.2, env.radiusM * 0.62);
+
+  const near = projectSurfacePoint(env.offsetM - lengthM / 2, env.lateralM, proj);
+  const far = projectSurfacePoint(env.offsetM + lengthM / 2, env.lateralM, proj);
+  const side = projectSurfacePoint(env.offsetM, env.lateralM + halfWidthM, proj);
+  if (!near.visible || !far.visible || !side.visible) return;
+
+  const ax = far.x - near.x;
+  const ay = far.y - near.y;
+  const axisLen = Math.hypot(ax, ay);
+  if (axisLen < 1.5) return;
+  const midX = (near.x + far.x) / 2;
+  const midY = (near.y + far.y) / 2;
+  let px = side.x - midX;
+  let py = side.y - midY;
+  if (Math.hypot(px, py) < 0.6) {
+    px = (-ay / axisLen) * 2;
+    py = (ax / axisLen) * 2;
+  }
+
+  // Terrain conformance: the outline is warped by the ground it falls on —
+  // stretched over rims, compressed in hollows — rather than drawn flat.
+  const warpCell = 9;
+  const warpAmp = 0.1 + env.detail * 0.16;
+  const pt = (u: number, v: number): [number, number] => {
+    const worldU = s.rangeToGoM - (env.offsetM - lengthM / 2 + u * lengthM);
+    const n = shadowNoise(worldU / warpCell, (env.lateralM + v * halfWidthM) / warpCell);
+    const n2 = shadowNoise(worldU / (warpCell * 2.7) + 31, v * 3);
+    const uu = u + n * warpAmp * 0.5;
+    const vv = v + n2 * warpAmp;
+    return [near.x + ax * uu + px * vv, near.y + ay * uu + py * vv];
+  };
+
+  const bodyForm = Math.max(0, Math.min(1, env.detail * 1.6));
+  const legForm = Math.max(0, Math.min(1, (env.detail - 0.28) / 0.42));
+  const spikeForm = Math.max(0, Math.min(1, (env.detail - 0.72) / 0.28));
+
+  ctx.save();
+  // Hard vacuum edge with only a narrow penumbra; softer while it is still an
+  // unresolved patch far below.
+  const blur = (1 - env.edgeHardness) * Math.max(1.5, axisLen * 0.16);
+  if (blur > 0.4) {
+    ctx.shadowColor = "rgba(5,6,4,0.75)";
+    ctx.shadowBlur = blur;
+  }
+  // Dust veils the part of the shadow nearest the engine and makes it flicker.
+  const dust = dustDensity(s.alt, s.throttle);
+  const flicker = dust > 0 && !s.contact
+    ? 1 - 0.12 * Math.abs(shadowNoise(s.rangeToGoM * 7, s.alt * 53)) * dust
+    : 1;
+  ctx.globalAlpha = Math.min(0.94, (0.1 + env.intensity * 0.84) * flicker);
+  ctx.fillStyle = "#050604";
+  ctx.strokeStyle = "#050604";
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  // Central body: broad and almost solid.
+  ctx.beginPath();
+  SHADOW_BODY.forEach(([u, v], i) => {
+    const shape = 0.34 + bodyForm * 0.66;
+    const [x, y] = pt(0.5 + (u - 0.5) * shape, v * shape);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fill();
+
+  // Legs: much thinner, angular lines with flattened footpads.
+  if (legForm > 0.02) {
+    ctx.lineWidth = Math.max(0.8, axisLen * 0.035 * (0.6 + legForm * 0.6));
+    for (const [bu, bv, fu, fv] of SHADOW_LEGS) {
+      const eu = bu + (fu - bu) * legForm;
+      const ev = bv + (fv - bv) * legForm;
+      const [x0, y0] = pt(bu, bv);
+      const [x1, y1] = pt(eu, ev);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+      const pad = axisLen * 0.055 * legForm;
+      if (pad > 0.6) {
+        ctx.beginPath();
+        ctx.ellipse(x1, y1, pad, pad * 0.45, Math.atan2(ay, ax), 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
+  // Antennae and equipment: a few narrow spikes, low altitude only.
+  if (spikeForm > 0.02) {
+    ctx.lineWidth = Math.max(0.6, axisLen * 0.012);
+    for (const [bu, bv, tu, tv] of SHADOW_SPIKES) {
+      const [x0, y0] = pt(bu, bv);
+      const [x1, y1] = pt(bu + (tu - bu) * spikeForm, bv + (tv - bv) * spikeForm);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    }
+  }
+
+  // Blowing dust washes out the near end without erasing the outer silhouette.
+  if (dust > 0.02) {
+    ctx.shadowBlur = 0;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.globalAlpha = Math.min(0.55, dust * 0.6);
+    const [vx, vy] = pt(0.12, 0);
+    const veil = ctx.createRadialGradient(vx, vy, 0, vx, vy, Math.max(6, axisLen * 0.5));
+    veil.addColorStop(0, "rgba(0,0,0,1)");
+    veil.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = veil;
+    ctx.beginPath();
+    ctx.ellipse(vx, vy, axisLen * 0.5, axisLen * 0.3, Math.atan2(ay, ax), 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.restore();
 }
