@@ -674,18 +674,32 @@ export function usePlaySession(
       padEdgesRef.current = next;
       padInputRef.current = input;
 
-      // Right trigger — roll toward windows-up (the R key).
-      if (input.rollCommanded !== padRollCommanded) {
-        padRollCommanded = input.rollCommanded;
-        dispatchRoll({ kind: "roll", active: input.rollCommanded });
+      // M4.49 — the pad remaps at manual takeover: while the computer flies,
+      // RT rolls the vehicle and RB clears an alarm; once the crew has the
+      // vehicle RT becomes the throttle and RB a short thrust burst.
+      const crewFlying =
+        procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
+
+      // Right trigger — roll toward windows-up (the R key), guided flight only.
+      const rollWanted = input.rollCommanded && !crewFlying;
+      if (rollWanted !== padRollCommanded) {
+        padRollCommanded = rollWanted;
+        dispatchRoll({ kind: "roll", active: rollWanted });
       }
-      // Right bumper — cancel the program alarm in one press.
-      if (input.cancelAlarmPressed && alarmsRef.current.active !== null) {
-        dispatchAlarm({
-          kind: "cancel",
-          sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
-        });
-        hapticsRef.current.pulse("alarm");
+      // Right bumper — alarm reset under guidance, throttle burst in manual.
+      if (input.cancelAlarmPressed) {
+        if (crewFlying && alarmsRef.current.active === null) {
+          throttleBurstUntilMsRef.current = Date.now() + 900;
+          manualThrottleHoldUntilMsRef.current = Date.now() + 900;
+          engineRef.current = true;
+          hapticsRef.current.pulse("ignition");
+        } else if (alarmsRef.current.active !== null) {
+          dispatchAlarm({
+            kind: "cancel",
+            sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
+          });
+          hapticsRef.current.pulse("alarm");
+        }
       }
       // Left bumper — easy program acceptance: key the pending DSKY step.
       if (input.acceptProgramPressed) acceptProgramRef.current();
@@ -695,8 +709,6 @@ export function usePlaySession(
       }
       // Right stick vertical — page scroll, but only while the computer still
       // flies: once the crew has the vehicle the same axis commands pitch.
-      const crewFlying =
-        procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
       if (!crewFlying && input.scrollRate !== 0 && typeof window !== "undefined") {
         window.scrollBy({ top: input.scrollRate * 24, behavior: "auto" });
       }
