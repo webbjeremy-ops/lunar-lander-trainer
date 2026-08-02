@@ -242,14 +242,12 @@ function PlayClient() {
     touchdownOnly: missionId !== "full-descent",
   });
 
-  // The PDI card keys up with Houston's "Go for PDI" call.
-  // The PDI card keys up with Houston's "Go for PDI" call, and only inside the
-  // final minute of the countdown (TIG-60 s), when arming actually matters.
+  // The PDI card keys up with Houston's "Go for PDI" call and stays up for the
+  // whole countdown, so the crew can arm whenever they are ready.
   const pdiCardReady =
-    (!audioLive ||
-      missionId !== "full-descent" ||
-      missionAudio.played.has("go-for-pdi")) &&
-    session.ignition.tigOffsetUs <= 60 * 1_000_000;
+    !audioLive ||
+    missionId !== "full-descent" ||
+    missionAudio.played.has("go-for-pdi");
 
 
 
