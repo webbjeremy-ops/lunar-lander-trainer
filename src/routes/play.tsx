@@ -529,7 +529,12 @@ function PlayClient() {
               !session.script.steps.some((s) => s.id === "p64-monitor") ||
               session.procedure.completedStepIds.includes("p64-monitor") ||
               session.manualUnlocked;
-            const windowAvailable = p64Selected;
+            // The commander's window is available in every scenario and at
+            // every phase — it simply shows whatever attitude and altitude
+            // the vehicle currently holds.
+            const windowAvailable = true;
+
+
             return (
               <div className="relative">
                 {windowAvailable && (
