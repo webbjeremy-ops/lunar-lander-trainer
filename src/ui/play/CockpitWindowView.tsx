@@ -323,8 +323,7 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     ctx.restore();
   }
 
-  // In bare mode the photographic console carries its own etched LPD scale.
-  if (!a.bare) drawLpdReticle(ctx, w, h, proj);
+  drawLpdReticle(ctx, w, h, proj);
 }
 
 function drawLandmark(
