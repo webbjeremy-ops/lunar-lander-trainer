@@ -230,7 +230,21 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
   --lm-bezel: #0a0b0a;
   --lm-el: #5df2a3;
   --lm-caution: #f5b323;
+
+  /* Flown LM Panel 1 as photographed in the cabin: blue-grey face, white
+     silkscreen, black instrument faces, blue LUNAR CONTACT lamp. */
+  --lm1-panel: #8194a1;
+  --lm1-panel-dark: #6b7d89;
+  --lm1-panel-light: #9aacb7;
+  --lm1-legend: #f3f6f7;
+  --lm1-face: #0d1113;
+  --lm1-scale: #dfe6ea;
+  --lm1-contact: #2f7fe0;
+  --lm1-needle: #f0b429;
+  --lm1-hazard: #e6c02a;
+  --lm1-screw: #5d6d78;
 }
+
 
 
 /* The cabin structure behind the panels: painted aluminium. */
