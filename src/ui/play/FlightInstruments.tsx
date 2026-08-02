@@ -78,7 +78,7 @@ export function FlightInstruments({
 }) {
   const sink = -orbit.radialSpeedMps;
   const lateral = Math.abs(orbit.tangentialSpeedMps);
-  const tiltDeg = (flight.attitudeRad * 180) / Math.PI;
+  const tiltDeg = (-flight.attitudeRad * 180) / Math.PI;
   const fuelFraction = initialPropellantKg > 0 ? flight.descentPropellantKg / initialPropellantKg : 0;
 
   const units = useAppSettings().units;
