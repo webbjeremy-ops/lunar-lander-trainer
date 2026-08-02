@@ -218,39 +218,69 @@ export function horizonY(p: WindowProjection): number {
 // Shadow and dust envelopes
 // ---------------------------------------------------------------------------
 
-/** Altitude below which the LM's own shadow is discernible (m ≈ 150 ft). */
-export const SHADOW_ONSET_M = 46;
+/** Altitude below which the LM's own shadow is discernible (m ≈ 400 ft).
+ *  Buzz first called the shadow around 260 ft and said in debrief he could
+ *  probably have picked it up near 400 ft — so that is where it fades in. */
+export const SHADOW_ONSET_M = 122;
+/** Altitude at which the shadow is unmistakable (m ≈ 260 ft). */
+export const SHADOW_CLEAR_M = 79;
 /** Altitude below which surface dust begins to stream (m ≈ 100 ft). */
 export const DUST_ONSET_M = 30;
+
+/** Sun elevation at Tranquility Base during the landing (10.65 deg). */
+export const SUN_ELEVATION_RAD = 10.65 * (Math.PI / 180);
+/** Height of the cabin/descent-stage mass above the footpads (m). */
+const VEHICLE_HEIGHT_M = 6.4;
+/** Eagle was yawed ~13 deg left, throwing the shadow toward the right side. */
+const YAW_LEFT_RAD = 13 * (Math.PI / 180);
 
 export interface ShadowEnvelope {
   /** 0 = invisible, 1 = fully resolved at touchdown. */
   readonly intensity: number;
-  /** Distance from the vehicle's ground point to the shadow centre, metres. */
+  /** Distance from the vehicle's ground point to the shadow centre, metres.
+   *  Sun behind and low, so the shadow lies ahead, along the flight path. */
   readonly offsetM: number;
+  /** Lateral displacement of the shadow, positive = right of track (m). */
+  readonly lateralM: number;
   /** Apparent shadow radius on the surface, metres. */
   readonly radiusM: number;
 }
 
 /**
- * The LM shadow: with the sun low behind and to the left, the shadow lies out
- * ahead of the ground point at high altitude and slides in to meet the vehicle
- * as it settles — the cue the crews used for the last few feet.
+ * The LM shadow.
+ *
+ * With the Sun only 10.65 deg above the eastern horizon and Eagle flying west,
+ * the light came from behind: the shadow lies *ahead* of the vehicle at roughly
+ * `cot(10.65 deg) ≈ 5.32` times the height of whatever casts it, and sweeps
+ * back toward the LM as it settles. It never collapses to nothing at contact —
+ * the cabin and descent stage keep throwing a long shadow across the surface.
  */
 export function shadowEnvelope(
   altitudeM: number,
   options: { readonly sunElevationRad?: number } = {},
 ): ShadowEnvelope {
   const alt = Math.max(0, altitudeM);
-  if (alt > SHADOW_ONSET_M) return { intensity: 0, offsetM: 0, radiusM: 0 };
-  const sunElevation = options.sunElevationRad ?? 12 * (Math.PI / 180);
-  const t = 1 - alt / SHADOW_ONSET_M; // 0 at onset, 1 at contact
+  if (alt > SHADOW_ONSET_M) {
+    return { intensity: 0, offsetM: 0, lateralM: 0, radiusM: 0 };
+  }
+  const sunElevation = options.sunElevationRad ?? SUN_ELEVATION_RAD;
+  const cot = 1 / Math.tan(sunElevation);
+
+  // Faint from 400 ft, clearly usable by 260 ft, dominant in the last 40 ft.
+  const fade = Math.min(1, (SHADOW_ONSET_M - alt) / (SHADOW_ONSET_M - SHADOW_CLEAR_M));
+  const near = Math.max(0, Math.min(1, 1 - alt / SHADOW_CLEAR_M));
+  const intensity = Math.min(1, 0.18 * fade + 0.82 * near * near);
+
+  // The whole vehicle casts the shadow, so the throw never reaches zero.
+  const offsetM = cot * (alt + VEHICLE_HEIGHT_M);
   return {
-    intensity: t * t,
-    offsetM: alt / Math.tan(sunElevation),
-    radiusM: 4.6 + alt * 0.02,
+    intensity,
+    offsetM,
+    lateralM: offsetM * Math.sin(YAW_LEFT_RAD),
+    radiusM: 4.6 + (alt + VEHICLE_HEIGHT_M) * 0.35,
   };
 }
+
 
 /** Dust density in [0, 1]; zero above the onset altitude, 1 at contact. */
 export function dustDensity(altitudeM: number, throttle: number): number {
