@@ -76,7 +76,7 @@ function StationBall({ pitchDeg, rollDeg }: { pitchDeg: number; rollDeg: number 
                     y1={y}
                     x2={half}
                     y2={y}
-                    stroke={d > 0 ? "#3a3d42" : "#c9c6c0"}
+                    stroke={y < 0 ? "#6f7480" : "#9a968f"}
                     strokeWidth="1"
                     opacity="0.8"
                   />
