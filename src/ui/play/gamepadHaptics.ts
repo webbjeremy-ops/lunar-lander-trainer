@@ -77,16 +77,26 @@ export function engineRumble(throttle: number, engineOn: boolean): RumbleEffect 
 interface VibrationActuatorLike {
   playEffect(type: string, params: Record<string, number>): Promise<unknown>;
   reset?(): Promise<unknown>;
+  /** Older Firefox / WebKit surface. */
+  pulse?(value: number, durationMs: number): Promise<unknown>;
 }
 
 interface PadWithHaptics {
   readonly vibrationActuator?: VibrationActuatorLike | null;
+  readonly hapticActuators?: readonly VibrationActuatorLike[];
 }
 
 function actuatorOf(pad: unknown): VibrationActuatorLike | null {
-  const a = (pad as PadWithHaptics | null)?.vibrationActuator;
-  return a && typeof a.playEffect === "function" ? a : null;
+  const p = pad as PadWithHaptics | null;
+  const a = p?.vibrationActuator;
+  if (a && (typeof a.playEffect === "function" || typeof a.pulse === "function")) return a;
+  const legacy = p?.hapticActuators?.[0];
+  if (legacy && (typeof legacy.playEffect === "function" || typeof legacy.pulse === "function")) {
+    return legacy;
+  }
+  return null;
 }
+
 
 /**
  * Drives the pad. `tick` is called from the flight loop with the live throttle;
