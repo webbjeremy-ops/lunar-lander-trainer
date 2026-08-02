@@ -1,21 +1,27 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// M4.30 — Xbox controller mapping for the LM cockpit.
+// M4.30 / M4.45 — Xbox controller mapping for the LM cockpit.
 //
 // This module is PURE: it turns a raw gamepad snapshot into a cockpit input
 // record and tracks button edges. It never touches the flight kernel, the AGC
 // or React. The physical mapping the crew asked for:
 //
-//   Left stick (vertical)   thrust — pushed forward the throttle winds up,
-//                           pulled back it winds down (rate control, exactly
-//                           like holding the arrow keys)
+//   Left stick (vertical)    thrust — pushed forward the throttle winds up,
+//                            pulled back it winds down (rate control, exactly
+//                            like holding the arrow keys)
 //   Right stick (horizontal) pitch — rate command to the attitude controller
 //   Right trigger            roll toward windows-up (the R key)
+//   Left trigger             TAKE MANUAL CONTROL (crew handover)
+//   A                        acknowledge the on-screen call — "Got it" /
+//                            "Copy that" (never an alarm)
+//   X                        ENG ARM — the PDI descent-arm switch
+//   Y                        DPS engine on/off
+//   B                        ABORT STAGE
 //   Right bumper (RB)        cancel the program alarm
 //   Left bumper (LB)         easy program acceptance — key the pending DSKY
 //                            step for the crew (M4.31)
-//   A                        DPS engine on/off
-//   D-pad up / down          rate-of-descent trim (left trigger also trims down)
+//   D-pad up / down          rate-of-descent trim
+
 //
 // Standard-mapping indices are used throughout; every Xbox pad reports the
 // standard mapping in Chromium and Firefox.
