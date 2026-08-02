@@ -135,7 +135,24 @@ export interface ProgramAlarmState {
   /** Keys accepted so far toward the V05 N09 E read sequence. */
   readonly readBuffer: number;
   readonly lastMessage: string;
+  /** Ignition-relative time the last alarm was raised; null before the first. */
+  readonly lastRaisedSinceIgnitionUs: number | null;
 }
+
+/**
+ * Minimum spacing between two raised alarms. Without it a trajectory that is
+ * lower than the flown one satisfies several `belowAltitudeFt` triggers at
+ * once and the next alarm re-lights on the tick after RSET, so the lamp looks
+ * as if it will not silence. Apollo 11's closest pair was ~25 s apart.
+ */
+export const ALARM_MIN_SPACING_SEC = 20;
+
+/**
+ * How early the altitude trigger may pre-empt the scheduled time. It exists to
+ * keep alarms in the right part of the descent, not to fire them minutes early.
+ */
+export const ALARM_ALTITUDE_LEAD_SEC = 60;
+
 
 export type ProgramAlarmEvent =
   | {
