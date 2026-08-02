@@ -257,6 +257,18 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   }
   ctx.restore();
 
+  // Earth: a small, brilliant gibbous disk, in view only while the vehicle is
+  // still pitched well back and windows-up, drifting a couple of degrees with
+  // propellant slosh and RCS trim. It climbs out of the pane as Eagle comes
+  // upright and the surface rises into the bottom of the window.
+  const wobble =
+    (typeof performance === "undefined" ? 0 : Math.sin(performance.now() / 2600)) *
+    0.018;
+  const earth = earthDisk(proj, { wobbleRad: wobble });
+  if (earth.visible) drawEarth(ctx, earth);
+
+
+
 
   // Signed range to the landing zone: positive = still short of it, negative =
   // the LZ is already behind the vehicle. Taking the magnitude here would make
