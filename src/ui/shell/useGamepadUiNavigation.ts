@@ -62,6 +62,7 @@ export function useGamepadUiNavigation(): void {
     let frame = 0;
     let nextMoveAt = 0;
     let selectHeld = false;
+    let tabHeld = false;
 
     const poll = () => {
       frame = window.requestAnimationFrame(poll);
@@ -69,6 +70,7 @@ export function useGamepadUiNavigation(): void {
       if (document.body.dataset["gamepadOwner"] === "gameplay") {
         nextMoveAt = 0;
         selectHeld = false;
+        tabHeld = false;
         return;
       }
 
@@ -76,6 +78,8 @@ export function useGamepadUiNavigation(): void {
       let dir = 0;
       let select = false;
       let scroll = 0;
+      // LB tabs forward, RB tabs backward (shift-tab).
+      let tab = 0;
       for (const pad of pads) {
         if (!pad?.connected) continue;
         const b = pad.buttons;
@@ -89,6 +93,9 @@ export function useGamepadUiNavigation(): void {
         else if (up || left || y < -AXIS_DEADZONE || x < -AXIS_DEADZONE) dir = -1;
         // A (0) and X (2) both select.
         if ((b[0]?.pressed ?? false) || (b[2]?.pressed ?? false)) select = true;
+        // LB (4) tabs forward, RB (5) tabs backward.
+        if (b[4]?.pressed ?? false) tab = 1;
+        else if (b[5]?.pressed ?? false) tab = -1;
         // Right stick vertical scrolls the page.
         const ry = pad.axes[3] ?? 0;
         if (Math.abs(ry) > 0.15) scroll = ry;
@@ -104,6 +111,10 @@ export function useGamepadUiNavigation(): void {
         nextMoveAt = now + (nextMoveAt === 0 ? REPEAT_MS * 2.5 : REPEAT_MS);
         move(dir);
       }
+
+      // Bumpers tab one element per press (no auto-repeat).
+      if (tab !== 0 && !tabHeld) move(tab);
+      tabHeld = tab !== 0;
 
       if (select && !selectHeld) activate();
       selectHeld = select;
