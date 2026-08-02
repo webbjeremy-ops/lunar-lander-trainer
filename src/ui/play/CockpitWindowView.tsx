@@ -250,9 +250,10 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   // still pitched well back and windows-up, drifting a couple of degrees with
   // propellant slosh and RCS trim. It climbs out of the pane as Eagle comes
   // upright and the surface rises into the bottom of the window.
-  const wobble =
-    (typeof performance === "undefined" ? 0 : Math.sin(performance.now() / 2600)) *
-    0.018;
+  // Two or three degrees of slow drift: propellant slosh and RCS attitude trim
+  // walked the Earth around the pane the whole time it was in view.
+  const t = typeof performance === "undefined" ? 0 : performance.now();
+  const wobble = (Math.sin(t / 2600) * 0.7 + Math.sin(t / 900) * 0.3) * 0.042;
   const earth = earthDisk(proj, { wobbleRad: wobble });
   if (earth.visible) drawEarth(ctx, earth);
 
