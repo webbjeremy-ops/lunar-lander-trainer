@@ -75,6 +75,7 @@ export function useGamepadUiNavigation(): void {
       const pads = navigator.getGamepads();
       let dir = 0;
       let select = false;
+      let scroll = 0;
       for (const pad of pads) {
         if (!pad?.connected) continue;
         const b = pad.buttons;
@@ -88,7 +89,12 @@ export function useGamepadUiNavigation(): void {
         else if (up || left || y < -AXIS_DEADZONE || x < -AXIS_DEADZONE) dir = -1;
         // A (0) and X (2) both select.
         if ((b[0]?.pressed ?? false) || (b[2]?.pressed ?? false)) select = true;
+        // Right stick vertical scrolls the page.
+        const ry = pad.axes[3] ?? 0;
+        if (Math.abs(ry) > 0.15) scroll = ry;
       }
+
+      if (scroll !== 0) window.scrollBy({ top: scroll * 24, behavior: "auto" });
 
       const now = performance.now();
       if (dir === 0) {
