@@ -174,19 +174,21 @@ function PlayClient() {
     duck: missionDuck,
   });
 
-  // M4.43 — the DPS is only "lit" for audio purposes once the descent clock is
-  // actually running. During the pre-TIG coast the engine command can flicker
-  // on for a frame before the countdown gate clamps it cold, and that was
-  // enough to fire the ignition recording and the boost swell 2.5 minutes
-  // early. The descent clock holds at T-0 until TIG, so it is the honest gate.
+  // M4.43 — cockpit audio only exists once the crew is actually flying. The
+  // session simulates behind the mission-select screen, so without the
+  // `started` gate the ignition recording and the DPS bed fired while the
+  // player was still choosing a mission. And the DPS counts as lit only once
+  // the descent clock runs: during the pre-TIG coast the engine command can
+  // flicker on for a frame before the countdown gate clamps it cold.
+  const audioLive = musicScore.enabled && started;
   const engineLit =
-    session.controls.engineOn && session.descentClock.mode === "running";
+    audioLive && session.controls.engineOn && session.descentClock.mode === "running";
 
   // M4.26 — cockpit sound effects share the score's on/off state: DPS bed and
   // ignition swell from the live throttle, master alarm from the 1201/1202
   // lamp, contact chime from the footpad probes.
   useDescentSfx({
-    enabled: musicScore.enabled,
+    enabled: audioLive,
     throttle: engineLit ? session.controls.throttle : 0,
     engineOn: engineLit,
     alarmActive: session.alarms.lampOn,
@@ -197,13 +199,14 @@ function PlayClient() {
 
   // M4.31 — restored Apollo 11 air-to-ground recordings, cued by story beat.
   const missionAudio = useMissionAudio({
-    enabled: musicScore.enabled,
+    enabled: audioLive,
     engineOn: engineLit,
     activeAlarmId: session.alarms.active?.id ?? null,
     calloutId: session.callout?.id ?? null,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
   });
+
 
 
 
