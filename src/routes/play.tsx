@@ -192,6 +192,7 @@ function PlayClient() {
     activeAlarmId: session.alarms.active?.id ?? null,
     calloutId: session.callout?.id ?? null,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
+    crashed: session.flight.terminalState === "crashed",
   });
 
   useEffect(() => {

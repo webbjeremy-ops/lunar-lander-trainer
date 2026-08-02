@@ -42,6 +42,8 @@ export interface MissionAudioInput {
   readonly calloutId: string | null;
   /** Footpad probes have touched the surface. */
   readonly contact: boolean;
+  /** The vehicle hit the surface too hard — no touchdown call is earned. */
+  readonly crashed?: boolean;
 }
 
 /**
@@ -49,6 +51,7 @@ export interface MissionAudioInput {
  * Exported for tests; the hook below owns the playback side effects.
  */
 export function beatFor(input: MissionAudioInput): MissionAudioBeat | null {
+  if (input.crashed === true) return null;
   if (input.contact) return "contact";
   if (input.activeAlarmId === "alarm-1201-first") return "go-for-landing-1201";
   if (input.activeAlarmId === "alarm-1202-first") return "alarm-1202";
@@ -80,10 +83,10 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     [],
   );
 
-  const { enabled, engineOn, activeAlarmId, calloutId, contact } = input;
+  const { enabled, engineOn, activeAlarmId, calloutId, contact, crashed } = input;
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
-    const beat = beatFor({ enabled, engineOn, activeAlarmId, calloutId, contact });
+    const beat = beatFor({ enabled, engineOn, activeAlarmId, calloutId, contact, crashed });
     if (beat === null || playedRef.current.has(beat)) return;
 
     const playing = currentRef.current;
@@ -104,15 +107,15 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     void el.play().catch(() => {
       done();
     });
-  }, [enabled, engineOn, activeAlarmId, calloutId, contact]);
+  }, [enabled, engineOn, activeAlarmId, calloutId, contact, crashed]);
 
-  // Muting the cockpit audio also silences the comm loop.
+  // Muting the cockpit audio — or crashing — silences the comm loop.
   useEffect(() => {
-    if (enabled) return;
+    if (enabled && crashed !== true) return;
     currentRef.current?.pause();
     currentRef.current = null;
     setSpeaking(false);
-  }, [enabled]);
+  }, [enabled, crashed]);
 
   return { speaking, duck: speaking ? MISSION_AUDIO_DUCK : 1 };
 }
