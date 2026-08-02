@@ -58,18 +58,15 @@ export function CockpitWindowView(props: CockpitWindowViewProps) {
     };
   }
 
-  const argsRef = useRef<DrawArgs>({
+  const makeArgs = (): DrawArgs => ({
     ...props,
     rollDeg: props.rollDeg ?? 0,
     p64Selected: props.p64Selected ?? true,
+    bare: props.bare ?? false,
     landmarks: landmarksRef.current.marks,
   });
-  argsRef.current = {
-    ...props,
-    rollDeg: props.rollDeg ?? 0,
-    p64Selected: props.p64Selected ?? true,
-    landmarks: landmarksRef.current.marks,
-  };
+  const argsRef = useRef<DrawArgs>(makeArgs());
+  argsRef.current = makeArgs();
 
   useEffect(() => {
     const canvas = ref.current;
