@@ -166,8 +166,13 @@ function PlayClient() {
       if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
       setFirstPerson((v) => !v);
     };
+    const onPadToggle = () => setFirstPerson((v) => !v);
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("tranquility:toggle-view", onPadToggle);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("tranquility:toggle-view", onPadToggle);
+    };
   }, []);
 
 

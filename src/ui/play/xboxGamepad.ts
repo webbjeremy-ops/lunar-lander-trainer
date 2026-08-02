@@ -21,6 +21,8 @@
 //   Left bumper (LB)         easy program acceptance — key the pending DSKY
 //                            step for the crew (M4.31)
 //   D-pad up / down          rate-of-descent trim
+//   View (two squares)       first-person window view on / off
+//   Right stick (vertical)   scroll the page
 
 //
 // Standard-mapping indices are used throughout; every Xbox pad reports the
@@ -44,6 +46,7 @@ export const BUTTON = {
   rightBumper: 5,
   leftTrigger: 6,
   rightTrigger: 7,
+  view: 8,
   start: 9,
   dpadUp: 12,
   dpadDown: 13,
@@ -83,6 +86,10 @@ export interface XboxCockpitInput {
   readonly armEnginePressed: boolean;
   /** M4.45 — left trigger: take manual control of the vehicle. */
   readonly takeoverPressed: boolean;
+  /** M4.48 — View button: toggle the first-person window view. */
+  readonly toggleViewPressed: boolean;
+  /** M4.48 — right stick vertical: page scroll, [-1, 1]. Positive scrolls down. */
+  readonly scrollRate: number;
   /** Y: DPS engine on/off. */
   readonly enginePressed: boolean;
   readonly abortPressed: boolean;
@@ -101,6 +108,8 @@ export const NEUTRAL_INPUT: XboxCockpitInput = {
   takeoverPressed: false,
   enginePressed: false,
   abortPressed: false,
+  toggleViewPressed: false,
+  scrollRate: 0,
 };
 
 
@@ -164,6 +173,7 @@ export function mapXboxInput(
   const enginePressed = edge(BUTTON.y);
   const abortPressed = edge(BUTTON.b);
   const acceptProgramPressed = edge(BUTTON.leftBumper);
+  const toggleViewPressed = edge(BUTTON.view);
   const trimUp = edge(BUTTON.dpadUp);
   const trimDown = edge(BUTTON.dpadDown);
   // Left trigger — manual takeover, on the pull edge only.
@@ -188,6 +198,9 @@ export function mapXboxInput(
       takeoverPressed,
       enginePressed,
       abortPressed,
+      toggleViewPressed,
+      // Right stick Y is negative pushed forward; positive scrolls the page down.
+      scrollRate: applyDeadzone(axis(pad, AXIS.rightStickY)),
     },
 
     next: { held },
