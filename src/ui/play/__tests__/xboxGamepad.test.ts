@@ -100,8 +100,8 @@ describe("mapXboxInput", () => {
     expect(third.input.cancelAlarmPressed).toBe(true);
   });
 
-  it("edge-detects the engine and abort buttons independently", () => {
-    const both = pad({ buttons: { [BUTTON.a]: 1, [BUTTON.b]: 1 } });
+  it("edge-detects the engine (Y) and abort (B) buttons independently", () => {
+    const both = pad({ buttons: { [BUTTON.y]: 1, [BUTTON.b]: 1 } });
     const first = mapXboxInput(both, createGamepadEdgeState());
     expect(first.input.enginePressed).toBe(true);
     expect(first.input.abortPressed).toBe(true);
@@ -110,16 +110,39 @@ describe("mapXboxInput", () => {
     expect(second.input.abortPressed).toBe(false);
   });
 
+  it("acknowledges the on-screen call on A, on the press edge only", () => {
+    const held = pad({ buttons: { [BUTTON.a]: 1 } });
+    const first = mapXboxInput(held, createGamepadEdgeState());
+    expect(first.input.acknowledgePressed).toBe(true);
+    expect(first.input.enginePressed).toBe(false);
+    expect(mapXboxInput(held, first.next).input.acknowledgePressed).toBe(false);
+  });
+
+  it("arms the descent engine on X", () => {
+    const held = pad({ buttons: { [BUTTON.x]: 1 } });
+    const first = mapXboxInput(held, createGamepadEdgeState());
+    expect(first.input.armEnginePressed).toBe(true);
+    expect(mapXboxInput(held, first.next).input.armEnginePressed).toBe(false);
+  });
+
+  it("takes manual control on the left-trigger pull edge", () => {
+    const held = pad({ buttons: { [BUTTON.leftTrigger]: 1 } });
+    const first = mapXboxInput(held, createGamepadEdgeState());
+    expect(first.input.takeoverPressed).toBe(true);
+    expect(first.input.rodTrim).toBe(0); // LT no longer trims
+    expect(mapXboxInput(held, first.next).input.takeoverPressed).toBe(false);
+  });
+
   it("accepts the pending DSKY program on the LB press edge only", () => {
     const held = pad({ buttons: { [BUTTON.leftBumper]: 1 } });
     const first = mapXboxInput(held, createGamepadEdgeState());
     expect(first.input.acceptProgramPressed).toBe(true);
-    expect(first.input.rodTrim).toBe(0); // LB no longer trims
+    expect(first.input.rodTrim).toBe(0);
     const second = mapXboxInput(held, first.next);
     expect(second.input.acceptProgramPressed).toBe(false);
   });
 
-  it("trims rate of descent on the D-pad and down on the left trigger", () => {
+  it("trims rate of descent on the D-pad", () => {
     const up = mapXboxInput(
       pad({ buttons: { [BUTTON.dpadUp]: 1 } }),
       createGamepadEdgeState(),
@@ -131,13 +154,8 @@ describe("mapXboxInput", () => {
       createGamepadEdgeState(),
     ).input;
     expect(dpadDown.rodTrim).toBe(-1);
-
-    const down = mapXboxInput(
-      pad({ buttons: { [BUTTON.leftTrigger]: 1 } }),
-      createGamepadEdgeState(),
-    ).input;
-    expect(down.rodTrim).toBe(-1);
   });
+
 
   it("clears all edges when the pad is unplugged mid-flight", () => {
     const first = mapXboxInput(
