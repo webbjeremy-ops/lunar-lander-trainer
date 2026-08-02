@@ -616,9 +616,10 @@ function PlayClient() {
             onRod={session.actions.trimRod}
           />
           <GamepadLegend
-            haptics={session.hapticsEnabled}
-            onHaptics={session.actions.setHaptics}
+            haptics={hapticsPref}
+            onHaptics={(on) => setHapticsPref(on)}
           />
+
         </div>
 
         <div className="space-y-3">
