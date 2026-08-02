@@ -61,9 +61,10 @@ function StationBall({ pitchDeg, rollDeg }: { pitchDeg: number; rollDeg: number 
       <g clipPath="url(#station-ball-clip)">
         <g transform={`rotate(${-rollDeg})`}>
           <g transform={`translate(0 ${(pitchDeg * R) / 90})`}>
-            <rect x="-140" y="-400" width="280" height="400" fill="#d6d3cd" />
-            <rect x="-140" y="0" width="280" height="400" fill="#1d1f22" />
-            <line x1="-140" y1="0" x2="140" y2="0" stroke="#8a5a2b" strokeWidth="2" />
+            <rect x="-140" y="-400" width="280" height="400" fill="#111318" />
+            <rect x="-140" y="0" width="280" height="400" fill="#e8e6e0" />
+            <line x1="-140" y1="0" x2="140" y2="0" stroke="#8a8681" strokeWidth="2" />
+
             {rows.map((d) => {
               const y = (-d * R) / 90;
               const major = d % 45 === 0;
