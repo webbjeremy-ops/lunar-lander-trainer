@@ -530,7 +530,43 @@ function drawGlassReflections(
 }
 
 
+/**
+ * West Crater, called out as the crew saw it on pitch-over: a blocky, shadowed
+ * hole with an ejecta apron of boulders, which is precisely why Armstrong took
+ * over and flew long past it rather than landing in it.
+ */
+function drawWestCraterCallout(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  r: number,
+) {
+  const flat = 0.34;
+  ctx.save();
+  // Deep shadowed floor and a bright sunlit west rim.
+  ctx.fillStyle = "rgba(16,15,13,0.82)";
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 0.92, r * flat * 0.92, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(238,229,208,0.9)";
+  ctx.lineWidth = Math.max(1.2, r * 0.13);
+  ctx.beginPath();
+  ctx.ellipse(x, y, r, r * flat, 0, Math.PI * 0.02, Math.PI * 0.98);
+  ctx.stroke();
+  ctx.restore();
+
+  if (r > 16) {
+    ctx.save();
+    ctx.fillStyle = "rgba(240,197,106,0.85)";
+    ctx.font = "9px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText("WEST CRATER", x, y - r * flat - 8);
+    ctx.restore();
+  }
+}
+
 function drawLandmark(
+
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
