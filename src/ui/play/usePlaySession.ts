@@ -563,6 +563,11 @@ export function usePlaySession(
         // physics, so the correction window is simulated time, not wall time.
         if (sinceIgnitionUs > 0 || state.mainEngine !== "off") {
           const o = computeOrbitalValues(state);
+          // M4.39 — the crew only owns the vehicle once manual control is
+          // unlocked AND they have actually taken it.
+          const autoGuidanceHandsOff =
+            procedureRef.current.manualControlUnlocked &&
+            crewHasVehicleRef.current;
           escalationRef.current = reduceHoustonEscalation(escalationRef.current, {
             deviations: houstonDeviations({
               altitudeM: o.altitudeM,
@@ -583,10 +588,12 @@ export function usePlaySession(
               ),
               sinceIgnitionUs,
               p64Selected: procedureRef.current.completedStepIds.includes("p64-monitor"),
+              autoGuidanceActive: !autoGuidanceHandsOff,
             }),
             stepUs: STEP_US,
             terminal: state.terminalState !== null,
             crewAborted: abortedRef.current,
+            autoGuidanceActive: !autoGuidanceHandsOff,
           });
         }
         if (

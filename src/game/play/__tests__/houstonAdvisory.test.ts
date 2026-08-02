@@ -10,6 +10,10 @@ import {
   sinkRateLimitMps,
   type FlightDeviationInput,
 } from "../houstonAdvisory";
+import {
+  createHoustonEscalationState,
+  reduceHoustonEscalation,
+} from "../houstonEscalation";
 
 const nominal: FlightDeviationInput = {
   altitudeM: 1_000,
@@ -67,5 +71,52 @@ describe("houstonDeviations", () => {
     expect(houstonDeviations({ ...nominal, radialSpeedMps: -80 })).toEqual(
       houstonDeviations({ ...nominal, radialSpeedMps: -80 }),
     );
+  });
+});
+
+// --- M4.39 — computer-flown phases must not manufacture an abort ----------
+describe("M4.39 auto-guidance suppression", () => {
+  const braking = {
+    altitudeM: 9_000,
+    radialSpeedMps: -46,
+    horizontalSpeedMps: 900,
+    attitudeRad: -1.3,
+    angularRateRadPerSec: 0,
+    propellantFraction: 0.6,
+    windowsUp: false,
+    engineBurning: true,
+    terminal: false,
+    sinceIgnitionUs: 210 * 1_000_000,
+  } as const;
+
+  it("raises no deviation while P63 guidance is flying the braking phase", () => {
+    expect(houstonDeviations({ ...braking, autoGuidanceActive: true })).toHaveLength(0);
+  });
+
+  it("never escalates a caution to abort under auto guidance", () => {
+    let s = createHoustonEscalationState();
+    for (let i = 0; i < 300; i++) {
+      s = reduceHoustonEscalation(s, {
+        deviations: houstonDeviations({ ...braking, autoGuidanceActive: false }),
+        stepUs: 1_000_000,
+        terminal: false,
+        crewAborted: false,
+        autoGuidanceActive: true,
+      });
+    }
+    expect(s.abortDirected).toBe(false);
+    expect(s.stage).toBe("clear");
+  });
+
+  it("still applies the sink rule once the crew has the vehicle at low altitude", () => {
+    const ids = houstonDeviations({
+      ...braking,
+      altitudeM: 300,
+      radialSpeedMps: -30,
+      horizontalSpeedMps: 2,
+      windowsUp: true,
+      autoGuidanceActive: false,
+    }).map((c) => c.id);
+    expect(ids).toContain("sink-excessive");
   });
 });

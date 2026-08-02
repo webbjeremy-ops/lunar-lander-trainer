@@ -43,6 +43,13 @@ export interface FlightDeviationInput {
   readonly rangeToLzM?: number;
   readonly sinceIgnitionUs?: number;
   readonly p64Selected?: boolean;
+  /**
+   * M4.39 — True while the computer (P63 braking guidance / scripted roll) is
+   * flying the vehicle and the crew has no manual authority. Houston does not
+   * call the crew on a profile they are not flying.
+   */
+  readonly autoGuidanceActive?: boolean;
+
 }
 
 export const HOUSTON_IMPROVISED_NOTE =
@@ -130,8 +137,13 @@ export function houstonDeviations(
     );
   }
 
+  // M4.39 — The sink-rate rule of thumb is a *landing-phase* rule. During the
+  // computer-flown braking phase the nominal profile is deliberately hot
+  // (well over 100 ft/s), so calling it a deviation there — and escalating it
+  // to an abort — punishes the crew for the guidance program's own trajectory.
+  const sinkRuleApplies = !input.autoGuidanceActive && alt <= 2_316;
   const sinkLimit = sinkRateLimitMps(alt);
-  if (sink > sinkLimit * 2) {
+  if (sinkRuleApplies && sink > sinkLimit * 2) {
     out.push(
       call(
         "sink-excessive",
@@ -141,7 +153,7 @@ export function houstonDeviations(
         "Roughly three feet per second per hundred feet of altitude is the rule that keeps the gear inside its stroke.",
       ),
     );
-  } else if (sink > sinkLimit) {
+  } else if (sinkRuleApplies && sink > sinkLimit) {
     out.push(
       call(
         "sink-high",
@@ -152,6 +164,7 @@ export function houstonDeviations(
       ),
     );
   }
+
 
   const transLimit = translationLimitMps(alt);
   if (speed > transLimit * 2 && alt < 2_000) {
@@ -176,7 +189,12 @@ export function houstonDeviations(
     );
   }
 
-  if (input.radialSpeedMps > 3 && alt < 6_000 && input.engineBurning) {
+  if (
+    !input.autoGuidanceActive &&
+    input.radialSpeedMps > 3 &&
+    alt < 6_000 &&
+    input.engineBurning
+  ) {
     out.push(
       call(
         "climbing",
@@ -188,7 +206,9 @@ export function houstonDeviations(
     );
   }
 
-  if (!input.windowsUp && alt < 12_000) {
+  // M4.39 — the roll to windows-up is a scripted, computer-timed manoeuvre;
+  // only call the crew on it once they actually have the vehicle.
+  if (!input.windowsUp && alt < 12_000 && !input.autoGuidanceActive) {
     out.push(
       call(
         "still-windows-down",
