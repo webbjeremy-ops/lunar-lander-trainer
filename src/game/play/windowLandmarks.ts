@@ -205,7 +205,7 @@ export function projectSurfacePoint(
 }
 
 /** Mean lunar radius, metres. */
-export const MOON_RADIUS_M = 1_737_400;
+const LUNAR_RADIUS_M = 1_737_400;
 
 /**
  * Angle by which the true horizon lies below the local level plane, radians.
@@ -217,7 +217,7 @@ export const MOON_RADIUS_M = 1_737_400;
  */
 export function horizonDipRad(altitudeM: number): number {
   const alt = Math.max(0, altitudeM);
-  return Math.acos(MOON_RADIUS_M / (MOON_RADIUS_M + alt));
+  return Math.acos(LUNAR_RADIUS_M / (LUNAR_RADIUS_M + alt));
 }
 
 /** Screen y of the horizon for the current pitch, in window pixels. */
