@@ -51,6 +51,7 @@ export interface MissionAudioInput {
  * Exported for tests; the hook below owns the playback side effects.
  */
 export function beatFor(input: MissionAudioInput): MissionAudioBeat | null {
+  if (input.crashed === true) return null;
   if (input.contact) return "contact";
   if (input.activeAlarmId === "alarm-1201-first") return "go-for-landing-1201";
   if (input.activeAlarmId === "alarm-1202-first") return "alarm-1202";
