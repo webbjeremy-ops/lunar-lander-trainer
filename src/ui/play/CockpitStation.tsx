@@ -11,8 +11,8 @@
 // in its octagonal well. Pure presentation.
 
 import consoleArt from "@/assets/cdr-console7.png.asset.json";
-import { displayPitchRad } from "@/game/play/descentPhase";
 import { CockpitWindowView, type CockpitWindowViewProps } from "@/ui/play/CockpitWindowView";
+import { wrapDeg } from "@/ui/play/FdaiBall";
 
 /** Aperture bounding box, measured from the console artwork (1086x1448). */
 const APERTURE = { left: 12.62, top: 23.07, right: 62.34, bottom: 71.82 };
@@ -109,12 +109,10 @@ function StationBall({ pitchDeg, rollDeg }: { pitchDeg: number; rollDeg: number 
 }
 
 export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationProps) {
-  const pitchDeg =
-    (displayPitchRad(view.flight.attitudeRad, view.orbit.altitudeM, view.manual, {
-      p64Selected: view.p64Selected,
-    }) *
-      180) /
-    Math.PI;
+  // Same drive signal as the FDAI card so both balls read identically in
+  // real time: the raw thrust-axis attitude, wrapped to (-180, 180].
+  const pitchDeg = wrapDeg((view.flight.attitudeRad * 180) / Math.PI);
+  const rollDeg = wrapDeg(view.rollDeg ?? 0);
 
   return (
     <div
@@ -176,7 +174,7 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
           height: `${BALL.r * 2 * (1086 / 1448)}%`,
         }}
       >
-        <StationBall pitchDeg={pitchDeg} rollDeg={view.rollDeg ?? 0} />
+        <StationBall pitchDeg={pitchDeg} rollDeg={rollDeg} />
       </div>
     </div>
   );
