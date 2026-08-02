@@ -121,17 +121,22 @@ export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationPro
       className="relative w-full overflow-hidden rounded border border-neutral-800 bg-black"
       style={{ aspectRatio: "1086 / 1448" }}
     >
+      {/* The console PNG's glass is not fully transparent, so the live scene
+          sits ABOVE the artwork and is clipped to the pane outline instead.
+          The frame, rivets and sill still read as structure around it. */}
       <div
-        className="absolute"
+        className="pointer-events-none absolute z-10"
         style={{
           left: `${APERTURE.left}%`,
           top: `${APERTURE.top}%`,
           width: `${APERTURE.right - APERTURE.left}%`,
           height: `${APERTURE.bottom - APERTURE.top}%`,
+          clipPath: PANE_CLIP,
         }}
       >
         <CockpitWindowView {...view} bare className="h-full w-full bg-black" />
       </div>
+
 
       <img
         src={consoleArt.url}
