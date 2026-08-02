@@ -85,6 +85,11 @@ describe("shadow and dust envelopes", () => {
     expect(shadowEnvelope(SHADOW_ONSET_M + 1).intensity).toBe(0);
   });
 
+  it("is faint at first sight and unmistakable by 260 ft", () => {
+    expect(shadowEnvelope(118).intensity).toBeLessThan(0.1);
+    expect(shadowEnvelope(60).intensity).toBeGreaterThan(0.2);
+  });
+
   it("grows the shadow monotonically as the vehicle settles", () => {
     const a = shadowEnvelope(40).intensity;
     const b = shadowEnvelope(20).intensity;
@@ -94,9 +99,20 @@ describe("shadow and dust envelopes", () => {
     expect(c).toBeLessThanOrEqual(1);
   });
 
-  it("slides the shadow in toward the vehicle as altitude drops", () => {
+  it("throws the shadow ahead at ~5.32x height and sweeps it back in", () => {
+    expect(shadowEnvelope(100).offsetM).toBeCloseTo(5.32 * 106.4, 0);
     expect(shadowEnvelope(5).offsetM).toBeLessThan(shadowEnvelope(40).offsetM);
   });
+
+  it("never collapses the shadow at touchdown", () => {
+    expect(shadowEnvelope(0).offsetM).toBeGreaterThan(30);
+    expect(shadowEnvelope(0).radiusM).toBeGreaterThan(6);
+  });
+
+  it("displaces the shadow toward the right window for the 13 deg left yaw", () => {
+    expect(shadowEnvelope(30).lateralM).toBeGreaterThan(0);
+  });
+
 
   it("raises dust only under the engine near the surface", () => {
     expect(dustDensity(DUST_ONSET_M + 1, 1)).toBe(0);
