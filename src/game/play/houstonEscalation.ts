@@ -67,15 +67,28 @@ export interface HoustonEscalationInput {
   readonly terminal: boolean;
   /** True once the crew has already hit ABORT STAGE themselves. */
   readonly crewAborted: boolean;
+  /**
+   * M4.39 — True while the computer is flying (P63 braking, scripted roll).
+   * Cautions do not escalate toward an abort while the crew has no authority
+   * to correct them; only a hard no-go does.
+   */
+  readonly autoGuidanceActive?: boolean;
 }
 
 /**
  * Escalation-relative time for a deviation: no-go deviations start the clock
  * immediately, cautions only after they have been ignored for the grace period.
  */
-function criticalElapsedUs(call: HoustonCall, heldUs: number): number {
+function criticalElapsedUs(
+  call: HoustonCall,
+  heldUs: number,
+  autoGuidanceActive: boolean,
+): number {
   if (call.severity === "no-go") return heldUs;
-  if (call.severity === "caution") return heldUs - CAUTION_GRACE_US;
+  if (call.severity === "caution") {
+    if (autoGuidanceActive) return -1;
+    return heldUs - CAUTION_GRACE_US;
+  }
   return -1;
 }
 
@@ -107,7 +120,11 @@ export function reduceHoustonEscalation(
   let active: HoustonCall | null = null;
   let elapsed = -1;
   for (const call of input.deviations) {
-    const e = criticalElapsedUs(call, timers[call.id] ?? 0);
+    const e = criticalElapsedUs(
+      call,
+      timers[call.id] ?? 0,
+      input.autoGuidanceActive === true,
+    );
     if (e < 0) continue;
     if (active === null || e > elapsed) {
       active = call;
