@@ -1146,8 +1146,17 @@ export function usePlaySession(
         recordTakeover(o.altitudeM > 300);
         setRunning(true);
       },
-      setThrottle: (v: number) => { throttleRef.current = clamp01(v); },
-      adjustThrottle: (d: number) => { throttleRef.current = clamp01(throttleRef.current + d); },
+      setThrottle: (v: number) => {
+        throttleRef.current = clamp01(v);
+        manualThrottleHoldUntilMsRef.current = Date.now() + 400;
+        if (throttleRef.current > 0) engineRef.current = true;
+      },
+      adjustThrottle: (d: number) => {
+        throttleRef.current = clamp01(throttleRef.current + d);
+        manualThrottleHoldUntilMsRef.current = Date.now() + 400;
+        // Winding the throttle up implies the crew wants the DPS burning.
+        if (d > 0 && throttleRef.current > 0) engineRef.current = true;
+      },
       setAttitudeCommand: (v: number) => {
         attitudeRef.current = clampSigned(v);
         // Touch/pointer hold: mirror into the held-key set so the loop honours it.
