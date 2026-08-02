@@ -462,7 +462,7 @@ export function earthDisk(
   // the unrolled disk would fall on or below the limb, it has already set.
   const unrolledY = p.height / 2 + sy;
   const radiusPx = Math.max(2, Math.tan(EARTH_ANGULAR_DIAMETER_RAD / 2) * focal);
-  const limbY = horizonY({ ...p, rollRad: 0 });
+  const limbY = horizonY(p);
   if (unrolledY + radiusPx * 1.4 > limbY) return EARTH_HIDDEN;
 
   if (roll !== 0) {
