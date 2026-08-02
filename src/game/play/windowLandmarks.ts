@@ -57,6 +57,44 @@ export function seedForMission(missionId: string): number {
 }
 
 /**
+ * West Crater — the ~180 m boulder-strewn crater Armstrong overflew, deciding
+ * on the way past that its blocky ejecta field was no place to set down. It is
+ * always seeded just uprange of the landing zone so every mission flies the
+ * same bypass the crew flew.
+ */
+export const WEST_CRATER: SurfaceLandmark = {
+  id: "west-crater",
+  kind: "crater",
+  trackRangeM: 620,
+  lateralM: -40,
+  radiusM: 90,
+  albedo: 0.9,
+};
+
+/**
+ * The blocky ejecta apron around West Crater: football-to-Volkswagen sized
+ * boulders scattered a crater-diameter out, which is what made the site
+ * unlandable and forced the manual redesignation past it.
+ */
+export function westCraterBoulders(): readonly SurfaceLandmark[] {
+  const out: SurfaceLandmark[] = [];
+  for (let i = 0; i < 22; i += 1) {
+    const r = hash2(i + 3, 71);
+    const ang = (i / 22) * Math.PI * 2 + r * 0.5;
+    const dist = WEST_CRATER.radiusM * (1.05 + hash2(i, 12) * 1.35);
+    out.push({
+      id: `west-boulder-${i}`,
+      kind: "boulder-field",
+      trackRangeM: WEST_CRATER.trackRangeM + Math.cos(ang) * dist,
+      lateralM: WEST_CRATER.lateralM + Math.sin(ang) * dist,
+      radiusM: 2.5 + hash2(i + 40, 9) * 7,
+      albedo: 0.5 + hash2(i, 55) * 0.4,
+    });
+  }
+  return out;
+}
+
+/**
  * Landmarks along the last stretch of the ground track.
  *
  * Placed from the LZ backwards so the field the crew sees on final approach is
@@ -72,17 +110,8 @@ export function buildLandmarks(
   const maxRangeM = options.maxRangeM ?? 12_000;
   const rand = mulberry32(seedForMission(missionId));
 
-  const marks: SurfaceLandmark[] = [
-    // The boulder-strewn crater Armstrong overflew on the way to Tranquility.
-    {
-      id: "west-crater",
-      kind: "boulder-field",
-      trackRangeM: 620,
-      lateralM: -40,
-      radiusM: 90,
-      albedo: 0.85,
-    },
-  ];
+  const marks: SurfaceLandmark[] = [WEST_CRATER, ...westCraterBoulders()];
+
 
   for (let i = 0; i < count; i += 1) {
     const t = (i + rand() * 0.8) / count;
