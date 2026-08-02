@@ -304,6 +304,9 @@ export function shadowEnvelope(
 export function dustDensity(altitudeM: number, throttle: number): number {
   const alt = Math.max(0, altitudeM);
   if (alt > DUST_ONSET_M) return 0;
+  // The blast sheet is engine-driven: at shutdown the moving dust stops dead
+  // rather than hanging as a cloud (no atmosphere to suspend it).
+  if (throttle <= 0.01) return 0;
   const height = 1 - alt / DUST_ONSET_M;
   return Math.max(0, Math.min(1, height * height * Math.max(0.15, throttle)));
 }
