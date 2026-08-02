@@ -43,6 +43,13 @@ export interface FlightDeviationInput {
   readonly rangeToLzM?: number;
   readonly sinceIgnitionUs?: number;
   readonly p64Selected?: boolean;
+  /**
+   * M4.39 — True while the computer (P63 braking guidance / scripted roll) is
+   * flying the vehicle and the crew has no manual authority. Houston does not
+   * call the crew on a profile they are not flying.
+   */
+  readonly autoGuidanceActive?: boolean;
+
 }
 
 export const HOUSTON_IMPROVISED_NOTE =
