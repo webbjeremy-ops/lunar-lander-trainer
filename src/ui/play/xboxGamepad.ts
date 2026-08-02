@@ -187,7 +187,12 @@ export function mapXboxInput(
     input: {
       // Stick Y is negative when pushed forward.
       thrustRate: applyDeadzone(-axis(pad, AXIS.leftStickY)),
-      pitch: applyDeadzone(axis(pad, AXIS.rightStickX)),
+      // Right stick vertical is the manual pitch axis (forward = nose down),
+      // matching the LM's rotational hand controller. Horizontal is a fallback
+      // for pads whose right stick reports on X only.
+      pitch:
+        applyDeadzone(-axis(pad, AXIS.rightStickY)) ||
+        applyDeadzone(axis(pad, AXIS.rightStickX)),
       rollPull,
       rollCommanded: rollPull > TRIGGER_THRESHOLD,
       rodTrim: (trimUp ? 1 : 0) - (trimDown ? 1 : 0),
