@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 const BINDINGS: readonly (readonly [string, string])[] = [
   ["Left stick ↑/↓", "DPS throttle"],
-  ["Right stick ←/→", "Pitch attitude"],
+  ["Right stick ↕", "Pitch attitude (manual)"],
   ["Right trigger", "Roll to windows-up"],
   ["Left trigger", "Take manual control"],
   ["A", "Got it / Copy that"],
@@ -18,7 +18,7 @@ const BINDINGS: readonly (readonly [string, string])[] = [
   ["Left bumper", "Accept pending DSKY program"],
   ["D-pad ↑/↓", "Rate-of-descent trim"],
   ["View (⧉)", "Window view on / off"],
-  ["Right stick ↕", "Scroll the page"],
+  ["Right stick ↕", "Scroll the page (before manual takeover)"],
 
 ];
 
