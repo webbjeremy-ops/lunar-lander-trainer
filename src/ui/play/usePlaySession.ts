@@ -278,7 +278,9 @@ export function usePlaySession(
 
   const [flight, setFlight] = useState<LunarFlightState>(makeInitial);
   const [procedure, setProcedure] = useState<ProcedureState>(() => createProcedureState(script));
-  const [running, setRunning] = useState(false);
+  // M4.41 — the clock is live from the moment the mission opens: Eagle is
+  // already coasting on the descent orbit before the crew arms the countdown.
+  const [running, setRunning] = useState(true);
   const [timeScale, setTimeScale] = useState(1);
   const [gamepadConnected, setGamepadConnected] = useState(false);
   const [takeover, setTakeover] = useState<TakeoverRecord | null>(null);
@@ -428,7 +430,7 @@ export function usePlaySession(
     setProcedure(proc);
     procedureRef.current = proc;
     setTakeover(null);
-    setRunning(false);
+    setRunning(true);
     throttleRef.current = 0;
     attitudeRef.current = 0;
     engineRef.current = startsUnderPower;
