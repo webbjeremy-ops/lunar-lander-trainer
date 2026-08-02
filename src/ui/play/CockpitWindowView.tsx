@@ -223,25 +223,11 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
     ctx.translate(-w / 2, -h / 2);
   }
 
-  // Black lunar sky above the limb: a scatter of fixed stars, deterministic in
-  // the vehicle frame so they hold still while the surface streams past and
-  // sweep with the vehicle when it rolls.
-  if (top > 2) {
-    ctx.save();
-    ctx.fillStyle = "#cdd6e6";
-    let seed = 0x2f6e2b1;
-    for (let i = 0; i < 90; i += 1) {
-      seed = (seed * 1664525 + 1013904223) >>> 0;
-      const sx = ((seed >>> 8) % 10_000) / 10_000;
-      seed = (seed * 1664525 + 1013904223) >>> 0;
-      const sy = ((seed >>> 8) % 10_000) / 10_000;
-      const y = sy * top;
-      if (y > top - 2) continue;
-      ctx.globalAlpha = 0.25 + ((seed >>> 20) % 60) / 100;
-      ctx.fillRect(sx * w, y, 1, 1);
-    }
-    ctx.restore();
-  }
+  // No stars. With the sunlit surface, the illuminated panels and the glare of
+  // the Earth in the pane, neither commander was anywhere near dark-adapted:
+  // the lunar sky out the window was flat, empty black. Painting stars here
+  // would be the one thing in this view the crew never saw.
+
 
   const grad = ctx.createLinearGradient(0, top, 0, h);
   grad.addColorStop(0, "#8d8b85");
