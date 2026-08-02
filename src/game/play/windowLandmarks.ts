@@ -142,6 +142,19 @@ export interface ProjectedPoint {
 const DEFAULT_HALF_FOV = 32 * (Math.PI / 180);
 
 /**
+ * Upward cant of the commander's window boresight from the vehicle's forward
+ * axis, radians.
+ *
+ * The LM's forward panes are set high in the cabin and the crew flew them
+ * standing: with Eagle pitched well back the window is filled with black sky
+ * and the limb sits low in the pane — which is why Aldrin could call the Earth
+ * "straight out our front window" while the surface was still below the frame.
+ * Without this cant the horizon rides above the pane centre and the view is
+ * nearly all regolith.
+ */
+export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
+
+/**
  * Project a point on the surface into window coordinates.
  *
  * The commander looks out along the vehicle's +Z window axis. With the vehicle
