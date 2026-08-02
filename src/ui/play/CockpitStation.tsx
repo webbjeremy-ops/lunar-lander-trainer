@@ -114,9 +114,11 @@ function StationBall({ pitchDeg, rollDeg }: { pitchDeg: number; rollDeg: number 
 }
 
 export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationProps) {
-  // Same drive signal as the FDAI card so both balls read identically in
-  // real time: the raw thrust-axis attitude, wrapped to (-180, 180].
-  const pitchDeg = wrapDeg((view.flight.attitudeRad * 180) / Math.PI);
+  // Same drive signal as the FDAI card so both balls read identically in real
+  // time. The kernel signs attitude negative for retrograde (braking) tilt, so
+  // it is negated into the display convention where + is pitched back.
+  const pitchDeg = wrapDeg((-view.flight.attitudeRad * 180) / Math.PI);
+
   const rollDeg = wrapDeg(view.rollDeg ?? 0);
 
   return (
