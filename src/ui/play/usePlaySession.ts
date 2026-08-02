@@ -409,6 +409,11 @@ export function usePlaySession(
    * the very next frame, so on mobile the thrust buttons did nothing.
    */
   const manualThrottleHoldUntilMsRef = useRef(0);
+  /**
+   * M4.49 — RB fires a short throttle burst once the crew has the vehicle:
+   * a brief kick of thrust, the way a commander taps the DPS to arrest sink.
+   */
+  const throttleBurstUntilMsRef = useRef(0);
   /** Latched once the vehicle drops below low gate: terminal (P66) guidance. */
   const terminalGuidanceRef = useRef(false);
   const attitudeRef = useRef(0);
