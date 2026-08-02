@@ -188,6 +188,12 @@ function PlayClient() {
   // the descent clock runs: during the pre-TIG coast the engine command can
   // flicker on for a frame before the countdown gate clamps it cold.
   const audioLive = musicScore.enabled && started;
+
+  const setHaptics = session.actions.setHaptics;
+  useEffect(() => {
+    setHaptics(hapticsPref && started);
+  }, [setHaptics, hapticsPref, started]);
+
   const engineLit =
     audioLive && session.controls.engineOn && session.descentClock.mode === "running";
 
