@@ -661,7 +661,14 @@ export function usePlaySession(
       }
       // Left bumper — easy program acceptance: key the pending DSKY step.
       if (input.acceptProgramPressed) acceptProgramRef.current();
-      // A — DPS on/off, but only once the crew actually has the vehicle.
+      // A — acknowledge the on-screen call ("Got it" / "Copy that"). Alarms are
+      // deliberately NOT dismissible this way; they stay on RB.
+      if (input.acknowledgePressed) acknowledgeOnScreenCall();
+      // X — ENG ARM, the PDI descent-arm switch.
+      if (input.armEnginePressed) setEngineArmRef.current();
+      // Left trigger — take manual control of the vehicle.
+      if (input.takeoverPressed) takeoverRef.current();
+      // Y — DPS on/off, but only once the crew actually has the vehicle.
       if (
         input.enginePressed &&
         procedureRef.current.manualControlUnlocked &&
@@ -679,6 +686,7 @@ export function usePlaySession(
         rodTargetRef.current += input.rodTrim * ROD_INCREMENT_MPS;
       }
     };
+
 
     // --- M4.30 haptics ------------------------------------------------------
     // Continuous engine bed plus a pulse on every event the crew would feel.
