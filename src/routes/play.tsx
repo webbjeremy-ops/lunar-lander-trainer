@@ -555,6 +555,12 @@ function PlayClient() {
             callout={session.callout}
             onAcknowledge={session.actions.acknowledgeCallout}
           />
+          <V99CueOverlay
+            flashing={session.ignition.requestFlashing}
+            engineArmed={session.ignition.engineArmed}
+            proAccepted={session.ignition.proAccepted}
+          />
+
 
           {(() => {
             // Pitch-over is withheld until the crew takes the approach
