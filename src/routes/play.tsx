@@ -135,6 +135,17 @@ function PlayClient() {
 
   const [started, setStarted] = useState(false);
 
+  // M4.47 — once the flight is live the cockpit owns the pad: the shell's
+  // D-pad focus navigation stands down while this flag is set.
+  useEffect(() => {
+    if (!started) return;
+    document.body.dataset["gamepadOwner"] = "gameplay";
+    return () => {
+      delete document.body.dataset["gamepadOwner"];
+    };
+  }, [started]);
+
+
   // M4.43 — controller rumble is a cockpit cue, so it must be silent while the
   // player is still on the mission-select screen (the session simulates behind
   // it). The player's preference is kept here and applied to the session only
