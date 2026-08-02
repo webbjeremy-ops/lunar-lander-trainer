@@ -940,15 +940,20 @@ export function usePlaySession(
           throttleMaxFraction: guidanceEnv ? guidanceEnv.max : null,
         });
         throttle = cue.recommendedThrottle;
-        // M4.49 — automatic pitch-over at high gate. Below ~7,600 ft the
-        // computer flies the approach attitude profile (55 deg at the gate
-        // easing upright through low gate) rather than holding the braking
-        // posture, so the vehicle arrives on the landing attitude even if the
-        // crew never takes P64 manually.
+        // M4.49 / M4.51 — automatic pitch-over at high gate, but ONLY as fast
+        // as the translation allows. Forcing the cosmetic phase attitude while
+        // the vehicle still carries downrange speed removed the braking
+        // component guidance needs, so it sailed past the site and arrived hot.
+        // The phase attitude is therefore blended in as horizontal speed is
+        // nulled: no authority above ~30 m/s, full pitch-over below ~4 m/s.
         let aimAttitudeRad = cue.recommendedAttitudeRad;
         if (o.altitudeM <= PHASE_HIGH_GATE_M) {
           const phasePitch = descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad;
-          aimAttitudeRad = Math.min(aimAttitudeRad, phasePitch);
+          const speed = Math.abs(o.tangentialSpeedMps);
+          const blend = Math.max(0, Math.min(1, (30 - speed) / 26));
+          if (phasePitch < aimAttitudeRad) {
+            aimAttitudeRad = aimAttitudeRad + (phasePitch - aimAttitudeRad) * blend;
+          }
         }
         // Simple proportional attitude autopilot onto the advisory angle.
         const err = aimAttitudeRad - state.attitudeRad;
