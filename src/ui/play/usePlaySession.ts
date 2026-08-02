@@ -262,17 +262,16 @@ export function usePlaySession(
 
   const makeInitial = useCallback(
     () =>
-      createLunarFlightState({
-        altitudeM: mission.initial.altitudeM,
-        centralAngleRad:
-          LANDING_ZONE_ANGLE_RAD - angleForRange(mission.initial.rangeToLandingZoneM),
-        radialSpeedMps: mission.initial.radialSpeedMps,
-        tangentialSpeedMps: mission.initial.tangentialSpeedMps,
-        attitudeRad: mission.initial.attitudeRad,
-        descentPropellantKg: mission.initial.descentPropellantKg,
-      }),
+      // M4.41 — Full Descent starts UPRANGE of PDI, already moving at descent-
+      // orbit speed, and coasts in during the countdown so the crew works the
+      // DSKY and ENG ARM on a live vehicle and crosses PDI exactly at TIG.
+      insertionStateForMission(
+        mission,
+        mission.id === "full-descent" ? PRE_IGNITION_COAST_SEC : 0,
+      ),
     [mission],
   );
+
 
   const [flight, setFlight] = useState<LunarFlightState>(makeInitial);
   const [procedure, setProcedure] = useState<ProcedureState>(() => createProcedureState(script));
