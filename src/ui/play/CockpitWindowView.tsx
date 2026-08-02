@@ -113,15 +113,18 @@ export function CockpitWindowView(props: CockpitWindowViewProps) {
 // Painting
 // ---------------------------------------------------------------------------
 
-/** The commander's forward window outline, in normalized window-box coords. */
+/** The commander's forward window outline: the LM's triangular pane, apex
+ *  outboard-low, chamfered at each corner, in normalized window-box coords. */
 const WINDOW_SHAPE: readonly (readonly [number, number])[] = [
-  [0.06, 0.20],
-  [0.60, 0.06],
-  [0.97, 0.30],
-  [0.97, 0.80],
-  [0.52, 0.95],
-  [0.06, 0.66],
+  [0.05, 0.30],
+  [0.11, 0.19],
+  [0.88, 0.31],
+  [0.96, 0.41],
+  [0.95, 0.52],
+  [0.46, 0.95],
+  [0.33, 0.94],
 ];
+
 
 function windowPath(
   ctx: CanvasRenderingContext2D,
