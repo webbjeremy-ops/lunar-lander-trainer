@@ -181,7 +181,7 @@ const DEFAULT_HALF_FOV = 32 * (Math.PI / 180);
  * Without this cant the horizon rides above the pane centre and the view is
  * nearly all regolith.
  */
-export const WINDOW_UP_CANT_RAD = 15 * (Math.PI / 180);
+export const WINDOW_UP_CANT_RAD = 25 * (Math.PI / 180);
 
 /**
  * Angle of the window boresight from straight down (nadir), radians.
