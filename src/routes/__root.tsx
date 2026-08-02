@@ -16,6 +16,8 @@ import { SettingsProvider } from "@/settings/SettingsProvider";
 import { AppNav } from "@/ui/shell/AppNav";
 import { AppFooter } from "@/ui/shell/AppFooter";
 import { AgcBootBanner, RecoverableError } from "@/ui/shell/Reliability";
+import { useGamepadUiNavigation } from "@/ui/shell/useGamepadUiNavigation";
+
 
 
 
@@ -122,9 +124,13 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // D-pad / left stick move focus, A or X activates — everywhere except a
+  // live flight, which claims the pad for the cockpit controls.
+  useGamepadUiNavigation();
 
   return (
     <QueryClientProvider client={queryClient}>
+
       {/* Shared AGC Worker session — one emulator instance persists across
           route changes (/learn ↔ /explore). See src/agc/AgcSession.tsx. */}
       <AgcSessionProvider>
