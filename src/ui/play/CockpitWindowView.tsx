@@ -187,14 +187,22 @@ function drawScene(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawA
   const pitch = displayPitchRad(a.flight.attitudeRad, alt, a.manual, {
     p64Selected: a.p64Selected,
   });
+  // Roll about the thrust axis rotates the whole outside world in the pane:
+  // windows-down (180 deg) puts the surface overhead, exactly as the crew saw
+  // it before the yaw-around. The scene must honour it or the view contradicts
+  // the FDAI and the roll dial.
+  const rollRad = (a.rollDeg * Math.PI) / 180;
   const proj: WindowProjection = {
     width: w,
     height: h,
     altitudeM: alt,
     pitchRad: Math.max(0.02, pitch),
-    rollRad: 0,
+    rollRad,
   };
-  const hy = horizonY(proj);
+  // The horizon line itself is computed in the unrolled frame, then rotated
+  // with everything else below.
+  const hy = horizonY({ ...proj, rollRad: 0 });
+
 
   // Space and surface.
   ctx.fillStyle = "#04060a";
