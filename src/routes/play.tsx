@@ -210,15 +210,22 @@ function PlayClient() {
     duck: missionDuck,
   });
 
-  // M4.31 — restored Apollo 11 air-to-ground recordings, cued by story beat.
+  // M4.44 — restored Apollo 11 air-to-ground recordings, cued by story beat.
   const missionAudio = useMissionAudio({
     enabled: audioLive,
     engineOn: engineLit,
+    sinceIgnitionSec: session.descentClock.sinceIgnitionUs / 1_000_000,
     activeAlarmId: session.alarms.active?.id ?? null,
     calloutId: session.callout?.id ?? null,
+    rollComplete: session.roll.phase === "windows-up",
+    altitudeM: session.orbit.altitudeM,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
   });
+
+  // The PDI card keys up with Houston's "Go for PDI" call.
+  const pdiCardReady = !audioLive || missionAudio.played.has("go-for-pdi");
+
 
 
 
