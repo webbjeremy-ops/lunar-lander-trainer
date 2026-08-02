@@ -189,7 +189,12 @@ export function houstonDeviations(
     );
   }
 
-  if (input.radialSpeedMps > 3 && alt < 6_000 && input.engineBurning) {
+  if (
+    !input.autoGuidanceActive &&
+    input.radialSpeedMps > 3 &&
+    alt < 6_000 &&
+    input.engineBurning
+  ) {
     out.push(
       call(
         "climbing",
@@ -201,7 +206,9 @@ export function houstonDeviations(
     );
   }
 
-  if (!input.windowsUp && alt < 12_000) {
+  // M4.39 — the roll to windows-up is a scripted, computer-timed manoeuvre;
+  // only call the crew on it once they actually have the vehicle.
+  if (!input.windowsUp && alt < 12_000 && !input.autoGuidanceActive) {
     out.push(
       call(
         "still-windows-down",
