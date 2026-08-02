@@ -108,6 +108,7 @@ export class GamepadHaptics {
   private enabled = true;
   private nextBedAtMs = 0;
   private pulseUntilMs = 0;
+  private nextMotionAtMs = 0;
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
@@ -121,17 +122,29 @@ export class GamepadHaptics {
   private play(effect: RumbleEffect): void {
     if (!this.enabled) return;
     if (typeof navigator === "undefined" || !navigator.getGamepads) return;
+    // Chrome hands out fresh Gamepad objects each poll; re-read every time so
+    // the actuator we talk to is never a stale one from a previous frame.
     for (const pad of navigator.getGamepads()) {
       const actuator = actuatorOf(pad);
       if (!actuator) continue;
-      void actuator
-        .playEffect("dual-rumble", {
-          startDelay: 0,
-          duration: effect.durationMs,
-          weakMagnitude: effect.weakMagnitude,
-          strongMagnitude: effect.strongMagnitude,
-        })
-        .catch(() => undefined);
+      if (typeof actuator.playEffect === "function") {
+        void Promise.resolve()
+          .then(() =>
+            actuator.playEffect("dual-rumble", {
+              startDelay: 0,
+              duration: effect.durationMs,
+              weakMagnitude: effect.weakMagnitude,
+              strongMagnitude: effect.strongMagnitude,
+            }),
+          )
+          .catch(() => {
+            if (typeof actuator.pulse === "function") {
+              void actuator.pulse(effect.strongMagnitude, effect.durationMs).catch(() => undefined);
+            }
+          });
+      } else if (typeof actuator.pulse === "function") {
+        void actuator.pulse(effect.strongMagnitude, effect.durationMs).catch(() => undefined);
+      }
     }
   }
 
@@ -141,6 +154,7 @@ export class GamepadHaptics {
     this.play(effect);
     this.pulseUntilMs = nowMs + effect.durationMs;
     this.nextBedAtMs = this.pulseUntilMs;
+    this.nextMotionAtMs = this.pulseUntilMs + MOTION_MIN_GAP_MS;
   }
 
   /** Continuous engine bed; safe to call every frame. */
@@ -153,11 +167,28 @@ export class GamepadHaptics {
         this.stop();
         this.nextBedAtMs = 0;
       }
+      this.tickMotion(nowMs);
       return;
     }
     if (nowMs < this.nextBedAtMs) return;
     this.nextBedAtMs = nowMs + ENGINE_BED_PERIOD_MS;
+    this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS;
     this.play(effect);
+  }
+
+  /**
+   * Occasional coast tremor. Only runs with the DPS cold, so it never fights
+   * the engine bed; the gap wanders so it does not read as a metronome.
+   */
+  private tickMotion(nowMs: number): void {
+    if (this.nextMotionAtMs === 0) {
+      this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS;
+      return;
+    }
+    if (nowMs < this.nextMotionAtMs) return;
+    const span = MOTION_MAX_GAP_MS - MOTION_MIN_GAP_MS;
+    this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS + Math.random() * span;
+    this.play(MOTION_EFFECT);
   }
 
   stop(): void {
@@ -168,3 +199,4 @@ export class GamepadHaptics {
     }
   }
 }
+
