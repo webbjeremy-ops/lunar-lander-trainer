@@ -172,11 +172,20 @@ export class GamepadHaptics {
     this.nextMotionAtMs = this.pulseUntilMs + MOTION_MIN_GAP_MS;
   }
 
-  /** Continuous engine bed; safe to call every frame. */
+  /**
+   * Open an engine-bed window: the steady throttle-tracking rumble runs for
+   * `durationMs` and then stops until the next burst (ignition, throttle-up).
+   */
+  engineBurst(durationMs: number = ENGINE_BURST_MS, nowMs: number = Date.now()): void {
+    this.bedUntilMs = nowMs + durationMs;
+  }
+
+  /** Engine bed; safe to call every frame, but only sounds inside a burst. */
   tick(throttle: number, engineOn: boolean, nowMs: number = Date.now()): void {
     if (!this.enabled) return;
     if (nowMs < this.pulseUntilMs) return;
-    const effect = engineRumble(throttle, engineOn);
+    const inBurst = nowMs < this.bedUntilMs;
+    const effect = inBurst ? engineRumble(throttle, engineOn) : null;
     if (effect === null) {
       if (this.nextBedAtMs !== 0) {
         this.stop();
@@ -190,6 +199,7 @@ export class GamepadHaptics {
     this.nextMotionAtMs = nowMs + MOTION_MIN_GAP_MS;
     this.play(effect);
   }
+
 
   /**
    * Occasional coast tremor. Only runs with the DPS cold, so it never fights
