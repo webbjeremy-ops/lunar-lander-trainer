@@ -71,7 +71,7 @@ export type IgnitionEvent =
 const S = 1_000_000;
 
 /** Countdown length presented to the player before TIG. */
-export const COUNTDOWN_LENGTH_US = 60 * S;
+export const COUNTDOWN_LENGTH_US = 150 * S;
 /** The computer asks permission to ignite at TIG-35 s. */
 export const IGNITION_REQUEST_US = 35 * S;
 /** RCS +X ullage begins at TIG-7.5 s. */

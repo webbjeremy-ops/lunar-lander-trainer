@@ -15,6 +15,11 @@ import type {
   MissionId,
 } from "./types";
 import { LUNAR_ENVIRONMENT } from "@/simulation/lunar2d/LunarMissionConstants";
+import {
+  createLunarFlightState,
+  stepLunarFlight,
+  type LunarFlightState,
+} from "@/simulation/lunar2d";
 
 const FT = 0.3048;
 const NMI = 1852;
@@ -174,3 +179,55 @@ export function downrangeToLandingZoneM(
 
 /** The landing zone always sits at central angle 0 in the planar frame. */
 export const LANDING_ZONE_ANGLE_RAD = 0;
+
+// --- Pre-ignition insertion (M4.41) -----------------------------------------
+//
+// Eagle did not hang motionless waiting for TIG: it was already on the descent
+// orbit, crossing the PDI point at about 5,570 ft/s (1,698 m/s) with the
+// engine cold. The scenario therefore inserts the player UPRANGE of PDI and
+// coasts, so the countdown ritual (V99 flashing, ENG ARM, PROCEED, ullage) is
+// flown on a live, fast-moving vehicle that arrives at the PDI state exactly
+// at TIG.
+
+/** Seconds of engine-off descent-orbit coast before TIG. Matches the countdown. */
+export const PRE_IGNITION_COAST_SEC = 150;
+
+/**
+ * Back-propagate a mission's PDI state along an engine-off Keplerian coast.
+ * Gravity is time-symmetric, so reversing velocity, integrating forward and
+ * reversing again lands exactly on the earlier point of the same orbit.
+ */
+export function insertionStateForMission(
+  mission: MissionDefinition,
+  coastSec: number = PRE_IGNITION_COAST_SEC,
+): LunarFlightState {
+  const pdi = createLunarFlightState({
+    altitudeM: mission.initial.altitudeM,
+    centralAngleRad:
+      LANDING_ZONE_ANGLE_RAD - angleForRange(mission.initial.rangeToLandingZoneM),
+    radialSpeedMps: mission.initial.radialSpeedMps,
+    tangentialSpeedMps: mission.initial.tangentialSpeedMps,
+    attitudeRad: mission.initial.attitudeRad,
+    descentPropellantKg: mission.initial.descentPropellantKg,
+  });
+  if (coastSec <= 0) return pdi;
+
+  const reversed: LunarFlightState = {
+    ...pdi,
+    velocityMps: [-pdi.velocityMps[0], -pdi.velocityMps[1]],
+  };
+  const STEP_US = 20_000;
+  let s = reversed;
+  for (let t = 0; t < coastSec * 1_000_000; t += STEP_US) {
+    s = stepLunarFlight(
+      s,
+      { throttle: 0, engineCommand: "off", attitudeCommand: 0 },
+      STEP_US,
+    );
+  }
+  return {
+    ...pdi,
+    positionM: s.positionM,
+    velocityMps: [-s.velocityMps[0], -s.velocityMps[1]],
+  };
+}

@@ -17,6 +17,8 @@ import {
 } from "@/game/play";
 
 const S = 1_000_000;
+/** Seconds of countdown ahead of the historical last minute, skipped in tests. */
+const LEAD_S = COUNTDOWN_LENGTH_US / S - 60;
 
 function tick(state: IgnitionSequenceState, seconds: number): IgnitionSequenceState {
   let s = state;
@@ -34,6 +36,7 @@ describe("ignition sequence", () => {
 
   it("raises the bridged flashing V99 N62 at TIG-35 s", () => {
     let s = reduceIgnition(createIgnitionState(), { kind: "start" });
+    s = tick(s, LEAD_S);
     s = tick(s, 20);
     expect(bridgedRequestFor(s)).toBeNull();
     s = tick(s, 6);
@@ -49,6 +52,7 @@ describe("ignition sequence", () => {
 
   it("refuses PROCEED with ENG ARM off and accepts it once armed", () => {
     let s = reduceIgnition(createIgnitionState(), { kind: "start" });
+    s = tick(s, LEAD_S);
     s = tick(s, 26);
     s = reduceIgnition(s, { kind: "proceed" });
     expect(s.proAccepted).toBe(false);
@@ -63,6 +67,7 @@ describe("ignition sequence", () => {
 
   it("holds the 10 % fixed-throttle point for 26 s, then ramps up", () => {
     let s = reduceIgnition(createIgnitionState(), { kind: "start" });
+    s = tick(s, LEAD_S);
     s = reduceIgnition(s, { kind: "arm", on: true });
     s = tick(s, 26);
     s = reduceIgnition(s, { kind: "proceed" });
@@ -83,6 +88,7 @@ describe("ignition sequence", () => {
 
   it("speaks Aldrin's ignition callout at TIG", () => {
     let s = reduceIgnition(createIgnitionState(), { kind: "start" });
+    s = tick(s, LEAD_S);
     s = reduceIgnition(s, { kind: "arm", on: true });
     s = tick(s, 26);
     s = reduceIgnition(s, { kind: "proceed" });
@@ -92,6 +98,7 @@ describe("ignition sequence", () => {
 
   it("aborts when TIG passes without PROCEED", () => {
     let s = reduceIgnition(createIgnitionState(), { kind: "start" });
+    s = tick(s, LEAD_S);
     s = reduceIgnition(s, { kind: "arm", on: true });
     s = tick(s, 61);
     expect(s.phase).toBe("aborted");
@@ -100,7 +107,7 @@ describe("ignition sequence", () => {
 
   it("formats the TIG clock either side of ignition", () => {
     const s = createIgnitionState();
-    expect(formatTig(s)).toBe("T-01:00.0");
+    expect(formatTig(s)).toBe("T-02:30.0");
     expect(formatTig({ ...s, tigOffsetUs: -5 * S })).toBe("T+00:05.0");
   });
 });

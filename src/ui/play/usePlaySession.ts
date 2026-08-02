@@ -25,6 +25,9 @@ import {
 } from "@/simulation/lunar2d";
 import {
   angleForRange,
+  insertionStateForMission,
+  PRE_IGNITION_COAST_SEC,
+
   bridgedAlarmFor,
   activeCallout,
   activeHoustonCall,
@@ -136,17 +139,17 @@ export const PLAY_TIME_SCALES = [0, 0.25, 0.5, 1, 2, 4] as const;
 
 /** Full Descent's configured state is the TIG state, not a pre-TIG state. */
 export function shouldAdvanceFlightPhysics(
-  missionId: MissionDefinition["id"],
-  ignitionState: IgnitionSequenceState,
-  aborted: boolean,
+  _missionId: MissionDefinition["id"],
+  _ignitionState: IgnitionSequenceState,
+  _aborted: boolean,
 ): boolean {
-  return !(
-    missionId === "full-descent" &&
-    ignitionState.phase !== "standby" &&
-    !isBurning(ignitionState) &&
-    !aborted
-  );
+  // M4.41 — the vehicle is never frozen. Before TIG it coasts on the descent
+  // orbit at ~1,698 m/s with the engine cold (the throttle law below forces
+  // zero thrust until ignition), which is what the crew actually flew through
+  // the countdown ritual.
+  return true;
 }
+
 
 export interface PlayControlsView {
   readonly throttle: number;
@@ -262,17 +265,16 @@ export function usePlaySession(
 
   const makeInitial = useCallback(
     () =>
-      createLunarFlightState({
-        altitudeM: mission.initial.altitudeM,
-        centralAngleRad:
-          LANDING_ZONE_ANGLE_RAD - angleForRange(mission.initial.rangeToLandingZoneM),
-        radialSpeedMps: mission.initial.radialSpeedMps,
-        tangentialSpeedMps: mission.initial.tangentialSpeedMps,
-        attitudeRad: mission.initial.attitudeRad,
-        descentPropellantKg: mission.initial.descentPropellantKg,
-      }),
+      // M4.41 — Full Descent starts UPRANGE of PDI, already moving at descent-
+      // orbit speed, and coasts in during the countdown so the crew works the
+      // DSKY and ENG ARM on a live vehicle and crosses PDI exactly at TIG.
+      insertionStateForMission(
+        mission,
+        mission.id === "full-descent" ? PRE_IGNITION_COAST_SEC : 0,
+      ),
     [mission],
   );
+
 
   const [flight, setFlight] = useState<LunarFlightState>(makeInitial);
   const [procedure, setProcedure] = useState<ProcedureState>(() => createProcedureState(script));
@@ -729,7 +731,14 @@ export function usePlaySession(
       // timeline, the computer flies P63 exactly as it did in 1969 — which is
       // what keeps the burn on range instead of sailing past the site.
       const autoBrakingMission = apollo11Timeline && mission.id === "full-descent";
-      if (!crewHasVehicleRef.current) {
+      // M4.41 — during the pre-TIG coast the countdown is still running, so the
+      // absence of a burn must NOT be read as "the crew has the vehicle".
+      const preTigCoast =
+        autoBrakingMission &&
+        ignitionRef.current.phase !== "aborted" &&
+        !isBurning(ignitionRef.current) &&
+        descentClockRef.current.mode !== "running";
+      if (!crewHasVehicleRef.current && !preTigCoast) {
         const o = computeOrbitalValues(state);
         const braking =
           autoBrakingMission &&
@@ -738,6 +747,7 @@ export function usePlaySession(
             descentClockRef.current.mode === "running");
         if (!braking) crewHasVehicleRef.current = true;
       }
+
       const manual =
         procedureRef.current.manualControlUnlocked && crewHasVehicleRef.current;
 
