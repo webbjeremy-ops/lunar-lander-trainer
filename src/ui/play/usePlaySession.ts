@@ -547,7 +547,7 @@ export function usePlaySession(
           countdownArmed: countdownRunning,
           countdownAborted: ignitionRef.current.phase === "aborted",
           engineBurning: state.mainEngine !== "off",
-          flightLockReleased: proc.flightLockReleased,
+          flightLockReleased: procedureRef.current.flightLockReleased,
           stepUs: STEP_US,
         });
         const sinceIgnitionUs = descentClockRef.current.sinceIgnitionUs;
