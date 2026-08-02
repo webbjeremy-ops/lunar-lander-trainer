@@ -541,8 +541,8 @@ function PlayClient() {
                   </button>
                 )}
                 {firstPerson && windowAvailable ? (
-                  <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_240px]">
-                    <CockpitWindowView
+                  <div className="mx-auto w-full max-w-[720px]">
+                    <CockpitStation
                       flight={session.flight}
                       orbit={session.orbit}
                       downrangeM={session.downrangeM}
@@ -550,22 +550,7 @@ function PlayClient() {
                       manual={session.manualUnlocked}
                       rollDeg={session.roll.rollDeg}
                       p64Selected={p64Selected}
-                    />
-                    <CockpitPanel1
-                      flight={session.flight}
-                      orbit={session.orbit}
-                      throttle={session.controls.throttle}
-                      engineOn={session.controls.engineOn}
-                      engineArmed={session.ignition.engineArmed}
-                      contactLight={contact.on}
-                      descentPropellantFraction={
-                        session.flight.descentPropellantKg /
-                        Math.max(1, mission.initial.descentPropellantKg)
-                      }
                       missionElapsedSec={session.flight.missionTimeUs / 1_000_000}
-                      sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
-                      aborted={session.aborted}
-                      onAbortStage={() => session.actions.abortStage()}
                     />
                   </div>
                 ) : (
