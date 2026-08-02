@@ -97,21 +97,46 @@ const BEATS: ReadonlyArray<{
 }> = [
   { id: "game-open", due: () => true },
   { id: "go-for-pdi", due: () => true },
-  { id: "ignition", due: (i) => i.engineOn },
-  { id: "ac-voltage", due: (i) => i.engineOn && (i.sinceIgnitionSec ?? 0) >= 60 },
+  // T+6 s — the engine is lit and settled at 10 %.
+  { id: "ignition", due: (i) => i.engineOn && (i.sinceIgnitionSec ?? 0) >= 6 },
+  // T+161 s — the AC bus voltage exchange, mid braking phase.
+  { id: "ac-voltage", due: (i) => i.engineOn && (i.sinceIgnitionSec ?? 0) >= 161 },
   { id: "alarm-1202", due: (i) => i.activeAlarmId === "alarm-1202-first" },
+  // T+299 s — radar lock, keyed off the completed windows-up roll.
   { id: "radar-lock", due: (i) => i.rollComplete === true },
+  // T+315 s — Earth in the window, once the vehicle is face-up.
   { id: "earth-window", due: (i) => i.rollComplete === true },
-  // 5 000 ft — P64 pitch-over and the manual attitude check.
-  { id: "p64-5000", due: (i) => (i.altitudeM ?? Infinity) <= 1_524 },
-  // 4 200 ft — "same type, we're go" over the first 1201.
+  // T+526 s / 5,000 ft — P64 pitch-over and the manual attitude check.
+  {
+    id: "p64-5000",
+    due: (i) => (i.altitudeM ?? Infinity) <= 1_524 || (i.sinceIgnitionSec ?? 0) >= 526,
+  },
+  // T+543 s / 3,500 ft — "you're go for landing", running into the first 1201.
   {
     id: "go-for-landing-1201",
-    due: (i) => (i.altitudeM ?? Infinity) <= 1_280 || i.activeAlarmId === "alarm-1201-first",
+    due: (i) =>
+      (i.altitudeM ?? Infinity) <= 1_067 ||
+      (i.sinceIgnitionSec ?? 0) >= 543 ||
+      i.activeAlarmId === "alarm-1201-first",
   },
-  { id: "sixty-seconds", due: (i) => i.calloutId === "quantity-light" },
-  { id: "final-100", due: (i) => (i.altitudeM ?? Infinity) <= 33 },
-  { id: "dust-30", due: (i) => (i.altitudeM ?? Infinity) <= 13 },
+  // T+700 s / 100 ft.
+  {
+    id: "final-100",
+    due: (i) => (i.altitudeM ?? Infinity) <= 33 || (i.sinceIgnitionSec ?? 0) >= 700,
+  },
+  // T+717 s — the sixty-second propellant call (~70 ft).
+  {
+    id: "sixty-seconds",
+    due: (i) =>
+      i.calloutId === "quantity-light" ||
+      (i.altitudeM ?? Infinity) <= 21 ||
+      (i.sinceIgnitionSec ?? 0) >= 717,
+  },
+  // T+732 s / 40 ft — dust, running into the thirty-second call.
+  {
+    id: "dust-30",
+    due: (i) => (i.altitudeM ?? Infinity) <= 13 || (i.sinceIgnitionSec ?? 0) >= 732,
+  },
   { id: "contact", due: (i) => i.contact },
 ];
 
