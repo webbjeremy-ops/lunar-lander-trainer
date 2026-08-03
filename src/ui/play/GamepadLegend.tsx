@@ -112,8 +112,9 @@ export function GamepadLegend({ haptics, onHaptics, phase = "guided", scheme = "
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-widest text-neutral-500">
-          Controller
+          {vr ? `Quest 3 — ${phase === "manual" ? "manual landing" : "guided descent"}` : "Controller"}
         </span>
+
         <button
           type="button"
           onClick={() => onHaptics(!haptics)}
