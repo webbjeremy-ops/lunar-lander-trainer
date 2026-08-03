@@ -9,7 +9,7 @@
 
 import { useEffect, useRef } from "react";
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
-import type { Hazard, LandingLimits, MissionDefinition } from "@/game/play";
+import type { LandingLimits, MissionDefinition } from "@/game/play";
 import { descentPhaseFor, displayPitchRad } from "@/game/play/descentPhase";
 import {
   currentMilestone,
