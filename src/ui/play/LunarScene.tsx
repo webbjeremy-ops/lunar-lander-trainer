@@ -150,13 +150,8 @@ function draw(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawArgs) 
   ctx.restore();
 }
 
-// ----------------------------------------------------------------------------
 
-function groundY(rangeM: number, altitudeM: number, horizonY: number, h: number): number {
-  // Simple perspective: closer ground is lower on the screen.
-  const t = Math.atan2(altitudeM, Math.max(1, rangeM)); // 0 = far, pi/2 = below
-  return horizonY + (t / (Math.PI / 2)) * (h - horizonY);
-}
+
 
 // -----------------------------------------------------------------------------
 // Side profile inset
