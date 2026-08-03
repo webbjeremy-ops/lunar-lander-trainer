@@ -118,6 +118,9 @@ import {
   type XboxCockpitInput,
 } from "./xboxGamepad";
 import { GamepadHaptics } from "./gamepadHaptics";
+import { activeControlScheme } from "./controlScheme";
+import { mapQuestInput, readLiveQuestPads } from "./questGamepad";
+
 
 const MU_M3S2 = LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value;
 const MAX_DPS_THRUST_N = DESCENT_ENGINE.maxThrustN.value;
