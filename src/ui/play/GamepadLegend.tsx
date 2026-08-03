@@ -39,10 +39,39 @@ const MANUAL: readonly Binding[] = [
   ["View (⧉)", "Window view on / off"],
 ];
 
-export function GamepadLegend({ haptics, onHaptics, phase = "guided" }: {
+const VR_GUIDED: readonly Binding[] = [
+  ["Left stick ↑/↓", "DPS throttle"],
+  ["Left stick ←/→", "Rate-of-descent trim"],
+  ["Left trigger", "Take manual control"],
+  ["Left grip", "Accept pending DSKY program"],
+  ["X (left)", "Eng Arm (PDI)"],
+  ["Y (left)", "Engine on / off"],
+  ["Right trigger", "Roll to windows-up"],
+  ["Right grip", "Cancel program alarm"],
+  ["A (right)", "Got it / Copy that"],
+  ["B (right)", "Abort stage"],
+  ["Right stick press", "Window view on / off"],
+  ["Right stick ↕", "Scroll the page"],
+];
+
+const VR_MANUAL: readonly Binding[] = [
+  ["Right stick ↕", "Pitch forward / back"],
+  ["Right trigger", "Throttle / boost"],
+  ["Right grip", "Short throttle burst"],
+  ["Y (left)", "Engine off"],
+  ["Left stick ↑/↓", "Fine throttle trim"],
+  ["Left stick ←/→", "Rate-of-descent trim"],
+  ["A (right)", "Got it / Copy that"],
+  ["Left grip", "Accept pending DSKY program"],
+  ["B (right)", "Abort stage"],
+  ["Right stick press", "Window view on / off"],
+];
+
+export function GamepadLegend({ haptics, onHaptics, phase = "guided", scheme = "xbox" }: {
   haptics: boolean;
   onHaptics: (on: boolean) => void;
   phase?: LegendPhase;
+  scheme?: "xbox" | "vr";
 }) {
   const [connected, setConnected] = useState(false);
 
@@ -62,9 +91,17 @@ export function GamepadLegend({ haptics, onHaptics, phase = "guided" }: {
     };
   }, []);
 
-  if (!connected) return null;
+  if (!connected && scheme !== "vr") return null;
 
-  const bindings = phase === "manual" ? MANUAL : GUIDED;
+  const vr = scheme === "vr";
+  const bindings = vr
+    ? phase === "manual"
+      ? VR_MANUAL
+      : VR_GUIDED
+    : phase === "manual"
+      ? MANUAL
+      : GUIDED;
+
 
 
   return (
@@ -75,8 +112,9 @@ export function GamepadLegend({ haptics, onHaptics, phase = "guided" }: {
     >
       <div className="mb-2 flex items-center justify-between">
         <span className="text-[10px] uppercase tracking-widest text-neutral-500">
-          Controller
+          {vr ? `Quest 3 — ${phase === "manual" ? "manual landing" : "guided descent"}` : "Controller"}
         </span>
+
         <button
           type="button"
           onClick={() => onHaptics(!haptics)}

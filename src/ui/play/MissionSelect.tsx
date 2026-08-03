@@ -10,6 +10,11 @@ import {
   type ControlModeId,
   type MissionId,
 } from "@/game/play";
+import {
+  CONTROL_SCHEME_COPY,
+  CONTROL_SCHEME_IDS,
+  type ControlSchemeId,
+} from "@/ui/play/controlScheme";
 
 const ASSISTANCE_COPY: Record<AssistanceLevel, { title: string; body: string }> = {
   instructor: {
@@ -45,17 +50,24 @@ export function MissionSelect({
   missionId,
   controlMode,
   assistance,
+  scheme,
+  schemeLocked = false,
   onMission,
   onControlMode,
   onAssistance,
+  onScheme,
   onStart,
 }: {
   missionId: MissionId;
   controlMode: ControlModeId;
   assistance: AssistanceLevel;
+  scheme: ControlSchemeId;
+  /** Phones and tablets fly on touch; there is nothing to choose. */
+  schemeLocked?: boolean;
   onMission: (id: MissionId) => void;
   onControlMode: (m: ControlModeId) => void;
   onAssistance: (a: AssistanceLevel) => void;
+  onScheme: (s: ControlSchemeId) => void;
   onStart: () => void;
 }) {
   const mission = MISSIONS[missionId];
@@ -124,6 +136,25 @@ export function MissionSelect({
             />
           ))}
         </Group>
+
+        {schemeLocked ? (
+          <div className="rounded border border-neutral-800 bg-black/50 px-3 py-2 font-mono text-[10px] text-neutral-500">
+            Touch controls — on-screen cockpit, best in landscape.
+          </div>
+        ) : (
+          <Group title="Controls">
+            {CONTROL_SCHEME_IDS.map((s) => (
+              <Option
+                key={s}
+                testid={`scheme-${s}`}
+                active={s === scheme}
+                title={CONTROL_SCHEME_COPY[s].title}
+                body={CONTROL_SCHEME_COPY[s].body}
+                onClick={() => onScheme(s)}
+              />
+            ))}
+          </Group>
+        )}
 
         <Group title="Assistance">
           {(["instructor", "pilot", "commander"] as const).map((a) => (
