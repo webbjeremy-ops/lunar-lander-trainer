@@ -228,6 +228,12 @@ function PlayClient() {
     duck: missionDuck,
   });
 
+  // M4.55 — descent-propellant burn time remaining, seconds. The DPS at full
+  // thrust consumes roughly 45,040 N / 3,050 m/s exhaust velocity of
+  // propellant; the "sixty seconds" call keys off this, not altitude.
+  const burnTimeRemainingSec =
+    session.flight.descentPropellantKg / (45_040 / 3_050);
+
   // M4.44 — restored Apollo 11 air-to-ground recordings, cued by story beat.
   const missionAudio = useMissionAudio({
     enabled: audioLive,
@@ -237,6 +243,7 @@ function PlayClient() {
     calloutId: session.callout?.id ?? null,
     rollComplete: session.roll.phase === "windows-up",
     altitudeM: session.orbit.altitudeM,
+    burnTimeRemainingSec,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
     touchdownOnly: missionId !== "full-descent",
