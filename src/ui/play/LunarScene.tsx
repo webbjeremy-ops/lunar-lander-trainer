@@ -9,7 +9,7 @@
 
 import { useEffect, useRef } from "react";
 import type { LunarFlightState, LunarOrbitalValues } from "@/simulation/lunar2d";
-import type { Hazard, LandingLimits, MissionDefinition } from "@/game/play";
+import type { LandingLimits, MissionDefinition } from "@/game/play";
 import { descentPhaseFor, displayPitchRad } from "@/game/play/descentPhase";
 import {
   currentMilestone,
@@ -114,8 +114,8 @@ export function LunarScene({
     <canvas
       ref={ref}
       data-testid="play-scene"
-      className="h-[380px] w-full rounded border border-neutral-800 bg-black"
-      aria-label="Lunar module out-the-window view and descent profile"
+      className="h-[420px] w-full rounded border border-neutral-800 bg-black"
+      aria-label="Lunar module descent profile"
     />
   );
 }
@@ -139,176 +139,19 @@ interface DrawArgs {
 }
 
 function draw(ctx: CanvasRenderingContext2D, w: number, h: number, a: DrawArgs) {
+  // M4.58 — the first-person commander's window (with its LPD scale) is its
+  // own panel now, so this canvas is the descent profile at full width.
   ctx.clearRect(0, 0, w, h);
-  const splitX = Math.round(w * 0.62);
-  drawWindow(ctx, 0, 0, splitX, h, a);
   ctx.save();
-  ctx.beginPath();
-  ctx.rect(splitX, 0, w - splitX, h);
-  ctx.clip();
-  drawProfile(ctx, splitX, 0, w - splitX, h, a);
-  ctx.restore();
-
-  ctx.strokeStyle = "#262626";
-  ctx.beginPath();
-  ctx.moveTo(splitX + 0.5, 0);
-  ctx.lineTo(splitX + 0.5, h);
-  ctx.stroke();
-}
-
-// -----------------------------------------------------------------------------
-// Out-the-window view
-// -----------------------------------------------------------------------------
-
-function drawWindow(
-  ctx: CanvasRenderingContext2D,
-  x0: number,
-  y0: number,
-  w: number,
-  h: number,
-  { flight, orbit, downrangeM, mission, limits, manual, p64Selected }: DrawArgs,
-) {
-  ctx.save();
-  ctx.translate(x0, y0);
   ctx.beginPath();
   ctx.rect(0, 0, w, h);
   ctx.clip();
-
-  // Sky (lunar black) and the pitch-driven horizon.
-  ctx.fillStyle = "#05070a";
-  ctx.fillRect(0, 0, w, h);
-
-  // Historical attitude: pitched back near 90 deg through braking (windows off
-  // the surface), pitch-over at high gate, near upright at low gate.
-  const phase = descentPhaseFor(orbit.altitudeM, { p64Selected });
-  const pitch = displayPitchRad(flight.attitudeRad, orbit.altitudeM, manual, {
-    p64Selected,
-  });
-  // At 90 deg from vertical the crew is looking at space: the horizon drops
-  // out of the bottom of the window. Upright brings it back up.
-  const horizonY = h * 0.36 + (pitch / (Math.PI / 2)) * h * 0.95;
-
-
-  // Regolith.
-  const grad = ctx.createLinearGradient(0, horizonY, 0, h);
-  grad.addColorStop(0, "#3b3630");
-  grad.addColorStop(1, "#171514");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, horizonY, w, h - horizonY);
-  ctx.strokeStyle = "#6b6255";
-  ctx.beginPath();
-  ctx.moveTo(0, horizonY);
-  ctx.lineTo(w, horizonY);
-  ctx.stroke();
-
-  // Perspective ground grid — each line is a downrange band.
-  const alt = Math.max(1, orbit.altitudeM);
-  ctx.strokeStyle = "rgba(140,128,110,0.28)";
-  for (let i = 1; i <= 10; i++) {
-    const range = i * Math.max(60, alt * 0.6);
-    const y = groundY(range, alt, horizonY, h);
-    if (y < horizonY + 1 || y > h) continue;
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(w, y);
-    ctx.stroke();
-  }
-
-  // Landing zone and hazards, positioned by downrange distance.
-  const zoneY = groundY(Math.max(0, downrangeM), alt, horizonY, h);
-  const scale = Math.max(0.6, (zoneY - horizonY) / Math.max(1, h - horizonY));
-  const zoneW = Math.max(8, (limits.landingZoneRadiusM / Math.max(alt, 60)) * w * scale * 1.6);
-
-  for (const hz of mission.hazards) {
-    drawHazard(ctx, hz, w, zoneY, zoneW);
-  }
-
-  if (zoneY > horizonY && zoneY < h + 40) {
-    ctx.strokeStyle = "#41e08a";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(w / 2, zoneY, zoneW, Math.max(3, zoneW * 0.35), 0, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.fillStyle = "rgba(65,224,138,0.10)";
-    ctx.fill();
-    ctx.lineWidth = 1;
-    ctx.fillStyle = "#41e08a";
-    ctx.font = "10px ui-monospace, monospace";
-    ctx.fillText("LANDING ZONE", w / 2 - 38, zoneY - Math.max(6, zoneW * 0.35) - 4);
-  } else {
-    ctx.fillStyle = "#41e08a";
-    ctx.font = "10px ui-monospace, monospace";
-    ctx.fillText(
-      `LZ ${(downrangeM / 1000).toFixed(1)} km ahead`,
-      w / 2 - 42,
-      horizonY - 8,
-    );
-  }
-
-  // LPD (landing-point designator) reticle — authentic aid, advisory only.
-  ctx.strokeStyle = "rgba(190,255,210,0.45)";
-  ctx.beginPath();
-  ctx.moveTo(w / 2, h * 0.18);
-  ctx.lineTo(w / 2, h * 0.9);
-  ctx.moveTo(w * 0.12, horizonY);
-  ctx.lineTo(w * 0.88, horizonY);
-  ctx.stroke();
-  ctx.font = "9px ui-monospace, monospace";
-  ctx.fillStyle = "rgba(190,255,210,0.6)";
-  for (let deg = 10; deg <= 60; deg += 10) {
-    const y = horizonY + (deg / 70) * (h - horizonY);
-    ctx.beginPath();
-    ctx.moveTo(w / 2 - 10, y);
-    ctx.lineTo(w / 2 + 10, y);
-    ctx.stroke();
-    ctx.fillText(String(deg), w / 2 + 14, y + 3);
-  }
-
-  // Window frame.
-  ctx.strokeStyle = "#4a4a4a";
-  ctx.lineWidth = 10;
-  ctx.strokeRect(-5, -5, w + 10, h + 10);
-  ctx.lineWidth = 1;
-
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "10px ui-monospace, monospace";
-  ctx.fillText("COMMANDER'S WINDOW · LPD", 10, 16);
-  ctx.fillStyle = phase.id === "braking" ? "#fbbf24" : "#41e08a";
-  ctx.fillText(`${phase.label} · ${(pitch * 180) / Math.PI | 0}° FROM VERTICAL`, 10, 30);
-  ctx.fillStyle = "#9ca3af";
-  ctx.font = "9px ui-monospace, monospace";
-  ctx.fillText(phase.windowView, 10, 42);
-  if (horizonY > h - 4) {
-    ctx.fillStyle = "#fbbf24";
-    ctx.font = "11px ui-monospace, monospace";
-    ctx.fillText("SURFACE BELOW THE WINDOW SILL", 10, h / 2);
-  }
+  drawProfile(ctx, 0, 0, w, h, a);
   ctx.restore();
-
 }
 
-function drawHazard(
-  ctx: CanvasRenderingContext2D,
-  hz: Hazard,
-  w: number,
-  zoneY: number,
-  zoneW: number,
-) {
-  const cx = w / 2 + (hz.angleOffsetRad * 1_737_400 * 0.02);
-  const r = Math.max(4, (hz.radiusM / 120) * zoneW);
-  ctx.strokeStyle = hz.kind === "crater" ? "#8a7a5f" : "#9a6a5a";
-  ctx.fillStyle = hz.kind === "crater" ? "rgba(60,52,40,0.75)" : "rgba(70,45,40,0.6)";
-  ctx.beginPath();
-  ctx.ellipse(cx - r * 1.4, zoneY - r * 0.5, r, r * 0.4, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-}
 
-function groundY(rangeM: number, altitudeM: number, horizonY: number, h: number): number {
-  // Simple perspective: closer ground is lower on the screen.
-  const t = Math.atan2(altitudeM, Math.max(1, rangeM)); // 0 = far, pi/2 = below
-  return horizonY + (t / (Math.PI / 2)) * (h - horizonY);
-}
+
 
 // -----------------------------------------------------------------------------
 // Side profile inset

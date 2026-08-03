@@ -141,7 +141,7 @@ function PlayClient() {
 
   const [started, setStarted] = useState(false);
 
-  // M4.57 — how the player flies: keyboard, Xbox pad, or a Quest 3 headset.
+  // M4.57 — how the player flies: keyboard or an Xbox pad.
   // Phones and tablets are locked to touch; nothing else exists there.
   const [scheme, setScheme] = useState<ControlSchemeId>("desktop");
   const [schemeLocked, setSchemeLocked] = useState(false);
@@ -154,7 +154,6 @@ function PlayClient() {
   useEffect(() => {
     setActiveControlScheme(scheme);
   }, [scheme]);
-  const vr = scheme === "vr";
 
   // M4.47 — once the flight is live the cockpit owns the pad: the shell's
   // D-pad focus navigation stands down while this flag is set.
@@ -454,10 +453,8 @@ function PlayClient() {
 
   return (
     <section
-      data-vr={vr ? "true" : undefined}
       className={
-        "cockpit-metal mx-auto space-y-4 px-4 py-4 " +
-        (vr ? "vr-cockpit max-w-[1100px]" : "max-w-[1400px]")
+        "cockpit-metal mx-auto max-w-[1400px] space-y-4 px-4 py-4"
       }
       data-testid="play-cockpit"
     >
@@ -581,11 +578,7 @@ function PlayClient() {
       )}
 
       <div
-        className={
-          vr
-            ? "grid gap-6"
-            : "grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]"
-        }
+        className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]"
       >
         <div className="relative space-y-3">
           {session.scriptTerminated && session.flight.terminalState === null && (
@@ -712,7 +705,6 @@ function PlayClient() {
             haptics={hapticsPref}
             onHaptics={(on) => setHapticsPref(on)}
             phase={session.manualUnlocked ? "manual" : "guided"}
-            scheme={vr ? "vr" : "xbox"}
           />
 
 

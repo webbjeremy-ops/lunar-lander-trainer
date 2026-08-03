@@ -2,14 +2,13 @@
 //
 // M4.57 — Control scheme selection.
 //
-// The cockpit can be flown three ways on a desktop-class device: keyboard and
-// mouse, an Xbox pad, or a Meta Quest 3 headset (WebXR browser, Touch Plus
-// controllers). Phones and tablets get the touch layout and are not offered a
-// choice, because neither of the other two schemes exists there.
+// The cockpit can be flown two ways on a desktop-class device: keyboard and
+// mouse, or an Xbox pad. Phones and tablets get the touch layout and are not
+// offered a choice, because neither of the other schemes exists there.
 
-export type ControlSchemeId = "desktop" | "xbox" | "vr" | "touch";
+export type ControlSchemeId = "desktop" | "xbox" | "touch";
 
-export const CONTROL_SCHEME_IDS = ["desktop", "xbox", "vr"] as const;
+export const CONTROL_SCHEME_IDS = ["desktop", "xbox"] as const;
 
 export const CONTROL_SCHEME_COPY: Record<
   ControlSchemeId,
@@ -23,44 +22,20 @@ export const CONTROL_SCHEME_COPY: Record<
     title: "Xbox controller",
     body: "Sticks, triggers and face buttons. The legend follows each stage of the descent.",
   },
-  vr: {
-    title: "Meta Quest 3 (VR)",
-    body: "Touch Plus controllers, enlarged single-column cockpit sized for the headset browser.",
-  },
   touch: {
     title: "Touch",
     body: "On-screen controls, sized for a phone or tablet in landscape.",
   },
 };
 
-/** Coarse pointer / small screen: the desktop and VR schemes do not apply. */
+/** Coarse pointer / small screen: the desktop scheme does not apply. */
 export function isMobileDevice(): boolean {
   if (typeof window === "undefined") return false;
-  if (isQuestBrowser()) return false;
   const coarse = window.matchMedia?.("(pointer: coarse)").matches ?? false;
   return coarse && window.innerWidth < 1024;
 }
 
-/** The Quest browser reports OculusBrowser/ (Quest 2, 3, Pro). */
-export function isQuestBrowser(): boolean {
-  if (typeof navigator === "undefined") return false;
-  return /OculusBrowser|Quest/i.test(navigator.userAgent);
-}
-
-/** True when the page can actually enter an immersive VR session. */
-export async function immersiveVrAvailable(): Promise<boolean> {
-  const xr = (navigator as unknown as { xr?: { isSessionSupported(mode: string): Promise<boolean> } })
-    .xr;
-  if (!xr) return false;
-  try {
-    return await xr.isSessionSupported("immersive-vr");
-  } catch {
-    return false;
-  }
-}
-
 export function detectDefaultScheme(): ControlSchemeId {
-  if (isQuestBrowser()) return "vr";
   if (isMobileDevice()) return "touch";
   return "desktop";
 }

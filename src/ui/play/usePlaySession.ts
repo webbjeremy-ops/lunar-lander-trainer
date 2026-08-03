@@ -119,7 +119,6 @@ import {
 } from "./xboxGamepad";
 import { GamepadHaptics } from "./gamepadHaptics";
 import { activeControlScheme } from "./controlScheme";
-import { mapQuestInput, readLiveQuestPads } from "./questGamepad";
 
 
 const MU_M3S2 = LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value;
@@ -673,12 +672,7 @@ export function usePlaySession(
     // Stick/trigger axes are consumed inside the physics step via padInputRef.
     let padRollCommanded = false;
     const pollGamepad = () => {
-      // M4.57 — the Quest's Touch controllers speak the same cockpit input
-      // record, so only the mapper changes with the chosen control scheme.
-      const { input, next } =
-        activeControlScheme() === "vr"
-          ? mapQuestInput(readLiveQuestPads(), padEdgesRef.current)
-          : mapXboxInput(readLivePad(), padEdgesRef.current);
+      const { input, next } = mapXboxInput(readLivePad(), padEdgesRef.current);
       padEdgesRef.current = next;
       padInputRef.current = input;
 
