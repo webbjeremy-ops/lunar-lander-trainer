@@ -13,11 +13,14 @@ import openClip from "@/assets/a11-open-looking-good.mp3.asset.json";
 import goForPdiClip from "@/assets/a11-go-for-pdi.mp3.asset.json";
 import ignitionClip from "@/assets/a11-ignition-throttle-up.mp3.asset.json";
 import acVoltageClip from "@/assets/a11-ac-voltage.mp3.asset.json";
-import alarm1202Clip from "@/assets/a11-1202-alarm.mp3.asset.json";
+import alarm1202Clip from "@/assets/First1202Alarm.mp3.asset.json";
 import radarLockClip from "@/assets/a11-radar-lock.mp3.asset.json";
 import earthWindowClip from "@/assets/a11-earth-window.mp3.asset.json";
+import p64ThirtyOutClip from "@/assets/p64_30secsout.mp3.asset.json";
+import p64ActivatedClip from "@/assets/p64activated.mp3.asset.json";
 import p64Clip from "@/assets/a11-p64-5000.mp3.asset.json";
-import goForLandingClip from "@/assets/a11-1201-were-go.mp3.asset.json";
+import goForLandingClip from "@/assets/EagleHoustonGoForLanding.mp3.asset.json";
+import alarm1201Clip from "@/assets/1201Alarm.mp3.asset.json";
 import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
 import final100Clip from "@/assets/a11-final-100ft.mp3.asset.json";
 import dustClip from "@/assets/a11-dust-30ft.mp3.asset.json";
@@ -32,8 +35,11 @@ export type MissionAudioBeat =
   | "alarm-1202"
   | "radar-lock"
   | "earth-window"
+  | "p64-thirty-out"
+  | "p64-activated"
   | "p64-5000"
   | "go-for-landing-1201"
+  | "alarm-1201"
   | "sixty-seconds"
   | "final-100"
   | "dust-30"
@@ -48,14 +54,18 @@ export const MISSION_AUDIO_URLS: Record<MissionAudioBeat, string> = {
   "alarm-1202": alarm1202Clip.url,
   "radar-lock": radarLockClip.url,
   "earth-window": earthWindowClip.url,
+  "p64-thirty-out": p64ThirtyOutClip.url,
+  "p64-activated": p64ActivatedClip.url,
   "p64-5000": p64Clip.url,
   "go-for-landing-1201": goForLandingClip.url,
+  "alarm-1201": alarm1201Clip.url,
   "sixty-seconds": sixtySecondsClip.url,
   "final-100": final100Clip.url,
   "dust-30": dustClip.url,
   contact: contactClip.url,
   "eagle-landed": eagleLandedClip.url,
 };
+
 
 export interface MissionAudioInput {
   /** Mirrors the descent score's on/off toggle. */
@@ -106,19 +116,28 @@ const BEATS: ReadonlyArray<{
   { id: "radar-lock", due: (i) => i.rollComplete === true },
   // T+315 s — Earth in the window, once the vehicle is face-up.
   { id: "earth-window", due: (i) => i.rollComplete === true },
+  // T+487 s (08:07) — "you've got 30 seconds to P64". P63 still flying.
+  { id: "p64-thirty-out", due: (i) => (i.sinceIgnitionSec ?? 0) >= 487 },
+  // T+510 s (08:30) — P64 has taken over automatically; Armstrong calls it.
+  { id: "p64-activated", due: (i) => (i.sinceIgnitionSec ?? 0) >= 510 },
   // T+526 s / 5,000 ft — P64 pitch-over and the manual attitude check.
   {
     id: "p64-5000",
     due: (i) => (i.altitudeM ?? Infinity) <= 1_524 || (i.sinceIgnitionSec ?? 0) >= 526,
   },
-  // T+543 s / 3,500 ft — "you're go for landing", running into the first 1201.
+  // T+543 s / 3,500 ft — "Eagle, Houston, you're go for landing".
   {
     id: "go-for-landing-1201",
     due: (i) =>
-      (i.altitudeM ?? Infinity) <= 1_067 ||
-      (i.sinceIgnitionSec ?? 0) >= 543 ||
-      i.activeAlarmId === "alarm-1201-first",
+      (i.altitudeM ?? Infinity) <= 1_067 || (i.sinceIgnitionSec ?? 0) >= 543,
   },
+  // T+554 s (09:14) — the first approach-phase 1201.
+  {
+    id: "alarm-1201",
+    due: (i) =>
+      i.activeAlarmId === "alarm-1201-first" || (i.sinceIgnitionSec ?? 0) >= 554,
+  },
+
   // T+700 s / 100 ft.
   {
     id: "final-100",

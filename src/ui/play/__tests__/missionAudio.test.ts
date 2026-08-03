@@ -82,8 +82,8 @@ describe("mission audio story beats", () => {
 
   it("has a distinct recording for every beat", () => {
     const urls = Object.values(MISSION_AUDIO_URLS);
-    expect(urls).toHaveLength(14);
-    expect(new Set(urls).size).toBe(14);
+    expect(urls).toHaveLength(17);
+    expect(new Set(urls).size).toBe(17);
     for (const url of urls) expect(url).toMatch(/\.mp3$/);
   });
 
