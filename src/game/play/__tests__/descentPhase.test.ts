@@ -20,13 +20,13 @@ describe("descent attitude phases", () => {
     const p = descentPhaseFor(PHASE_HIGH_GATE_M - 1);
     expect(p.id).toBe("approach");
     expect(deg(p.pitchRad)).toBeGreaterThan(40);
-    expect(deg(p.pitchRad)).toBeLessThanOrEqual(55);
+    expect(deg(p.pitchRad)).toBeLessThanOrEqual(57);
   });
 
   it("is nearly upright below low gate", () => {
     const p = descentPhaseFor(PHASE_LOW_GATE_M - 50);
     expect(p.id).toBe("landing");
-    expect(deg(p.pitchRad)).toBeLessThan(12);
+    expect(deg(p.pitchRad)).toBeLessThan(18);
   });
 
   it("touchdown attitude is essentially vertical", () => {
@@ -43,17 +43,20 @@ describe("descent attitude phases", () => {
   });
 });
 
-describe("P64 gate", () => {
-  it("holds the braking attitude below high gate until P64 is taken", () => {
-    const held = descentPhaseFor(1_000, { p64Selected: false });
-    expect(held.id).toBe("braking");
-    expect(held.label).toContain("P64 NOT SELECTED");
-  });
-
-  it("pitches over once the approach program is selected", () => {
+describe("P64 is automatic", () => {
+  it("pitches over without a crew DSKY entry", () => {
     const held = descentPhaseFor(1_000, { p64Selected: false });
     const taken = descentPhaseFor(1_000, { p64Selected: true });
-    expect(taken.id).toBe("approach");
-    expect(taken.pitchRad).toBeLessThan(held.pitchRad);
+    expect(held.id).toBe("approach");
+    expect(taken.pitchRad).toBeCloseTo(held.pitchRad);
+  });
+
+  it("follows the flown pitch curve down the approach", () => {
+    const at = (ft: number) => deg(descentPhaseFor(ft * 0.3048).pitchRad);
+    expect(at(7_129)).toBeCloseTo(55, 0);
+    expect(at(5_000)).toBeCloseTo(42, 0);
+    expect(at(3_000)).toBeCloseTo(36, 0);
+    expect(at(1_000)).toBeCloseTo(27, 0);
+    expect(at(600)).toBeCloseTo(19, 0);
   });
 });

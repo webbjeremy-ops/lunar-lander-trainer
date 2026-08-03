@@ -53,14 +53,18 @@ describe("mission audio story beats", () => {
     expect(dueBeats({ ...base, altitudeM: 1_000 })).toContain("go-for-landing-1201");
   });
 
-  it("fires the sixty-second call on the quantity light", () => {
-    expect(dueBeats({ ...base, calloutId: "quantity-light" })).toContain("sixty-seconds");
+  it("fires the sixty-second call on one minute of burn time, not altitude", () => {
+    expect(dueBeats({ ...base, altitudeM: 20 })).not.toContain("sixty-seconds");
+    expect(dueBeats({ ...base, burnTimeRemainingSec: 55 })).toContain("sixty-seconds");
   });
 
-  it("fires the final-descent calls at 100 ft and 40 ft", () => {
+  it("fires the final-descent calls at 100 ft and 40 ft, altitude only", () => {
     expect(dueBeats({ ...base, altitudeM: 30 })).toContain("final-100");
     expect(dueBeats({ ...base, altitudeM: 30 })).not.toContain("dust-30");
     expect(dueBeats({ ...base, altitudeM: 12 })).toContain("dust-30");
+    expect(dueBeats({ ...base, sinceIgnitionSec: 900, altitudeM: 15_000 })).not.toContain(
+      "final-100",
+    );
   });
 
   it("contact outranks every other beat", () => {
@@ -71,7 +75,7 @@ describe("mission audio story beats", () => {
         contact: true,
         altitudeM: 1,
         activeAlarmId: "alarm-1201-first",
-        calloutId: "quantity-light",
+        burnTimeRemainingSec: 30,
       }),
     ).toBe("contact");
   });
