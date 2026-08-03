@@ -1240,6 +1240,33 @@ export function usePlaySession(
     acceptProgramRef.current = acceptProgram;
   }, [acceptProgram]);
 
+  /**
+   * M4.55 — P64 is taken by the computer, not the crew. Historically the AGC
+   * switched P63 -> P64 by itself at high gate; the crew only read it out. As
+   * soon as the high-gate time-and-geometry box is satisfied the approach
+   * program is keyed automatically, so PROG 64 and the flashing V06 N64 come
+   * up on the DSKY and the pitch-over starts without a player entry.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let fired = false;
+    const id = window.setInterval(() => {
+      if (fired) return;
+      const state = procedureRef.current;
+      if (state.completedStepIds.includes("p64-monitor")) {
+        fired = true;
+        return;
+      }
+      const step = currentStep(script, state);
+      if (step?.id !== "p64-monitor") return;
+      if (!readGates().highGateReady) return;
+      fired = true;
+      acceptProgramRef.current();
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [script, readGates, generation]);
+
+
 
 
   const actions = useMemo(
