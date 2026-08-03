@@ -393,3 +393,18 @@ html[data-touch-size="large"] { --touch-control-size: 3.5rem; }
   box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 
+
+/* M4.57 — Meta Quest 3 layout. The headset browser renders at a low effective
+   DPI and the player reads the panel from ~1 m away, so the whole cockpit is
+   scaled up and forced into a single readable column. */
+.vr-cockpit {
+  zoom: 1.3;
+}
+.vr-cockpit [data-testid="gamepad-legend"] {
+  font-size: 1.05em;
+}
+@media (min-width: 1024px) {
+  .vr-cockpit .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
