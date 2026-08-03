@@ -82,6 +82,11 @@ export interface MissionAudioInput {
   readonly rollComplete?: boolean;
   /** Radar altitude, metres. */
   readonly altitudeM?: number;
+  /**
+   * M4.55 — descent-propellant burn time remaining, seconds. The "sixty
+   * seconds" call is a propellant call, so it keys off this and nothing else.
+   */
+  readonly burnTimeRemainingSec?: number;
   /** Footpad probes have touched the surface. */
   readonly contact: boolean;
   /** The vehicle hit the surface too hard — no touchdown call is earned. */
