@@ -6,6 +6,7 @@
 // remain routable but are deliberately not promoted here.
 
 import { Link } from "@tanstack/react-router";
+import { UnitsToggle } from "./UnitsToggle";
 
 export interface NavItem {
   readonly to: string;
@@ -54,11 +55,14 @@ export function AppNav() {
           {item.label}
         </Link>
       ))}
+      <div className="ml-auto flex items-center gap-2">
+        <UnitsToggle />
+      </div>
       <Link
         to="/settings"
         data-testid="nav-settings"
-        className={`ml-auto ${linkClass}`}
-        activeProps={{ className: `ml-auto ${linkClass} text-neutral-100`, "aria-current": "page" }}
+        className={linkClass}
+        activeProps={{ className: `${linkClass} text-neutral-100`, "aria-current": "page" }}
       >
         Settings
       </Link>
