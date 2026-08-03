@@ -116,19 +116,28 @@ const BEATS: ReadonlyArray<{
   { id: "radar-lock", due: (i) => i.rollComplete === true },
   // T+315 s — Earth in the window, once the vehicle is face-up.
   { id: "earth-window", due: (i) => i.rollComplete === true },
+  // T+487 s (08:07) — "you've got 30 seconds to P64". P63 still flying.
+  { id: "p64-thirty-out", due: (i) => (i.sinceIgnitionSec ?? 0) >= 487 },
+  // T+510 s (08:30) — P64 has taken over automatically; Armstrong calls it.
+  { id: "p64-activated", due: (i) => (i.sinceIgnitionSec ?? 0) >= 510 },
   // T+526 s / 5,000 ft — P64 pitch-over and the manual attitude check.
   {
     id: "p64-5000",
     due: (i) => (i.altitudeM ?? Infinity) <= 1_524 || (i.sinceIgnitionSec ?? 0) >= 526,
   },
-  // T+543 s / 3,500 ft — "you're go for landing", running into the first 1201.
+  // T+543 s / 3,500 ft — "Eagle, Houston, you're go for landing".
   {
     id: "go-for-landing-1201",
     due: (i) =>
-      (i.altitudeM ?? Infinity) <= 1_067 ||
-      (i.sinceIgnitionSec ?? 0) >= 543 ||
-      i.activeAlarmId === "alarm-1201-first",
+      (i.altitudeM ?? Infinity) <= 1_067 || (i.sinceIgnitionSec ?? 0) >= 543,
   },
+  // T+554 s (09:14) — the first approach-phase 1201.
+  {
+    id: "alarm-1201",
+    due: (i) =>
+      i.activeAlarmId === "alarm-1201-first" || (i.sinceIgnitionSec ?? 0) >= 554,
+  },
+
   // T+700 s / 100 ft.
   {
     id: "final-100",
