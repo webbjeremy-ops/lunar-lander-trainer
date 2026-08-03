@@ -670,7 +670,12 @@ export function usePlaySession(
     // Stick/trigger axes are consumed inside the physics step via padInputRef.
     let padRollCommanded = false;
     const pollGamepad = () => {
-      const { input, next } = mapXboxInput(readLivePad(), padEdgesRef.current);
+      // M4.57 — the Quest's Touch controllers speak the same cockpit input
+      // record, so only the mapper changes with the chosen control scheme.
+      const { input, next } =
+        activeControlScheme() === "vr"
+          ? mapQuestInput(readLiveQuestPads(), padEdgesRef.current)
+          : mapXboxInput(readLivePad(), padEdgesRef.current);
       padEdgesRef.current = next;
       padInputRef.current = input;
 
