@@ -42,6 +42,12 @@ import { ContactLight } from "@/ui/play/ContactLight";
 import { contactLightState } from "@/game/play/contactLight";
 import { DebriefPanel } from "@/ui/play/DebriefPanel";
 import { MissionSelect } from "@/ui/play/MissionSelect";
+import {
+  detectDefaultScheme,
+  isMobileDevice,
+  setActiveControlScheme,
+  type ControlSchemeId,
+} from "@/ui/play/controlScheme";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
 import {
   decodeChallengeRequest,
@@ -134,6 +140,21 @@ function PlayClient() {
   );
 
   const [started, setStarted] = useState(false);
+
+  // M4.57 — how the player flies: keyboard, Xbox pad, or a Quest 3 headset.
+  // Phones and tablets are locked to touch; nothing else exists there.
+  const [scheme, setScheme] = useState<ControlSchemeId>("desktop");
+  const [schemeLocked, setSchemeLocked] = useState(false);
+  useEffect(() => {
+    const detected = detectDefaultScheme();
+    const locked = isMobileDevice();
+    setSchemeLocked(locked);
+    setScheme(locked ? "touch" : detected);
+  }, []);
+  useEffect(() => {
+    setActiveControlScheme(scheme);
+  }, [scheme]);
+  const vr = scheme === "vr";
 
   // M4.47 — once the flight is live the cockpit owns the pad: the shell's
   // D-pad focus navigation stands down while this flag is set.
@@ -348,6 +369,9 @@ function PlayClient() {
           onMission={setMissionId}
           onControlMode={setControlMode}
           onAssistance={setAssistance}
+          scheme={scheme}
+          schemeLocked={schemeLocked}
+          onScheme={setScheme}
           onStart={() => {
             session.actions.restart();
             setStarted(true);
@@ -430,7 +454,11 @@ function PlayClient() {
 
   return (
     <section
-      className="cockpit-metal mx-auto max-w-[1400px] space-y-4 px-4 py-4"
+      data-vr={vr ? "true" : undefined}
+      className={
+        "cockpit-metal mx-auto space-y-4 px-4 py-4 " +
+        (vr ? "vr-cockpit max-w-[1100px]" : "max-w-[1400px]")
+      }
       data-testid="play-cockpit"
     >
       <div className="cockpit-strip flex flex-wrap items-center gap-2">
@@ -552,7 +580,13 @@ function PlayClient() {
         </div>
       )}
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <div
+        className={
+          vr
+            ? "grid gap-6"
+            : "grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]"
+        }
+      >
         <div className="relative space-y-3">
           {session.scriptTerminated && session.flight.terminalState === null && (
             <div
@@ -678,6 +712,7 @@ function PlayClient() {
             haptics={hapticsPref}
             onHaptics={(on) => setHapticsPref(on)}
             phase={session.manualUnlocked ? "manual" : "guided"}
+            scheme={vr ? "vr" : "xbox"}
           />
 
 
