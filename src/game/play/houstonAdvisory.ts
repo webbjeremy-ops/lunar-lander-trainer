@@ -166,8 +166,13 @@ export function houstonDeviations(
   }
 
 
+  // M4.55 — translation is a MANUAL-phase rule. P64 legitimately crosses low
+  // gate with tens of metres per second of forward velocity (≈19 m/s at 170 m
+  // is the nominal profile), so calling it while the computer is flying was
+  // Houston complaining about its own trajectory.
   const transLimit = translationLimitMps(alt);
-  if (speed > transLimit * 2 && alt < 2_000) {
+  const transRuleApplies = !input.autoGuidanceActive;
+  if (transRuleApplies && speed > transLimit * 2 && alt < 2_000) {
     out.push(
       call(
         "translation-excessive",
@@ -177,7 +182,7 @@ export function houstonDeviations(
         "Horizontal velocity at contact tips the vehicle. The landing has to be flown to near-zero translation.",
       ),
     );
-  } else if (speed > transLimit && alt < 2_000) {
+  } else if (transRuleApplies && speed > transLimit && alt < 2_000) {
     out.push(
       call(
         "translation-high",
@@ -242,7 +247,7 @@ export function houstonDeviations(
     );
   }
 
-  if (alt < 300 && pitchDeg > 25 && pitchDeg <= 100) {
+  if (!input.autoGuidanceActive && alt < 300 && pitchDeg > 25 && pitchDeg <= 100) {
     out.push(
       call(
         "attitude-steep",

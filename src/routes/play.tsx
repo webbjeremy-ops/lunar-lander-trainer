@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dsky } from "@/ui/dsky/Dsky";
 import { useAgcSession } from "@/agc/AgcSession";
 import { LunarScene } from "@/ui/play/LunarScene";
-import { CockpitStation } from "@/ui/play/CockpitStation";
+import { CockpitWindowView } from "@/ui/play/CockpitWindowView";
 
 
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
@@ -228,6 +228,12 @@ function PlayClient() {
     duck: missionDuck,
   });
 
+  // M4.55 — descent-propellant burn time remaining, seconds. The DPS at full
+  // thrust consumes roughly 45,040 N / 3,050 m/s exhaust velocity of
+  // propellant; the "sixty seconds" call keys off this, not altitude.
+  const burnTimeRemainingSec =
+    session.flight.descentPropellantKg / (45_040 / 3_050);
+
   // M4.44 — restored Apollo 11 air-to-ground recordings, cued by story beat.
   const missionAudio = useMissionAudio({
     enabled: audioLive,
@@ -237,6 +243,7 @@ function PlayClient() {
     calloutId: session.callout?.id ?? null,
     rollComplete: session.roll.phase === "windows-up",
     altitudeM: session.orbit.altitudeM,
+    burnTimeRemainingSec,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
     touchdownOnly: missionId !== "full-descent",
@@ -613,8 +620,11 @@ function PlayClient() {
                   </button>
                 )}
                 {firstPerson && windowAvailable ? (
-                  <div className="mx-auto w-full max-w-[720px]">
-                    <CockpitStation
+                  <div className="w-full">
+                    {/* M4.55 — the commander's console artwork is gone; the
+                        live out-the-window scene now uses the whole column so
+                        approach angles read at a realistic scale. */}
+                    <CockpitWindowView
                       flight={session.flight}
                       orbit={session.orbit}
                       downrangeM={session.downrangeM}
@@ -622,7 +632,6 @@ function PlayClient() {
                       manual={session.manualUnlocked}
                       rollDeg={session.roll.rollDeg}
                       p64Selected={p64Selected}
-                      missionElapsedSec={session.flight.missionTimeUs / 1_000_000}
                     />
                   </div>
                 ) : (

@@ -170,6 +170,17 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "P64 · LR POS 2",
   ),
   c(
+    "go-for-landing",
+    "Duke (CAPCOM)",
+    "Eagle, Houston. You're go for landing.",
+    "Nothing to key. P64 is flying the approach — watch the site come up in the window and stand by for P66.",
+    "The go-for-landing call is Houston clearing the crew to continue through the approach phase on the computer's guidance.",
+    "none",
+    543,
+    3_500,
+    "P64",
+  ),
+  c(
     "site-assessment",
     "Armstrong",
     "Pretty rocky area… I'm going to fly a little longer.",
@@ -251,6 +262,27 @@ const ALTITUDE_PRIMARY_IDS: readonly string[] = [
 ];
 
 /**
+ * M4.55 — calls that fire on whichever comes first, altitude or clock, so the
+ * card and its restored recording key up together.
+ */
+const EITHER_IDS: readonly string[] = ["go-for-landing"];
+
+/**
+ * M4.55 — the approach phase used to stack five cards on top of each other in
+ * ninety seconds. Everything below is still part of the script (procedures and
+ * the DSKY recommendation key off it) but no longer pops a card: after P64 the
+ * player sees the go-for-landing card, the P66 takeover card, contact, and
+ * whatever Houston improvises. Nothing else.
+ */
+export const SUPPRESSED_CARD_IDS: readonly string[] = [
+  "high-gate",
+  "radar-position-2",
+  "site-assessment",
+  "quantity-light",
+  "thirty-seconds",
+];
+
+/**
  * How long a call will wait for the vehicle to reach the altitude it was made
  * at before Houston makes it anyway. Beyond this the clock wins, so the script
  * can never stall out on a trajectory that runs shallow.
@@ -285,7 +317,9 @@ export function triggeredCallouts(
         input.altitudeM <= 1.5 * 7_600 * FT);
     const fired = ALTITUDE_PRIMARY_IDS.includes(call.id)
       ? atAltitude && highGateGeometryReady
-      : t >= call.atSinceIgnitionSec && highGateGeometryReady;
+      : EITHER_IDS.includes(call.id)
+        ? (atAltitude || t >= call.atSinceIgnitionSec) && highGateGeometryReady
+        : t >= call.atSinceIgnitionSec && highGateGeometryReady;
     // Strict order: a later call can never overtake an earlier one.
     if (!fired) break;
     out.push(call);
@@ -307,6 +341,7 @@ export function activeCallout(
   const fired = triggeredCallouts(input, timeline);
   for (let i = fired.length - 1; i >= 0; i--) {
     const call = fired[i]!;
+    if (SUPPRESSED_CARD_IDS.includes(call.id)) continue;
     if (!acknowledgedIds.includes(call.id)) return call;
   }
   return null;

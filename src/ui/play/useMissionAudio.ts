@@ -82,6 +82,11 @@ export interface MissionAudioInput {
   readonly rollComplete?: boolean;
   /** Radar altitude, metres. */
   readonly altitudeM?: number;
+  /**
+   * M4.55 — descent-propellant burn time remaining, seconds. The "sixty
+   * seconds" call is a propellant call, so it keys off this and nothing else.
+   */
+  readonly burnTimeRemainingSec?: number;
   /** Footpad probes have touched the surface. */
   readonly contact: boolean;
   /** The vehicle hit the surface too hard — no touchdown call is earned. */
@@ -138,23 +143,21 @@ const BEATS: ReadonlyArray<{
       i.activeAlarmId === "alarm-1201-first" || (i.sinceIgnitionSec ?? 0) >= 554,
   },
 
-  // T+700 s / 100 ft.
-  {
-    id: "final-100",
-    due: (i) => (i.altitudeM ?? Infinity) <= 33 || (i.sinceIgnitionSec ?? 0) >= 700,
-  },
-  // T+717 s — the sixty-second propellant call (~70 ft).
+  // M4.55 — the sixty-second call is a PROPELLANT call: one minute of burn
+  // time remaining, whatever the altitude or the clock says.
   {
     id: "sixty-seconds",
-    due: (i) =>
-      i.calloutId === "quantity-light" ||
-      (i.altitudeM ?? Infinity) <= 21 ||
-      (i.sinceIgnitionSec ?? 0) >= 717,
+    due: (i) => (i.burnTimeRemainingSec ?? Infinity) <= 60,
   },
-  // T+732 s / 40 ft — dust, running into the thirty-second call.
+  // M4.55 — 100 ft, altitude only.
+  {
+    id: "final-100",
+    due: (i) => (i.altitudeM ?? Infinity) <= 30.48,
+  },
+  // M4.55 — 40 ft, altitude only.
   {
     id: "dust-30",
-    due: (i) => (i.altitudeM ?? Infinity) <= 13 || (i.sinceIgnitionSec ?? 0) >= 732,
+    due: (i) => (i.altitudeM ?? Infinity) <= 12.19,
   },
   { id: "contact", due: (i) => i.contact },
 ];
@@ -251,6 +254,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     calloutId,
     rollComplete,
     altitudeM,
+    burnTimeRemainingSec,
     contact,
     crashed,
     touchdownOnly,
@@ -266,6 +270,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       calloutId,
       rollComplete,
       altitudeM,
+      burnTimeRemainingSec,
       contact,
       crashed,
       touchdownOnly,
@@ -288,6 +293,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     calloutId,
     rollComplete,
     altitudeM,
+    burnTimeRemainingSec,
     contact,
     crashed,
     touchdownOnly,
