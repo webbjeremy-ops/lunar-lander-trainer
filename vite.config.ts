@@ -23,7 +23,11 @@ function stripRedundantNodeCompatFlag(): Plugin {
   return {
     name: "tranquility:strip-redundant-nodejs-compat",
     apply: "build",
-    closeBundle() {
+    enforce: "post",
+    closeBundle: {
+      order: "post",
+      sequential: true,
+      handler() {
       const file = path.resolve(process.cwd(), "dist/server/wrangler.json");
       if (!fs.existsSync(file)) return;
       try {
@@ -37,9 +41,10 @@ function stripRedundantNodeCompatFlag(): Plugin {
         if (!flags.includes("nodejs_compat")) return;
         config.compatibility_flags = flags.filter((f) => f !== "nodejs_compat");
         fs.writeFileSync(file, JSON.stringify(config, null, 2));
-      } catch {
-        // Never fail the build over a cosmetic wrangler patch.
-      }
+        } catch {
+          // Never fail the build over a cosmetic wrangler patch.
+        }
+      },
     },
   };
 }
