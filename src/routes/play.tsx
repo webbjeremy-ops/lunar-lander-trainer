@@ -248,9 +248,12 @@ function PlayClient() {
     duck: missionDuck,
   });
 
-  // M4.55 — descent-propellant burn time remaining, seconds. The DPS at full
-  // thrust consumes roughly 45,040 N / 3,050 m/s exhaust velocity of
-  // propellant; the "sixty seconds" call keys off this, not altitude.
+  // M4.56 — descent propellant remaining as a fraction of the load. The
+  // "sixty seconds" call keys off this: it fires at 1 % remaining.
+  const propellantFraction =
+    mission.initial.descentPropellantKg > 0
+      ? session.flight.descentPropellantKg / mission.initial.descentPropellantKg
+      : 0;
   const burnTimeRemainingSec =
     session.flight.descentPropellantKg / (45_040 / 3_050);
 
@@ -264,6 +267,7 @@ function PlayClient() {
     rollComplete: session.roll.phase === "windows-up",
     altitudeM: session.orbit.altitudeM,
     burnTimeRemainingSec,
+    propellantFraction,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     crashed: session.flight.terminalState === "crashed",
     touchdownOnly: missionId !== "full-descent",

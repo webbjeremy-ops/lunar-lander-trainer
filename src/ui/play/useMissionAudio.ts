@@ -83,10 +83,14 @@ export interface MissionAudioInput {
   /** Radar altitude, metres. */
   readonly altitudeM?: number;
   /**
-   * M4.55 — descent-propellant burn time remaining, seconds. The "sixty
-   * seconds" call is a propellant call, so it keys off this and nothing else.
+   * M4.55 — descent-propellant burn time remaining, seconds. Kept for tests.
    */
   readonly burnTimeRemainingSec?: number;
+  /**
+   * M4.56 — descent propellant remaining as a fraction of the load (1 → full).
+   * The "sixty seconds" call keys off this: it fires at 1 % remaining.
+   */
+  readonly propellantFraction?: number;
   /** Footpad probes have touched the surface. */
   readonly contact: boolean;
   /** The vehicle hit the surface too hard — no touchdown call is earned. */
@@ -143,11 +147,14 @@ const BEATS: ReadonlyArray<{
       i.activeAlarmId === "alarm-1201-first" || (i.sinceIgnitionSec ?? 0) >= 554,
   },
 
-  // M4.55 — the sixty-second call is a PROPELLANT call: one minute of burn
-  // time remaining, whatever the altitude or the clock says.
+  // M4.56 — the sixty-second call is a PROPELLANT call: it keys up when the
+  // descent tank is down to 1 % of its load, whatever the altitude or clock.
   {
     id: "sixty-seconds",
-    due: (i) => (i.burnTimeRemainingSec ?? Infinity) <= 60,
+    due: (i) =>
+      i.propellantFraction !== undefined
+        ? i.propellantFraction <= 0.01
+        : (i.burnTimeRemainingSec ?? Infinity) <= 60,
   },
   // M4.55 — 100 ft, altitude only.
   {
@@ -255,6 +262,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     rollComplete,
     altitudeM,
     burnTimeRemainingSec,
+    propellantFraction,
     contact,
     crashed,
     touchdownOnly,
@@ -271,6 +279,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       rollComplete,
       altitudeM,
       burnTimeRemainingSec,
+      propellantFraction,
       contact,
       crashed,
       touchdownOnly,
@@ -279,8 +288,15 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     for (const beat of due) {
       if (claimedRef.current.has(beat)) continue;
       claimedRef.current.add(beat);
-      // Touchdown outranks anything still waiting to be said.
-      if (beat === "contact" || beat === "eagle-landed") queueRef.current.length = 0;
+      // The terminal calls are altitude-true: they must be heard at the height
+      // they belong to, so they clear anything still waiting in the loop.
+      if (
+        beat === "contact" ||
+        beat === "eagle-landed" ||
+        beat === "final-100" ||
+        beat === "dust-30"
+      )
+        queueRef.current.length = 0;
       queueRef.current.push(beat);
       queued = true;
     }
@@ -294,6 +310,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     rollComplete,
     altitudeM,
     burnTimeRemainingSec,
+    propellantFraction,
     contact,
     crashed,
     touchdownOnly,
