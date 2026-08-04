@@ -15,7 +15,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Dsky } from "@/ui/dsky/Dsky";
 import { useAgcSession } from "@/agc/AgcSession";
 import { LunarScene } from "@/ui/play/LunarScene";
-import { CockpitWindowView } from "@/ui/play/CockpitWindowView";
+import { CockpitStation } from "@/ui/play/CockpitStation";
 
 
 import { FlightInstruments } from "@/ui/play/FlightInstruments";
@@ -647,11 +647,8 @@ function PlayClient() {
                   </button>
                 )}
                 {firstPerson && windowAvailable ? (
-                  <div className="w-full">
-                    {/* M4.55 — the commander's console artwork is gone; the
-                        live out-the-window scene now uses the whole column so
-                        approach angles read at a realistic scale. */}
-                    <CockpitWindowView
+                  <div className="mx-auto w-full max-w-[720px]">
+                    <CockpitStation
                       flight={session.flight}
                       orbit={session.orbit}
                       downrangeM={session.downrangeM}
@@ -659,6 +656,7 @@ function PlayClient() {
                       manual={session.manualUnlocked}
                       rollDeg={session.roll.rollDeg}
                       p64Selected={p64Selected}
+                      missionElapsedSec={session.flight.missionTimeUs / 1_000_000}
                     />
                   </div>
                 ) : (
