@@ -19,6 +19,25 @@ import type { Plugin } from "vite";
  */
 const NODEJS_COMPAT_DEFAULT_DATE = "2026-08-04";
 
+function patchWranglerConfig() {
+  const file = path.resolve(process.cwd(), "dist/server/wrangler.json");
+  if (!fs.existsSync(file)) return;
+  try {
+    const config = JSON.parse(fs.readFileSync(file, "utf8")) as {
+      compatibility_date?: string;
+      compatibility_flags?: string[];
+    };
+    const date = config.compatibility_date ?? "";
+    const flags = config.compatibility_flags ?? [];
+    if (date < NODEJS_COMPAT_DEFAULT_DATE) return;
+    if (!flags.includes("nodejs_compat")) return;
+    config.compatibility_flags = flags.filter((f) => f !== "nodejs_compat");
+    fs.writeFileSync(file, JSON.stringify(config, null, 2));
+  } catch {
+    // Never fail the build over a cosmetic wrangler patch.
+  }
+}
+
 function stripRedundantNodeCompatFlag(): Plugin {
   return {
     name: "tranquility:strip-redundant-nodejs-compat",
@@ -28,22 +47,10 @@ function stripRedundantNodeCompatFlag(): Plugin {
       order: "post",
       sequential: true,
       handler() {
-      const file = path.resolve(process.cwd(), "dist/server/wrangler.json");
-      if (!fs.existsSync(file)) return;
-      try {
-        const config = JSON.parse(fs.readFileSync(file, "utf8")) as {
-          compatibility_date?: string;
-          compatibility_flags?: string[];
-        };
-        const date = config.compatibility_date ?? "";
-        const flags = config.compatibility_flags ?? [];
-        if (date < NODEJS_COMPAT_DEFAULT_DATE) return;
-        if (!flags.includes("nodejs_compat")) return;
-        config.compatibility_flags = flags.filter((f) => f !== "nodejs_compat");
-        fs.writeFileSync(file, JSON.stringify(config, null, 2));
-        } catch {
-          // Never fail the build over a cosmetic wrangler patch.
-        }
+        // Nitro writes dist/server/wrangler.json after every Vite hook has
+        // run, so patch on process exit as well as here.
+        patchWranglerConfig();
+        process.once("exit", patchWranglerConfig);
       },
     },
   };
