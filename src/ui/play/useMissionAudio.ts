@@ -147,11 +147,14 @@ const BEATS: ReadonlyArray<{
       i.activeAlarmId === "alarm-1201-first" || (i.sinceIgnitionSec ?? 0) >= 554,
   },
 
-  // M4.55 — the sixty-second call is a PROPELLANT call: one minute of burn
-  // time remaining, whatever the altitude or the clock says.
+  // M4.56 — the sixty-second call is a PROPELLANT call: it keys up when the
+  // descent tank is down to 1 % of its load, whatever the altitude or clock.
   {
     id: "sixty-seconds",
-    due: (i) => (i.burnTimeRemainingSec ?? Infinity) <= 60,
+    due: (i) =>
+      i.propellantFraction !== undefined
+        ? i.propellantFraction <= 0.01
+        : (i.burnTimeRemainingSec ?? Infinity) <= 60,
   },
   // M4.55 — 100 ft, altitude only.
   {
