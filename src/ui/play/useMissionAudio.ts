@@ -288,8 +288,15 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
     for (const beat of due) {
       if (claimedRef.current.has(beat)) continue;
       claimedRef.current.add(beat);
-      // Touchdown outranks anything still waiting to be said.
-      if (beat === "contact" || beat === "eagle-landed") queueRef.current.length = 0;
+      // The terminal calls are altitude-true: they must be heard at the height
+      // they belong to, so they clear anything still waiting in the loop.
+      if (
+        beat === "contact" ||
+        beat === "eagle-landed" ||
+        beat === "final-100" ||
+        beat === "dust-30"
+      )
+        queueRef.current.length = 0;
       queueRef.current.push(beat);
       queued = true;
     }
