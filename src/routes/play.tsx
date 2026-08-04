@@ -251,9 +251,8 @@ function PlayClient() {
   // M4.56 — descent propellant remaining as a fraction of the load. The
   // "sixty seconds" call keys off this: it fires at 1 % remaining.
   const propellantFraction =
-    session.flight.descentPropellantKg > 0 &&
-    session.mission.initial.descentPropellantKg > 0
-      ? session.flight.descentPropellantKg / session.mission.initial.descentPropellantKg
+    mission.initial.descentPropellantKg > 0
+      ? session.flight.descentPropellantKg / mission.initial.descentPropellantKg
       : 0;
   const burnTimeRemainingSec =
     session.flight.descentPropellantKg / (45_040 / 3_050);
