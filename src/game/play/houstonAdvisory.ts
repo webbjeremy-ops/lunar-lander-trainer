@@ -185,7 +185,8 @@ export function houstonDeviations(
   // is the nominal profile), so calling it while the computer is flying was
   // Houston complaining about its own trajectory.
   const transLimit = translationLimitMps(alt);
-  const transRuleApplies = !input.autoGuidanceActive;
+  const transRuleApplies =
+    !input.autoGuidanceActive && alt <= HANDOVER_ALTITUDE_M;
   if (
     transRuleApplies &&
     speed > transLimit * 2 &&
