@@ -216,7 +216,13 @@ export function houstonDeviations(
 
   // M4.39 — the roll to windows-up is a scripted, computer-timed manoeuvre;
   // only call the crew on it once they actually have the vehicle.
-  if (!input.windowsUp && alt < 12_000 && !input.autoGuidanceActive) {
+  // The roll IS a crew action, so it survives auto-guidance — but only once
+  // the yaw-around cue is well past (T+300 s), never before it is due.
+  if (
+    !input.windowsUp &&
+    alt < 12_000 &&
+    (!input.autoGuidanceActive || (input.sinceIgnitionUs ?? 0) >= 300 * 1_000_000)
+  ) {
     out.push(
       call(
         "still-windows-down",
