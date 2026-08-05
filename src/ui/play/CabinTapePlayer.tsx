@@ -3,6 +3,7 @@
 // M4.57 — Cabin tape player UI: a small side tab on the left edge. Tapping
 // the tab expands a moderate tape-deck panel; tapping again stows it.
 
+import { useState } from "react";
 import handTape from "@/assets/cabin-tape-hand.png.asset.json";
 import { CABIN_TRACKS, type CabinMusicApi } from "./useCabinMusic";
 
@@ -32,6 +33,7 @@ function MusicIcon({ className }: { readonly className?: string }) {
 }
 
 export function CabinTapePlayer({ music, available }: CabinTapePlayerProps) {
+  const [listOpen, setListOpen] = useState(false);
   if (!available) return null;
   const current = CABIN_TRACKS.find((t) => t.id === music.trackId) ?? null;
 
@@ -54,62 +56,62 @@ export function CabinTapePlayer({ music, available }: CabinTapePlayerProps) {
             draggable={false}
           />
 
-          {/* Track list laid over the face of the tape deck */}
-          <div className="absolute left-[45%] right-[6%] top-[27%] bottom-[10%] flex flex-col">
-            <div className="mb-1 flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <MusicIcon className="h-3 w-3 text-neutral-800" />
-                <span className="font-mono text-[9px] uppercase tracking-widest text-neutral-700">
-                  Cabin tapes
-                </span>
-              </div>
+          {/* Controls below the tape — never overlapping the hand art */}
+          <div className="-mt-2 w-[86%] rounded-md border border-neutral-700 bg-neutral-950/90 p-2 shadow-xl backdrop-blur">
+            <div className="flex items-center gap-2">
               <button
-                onClick={() => music.setOpen(false)}
-                data-testid="cabin-tape-close"
-                className="font-mono text-[9px] uppercase tracking-widest text-neutral-600 hover:text-neutral-900"
+                onClick={() => setListOpen((v) => !v)}
+                data-testid="cabin-tape-play-toggle"
+                className="flex items-center gap-1.5 rounded bg-emerald-900/70 px-2 py-1 font-mono text-[10px] uppercase tracking-widest text-emerald-200 hover:bg-emerald-800/80"
               >
-                Stow
+                <span aria-hidden="true">{listOpen ? "▾" : "▶"}</span>
+                {listOpen ? "Collapse" : current ? "Playing" : "Play"}
               </button>
+              <span className="min-w-0 flex-1 truncate font-mono text-[9px] uppercase tracking-widest text-neutral-400">
+                {current ? current.title : "No tape"}
+              </span>
+              {current && (
+                <button
+                  onClick={music.stop}
+                  data-testid="cabin-tape-stop"
+                  className="rounded bg-neutral-800 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-neutral-200 hover:bg-neutral-700"
+                >
+                  Stop
+                </button>
+              )}
             </div>
 
-            <ul className="flex-1 space-y-0.5 overflow-y-auto pr-1">
-              {CABIN_TRACKS.map((track) => {
-                const on = music.trackId === track.id;
-                return (
-                  <li key={track.id}>
-                    <button
-                      onClick={() => (on ? music.stop() : music.play(track.id))}
-                      data-testid={`cabin-track-${track.id}`}
-                      className={`w-full rounded px-1.5 py-[3px] text-left transition-colors ${
-                        on
-                          ? "bg-neutral-900 text-emerald-300"
-                          : "text-neutral-800 hover:bg-neutral-900/10"
-                      }`}
-                    >
-                      <span className="block truncate text-[10px] leading-tight">
-                        {on ? "▶ " : ""}
-                        {track.title}
-                      </span>
-                      <span className="block truncate font-mono text-[8px] uppercase tracking-widest opacity-70">
-                        {track.artist}
-                      </span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-
-            {current && (
-              <button
-                onClick={music.stop}
-                data-testid="cabin-tape-stop"
-                className="mt-1 w-full rounded bg-neutral-900 px-2 py-1 font-mono text-[8px] uppercase tracking-widest text-neutral-200 hover:bg-neutral-800"
-              >
-                Stop tape
-              </button>
+            {listOpen && (
+              <ul className="mt-1.5 max-h-40 space-y-0.5 overflow-y-auto pr-1">
+                {CABIN_TRACKS.map((track) => {
+                  const on = music.trackId === track.id;
+                  return (
+                    <li key={track.id}>
+                      <button
+                        onClick={() => (on ? music.stop() : music.play(track.id))}
+                        data-testid={`cabin-track-${track.id}`}
+                        className={`w-full rounded px-1.5 py-[3px] text-left transition-colors ${
+                          on
+                            ? "bg-emerald-900/60 text-emerald-200"
+                            : "text-neutral-300 hover:bg-neutral-800"
+                        }`}
+                      >
+                        <span className="block truncate text-[10px] leading-tight">
+                          {on ? "▶ " : ""}
+                          {track.title}
+                        </span>
+                        <span className="block truncate font-mono text-[8px] uppercase tracking-widest opacity-60">
+                          {track.artist}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
         </div>
+
 
 
         {/* Small side tab handle */}
