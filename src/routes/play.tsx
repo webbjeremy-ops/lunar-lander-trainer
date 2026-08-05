@@ -729,6 +729,7 @@ function PlayClient() {
             limits={limits}
             assistance={assistance}
             initialPropellantKg={mission.initial.descentPropellantKg}
+            manualControl={session.manualUnlocked}
           />
           <FlightControls
             manual={session.manualUnlocked}
