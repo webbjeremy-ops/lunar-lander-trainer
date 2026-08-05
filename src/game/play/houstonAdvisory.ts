@@ -144,9 +144,11 @@ export function houstonDeviations(
   // computer-flown braking phase the nominal profile is deliberately hot
   // (well over 100 ft/s), so calling it a deviation there — and escalating it
   // to an abort — punishes the crew for the guidance program's own trajectory.
+  // M4.65 — and no flight-dynamics call becomes a hard no-go above the P66
+  // hand-over altitude (500 ft): the player does not yet have the vehicle.
   const sinkRuleApplies = !input.autoGuidanceActive && alt <= 2_316;
   const sinkLimit = sinkRateLimitMps(alt);
-  if (sinkRuleApplies && sink > sinkLimit * 2) {
+  if (sinkRuleApplies && sink > sinkLimit * 2 && alt <= HANDOVER_ALTITUDE_M) {
     out.push(
       call(
         "sink-excessive",
@@ -175,7 +177,11 @@ export function houstonDeviations(
   // Houston complaining about its own trajectory.
   const transLimit = translationLimitMps(alt);
   const transRuleApplies = !input.autoGuidanceActive;
-  if (transRuleApplies && speed > transLimit * 2 && alt < 2_000) {
+  if (
+    transRuleApplies &&
+    speed > transLimit * 2 &&
+    alt <= HANDOVER_ALTITUDE_M
+  ) {
     out.push(
       call(
         "translation-excessive",
@@ -196,6 +202,7 @@ export function houstonDeviations(
       ),
     );
   }
+
 
   if (
     !input.autoGuidanceActive &&
