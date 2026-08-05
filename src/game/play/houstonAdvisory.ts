@@ -128,7 +128,7 @@ export function houstonDeviations(
     );
   }
 
-  if (rateDeg > 20) {
+  if (!input.autoGuidanceActive && rateDeg > 20) {
     out.push(
       call(
         "attitude-tumbling",
