@@ -58,6 +58,13 @@ export const HOUSTON_IMPROVISED_NOTE =
 const DEG = Math.PI / 180;
 
 /**
+ * P66 hand-over altitude (500 ft). Above this the computer is still flying the
+ * approach, so flight-dynamics deviations never escalate to a hard no-go.
+ */
+export const HANDOVER_ALTITUDE_M = 152.4;
+
+
+/**
  * Sink-rate limit for the altitude: the flight-crew rule of thumb of roughly
  * 3 ft/s per 100 ft of altitude, floored so the last few metres stay gentle.
  */
