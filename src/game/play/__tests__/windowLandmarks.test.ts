@@ -231,3 +231,31 @@ describe("Earth in the commander's window", () => {
     expect(earthDisk(base).phase).toBeLessThan(0.85);
   });
 });
+
+// --- Post-roll window sequence: black sky first, terrain last --------------
+
+describe("post-roll window sequence", () => {
+  const at = (pitchDeg: number, altitudeM = 9_000) =>
+    horizonY({ width: 400, height: 300, altitudeM, pitchRad: (pitchDeg * Math.PI) / 180, rollRad: 0 });
+
+  it("shows no surface at all as the roll ends, windows-up and pitched back", () => {
+    expect(at(80)).toBeGreaterThan(300);
+    expect(at(77)).toBeGreaterThan(300);
+  });
+
+  it("creeps a thin strip of regolith into the bottom of the pane", () => {
+    const strip = at(70);
+    expect(strip).toBeLessThan(300);
+    expect(strip).toBeGreaterThan(300 * 0.85);
+  });
+
+  it("raises the horizon steadily as the pitch program comes upright", () => {
+    const walk = [77, 70, 60, 50, 40, 30].map((d) => at(d));
+    for (let i = 1; i < walk.length; i += 1) {
+      expect(walk[i]!).toBeLessThan(walk[i - 1]!);
+    }
+    // Broad terrain through P64, and the pane is nearly all surface by P66.
+    expect(at(50)).toBeLessThan(300 * 0.6);
+    expect(at(30)).toBeLessThan(300 * 0.2);
+  });
+});
