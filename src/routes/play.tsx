@@ -794,12 +794,35 @@ function PlayClient() {
             onTakeover={session.actions.takeover}
           />
 
-          <div className="rounded border border-neutral-800 bg-neutral-950 p-2">
+          {dskyPopup && (
+            <button
+              type="button"
+              aria-label="Close the DSKY pop-up"
+              onClick={() => setDskyPopup(false)}
+              className="fixed inset-0 z-40 cursor-default bg-black/70"
+            />
+          )}
+          <div
+            data-testid="dsky-panel"
+            data-popup={dskyPopup ? "yes" : "no"}
+            className={
+              dskyPopup
+                ? "fixed left-1/2 top-1/2 z-50 w-[min(560px,92vw)] max-h-[88vh] -translate-x-1/2 -translate-y-1/2 overflow-auto rounded border-2 border-emerald-800 bg-neutral-950 p-3 shadow-2xl shadow-black/60"
+                : "rounded border border-neutral-800 bg-neutral-950 p-2"
+            }
+          >
             <div className="mb-1 flex items-center justify-between">
               <span className="text-[10px] uppercase tracking-widest text-neutral-500">
                 Live AGC · Luminary 099
               </span>
-              <span className="font-mono text-[9px] text-neutral-600">shared session</span>
+              <button
+                type="button"
+                onClick={() => setDskyPopup((v) => !v)}
+                data-testid="dsky-popup-toggle"
+                className="rounded border border-neutral-700 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-widest text-neutral-400 hover:border-emerald-600 hover:text-emerald-300"
+              >
+                {dskyPopup ? "Close (D)" : "Pop out (D)"}
+              </button>
             </div>
             {agc.client ? (
               <Dsky
