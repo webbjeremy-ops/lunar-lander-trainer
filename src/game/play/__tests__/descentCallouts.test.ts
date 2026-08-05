@@ -101,17 +101,17 @@ describe("descent callouts", () => {
   });
 });
 
-describe("altitude-triggered program alarms", () => {
-  it("raises the first 1202 on altitude when the vehicle is low ahead of the clock", () => {
+describe("time-anchored program alarms", () => {
+  it("does not raise the first 1202 early just because the vehicle is low", () => {
     const def = APOLLO11_ALARM_TIMELINE[0]!;
     const next = reduceProgramAlarms(createProgramAlarmState(), {
       kind: "tick",
-      // Within the altitude trigger's lead window ahead of the scheduled time.
+      // Low ahead of the clock: the lamp must still wait for Aldrin's call.
       sinceIgnitionUs: (def.atSinceIgnitionSec - 30) * S,
       altitudeFt: (def.belowAltitudeFt ?? 0) - 1,
     });
-    expect(next.active?.code).toBe("1202");
-    expect(next.lampOn).toBe(true);
+    expect(next.active).toBeNull();
+    expect(next.lampOn).toBe(false);
   });
 
 
