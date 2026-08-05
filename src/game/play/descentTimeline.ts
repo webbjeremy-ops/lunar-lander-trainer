@@ -77,10 +77,14 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
   m("yaw-around", 221, "BEGIN 180° FACE-UP YAW", "P63", 40_900, 88,
     "Start the face-up yaw so the landing radar can see the surface; the " +
     "manoeuvre is not complete until about T+294."),
+  m("radar-data-good", 286, "LANDING RADAR DATA GOOD", "P63", 37_100, 55,
+    "Initial valid landing-radar returns: altitude data is accepted by the " +
+    "computer. The spoken Delta-H exchange comes a few seconds later."),
   m("yaw-complete", 294, "FACE-UP YAW COMPLETE", "P63", 36_800, 52,
     "Windows up, radar antenna looking at the surface."),
   m("radar-lock", 299, "LANDING RADAR LOCK · DELTA-H", "P63", 36_500, 50,
     "Radar altitude agrees with the state vector; V57 accepts it."),
+
   m("alarm-1202-first", 317, "1202 PROGRAM ALARM", "P63", 33_500, 43,
     "Executive overflow — no core sets. Read it, reset it, keep flying."),
   m("alarm-1202-second", 357, "1202 PROGRAM ALARM", "P63", 26_977, 30,
