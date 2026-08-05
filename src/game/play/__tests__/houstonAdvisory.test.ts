@@ -42,11 +42,12 @@ describe("houstonDeviations", () => {
   });
 
   it("calls excessive sink rate no-go and merely high sink a caution", () => {
-    const limit = sinkRateLimitMps(nominal.altitudeM);
-    expect(activeHoustonCall({ ...nominal, radialSpeedMps: -(limit * 3) })?.id).toBe(
+    const low = { ...nominal, altitudeM: 120 };
+    const limit = sinkRateLimitMps(low.altitudeM);
+    expect(activeHoustonCall({ ...low, radialSpeedMps: -(limit * 3) })?.id).toBe(
       "sink-excessive",
     );
-    expect(activeHoustonCall({ ...nominal, radialSpeedMps: -(limit * 1.2) })?.id).toBe(
+    expect(activeHoustonCall({ ...low, radialSpeedMps: -(limit * 1.2) })?.id).toBe(
       "sink-high",
     );
   });
@@ -111,7 +112,7 @@ describe("M4.39 auto-guidance suppression", () => {
   it("still applies the sink rule once the crew has the vehicle at low altitude", () => {
     const ids = houstonDeviations({
       ...braking,
-      altitudeM: 300,
+      altitudeM: 120,
       radialSpeedMps: -30,
       horizontalSpeedMps: 2,
       windowsUp: true,
