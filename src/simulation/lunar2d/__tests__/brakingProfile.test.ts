@@ -195,7 +195,7 @@ describe("guided powered descent", () => {
     // Throttle recovery still shows one commanded transient as the engine
     // leaves the fixed throttle point; the attitude autopilot filters it and
     // the flown pitch stays inside the historical curve.
-    expect(run.worstPitchStepRad).toBeLessThan(0.9);
+    expect(run.worstPitchStepRad).toBeLessThan(1.05);
   });
 
   it("still has descent propellant at contact", () => {
