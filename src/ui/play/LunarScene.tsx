@@ -427,9 +427,14 @@ function drawProfile(
 
   // Roll state caption: the vehicle starts the braking phase windows-down and
   // the player rolls it windows-up before the radar can look at the surface.
-  ctx.fillStyle = cwLabelColor(rollDeg);
-  ctx.font = "9px ui-monospace, monospace";
-  ctx.fillText(rollLabel(rollDeg), vx + 12, vy - 6);
+  // Once P64 pitches the vehicle forward for the landing phase the windows are
+  // no longer "up" over the surface, so the caption is dropped entirely.
+  if (!p64Selected) {
+    ctx.fillStyle = cwLabelColor(rollDeg);
+    ctx.font = "9px ui-monospace, monospace";
+    ctx.fillText(rollLabel(rollDeg), vx + 12, vy - 6);
+  }
+
 
   // Velocity vector.
   ctx.strokeStyle = "#60a5fa";

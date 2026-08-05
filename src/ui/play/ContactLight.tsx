@@ -11,30 +11,43 @@ export function ContactLight({ on }: { on: boolean }) {
       aria-label="Lunar contact lights"
       className="rounded border border-neutral-800 bg-neutral-950 p-2 shadow-inner"
     >
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {["l", "r"].map((side) => (
           <div
             key={side}
             data-testid={`contact-lamp-${side}`}
             role="status"
             aria-live="polite"
-            className={`rounded-sm border px-1 py-2 text-center font-mono text-[9px] font-bold uppercase leading-tight tracking-widest transition-colors ${
-              on
-                ? "border-sky-200 bg-sky-400 text-neutral-950 shadow-[0_0_14px_2px_rgba(56,189,248,0.65)]"
-                : "border-neutral-700 bg-neutral-900 text-neutral-500/70"
-            }`}
+            className="flex flex-col items-center gap-1"
             title={
               on
                 ? "Contact — a 67-inch footpad probe is touching the surface. Engine stop."
                 : "Lunar contact: lights blue when a footpad probe touches the surface."
             }
           >
-            Lunar
-            <br />
-            Contact
+            {/* Bezel ring around a domed bulb, as on the LM main panel. */}
+            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-neutral-700 bg-neutral-900 shadow-inner">
+              <span
+                className={`h-7 w-7 rounded-full transition-all ${
+                  on
+                    ? "bg-[radial-gradient(circle_at_35%_30%,#e0f2fe,#38bdf8_45%,#0284c7_85%)] shadow-[0_0_16px_4px_rgba(56,189,248,0.7)]"
+                    : "bg-[radial-gradient(circle_at_35%_30%,#1f2937,#0b1220_80%)]"
+                }`}
+              />
+            </span>
+            <span
+              className={`text-center font-mono text-[8px] font-bold uppercase leading-tight tracking-widest ${
+                on ? "text-sky-200" : "text-neutral-500/70"
+              }`}
+            >
+              Lunar
+              <br />
+              Contact
+            </span>
           </div>
         ))}
       </div>
+
     </section>
   );
 }

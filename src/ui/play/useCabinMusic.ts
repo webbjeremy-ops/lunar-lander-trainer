@@ -18,6 +18,8 @@ import spinningWheel from "@/assets/spinning-wheel.mp3.asset.json";
 import everyoneGone from "@/assets/everyone-gone-to-the-moon.mp3.asset.json";
 import flyMeToTheMoon from "@/assets/fly-me-to-the-moon.mp3.asset.json";
 import mistOTheMoon from "@/assets/mist-o-the-moon.mp3.asset.json";
+import moonMoods from "@/assets/moon-moods.mp3.asset.json";
+import newWorld from "@/assets/dvorak-new-world-mvmt4.mp3.asset.json";
 
 export interface CabinTrack {
   readonly id: string;
@@ -46,7 +48,7 @@ export const CABIN_TRACKS: readonly CabinTrack[] = [
   {
     id: "everyone-gone-to-the-moon",
     title: "Everyone's Gone to the Moon",
-    artist: "Jonathan King",
+    artist: "Chad & Jeremy",
     url: everyoneGone.url,
   },
   {
@@ -54,6 +56,13 @@ export const CABIN_TRACKS: readonly CabinTrack[] = [
     title: "Fly Me to the Moon",
     artist: "Frank Sinatra",
     url: flyMeToTheMoon.url,
+  },
+  { id: "moon-moods", title: "Moon Moods", artist: "Les Baxter", url: moonMoods.url },
+  {
+    id: "new-world-mvmt4",
+    title: "Symphony No. 9 (From the New World), Mvmt 4",
+    artist: "Antonín Dvořák",
+    url: newWorld.url,
   },
   { id: "mist-o-the-moon", title: "Mist o' the Moon", artist: "Les Baxter", url: mistOTheMoon.url },
 ];
