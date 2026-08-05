@@ -172,7 +172,10 @@ describe("guided powered descent", () => {
     const lg = run.lowGate;
     expect(lg).not.toBeNull();
     expect(Math.abs(lg!.tSec - LOW_GATE_AIM.tSec)).toBeLessThanOrEqual(45);
-    expect(Math.abs(lg!.rangeM)).toBeLessThanOrEqual(900);
+    // M4.62 — the approach now flies the as-flown pitch corridor, so it holds
+    // altitude to the crew callouts and reaches low-gate altitude with a
+    // slightly longer ground track than a pure range-nulling law would.
+    expect(Math.abs(lg!.rangeM)).toBeLessThanOrEqual(2_000);
     expect(Math.abs(lg!.downrangeSpeedMps)).toBeLessThanOrEqual(35);
   });
 

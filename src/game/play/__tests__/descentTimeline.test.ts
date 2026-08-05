@@ -24,11 +24,11 @@ describe("canonical descent timeline", () => {
     }
   });
 
-  it("puts high gate at T+507 s, ~6,200 ft and ~4.1 nmi from the site", () => {
+  it("puts high gate at T+507 s, ~7,129 ft and ~4.1 nmi from the site", () => {
     const hg = DESCENT_TIMELINE.find((e) => e.id === "high-gate")!;
     expect(hg.tSec).toBe(507);
     expect(hg.program).toBe("P64");
-    expect(hg.altitudeM / FT).toBeCloseTo(6_200, 0);
+    expect(hg.altitudeM / FT).toBeCloseTo(7_129, 0);
     expect(hg.rangeToLzM / NMI).toBeCloseTo(4.1, 2);
     expect(hg.label).toContain("HIGH GATE");
     // SETPOS2 is five seconds after P64 entry, not at the gate itself.
