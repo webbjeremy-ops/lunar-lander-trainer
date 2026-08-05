@@ -503,6 +503,7 @@ export function usePlaySession(
     escalationRef.current = createHoustonEscalationState();
     setEscalation(escalationRef.current);
     crewHasVehicleRef.current = false;
+    forceHighGateRef.current = false;
   }, [makeInitial, script, generation, windowsUpAtStart, startsUnderPower, coastsToTig]);
 
   // --- Keyboard -------------------------------------------------------------
