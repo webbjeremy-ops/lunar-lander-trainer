@@ -19,6 +19,8 @@ import {
   type LessonAttemptReadyV1,
 } from "@/lessons/attemptReadiness";
 import { LessonDiagram } from "@/ui/learn/diagrams";
+import { GlossedText, KeyTerms } from "@/ui/learn/Glossary";
+
 import { ChallengeLauncher, ChallengeResultCard } from "@/ui/learn/ChallengeLauncher";
 import { ProgressPanel } from "@/ui/learn/ProgressPanel";
 import { useLearningProgress } from "@/ui/learn/useLearningProgress";
