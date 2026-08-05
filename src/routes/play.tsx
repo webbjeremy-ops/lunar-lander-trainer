@@ -462,14 +462,22 @@ function PlayClient() {
     {
       id: "velocity",
       legend: "Velocity",
-      on: Math.abs(session.orbit.radialSpeedMps) > limits.verticalSpeedMps * 1.5,
+      // M4.58 — flight-dynamics cautions belong to the pilot. While the
+      // computer flies its own (deliberately hot) profile, no lamp is lit
+      // against it.
+      on:
+        session.manualUnlocked &&
+        Math.abs(session.orbit.radialSpeedMps) > limits.verticalSpeedMps * 1.5,
       tone: "caution" as const,
       title: "Sink rate above the landing-gear limit.",
     },
     {
       id: "altitude",
       legend: "Altitude",
-      on: session.orbit.altitudeM < 60 && Math.abs(session.orbit.tangentialSpeedMps) > limits.horizontalSpeedMps * 2,
+      on:
+        session.manualUnlocked &&
+        session.orbit.altitudeM < 60 &&
+        Math.abs(session.orbit.tangentialSpeedMps) > limits.horizontalSpeedMps * 2,
       tone: "caution" as const,
       title: "Low and still translating — null the horizontal velocity.",
     },
