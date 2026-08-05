@@ -160,6 +160,59 @@ function SourcesPage() {
         </section>
 
         <section>
+          <h2 className="mb-2 text-lg font-semibold text-neutral-200">Music credits</h2>
+          <p className="mb-3 text-neutral-400">
+            Cabin tape selections were inspired by recordings carried aboard or heard during Apollo 11.
+            Historical track identification was based on the Apollo in Real Time mission archive and the
+            European Space Agency’s Apollo 11 music playlist.
+          </p>
+          <ul className="space-y-3 text-neutral-400">
+            <li>
+              <strong className="text-neutral-200">“Mother Country”</strong> — Written and performed by John Stewart.{" "}
+              <em>California Bloodlines</em>. Capitol Records, 1969.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Galveston”</strong> — Written by Jimmy Webb; performed by Glen Campbell.{" "}
+              <em>Galveston</em>. Capitol Records, 1969.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“People”</strong> — Music by Jule Styne; lyrics by Bob Merrill; performed by Barbra Streisand.{" "}
+              <em>People</em>. Columbia Records, 1964.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Three O’Clock in the Morning”</strong> — Music by Julián Robledo; lyrics by Dorothy Terriss; performed by Lou Rawls.{" "}
+              <em>Lou Rawls and Strings</em>. Capitol Records, 1965.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Angel of the Morning”</strong> — Written by Chip Taylor; performed by Bettye Swann. Capitol Records, 1969.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Everyday People”</strong> — Written by Sylvester Stewart (Sly Stone); performed by Peggy Lee.{" "}
+              <em>A Natural Woman</em>. Capitol Records, 1969.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Spinning Wheel”</strong> — Written by David Clayton-Thomas; performed by Peggy Lee.{" "}
+              <em>A Natural Woman</em>. Capitol Records, 1969.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Everyone’s Gone to the Moon”</strong> — Written by Jonathan King; performed by Chad & Jeremy.{" "}
+              <em>Distant Shores</em>. Columbia Records, 1966.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Everyone’s Gone to the Moon”</strong> — Written and performed by Jonathan King. Decca Records/Parrot Records, 1965.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Moon Moods”</strong> — Composed by Harry Revel; arranged and conducted by Les Baxter; theremin performed by Dr. Samuel J. Hoffman.{" "}
+              <em>Music Out of the Moon: Music Unusual Featuring the Theremin</em>. Capitol Records, 1947.
+            </li>
+            <li>
+              <strong className="text-neutral-200">“Symphony No. 9 in E Minor, Op. 95, ‘From the New World’: IV. Allegro con fuoco”</strong> —{" "}
+              Composed by Antonín Dvořák; performed by the Chicago Symphony Orchestra; conducted by Sir Georg Solti. London Records, 1983.
+            </li>
+          </ul>
+        </section>
+
+        <section>
           <h2 className="mb-2 text-lg font-semibold text-neutral-200">All rope images</h2>
           <ul className="space-y-1 text-neutral-400">
             {ROPE_IMAGES.map((r) => (
