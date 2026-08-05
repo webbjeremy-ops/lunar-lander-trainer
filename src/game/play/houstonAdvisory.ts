@@ -153,7 +153,9 @@ export function houstonDeviations(
   // to an abort — punishes the crew for the guidance program's own trajectory.
   // M4.65 — and no flight-dynamics call becomes a hard no-go above the P66
   // hand-over altitude (500 ft): the player does not yet have the vehicle.
-  const sinkRuleApplies = !input.autoGuidanceActive && alt <= 2_316;
+  // M4.66 — and no flight-dynamics call at all above the hand-over altitude,
+  // not even a caution: above 500 ft the deviation belongs to the computer.
+  const sinkRuleApplies = !input.autoGuidanceActive && alt <= HANDOVER_ALTITUDE_M;
   const sinkLimit = sinkRateLimitMps(alt);
   if (sinkRuleApplies && sink > sinkLimit * 2 && alt <= HANDOVER_ALTITUDE_M) {
     out.push(
