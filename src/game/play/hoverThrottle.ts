@@ -11,13 +11,12 @@
 import {
   DESCENT_ENGINE,
   LUNAR_ENVIRONMENT,
-  LUNAR_TERRAIN,
 } from "@/simulation/lunar2d/LunarMissionConstants";
 
 /** Surface gravity from the published GM and mean radius (~1.62 m/s²). */
 export const LUNAR_SURFACE_GRAVITY_MPS2 =
   LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value /
-  (LUNAR_TERRAIN.meanRadiusM.value * LUNAR_TERRAIN.meanRadiusM.value);
+  (LUNAR_ENVIRONMENT.meanRadiusM.value * LUNAR_ENVIRONMENT.meanRadiusM.value);
 
 /**
  * Throttle fraction that exactly cancels weight: T = m·g  =>  f = m·g / Tmax.
