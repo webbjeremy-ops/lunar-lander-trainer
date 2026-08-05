@@ -973,7 +973,7 @@ export function usePlaySession(
               ? 4
               : corridorSec <= 575
                 ? 7
-                : Math.max(3, 7 - 4 * ((corridorSec - 575) / 25));
+                : 2.5;
           maxTiltRad = walk + headroom * (Math.PI / 180);
           minTiltRad = Math.max(0, walk - 3 * (Math.PI / 180));
         } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
