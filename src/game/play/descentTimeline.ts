@@ -339,15 +339,16 @@ export const LOW_GATE_AIM: GateAimPoint = {
  */
 const APPROACH_PITCH_DEG: readonly (readonly [number, number])[] = [
   [487, 55],
-  [507, 55],
-  [512, 45],
-  [526, 40],
-  [543, 32],
-  [560, 26],
-  [578, 22],
-  [593, 19],
-  [617, 18],
-  [660, 12],
+  [507, 53],
+  [512, 43],
+  [526, 36],
+  [543, 28],
+  [553, 25],
+  [578, 22.5],
+  [593, 20.5],
+  [604, 20],
+  [617, 19.5],
+  [660, 13],
 ] as const;
 
 /** Scheduled tilt from local vertical at a mission time, radians (>= 0). */
@@ -433,11 +434,11 @@ const APPROACH_ALTITUDE_LEAD_FT: readonly (readonly [number, number])[] = [
   [526, -950],
   [543, -700],
   [553, -400],
-  [578, -100],
-  [593, 150],
-  [604, 230],
-  [617, 300],
-  [640, 60],
+  [578, -120],
+  [593, -20],
+  [604, -40],
+  [617, -60],
+  [640, -20],
   [660, 0],
 ] as const;
 
