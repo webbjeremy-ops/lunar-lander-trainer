@@ -3,6 +3,7 @@
 // M4.57 — Cabin tape player UI: a small side tab on the left edge. Tapping
 // the tab expands a moderate tape-deck panel; tapping again stows it.
 
+import { useState } from "react";
 import handTape from "@/assets/cabin-tape-hand.png.asset.json";
 import { CABIN_TRACKS, type CabinMusicApi } from "./useCabinMusic";
 
