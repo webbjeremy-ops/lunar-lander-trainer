@@ -40,17 +40,47 @@ function Readout({
   );
 }
 
-function Bar({ label, fraction, tone }: { label: string; fraction: number; tone: string }) {
+function Bar({
+  label,
+  fraction,
+  tone,
+  markerFraction = null,
+  markerLabel,
+  testid,
+}: {
+  label: string;
+  fraction: number;
+  tone: string;
+  markerFraction?: number | null;
+  markerLabel?: string;
+  testid?: string;
+}) {
   const pct = Math.max(0, Math.min(1, fraction)) * 100;
+  const markPct =
+    markerFraction === null ? null : Math.max(0, Math.min(1, markerFraction)) * 100;
   return (
     <div>
       <div className="mb-0.5 flex justify-between text-[9px] uppercase tracking-widest text-neutral-500">
         <span>{label}</span>
         <span>{pct.toFixed(0)}%</span>
       </div>
-      <div className="h-2 w-full rounded bg-neutral-900">
+      <div className="relative h-2 w-full rounded bg-neutral-900">
         <div className={`h-2 rounded ${tone}`} style={{ width: `${pct}%` }} />
+        {markPct !== null && (
+          <div
+            className="pointer-events-none absolute -top-0.5 h-3 w-[2px] rounded-sm bg-amber-300"
+            style={{ left: `${markPct}%` }}
+            data-testid={testid}
+            data-marker-pct={markPct.toFixed(1)}
+            title={markerLabel}
+          />
+        )}
       </div>
+      {markPct !== null && markerLabel && (
+        <div className="mt-0.5 text-right font-mono text-[9px] uppercase tracking-widest text-amber-300/80">
+          {markerLabel}
+        </div>
+      )}
     </div>
   );
 }
