@@ -253,7 +253,7 @@ function PlayClient() {
     alarmActive: session.alarms.lampOn,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     running: session.running,
-    duck: missionDuck,
+    duck: missionDuck * (cabinMusic.playing ? 0.75 : 1),
   });
 
   // M4.56 — descent propellant remaining as a fraction of the load. The
