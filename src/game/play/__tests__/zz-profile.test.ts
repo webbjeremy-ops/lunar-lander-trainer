@@ -25,7 +25,7 @@ describe("sample", () => { it("prints", () => {
     const sched = T.nominalStateAt(tSec);
     let maxTilt: number|null = null, minTilt: number|null = null;
     if (tSec >= T.APPROACH_PITCH_START_SEC && o.altitudeM > 60) {
-      const w = T.approachPitchRadAt(tSec); const tol = 6*Math.PI/180;
+      const w = T.approachPitchRadAt(tSec); const tol = 4*Math.PI/180;
       maxTilt = w+tol; minTilt = Math.max(0,w-tol);
     } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
       maxTilt = Math.abs(descentPhaseFor(o.altitudeM,{p64Selected:true}).pitchRad) + (1-Math.max(0,Math.min(1,(30-Math.abs(o.tangentialSpeedMps))/26)))*8*Math.PI/180;
