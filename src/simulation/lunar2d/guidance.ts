@@ -376,24 +376,34 @@ export function computeReferenceGuidance(
     recommendedThrottle = throttle;
   }
 
-  const clamped = Math.abs(attitude) > tiltLimit;
+  let clamped = Math.abs(attitude) > tiltLimit;
   if (attitude > tiltLimit) attitude = tiltLimit;
   if (attitude < -tiltLimit) attitude = -tiltLimit;
 
-  // M4.60 — a clipped attitude must not leave the engine over-thrusting the
-  // vertical axis. Re-trim the throttle so the vertical component of the
-  // delivered thrust is still the demanded aRadial; without this the tilt
-  // ceiling made the vehicle balloon back up through the approach.
-  if (clamped && fixed === null && recommendedThrottle > 0 && maxThrust > 0) {
+  // M4.62 — the approach-phase pitch corridor also has a FLOOR. The braking
+  // law would otherwise snap the vehicle nearly upright the instant it caught
+  // the profile at high gate; the flown approach walked from ~55° to ~18°.
+  const floorTilt = braking?.minTiltRad ?? null;
+  if (floorTilt !== null && floorTilt > 0 && Math.abs(attitude) < floorTilt) {
+    const sign = attitude < 0 ? -1 : aHorizontal < 0 ? -1 : 1;
+    attitude = sign * Math.min(floorTilt, tiltLimit);
+    clamped = true;
+  }
+
+  // M4.60/M4.62 — a corridor-clipped attitude must not leave the engine
+  // over- OR under-thrusting the vertical axis. Re-trim the throttle so the
+  // vertical component of the delivered thrust is still the demanded aRadial.
+  if (clamped && fixed === null && maxThrust > 0) {
     const cos = Math.cos(attitude);
     if (cos > 0.05) {
       let trimmed = (aRadial / cos) * mass / maxThrust;
       trimmed = snapDescentThrottle(Math.min(1, Math.max(0, trimmed)), parameters);
       if (bandMax !== null) trimmed = Math.min(trimmed, bandMax);
       if (bandMin !== null && trimmed > 0) trimmed = Math.max(trimmed, bandMin);
-      if (trimmed < recommendedThrottle) recommendedThrottle = trimmed;
+      recommendedThrottle = trimmed;
     }
   }
+
 
   let advisory: string;
   if (state.terminalState !== null) {
