@@ -962,7 +962,7 @@ export function usePlaySession(
             : null;
         if (corridorSec !== null) {
           const walk = approachPitchRadAt(corridorSec);
-          const tol = 4 * (Math.PI / 180);
+          const tol = 6 * (Math.PI / 180);
           maxTiltRad = walk + tol;
           minTiltRad = Math.max(0, walk - tol);
         } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
