@@ -15,8 +15,10 @@ import {
   currentMilestone,
   formatT,
   nextMilestone,
+  nominalAltitudeForRangeM,
   nominalStateAt,
 } from "@/game/play/descentTimeline";
+
 
 export function LunarScene({
   flight,
