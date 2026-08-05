@@ -779,9 +779,12 @@ function LearnPage() {
                 </span>
               </div>
               <h3 className="text-lg font-semibold text-neutral-100">{step.title}</h3>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-neutral-300">
-                {step.body}
-              </p>
+              <GlossedText
+                text={step.body}
+                className="mt-3 whitespace-pre-line text-sm leading-relaxed text-neutral-300"
+              />
+              <KeyTerms text={`${step.title}\n${step.body}`} />
+
 
               <div className="mt-4">
                 <h4 className="mb-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
