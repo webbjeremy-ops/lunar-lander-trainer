@@ -212,14 +212,13 @@ export function reduceProgramAlarms(
     case "tick": {
       const def = timeline[state.nextIndex];
       if (def === undefined) return state;
+      // M4.61 — alarms are TIME events, full stop. The altitude column is kept
+      // as reference (and shown in the debrief), but it may no longer pre-empt
+      // the clock: a trajectory a little low used to raise the 1202 seconds
+      // before Aldrin's recorded "twelve-oh-two" call, so lamp and voice
+      // disagreed. Both now key off the same ignition-relative second.
       const dueByTime = event.sinceIgnitionUs >= def.atSinceIgnitionSec * S;
-      const dueByAltitude =
-        def.belowAltitudeFt !== undefined &&
-        event.altitudeFt !== undefined &&
-        event.altitudeFt <= def.belowAltitudeFt &&
-        event.sinceIgnitionUs >=
-          (def.atSinceIgnitionSec - ALARM_ALTITUDE_LEAD_SEC) * S;
-      if (!dueByTime && !dueByAltitude) return state;
+      if (!dueByTime) return state;
 
       // Never stack two alarms on top of each other: a low trajectory can
       // satisfy several altitude triggers at once, which would re-light the
