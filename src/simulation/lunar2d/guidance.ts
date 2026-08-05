@@ -144,6 +144,14 @@ export interface BrakingTarget {
    * vehicle back up through the approach).
    */
   readonly maxTiltRad?: number | null;
+  /**
+   * M4.62 — floor on commanded tilt, radians. The approach phase pitch walk is
+   * a two-sided corridor: without a floor the braking law snapped Eagle nearly
+   * vertical at P64 (a 55° → 9° jump in three seconds), which is not how the
+   * approach was flown.
+   */
+  readonly minTiltRad?: number | null;
+
 }
 
 /**
@@ -286,7 +294,17 @@ export function computeReferenceGuidance(
         Math.min(5, altitudeError / altitudeTau),
       );
     }
+    // M4.62 — terminal descent must SETTLE, never hover. Above the surface the
+    // guided law always keeps a positive sink: ~2 ft/s inside 100 ft and
+    // ~1 ft/s inside 40 ft, so the vehicle flies down onto the probes instead
+    // of holding a lunar hover equilibrium until the propellant runs out.
+    if (orbit.altitudeM > 0.2) {
+      const floorSink =
+        orbit.altitudeM < 12 ? 0.25 : orbit.altitudeM < 30 ? 0.55 : 0.75;
+      targetRadial = Math.min(targetRadial, -floorSink);
+    }
     aRadial = netG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
+
   } else {
     targetRadial = targetSinkRate(orbit.altitudeM);
     // Terminal descent (P66 picture): the last hundred metres are flown by
@@ -358,24 +376,34 @@ export function computeReferenceGuidance(
     recommendedThrottle = throttle;
   }
 
-  const clamped = Math.abs(attitude) > tiltLimit;
+  let clamped = Math.abs(attitude) > tiltLimit;
   if (attitude > tiltLimit) attitude = tiltLimit;
   if (attitude < -tiltLimit) attitude = -tiltLimit;
 
-  // M4.60 — a clipped attitude must not leave the engine over-thrusting the
-  // vertical axis. Re-trim the throttle so the vertical component of the
-  // delivered thrust is still the demanded aRadial; without this the tilt
-  // ceiling made the vehicle balloon back up through the approach.
-  if (clamped && fixed === null && recommendedThrottle > 0 && maxThrust > 0) {
+  // M4.62 — the approach-phase pitch corridor also has a FLOOR. The braking
+  // law would otherwise snap the vehicle nearly upright the instant it caught
+  // the profile at high gate; the flown approach walked from ~55° to ~18°.
+  const floorTilt = braking?.minTiltRad ?? null;
+  if (floorTilt !== null && floorTilt > 0 && Math.abs(attitude) < floorTilt) {
+    const sign = attitude < 0 ? -1 : aHorizontal < 0 ? -1 : 1;
+    attitude = sign * Math.min(floorTilt, tiltLimit);
+    clamped = true;
+  }
+
+  // M4.60/M4.62 — a corridor-clipped attitude must not leave the engine
+  // over- OR under-thrusting the vertical axis. Re-trim the throttle so the
+  // vertical component of the delivered thrust is still the demanded aRadial.
+  if (clamped && fixed === null && maxThrust > 0) {
     const cos = Math.cos(attitude);
     if (cos > 0.05) {
       let trimmed = (aRadial / cos) * mass / maxThrust;
       trimmed = snapDescentThrottle(Math.min(1, Math.max(0, trimmed)), parameters);
       if (bandMax !== null) trimmed = Math.min(trimmed, bandMax);
       if (bandMin !== null && trimmed > 0) trimmed = Math.max(trimmed, bandMin);
-      if (trimmed < recommendedThrottle) recommendedThrottle = trimmed;
+      recommendedThrottle = trimmed;
     }
   }
+
 
   let advisory: string;
   if (state.terminalState !== null) {

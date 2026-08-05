@@ -77,10 +77,14 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
   m("yaw-around", 221, "BEGIN 180° FACE-UP YAW", "P63", 40_900, 88,
     "Start the face-up yaw so the landing radar can see the surface; the " +
     "manoeuvre is not complete until about T+294."),
+  m("radar-data-good", 286, "LANDING RADAR DATA GOOD", "P63", 37_100, 55,
+    "Initial valid landing-radar returns: altitude data is accepted by the " +
+    "computer. The spoken Delta-H exchange comes a few seconds later."),
   m("yaw-complete", 294, "FACE-UP YAW COMPLETE", "P63", 36_800, 52,
     "Windows up, radar antenna looking at the surface."),
   m("radar-lock", 299, "LANDING RADAR LOCK · DELTA-H", "P63", 36_500, 50,
     "Radar altitude agrees with the state vector; V57 accepts it."),
+
   m("alarm-1202-first", 317, "1202 PROGRAM ALARM", "P63", 33_500, 43,
     "Executive overflow — no core sets. Read it, reset it, keep flying."),
   m("alarm-1202-second", 357, "1202 PROGRAM ALARM", "P63", 26_977, 30,
@@ -88,28 +92,28 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
   m("throttle-down", 386, "THROTTLE RECOVERY · 92.5 % → 57 %", "P63", 24_000, 23,
     "Guidance leaves the fixed throttle point and steps straight down to the " +
     "variable range, skipping the 65-92.5 % nozzle-erosion band."),
-  m("p64-warning", 487, "THIRTY SECONDS TO P64", "P63", 7_000, 6.1,
+  m("p64-warning", 487, "THIRTY SECONDS TO P64", "P63", 9_900, 6.1,
     "Houston's call that the approach program is about to take over."),
-  m("high-gate", 507, "HIGH GATE · P64", "P64", 6_200, 4.1,
+  m("high-gate", 507, "HIGH GATE · P64", "P64", 7_129, 4.1,
     "P63 hands to P64: pitch-over brings the site into the window."),
-  m("setpos2", 512, "SETPOS2 · RADAR POSITION 2", "P64", 5_900, 3.85,
+  m("setpos2", 512, "SETPOS2 · RADAR POSITION 2", "P64", 6_750, 3.85,
     "The landing radar antenna is cranked to position 2 for the descent."),
   m("five-thousand", 526, "FIVE THOUSAND FEET", "P64", 5_000, 2.7,
     "Approach phase established, site in the window."),
-  m("go-for-landing", 543, "GO FOR LANDING", "P64", 3_000, 1.7,
+  m("go-for-landing", 543, "GO FOR LANDING", "P64", 3_300, 1.7,
     "Houston clears the crew to continue past the alarms."),
   m("alarm-1201-first", 553, "1201 PROGRAM ALARM", "P64", 2_500, 1.2,
     "Executive overflow — no VAC areas, taken in the approach phase."),
-  m("alarm-1201-second", 578, "1202 PROGRAM ALARM", "P64", 950, 0.55,
+  m("alarm-1201-second", 578, "1202 PROGRAM ALARM", "P64", 1_100, 0.55,
     "Recurring overload in the approach phase, landing point in the window."),
   m("alarm-1201-third", 593, "1202 PROGRAM ALARM", "P64", 800, 0.4,
     "Last of the descent alarms; guidance and displays stay healthy."),
   m("redesignate", 604, "LPD REDESIGNATION", "P64", 620, 0.34,
     "Commander flies past the rocky area, moving the aim point downrange."),
-  m("low-gate", 617, "LOW GATE · P66", "P66", 490, 0.3,
+  m("low-gate", 617, "LOW GATE · P66", "P66", 500, 0.3,
     "Rate-of-descent landing: control passes to the commander at once."),
 
-  m("des-qty-light", 683, "DES QTY · LOW LEVEL", "P66", 250, 0.15,
+  m("des-qty-light", 683, "DES QTY · LOW LEVEL", "P66", 160, 0.15,
     "The low-level propellant sensor lights; burn-time countdown starts."),
   m("sixty-seconds", 717, "SIXTY SECONDS", "P66", 70, 0.03,
     "Propellant call from Houston — burn time remaining, not tank quantity."),
@@ -117,6 +121,7 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
     "Final propellant call; the vehicle is essentially over the site."),
   m("contact", 755, "CONTACT · ENGINE STOP", "P66", 0, 0,
     "A probe touches, the contact light comes on, the engine is shut down."),
+
 ] as const;
 
 /** Total scripted descent duration, seconds (12:35 from PDI). */
@@ -296,19 +301,63 @@ export interface GateAimPoint {
 
 export const HIGH_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("high-gate"),
-  altitudeM: 6_200 * FT,
+  altitudeM: 7_129 * FT,
   rangeToLzM: 4.1 * NMI,
   downrangeSpeedMps: 500 * FT,
-  sinkRateMps: 145 * FT,
+  sinkRateMps: 125 * FT,
 } as const;
 
 export const LOW_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("low-gate"),
-  altitudeM: 490 * FT,
+  altitudeM: 500 * FT,
   rangeToLzM: 0.3 * NMI,
   downrangeSpeedMps: 50 * FT,
-  sinkRateMps: 16 * FT,
+  sinkRateMps: 14 * FT,
 } as const;
+
+/**
+ * M4.62 — the as-flown P64 pitch walk, degrees of tilt from local vertical as
+ * a function of ignition-relative time. Eagle entered the approach phase near
+ * 55° and walked MONOTONICALLY upright to about 18° at low gate; it never
+ * snapped near-vertical at the gate and never pitched back. Guidance is given
+ * this curve as a corridor so the commanded attitude follows the flight record
+ * instead of whatever the braking law would like instant by instant.
+ */
+const APPROACH_PITCH_DEG: readonly (readonly [number, number])[] = [
+  [487, 55],
+  [507, 55],
+  [512, 45],
+  [526, 40],
+  [543, 32],
+  [560, 26],
+  [578, 22],
+  [593, 19],
+  [617, 18],
+  [660, 12],
+] as const;
+
+/** Scheduled tilt from local vertical at a mission time, radians (>= 0). */
+export function approachPitchRadAt(tSec: number): number {
+  const first = APPROACH_PITCH_DEG[0]!;
+  const last = APPROACH_PITCH_DEG[APPROACH_PITCH_DEG.length - 1]!;
+  if (tSec <= first[0]) return (first[1] * Math.PI) / 180;
+  if (tSec >= last[0]) return (last[1] * Math.PI) / 180;
+  for (let i = 0; i < APPROACH_PITCH_DEG.length - 1; i++) {
+    const a = APPROACH_PITCH_DEG[i]!;
+    const b = APPROACH_PITCH_DEG[i + 1]!;
+    if (tSec >= a[0] && tSec <= b[0]) {
+      const f = (tSec - a[0]) / (b[0] - a[0]);
+      return (lerp(a[1], b[1], f) * Math.PI) / 180;
+    }
+  }
+  return (last[1] * Math.PI) / 180;
+}
+
+/** First and last mission time covered by the P64 pitch corridor, seconds. */
+export const APPROACH_PITCH_START_SEC = APPROACH_PITCH_DEG[0]![0];
+export const APPROACH_PITCH_END_SEC =
+  APPROACH_PITCH_DEG[APPROACH_PITCH_DEG.length - 1]![0];
+
 
 /**
  * Slope of the canonical altitude-versus-range profile at a given range to go
@@ -344,5 +393,5 @@ export function nominalGlideSlopeForRange(rangeToLzM: number): number {
  */
 export function altitudeTargetFor(forRangeM: number, forTimeM: number): number {
   if (forTimeM >= forRangeM) return forRangeM;
-  return forRangeM - 0.6 * (forRangeM - forTimeM);
+  return forRangeM - 0.85 * (forRangeM - forTimeM);
 }
