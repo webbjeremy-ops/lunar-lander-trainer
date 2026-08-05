@@ -4,6 +4,7 @@
 
 import type { LunarFlightState, LunarGuidanceCue, LunarOrbitalValues } from "@/simulation/lunar2d";
 import type { AssistanceLevel, LandingLimits } from "@/game/play";
+import { hoverThrottleFraction, hoverThrottleIsCommandable } from "@/game/play";
 import { useAppSettings } from "@/settings/SettingsProvider";
 import { formatDistance, formatMass, speedUnitLabel, M_PER_FT } from "@/settings/units";
 
@@ -40,17 +41,47 @@ function Readout({
   );
 }
 
-function Bar({ label, fraction, tone }: { label: string; fraction: number; tone: string }) {
+function Bar({
+  label,
+  fraction,
+  tone,
+  markerFraction = null,
+  markerLabel,
+  testid,
+}: {
+  label: string;
+  fraction: number;
+  tone: string;
+  markerFraction?: number | null;
+  markerLabel?: string;
+  testid?: string;
+}) {
   const pct = Math.max(0, Math.min(1, fraction)) * 100;
+  const markPct =
+    markerFraction === null ? null : Math.max(0, Math.min(1, markerFraction)) * 100;
   return (
     <div>
       <div className="mb-0.5 flex justify-between text-[9px] uppercase tracking-widest text-neutral-500">
         <span>{label}</span>
         <span>{pct.toFixed(0)}%</span>
       </div>
-      <div className="h-2 w-full rounded bg-neutral-900">
+      <div className="relative h-2 w-full rounded bg-neutral-900">
         <div className={`h-2 rounded ${tone}`} style={{ width: `${pct}%` }} />
+        {markPct !== null && (
+          <div
+            className="pointer-events-none absolute -top-0.5 h-3 w-[2px] rounded-sm bg-amber-300"
+            style={{ left: `${markPct}%` }}
+            data-testid={testid}
+            data-marker-pct={markPct.toFixed(1)}
+            title={markerLabel}
+          />
+        )}
       </div>
+      {markPct !== null && markerLabel && (
+        <div className="mt-0.5 text-right font-mono text-[9px] uppercase tracking-widest text-amber-300/80">
+          {markerLabel}
+        </div>
+      )}
     </div>
   );
 }
@@ -65,6 +96,7 @@ export function FlightInstruments({
   limits,
   assistance,
   initialPropellantKg,
+  manualControl = false,
 }: {
   flight: LunarFlightState;
   orbit: LunarOrbitalValues;
@@ -75,11 +107,18 @@ export function FlightInstruments({
   limits: LandingLimits;
   assistance: AssistanceLevel;
   initialPropellantKg: number;
+  /** M4.66 — show the hover mark once the crew has the vehicle. */
+  manualControl?: boolean;
 }) {
   const sink = -orbit.radialSpeedMps;
   const lateral = Math.abs(orbit.tangentialSpeedMps);
   const tiltDeg = (-flight.attitudeRad * 180) / Math.PI;
   const fuelFraction = initialPropellantKg > 0 ? flight.descentPropellantKg / initialPropellantKg : 0;
+
+  // M4.66 — the throttle that balances weight at the CURRENT mass. It falls as
+  // propellant burns off, which is why a fixed setting eventually climbs.
+  const hoverFraction = hoverThrottleFraction(massKg);
+  const showHover = manualControl && hoverThrottleIsCommandable(hoverFraction);
 
   const units = useAppSettings().units;
   const speedUnit = speedUnitLabel(units);
@@ -128,7 +167,16 @@ export function FlightInstruments({
           fraction={fuelFraction}
           tone={fuelFraction < 0.08 ? "bg-red-500" : fuelFraction < 0.2 ? "bg-amber-500" : "bg-emerald-500"}
         />
-        <Bar label="Throttle" fraction={throttle} tone="bg-sky-500" />
+        <Bar
+          label="Throttle"
+          fraction={throttle}
+          tone="bg-sky-500"
+          markerFraction={showHover ? hoverFraction : null}
+          markerLabel={
+            showHover ? `hover ${(hoverFraction * 100).toFixed(0)}%` : undefined
+          }
+          testid="inst-hover-mark"
+        />
       </div>
 
       <div className="rounded border border-neutral-800 bg-black/40 px-2 py-1.5 text-[11px]">
