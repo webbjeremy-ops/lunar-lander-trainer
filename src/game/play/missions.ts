@@ -192,8 +192,36 @@ export function downrangeToLandingZoneM(
   return (landingZoneAngleRad - centralAngleRad) * MOON_RADIUS_M;
 }
 
-/** The landing zone always sits at central angle 0 in the planar frame. */
+/**
+ * The computer's AIM POINT sits at central angle 0 in the planar frame. This
+ * is the point P63/P64 guidance nulls its range against, so the range to it
+ * reaches zero and then goes NEGATIVE if the vehicle overflies it.
+ */
 export const LANDING_ZONE_ANGLE_RAD = 0;
+
+/**
+ * M4.64 — two distinct range references, kept apart on purpose.
+ *
+ *   rangeToGuidanceAimpointM — distance to the computer's automatic aim point
+ *     (central angle 0). Guidance flies this to zero; it may go negative.
+ *   rangeToLandingZoneCenterM — distance to the SELECTED landing area. Apollo
+ *     11 touched down about 1,100 ft (335 m) downrange of the automatic aim
+ *     point after Armstrong flew past the rocky crater field, so the selected
+ *     area sits that far beyond the aim point along the ground track.
+ */
+export const LANDING_ZONE_DOWNRANGE_OFFSET_M = 335;
+
+export function rangeToGuidanceAimpointM(centralAngleRad: number): number {
+  return downrangeToLandingZoneM(centralAngleRad, LANDING_ZONE_ANGLE_RAD);
+}
+
+export function rangeToLandingZoneCenterM(centralAngleRad: number): number {
+  return (
+    downrangeToLandingZoneM(centralAngleRad, LANDING_ZONE_ANGLE_RAD) +
+    LANDING_ZONE_DOWNRANGE_OFFSET_M
+  );
+}
+
 
 // --- Pre-ignition insertion (M4.41) -----------------------------------------
 //
