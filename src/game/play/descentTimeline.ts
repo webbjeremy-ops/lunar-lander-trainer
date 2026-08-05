@@ -20,10 +20,11 @@
 //          T+357 second 1202 (102:39:02)
 //   T+386  THROTTLE RECOVERY: guidance leaves the 92.5 % fixed throttle point
 //          and drops straight to ~57 %, below the 65-92.5 % erosion band
-//   T+507  HIGH GATE — P63 hands to P64, pitch-over, SETPOS2 (radar to
-//          antenna position 2), ~7,600 ft and ~4.1 nmi from the aim point
+//   T+507  HIGH GATE — P63 hands to P64, pitch-over at ~6,200 ft and
+//          ~4.1 nmi from the aim point; SETPOS2 (radar position 2) at T+512
 //   T+553 / T+578  the two 1201s in the approach phase
-//   T+617  LOW GATE — 500 ft, P66 rate-of-descent, manual landing
+//   T+617  LOW GATE — ~490 ft, P66, control passes to the commander
+
 //   T+717  "sixty seconds", T+746 "thirty seconds"
 //   T+755  contact / touchdown  (12:35 from PDI)
 //
@@ -73,30 +74,41 @@ export const DESCENT_TIMELINE: readonly DescentMilestone[] = [
     "DPS lights at 10 % thrust; the vehicle is on its back, windows down."),
   m("throttle-up", 26, "THROTTLE UP · FTP", "P63", 48_000, 236,
     "Guidance takes the engine to the fixed throttle point for braking."),
-  m("yaw-around", 221, "YAW-AROUND · WINDOWS UP", "P63", 40_900, 95,
-    "Roll face-up so the landing radar sees the surface."),
-  m("radar-lock", 299, "LANDING RADAR LOCK · DELTA-H", "P63", 36_500, 53,
+  m("yaw-around", 221, "BEGIN 180° FACE-UP YAW", "P63", 40_900, 88,
+    "Start the face-up yaw so the landing radar can see the surface; the " +
+    "manoeuvre is not complete until about T+294."),
+  m("yaw-complete", 294, "FACE-UP YAW COMPLETE", "P63", 36_800, 52,
+    "Windows up, radar antenna looking at the surface."),
+  m("radar-lock", 299, "LANDING RADAR LOCK · DELTA-H", "P63", 36_500, 50,
     "Radar altitude agrees with the state vector; V57 accepts it."),
-  m("alarm-1202-first", 317, "1202 PROGRAM ALARM", "P63", 33_500, 51,
+  m("alarm-1202-first", 317, "1202 PROGRAM ALARM", "P63", 33_500, 43,
     "Executive overflow — no core sets. Read it, reset it, keep flying."),
-  m("alarm-1202-second", 357, "1202 PROGRAM ALARM", "P63", 26_977, 37,
+  m("alarm-1202-second", 357, "1202 PROGRAM ALARM", "P63", 26_977, 30,
     "Recurring overload; guidance and displays stay healthy."),
-  m("throttle-down", 386, "THROTTLE RECOVERY · 92.5 % → 57 %", "P63", 24_000, 30,
+  m("throttle-down", 386, "THROTTLE RECOVERY · 92.5 % → 57 %", "P63", 24_000, 23,
     "Guidance leaves the fixed throttle point and steps straight down to the " +
     "variable range, skipping the 65-92.5 % nozzle-erosion band."),
-  m("high-gate", 507, "HIGH GATE · P64 · SETPOS2", "P64", 7_600, 4.1,
-    "P63 hands to P64: pitch-over brings the site into the window and the " +
-    "landing radar antenna is cranked to position 2 for the descent."),
-  m("alarm-1201-first", 553, "1201 PROGRAM ALARM", "P64", 3_000, 2.2,
+  m("p64-warning", 487, "THIRTY SECONDS TO P64", "P63", 7_000, 6.1,
+    "Houston's call that the approach program is about to take over."),
+  m("high-gate", 507, "HIGH GATE · P64", "P64", 6_200, 4.1,
+    "P63 hands to P64: pitch-over brings the site into the window."),
+  m("setpos2", 512, "SETPOS2 · RADAR POSITION 2", "P64", 5_900, 3.85,
+    "The landing radar antenna is cranked to position 2 for the descent."),
+  m("five-thousand", 526, "FIVE THOUSAND FEET", "P64", 5_000, 2.7,
+    "Approach phase established, site in the window."),
+  m("go-for-landing", 543, "GO FOR LANDING", "P64", 3_000, 1.7,
+    "Houston clears the crew to continue past the alarms."),
+  m("alarm-1201-first", 553, "1201 PROGRAM ALARM", "P64", 2_500, 1.2,
     "Executive overflow — no VAC areas, taken in the approach phase."),
-  m("alarm-1201-second", 578, "1202 PROGRAM ALARM", "P64", 1_000, 1.1,
+  m("alarm-1201-second", 578, "1202 PROGRAM ALARM", "P64", 950, 0.55,
     "Recurring overload in the approach phase, landing point in the window."),
-  m("alarm-1201-third", 593, "1202 PROGRAM ALARM", "P64", 800, 0.9,
+  m("alarm-1201-third", 593, "1202 PROGRAM ALARM", "P64", 800, 0.4,
     "Last of the descent alarms; guidance and displays stay healthy."),
-  m("redesignate", 604, "LPD REDESIGNATION", "P64", 700, 0.7,
+  m("redesignate", 604, "LPD REDESIGNATION", "P64", 620, 0.34,
     "Commander flies past the rocky area, moving the aim point downrange."),
-  m("low-gate", 617, "LOW GATE · P66", "P66", 500, 0.3,
-    "Rate-of-descent landing: hold the sink rate, null forward velocity."),
+  m("low-gate", 617, "LOW GATE · P66", "P66", 490, 0.3,
+    "Rate-of-descent landing: control passes to the commander at once."),
+
   m("des-qty-light", 683, "DES QTY · LOW LEVEL", "P66", 250, 0.15,
     "The low-level propellant sensor lights; burn-time countdown starts."),
   m("sixty-seconds", 717, "SIXTY SECONDS", "P66", 70, 0.03,
@@ -115,7 +127,7 @@ export const TIMELINE_CITATION = {
   label: "Apollo 11 Mission Report / air-to-ground transcript / Luminary 099",
   detail:
     "Times are ignition-relative (PDI at GET 102:33:05). High gate, the P64 " +
-    "hand-over and the SETPOS2 antenna reposition are at T+507 s (8:27), ~7,600 ft " +
+    "hand-over is at T+507 s (8:27), ~6,200 ft " +
     "and ~4.1 nmi from the aim point. The timeline is raised by the game as a " +
     "bridged overlay, never by the pinned rope.",
 } as const;
@@ -268,7 +280,7 @@ export const HIGH_GATE_RANGE_M = milestoneById("high-gate")!.rangeToLzM;
  * gate, Houston and the regression tests all read them from here so that no
  * two parts of the game can disagree about where the vehicle should be.
  *
- *   High gate  T+506 s   7,600 ft   4.1 nmi to run   ~500 ft/s   ~145 ft/s sink
+ *   High gate  T+507 s   6,200 ft   4.1 nmi to run   ~500 ft/s   ~145 ft/s sink
  *   Low gate   T+642 s     500 ft   0.3 nmi to run    ~50 ft/s    ~16 ft/s sink
  */
 export interface GateAimPoint {
@@ -284,7 +296,7 @@ export interface GateAimPoint {
 
 export const HIGH_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("high-gate"),
-  altitudeM: 7_600 * FT,
+  altitudeM: 6_200 * FT,
   rangeToLzM: 4.1 * NMI,
   downrangeSpeedMps: 500 * FT,
   sinkRateMps: 145 * FT,
@@ -292,7 +304,7 @@ export const HIGH_GATE_AIM: GateAimPoint = {
 
 export const LOW_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("low-gate"),
-  altitudeM: 500 * FT,
+  altitudeM: 490 * FT,
   rangeToLzM: 0.3 * NMI,
   downrangeSpeedMps: 50 * FT,
   sinkRateMps: 16 * FT,
@@ -321,4 +333,16 @@ export function nominalGlideSlopeForRange(rangeToLzM: number): number {
   const first = DESCENT_TIMELINE[0]!;
   const second = DESCENT_TIMELINE[1]!;
   return (first.altitudeM - second.altitudeM) / (first.rangeToLzM - second.rangeToLzM);
+}
+
+/**
+ * M4.60 — blend the range-keyed altitude target with the TIME-keyed one. A hard
+ * `min` of the two steps the vertical demand the moment the schedules cross
+ * (throttle recovery), which snapped the commanded pitch; easing 60 % of the
+ * way toward the time profile keeps the pitch continuous while still pulling
+ * the flown altitude back onto the mission clock.
+ */
+export function altitudeTargetFor(forRangeM: number, forTimeM: number): number {
+  if (forTimeM >= forRangeM) return forRangeM;
+  return forRangeM - 0.6 * (forRangeM - forTimeM);
 }

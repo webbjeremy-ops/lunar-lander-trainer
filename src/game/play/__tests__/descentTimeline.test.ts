@@ -24,13 +24,17 @@ describe("canonical descent timeline", () => {
     }
   });
 
-  it("puts high gate at T+507 s, ~7,600 ft and ~4.1 nmi from the site", () => {
+  it("puts high gate at T+507 s, ~6,200 ft and ~4.1 nmi from the site", () => {
     const hg = DESCENT_TIMELINE.find((e) => e.id === "high-gate")!;
     expect(hg.tSec).toBe(507);
     expect(hg.program).toBe("P64");
-    expect(hg.altitudeM / FT).toBeCloseTo(7_600, 0);
+    expect(hg.altitudeM / FT).toBeCloseTo(6_200, 0);
     expect(hg.rangeToLzM / NMI).toBeCloseTo(4.1, 2);
-    expect(hg.label).toContain("SETPOS2");
+    expect(hg.label).toContain("HIGH GATE");
+    // SETPOS2 is five seconds after P64 entry, not at the gate itself.
+    const sp = DESCENT_TIMELINE.find((e) => e.id === "setpos2")!;
+    expect(sp.tSec).toBe(512);
+    expect(sp.label).toContain("SETPOS2");
   });
 
   it("lands inside thirteen minutes of powered flight", () => {
@@ -51,7 +55,7 @@ describe("canonical descent timeline", () => {
 
   it("reports the current and next milestone", () => {
     expect(currentMilestone(510).id).toBe("high-gate");
-    expect(nextMilestone(510)!.id).toBe("alarm-1201-first");
+    expect(nextMilestone(510)!.id).toBe("setpos2");
     expect(nextMilestone(1_000)).toBeNull();
     expect(milestoneSec("low-gate")).toBe(617);
     expect(formatT(507)).toBe("T+08:27");

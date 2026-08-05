@@ -79,6 +79,9 @@ import {
   LOW_GATE_AIM,
   nominalGlideSlopeForRange,
   highGateStatus,
+  milestoneSec,
+  nominalStateAt,
+
   type HighGateStatus,
   usesApollo11Timeline,
   type AssistanceLevel,
@@ -929,9 +932,39 @@ export function usePlaySession(
             : null;
         const guidanceEnv =
           guidanceSinceIgnitionUs === null ? null : dpsThrottleEnvelope(guidanceSinceIgnitionUs);
+        // M4.60 — the canonical profile is a function of TIME as well as range.
+        // Keying the targets to range alone let the ground track run late and
+        // dragged the whole altitude profile up with it, so the cockpit read
+        // thousands of feet high at each crew callout. Take the time schedule
+        // into account: never hold an altitude above what the flown profile has
+        // at this mission time, and tell guidance how long it is running.
+        const schedSec =
+          apollo11Timeline && guidanceSinceIgnitionUs !== null
+            ? guidanceSinceIgnitionUs / 1_000_000
+            : null;
+        const sched = schedSec === null ? null : nominalStateAt(schedSec);
+        // M4.59/M4.60 — approach-phase tilt ceiling, handed to guidance so the
+        // throttle is sized at the attitude actually flown. After pitch-over the
+        // flown attitude walks monotonically upright (~55° at P64 → ~18° at
+        // P66); the braking law could otherwise demand 60°+ and point Eagle
+        // dramatically backwards again during the approach.
+        let maxTiltRad: number | null = null;
+        // Above ~120 m only: in the last hundred metres the terminal law
+        // needs full authority to null translation before the gear touches.
+        if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
+          const phasePitch = Math.abs(
+            descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad,
+          );
+          const speed = Math.abs(o.tangentialSpeedMps);
+          const blend = Math.max(0, Math.min(1, (30 - speed) / 26));
+          maxTiltRad = phasePitch + (1 - blend) * 8 * (Math.PI / 180);
+        }
         const cue = computeReferenceGuidance(state, undefined, !useProfile ? null : {
           rangeToLandingZoneM: rangeM,
-          targetAltitudeM: nominalAltitudeForRangeM(Math.abs(rangeM)),
+          targetAltitudeM:
+            sched === null
+              ? nominalAltitudeForRangeM(Math.abs(rangeM))
+              : altitudeTargetFor(nominalAltitudeForRangeM(Math.abs(rangeM)), sched.altitudeM),
           targetDownrangeSpeedMps: nominalDownrangeSpeedForRange(Math.abs(rangeM)),
           handoverRangeM: HIGH_GATE_RANGE_M,
           fixedThrottle:
@@ -945,29 +978,13 @@ export function usePlaySession(
           targetGlideSlope: nominalGlideSlopeForRange(Math.abs(rangeM)),
           throttleMinFraction: guidanceEnv ? guidanceEnv.min : null,
           throttleMaxFraction: guidanceEnv ? guidanceEnv.max : null,
+          scheduleRangeErrorM: sched === null ? null : rangeM - sched.rangeToLzM,
+          maxTiltRad,
         });
         throttle = cue.recommendedThrottle;
-        // M4.49 / M4.51 — automatic pitch-over at high gate, but ONLY as fast
-        // as the translation allows. Forcing the cosmetic phase attitude while
-        // the vehicle still carries downrange speed removed the braking
-        // component guidance needs, so it sailed past the site and arrived hot.
-        // The phase attitude is therefore blended in as horizontal speed is
-        // nulled: no authority above ~30 m/s, full pitch-over below ~4 m/s.
-        let aimAttitudeRad = cue.recommendedAttitudeRad;
-        if (o.altitudeM <= PHASE_HIGH_GATE_M) {
-          // M4.52 — the phase table is a PRESENTATION angle (positive = pitched
-          // back for braking); the kernel's attitude is signed the other way
-          // (negative = thrust tilted retrograde). Convert before using it as a
-          // guidance aim, otherwise the pitch-over commanded PROGRADE thrust
-          // and drove the vehicle away from the site.
-          const phasePitch = -descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad;
-          const speed = Math.abs(o.tangentialSpeedMps);
-          const blend = Math.max(0, Math.min(1, (30 - speed) / 26));
-          // Only ever blend toward a MORE upright attitude — never add tilt.
-          if (Math.abs(phasePitch) < Math.abs(aimAttitudeRad)) {
-            aimAttitudeRad = aimAttitudeRad + (phasePitch - aimAttitudeRad) * blend;
-          }
-        }
+        const aimAttitudeRad = cue.recommendedAttitudeRad;
+
+
 
         // Simple proportional attitude autopilot onto the advisory angle.
         const err = aimAttitudeRad - state.attitudeRad;
@@ -1280,6 +1297,32 @@ export function usePlaySession(
     return () => window.clearInterval(id);
   }, [script, readGates, generation]);
 
+  /**
+   * M4.59 — P66 IS the handover. Armstrong took the vehicle at low gate, at
+   * T+617 s and ~500 ft, not ten seconds later: the program change and the
+   * control transition are the same event. As soon as the descent clock
+   * reaches low gate the P66 entry is keyed automatically and the vehicle is
+   * the player's. A hand entry or the takeover button before that still works.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let fired = false;
+    const lowGateUs = milestoneSec("low-gate") * 1_000_000;
+    const id = window.setInterval(() => {
+      if (fired) return;
+      const state = procedureRef.current;
+      if (state.manualControlUnlocked) {
+        fired = true;
+        return;
+      }
+      if (descentClockRef.current.sinceIgnitionUs < lowGateUs) return;
+      const step = currentStep(script, state);
+      fired = true;
+      if (step?.id === "p66-takeover") acceptProgramRef.current();
+      takeoverRef.current();
+    }, 250);
+    return () => window.clearInterval(id);
+  }, [script, generation]);
 
 
 

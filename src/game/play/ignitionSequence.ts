@@ -8,6 +8,10 @@
 //
 //   T-60 s  countdown running, ENG ARM still OFF
 //   T-35 s  computer asks permission to ignite (flashing V99 N62)
+//          GAMEPLAY ACCOMMODATION: on Apollo 11 the flashing V99 N62 appeared
+//          at about TIG-5 s and PROCEED was pressed between TIG-5 and TIG-0.
+//          The request is raised thirty seconds early here purely to give the
+//          player a usable reaction window; it is not time-accurate.
 //   ...     Aldrin sets ENG ARM to DESCENT; PROCEED is refused until he does
 //   PRO     crew answers the request
 //   T-7.5 s RCS +X ullage settles the propellant
@@ -72,7 +76,13 @@ const S = 1_000_000;
 
 /** Countdown length presented to the player before TIG. */
 export const COUNTDOWN_LENGTH_US = 150 * S;
-/** The computer asks permission to ignite at TIG-35 s. */
+/**
+ * The computer asks permission to ignite at TIG-35 s.
+ *
+ * GAMEPLAY ACCOMMODATION — the authentic V99 N62 ignition request appeared at
+ * about TIG-5 s and was answered with PROCEED before TIG. The 35-second lead
+ * exists so the player has time to arm the engine and answer it.
+ */
 export const IGNITION_REQUEST_US = 35 * S;
 /** RCS +X ullage begins at TIG-7.5 s. */
 export const ULLAGE_START_US = 7.5 * S;
@@ -87,10 +97,14 @@ const THROTTLE_UP_RAMP_US = 2 * S;
 export const IGNITION_CITATION = {
   label: "Apollo 11 Flight Plan / LM Timeline Book / Apollo 11 air-to-ground transcript",
   detail:
-    "PDI ritual order (ENG ARM to DESCENT, flashing V99 ignition request at " +
-    "TIG-35 s answered with PROCEED, +X ullage at TIG-7.5 s, ignition at the " +
-    "10 % fixed-throttle point, throttle-up at TIG+26 s) follows the published " +
-    "timeline. Crew wording is transcript-derived except where marked attributed.",
+    "PDI ritual order (ENG ARM to DESCENT, V99 ignition request answered with " +
+    "PROCEED, +X ullage at TIG-7.5 s, ignition at the 10 % fixed-throttle " +
+    "point, throttle-up at TIG+26 s) follows the published timeline. The " +
+    "flashing V99 is shown at TIG-35 s rather than the authentic TIG-5 s as a " +
+    "deliberate gameplay accommodation. Houston's GO for powered descent was " +
+    "given at about TIG-297 s and TIG-254 s, before this scene opens; the clip " +
+    "is replayed at TIG-40 s as a cold open. Crew wording is transcript-derived " +
+    "except where marked attributed.",
 } as const;
 
 export const CREW_CALLOUTS: readonly CrewCallout[] = [
@@ -102,14 +116,14 @@ export const CREW_CALLOUTS: readonly CrewCallout[] = [
   },
   {
     atTigSeconds: -40,
-    speaker: "Duke (CAPCOM)",
-    text: "Eagle, Houston. You are GO for powered descent.",
+    speaker: "Aldrin",
+    text: "Engine Arm, Descent. Forty seconds.",
     attributed: false,
   },
   {
     atTigSeconds: -35,
     speaker: "Aldrin",
-    text: "Flashing 99 — the computer wants permission to ignite.",
+    text: "Flashing 99 — the computer wants permission to ignite. (Shown early for the player; the real 99 came up at TIG-5.)",
     attributed: true,
   },
   {

@@ -54,6 +54,13 @@ const BRAKING_MAX_SINK_MPS = 55;
  * braking, and it takes priority over the nominal speed profile, m/s².
  */
 const BRAKING_STOP_OVERRIDE_MPS2 = 2.8;
+/**
+ * Authority of the schedule catch-up relief, m/s², and the range error that
+ * saturates it (metres long of the canonical profile).
+ */
+const SCHEDULE_RELIEF_MAX_MPS2 = 0.45;
+const SCHEDULE_RELIEF_SCALE_M = 4_000;
+
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
 /** Schedule catch-up trim: time constant and authority limit. */
@@ -118,6 +125,25 @@ export interface BrakingTarget {
    * speed reach each gate together instead of drifting apart.
    */
   readonly targetGlideSlope?: number | null;
+  /**
+   * M4.60 — how far the vehicle is LONG of the canonical range-versus-TIME
+   * schedule right now, metres (positive = still further out than the flown
+   * profile wants at this mission time). Being long in range is what made the
+   * cockpit read thousands of feet high at each crew callout: the altitude
+   * target is keyed to range, so a late ground track drags the whole altitude
+   * profile with it. Guidance answers by braking a little less, keeping speed
+   * to eat the ground track back, and lets the terminal law brake harder later.
+   */
+  readonly scheduleRangeErrorM?: number | null;
+  /**
+   * M4.60 — hard ceiling on commanded tilt, radians. The approach phase has a
+   * flown pitch curve; letting the braking law demand more tilt than that made
+   * Eagle pitch dramatically backwards after pitch-over. Guidance applies the
+   * ceiling BEFORE it sizes the throttle, so a clipped attitude no longer
+   * leaves the engine over-thrusting the vertical axis (which ballooned the
+   * vehicle back up through the approach).
+   */
+  readonly maxTiltRad?: number | null;
 }
 
 /**
@@ -202,6 +228,22 @@ export function computeReferenceGuidance(
           (Math.abs(v) - Math.abs(scheduled)) / SCHEDULE_TRIM_TAU_S,
         );
       }
+      // M4.60 — schedule catch-up relief (the mirror of the trim above).
+      // Relief is a BRAKING-phase device: past high gate the approach has to
+      // arrive at the site on speed, not keep energy to catch a clock. Fade it
+      // out over the last gate-range so the pitch profile stays continuous
+      // through pitch-over instead of stepping when the relief drops out.
+      const relief = braking.scheduleRangeErrorM ?? 0;
+      const fade = Math.max(
+        0,
+        Math.min(1, (s - braking.handoverRangeM) / Math.max(1, braking.handoverRangeM)),
+      );
+      if (relief > 0 && fade > 0) {
+        decel = Math.max(
+          0,
+          decel - fade * Math.min(SCHEDULE_RELIEF_MAX_MPS2, relief / SCHEDULE_RELIEF_SCALE_M),
+        );
+      }
       if (inBraking) {
         // Safety law: genuinely late braking (still faster than the gate speed
         // and needing more than the profile deceleration) takes priority.
@@ -270,6 +312,9 @@ export function computeReferenceGuidance(
       ? parameters.ascentEngine.thrustN.value
       : parameters.descentEngine.maxThrustN.value;
 
+  const ceiling = braking?.maxTiltRad ?? null;
+  if (ceiling !== null && ceiling >= 0) tiltLimit = Math.min(tiltLimit, ceiling);
+
   const fixed = braking?.fixedThrottle ?? null;
   const bandMin = braking?.throttleMinFraction ?? null;
   const bandMax = braking?.throttleMaxFraction ?? null;
@@ -313,8 +358,24 @@ export function computeReferenceGuidance(
     recommendedThrottle = throttle;
   }
 
+  const clamped = Math.abs(attitude) > tiltLimit;
   if (attitude > tiltLimit) attitude = tiltLimit;
   if (attitude < -tiltLimit) attitude = -tiltLimit;
+
+  // M4.60 — a clipped attitude must not leave the engine over-thrusting the
+  // vertical axis. Re-trim the throttle so the vertical component of the
+  // delivered thrust is still the demanded aRadial; without this the tilt
+  // ceiling made the vehicle balloon back up through the approach.
+  if (clamped && fixed === null && recommendedThrottle > 0 && maxThrust > 0) {
+    const cos = Math.cos(attitude);
+    if (cos > 0.05) {
+      let trimmed = (aRadial / cos) * mass / maxThrust;
+      trimmed = snapDescentThrottle(Math.min(1, Math.max(0, trimmed)), parameters);
+      if (bandMax !== null) trimmed = Math.min(trimmed, bandMax);
+      if (bandMin !== null && trimmed > 0) trimmed = Math.max(trimmed, bandMin);
+      if (trimmed < recommendedThrottle) recommendedThrottle = trimmed;
+    }
+  }
 
   let advisory: string;
   if (state.terminalState !== null) {

@@ -35,6 +35,16 @@ export const DESCENT_LANDMARKS = {
   lowGateM: Math.round(500 * FT),
 } as const;
 
+/**
+ * Ground track still to run to the aim point AT IGNITION (259 nmi), and the
+ * pre-TIG coast the scenario opens with. The mission's initial range is the
+ * sum: the vehicle is continuously advancing during the countdown, so it must
+ * start further out to cross PDI at the historical range.
+ */
+export const FULL_DESCENT_PDI_RANGE_M = 480_000;
+export const FULL_DESCENT_COAST_SEC = 150;
+export const FULL_DESCENT_COAST_SPEED_MPS = 1_698;
+
 export const MOON_RADIUS_M = LUNAR_ENVIRONMENT.meanRadiusM.value;
 
 /** Landing-gear limits per assistance level. Commander is the tightest. */
@@ -107,11 +117,16 @@ export const MISSIONS: Readonly<Record<MissionId, MissionDefinition>> = {
       altitudeM: DESCENT_LANDMARKS.poweredDescentInitiationM,
       radialSpeedMps: -3,
       // Apollo 11 crossed PDI at about 5,570 ft/s inertial, 259 nmi of ground
-      // track still to run to the aim point.
+      // track still to run to the aim point. The scenario starts 150 s before
+      // TIG, and the vehicle coasts that whole time at ~1,698 m/s, so the
+      // initial range is 259 nmi PLUS the 150-second coast (~137 nmi) —
+      // ~397 nmi at T-150, ~314 nmi at T-60, 259 nmi at ignition.
       tangentialSpeedMps: 1_698,
       attitudeRad: -1.35,
       descentPropellantKg: 8_200,
-      rangeToLandingZoneM: 480_000,
+      rangeToLandingZoneM:
+        FULL_DESCENT_PDI_RANGE_M +
+        Math.round(FULL_DESCENT_COAST_SPEED_MPS * FULL_DESCENT_COAST_SEC),
     },
     defaultControlMode: "agc-assisted",
     availableControlModes: ["agc-assisted", "training", "quick-manual"],
