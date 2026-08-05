@@ -144,6 +144,14 @@ export interface BrakingTarget {
    * vehicle back up through the approach).
    */
   readonly maxTiltRad?: number | null;
+  /**
+   * M4.62 — floor on commanded tilt, radians. The approach phase pitch walk is
+   * a two-sided corridor: without a floor the braking law snapped Eagle nearly
+   * vertical at P64 (a 55° → 9° jump in three seconds), which is not how the
+   * approach was flown.
+   */
+  readonly minTiltRad?: number | null;
+
 }
 
 /**
