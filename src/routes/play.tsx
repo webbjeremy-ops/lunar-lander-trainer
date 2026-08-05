@@ -297,6 +297,18 @@ function PlayClient() {
     setMissionDuck(missionAudio.duck);
   }, [missionAudio.duck]);
 
+  // M4.57 — the tape is stowed the moment the crew takes the vehicle: from
+  // there the game score carries the landing.
+  const manualUnlocked = session.manualUnlocked;
+  const stopCabinMusic = cabinMusic.stop;
+  const setCabinOpen = cabinMusic.setOpen;
+  useEffect(() => {
+    if (!manualUnlocked) return;
+    stopCabinMusic();
+    setCabinOpen(false);
+  }, [manualUnlocked, stopCabinMusic, setCabinOpen]);
+
+
 
   const agc = useAgcSession();
 
