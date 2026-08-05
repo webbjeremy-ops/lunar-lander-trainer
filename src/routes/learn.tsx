@@ -19,6 +19,8 @@ import {
   type LessonAttemptReadyV1,
 } from "@/lessons/attemptReadiness";
 import { LessonDiagram } from "@/ui/learn/diagrams";
+import { GlossedText, KeyTerms } from "@/ui/learn/Glossary";
+
 import { ChallengeLauncher, ChallengeResultCard } from "@/ui/learn/ChallengeLauncher";
 import { ProgressPanel } from "@/ui/learn/ProgressPanel";
 import { useLearningProgress } from "@/ui/learn/useLearningProgress";
@@ -157,6 +159,19 @@ function LearnPage() {
   const [selectedId, setSelectedId] = useState<string>(
     LEARNING_TRACKS[0]?.lessonIds[0] ?? ALL_LESSONS[0]!.id,
   );
+  // Mobile: the lesson list collapses so the lesson body is the first thing
+  // on screen. Picking a lesson closes the list and scrolls back to the top.
+  const [navOpen, setNavOpen] = useState(false);
+  const lessonSectionRef = useRef<HTMLElement | null>(null);
+  const selectLessonForMobile = useCallback(() => {
+    setNavOpen(false);
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      requestAnimationFrame(() => {
+        lessonSectionRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    }
+  }, []);
+
   const [states, setStates] = useState<Record<string, LessonState>>(() => {
     const init: Record<string, LessonState> = {};
     for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
@@ -630,65 +645,80 @@ function LearnPage() {
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-6 py-8 md:grid-cols-[minmax(260px,320px)_1fr]">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 sm:py-8 md:grid-cols-[minmax(260px,320px)_1fr]">
         <aside aria-label="Lesson list" className="space-y-4">
-          <ProgressPanel api={progressApi} totalLessons={ALL_LESSONS.length} />
-          {LEARNING_TRACKS.map((track, ti) => (
-            <nav key={track.id} aria-label={track.title}>
-              <h2 className="mb-1 font-mono text-[11px] uppercase tracking-widest text-neutral-500">
-                {track.title}
-              </h2>
-              <p className="mb-2 text-[11px] text-neutral-600">{track.blurb}</p>
+          <button
+            type="button"
+            data-testid="lesson-nav-toggle"
+            onClick={() => setNavOpen((v) => !v)}
+            aria-expanded={navOpen}
+            className="flex w-full items-center justify-between rounded border border-neutral-700 bg-neutral-900 px-3 py-2 font-mono text-xs uppercase tracking-widest text-neutral-300 md:hidden"
+          >
+            <span className="truncate">{navOpen ? "Hide lessons" : `Lessons · ${lesson.title}`}</span>
+            <span className="ml-2 shrink-0">{navOpen ? "▲" : "▼"}</span>
+          </button>
 
-              <ol className="space-y-1">
-                {track.lessonIds.map((lessonId, i) => {
-                  const l = ALL_LESSONS.find((x) => x.id === lessonId);
-                  if (!l) return null;
-                  const st = states[l.id];
-                  const done = st?.status === "completed";
-                  const active = l.id === selectedId;
-                  return (
-                    <li key={l.id}>
-                      <button
-                        type="button"
-                        data-testid={`lesson-nav-${l.id}`}
-                        onClick={() => {
-                          setSelectedId(l.id);
-                          progressApi.visitLesson(l.id);
-                        }}
-                        aria-current={active ? "true" : undefined}
-                        className={`w-full rounded border px-3 py-2 text-left text-sm transition-colors ${
-                          active
-                            ? "border-emerald-600 bg-emerald-950/40"
-                            : "border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="font-mono text-[10px] text-neutral-500">
-                            T{ti + 1}.{String(i + 1).padStart(2, "0")}
-                          </span>
-                          {done && (
-                            <span className="rounded-sm border border-emerald-600 px-1 py-[1px] font-mono text-[9px] uppercase text-emerald-400">
-                              done
+          <div className={`${navOpen ? "space-y-4" : "hidden"} md:block md:space-y-4`}>
+            <ProgressPanel api={progressApi} totalLessons={ALL_LESSONS.length} />
+            {LEARNING_TRACKS.map((track, ti) => (
+              <nav key={track.id} aria-label={track.title}>
+                <h2 className="mb-1 font-mono text-[11px] uppercase tracking-widest text-neutral-500">
+                  {track.title}
+                </h2>
+                <p className="mb-2 text-[11px] text-neutral-600">{track.blurb}</p>
+
+                <ol className="space-y-1">
+                  {track.lessonIds.map((lessonId, i) => {
+                    const l = ALL_LESSONS.find((x) => x.id === lessonId);
+                    if (!l) return null;
+                    const st = states[l.id];
+                    const done = st?.status === "completed";
+                    const active = l.id === selectedId;
+                    return (
+                      <li key={l.id}>
+                        <button
+                          type="button"
+                          data-testid={`lesson-nav-${l.id}`}
+                          onClick={() => {
+                            setSelectedId(l.id);
+                            progressApi.visitLesson(l.id);
+                            selectLessonForMobile();
+                          }}
+                          aria-current={active ? "true" : undefined}
+                          className={`w-full rounded border px-3 py-2 text-left text-sm transition-colors ${
+                            active
+                              ? "border-emerald-600 bg-emerald-950/40"
+                              : "border-neutral-800 hover:border-neutral-700 hover:bg-neutral-900"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-[10px] text-neutral-500">
+                              T{ti + 1}.{String(i + 1).padStart(2, "0")}
                             </span>
-                          )}
-                        </div>
-                        <div className="mt-1 text-neutral-100">{l.title}</div>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ol>
-            </nav>
-          ))}
+                            {done && (
+                              <span className="rounded-sm border border-emerald-600 px-1 py-[1px] font-mono text-[9px] uppercase text-emerald-400">
+                                done
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 text-neutral-100">{l.title}</div>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </nav>
+            ))}
+          </div>
         </aside>
 
 
-        <section aria-label="Current lesson" className="min-w-0">
+        <section aria-label="Current lesson" className="min-w-0" ref={lessonSectionRef}>
           <div className="mb-4">
             <h2 className="text-xl font-semibold">{lesson.title}</h2>
             <p className="mt-1 text-sm text-neutral-400">{lesson.summary}</p>
           </div>
+
 
           <div className="mb-3 flex items-center justify-between text-xs text-neutral-500">
             <span className="font-mono">
@@ -751,9 +781,12 @@ function LearnPage() {
                 </span>
               </div>
               <h3 className="text-lg font-semibold text-neutral-100">{step.title}</h3>
-              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-neutral-300">
-                {step.body}
-              </p>
+              <GlossedText
+                text={step.body}
+                className="mt-3 whitespace-pre-line text-sm leading-relaxed text-neutral-300"
+              />
+              <KeyTerms text={`${step.title}\n${step.body}`} />
+
 
               <div className="mt-4">
                 <h4 className="mb-1 font-mono text-[10px] uppercase tracking-widest text-neutral-500">
