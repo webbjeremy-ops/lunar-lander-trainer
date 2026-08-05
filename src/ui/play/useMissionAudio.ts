@@ -18,7 +18,6 @@ import radarLockClip from "@/assets/a11-radar-lock.mp3.asset.json";
 import earthWindowClip from "@/assets/a11-earth-window.mp3.asset.json";
 import p64ThirtyOutClip from "@/assets/p64_30secsout.mp3.asset.json";
 import p64ActivatedClip from "@/assets/p64activated.mp3.asset.json";
-import p64Clip from "@/assets/a11-p64-5000.mp3.asset.json";
 import goForLandingClip from "@/assets/EagleHoustonGoForLanding.mp3.asset.json";
 import alarm1201Clip from "@/assets/1201Alarm.mp3.asset.json";
 import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
@@ -37,7 +36,6 @@ export type MissionAudioBeat =
   | "earth-window"
   | "p64-thirty-out"
   | "p64-activated"
-  | "p64-5000"
   | "go-for-landing-1201"
   | "alarm-1201"
   | "sixty-seconds"
@@ -56,7 +54,6 @@ export const MISSION_AUDIO_URLS: Record<MissionAudioBeat, string> = {
   "earth-window": earthWindowClip.url,
   "p64-thirty-out": p64ThirtyOutClip.url,
   "p64-activated": p64ActivatedClip.url,
-  "p64-5000": p64Clip.url,
   "go-for-landing-1201": goForLandingClip.url,
   "alarm-1201": alarm1201Clip.url,
   "sixty-seconds": sixtySecondsClip.url,
@@ -129,11 +126,8 @@ const BEATS: ReadonlyArray<{
   { id: "p64-thirty-out", due: (i) => (i.sinceIgnitionSec ?? 0) >= 487 },
   // T+510 s (08:30) — P64 has taken over automatically; Armstrong calls it.
   { id: "p64-activated", due: (i) => (i.sinceIgnitionSec ?? 0) >= 510 },
-  // T+526 s / 5,000 ft — P64 pitch-over and the manual attitude check.
-  {
-    id: "p64-5000",
-    due: (i) => (i.altitudeM ?? Infinity) <= 1_524 || (i.sinceIgnitionSec ?? 0) >= 526,
-  },
+  // T+526 s / 5,000 ft — beat removed at the crew's request.
+
   // T+543 s / 3,500 ft — "Eagle, Houston, you're go for landing".
   {
     id: "go-for-landing-1201",
