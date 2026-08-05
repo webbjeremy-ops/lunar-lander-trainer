@@ -944,15 +944,27 @@ export function usePlaySession(
             ? guidanceSinceIgnitionUs / 1_000_000
             : null;
         const sched = schedSec === null ? null : nominalStateAt(schedSec);
-        // M4.59/M4.60 — approach-phase tilt ceiling, handed to guidance so the
+        // M4.62 — approach-phase pitch CORRIDOR, handed to guidance so the
         // throttle is sized at the attitude actually flown. After pitch-over the
         // flown attitude walks monotonically upright (~55° at P64 → ~18° at
-        // P66); the braking law could otherwise demand 60°+ and point Eagle
-        // dramatically backwards again during the approach.
+        // P66); a ceiling alone let the braking law snap Eagle nearly vertical
+        // at the gate and then pitch back again.
         let maxTiltRad: number | null = null;
-        // Above ~120 m only: in the last hundred metres the terminal law
-        // needs full authority to null translation before the gear touches.
-        if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
+        let minTiltRad: number | null = null;
+        const corridorSec =
+          schedSec !== null &&
+          schedSec >= APPROACH_PITCH_START_SEC &&
+          o.altitudeM > 60
+            ? schedSec
+            : null;
+        if (corridorSec !== null) {
+          const walk = approachPitchRadAt(corridorSec);
+          const tol = 6 * (Math.PI / 180);
+          maxTiltRad = walk + tol;
+          minTiltRad = Math.max(0, walk - tol);
+        } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
+          // Non-Apollo-11 scenarios have no mission clock: fall back to the
+          // altitude-keyed phase curve as a ceiling only.
           const phasePitch = Math.abs(
             descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad,
           );
@@ -981,7 +993,9 @@ export function usePlaySession(
           throttleMaxFraction: guidanceEnv ? guidanceEnv.max : null,
           scheduleRangeErrorM: sched === null ? null : rangeM - sched.rangeToLzM,
           maxTiltRad,
+          minTiltRad,
         });
+
         throttle = cue.recommendedThrottle;
         const aimAttitudeRad = cue.recommendedAttitudeRad;
 
