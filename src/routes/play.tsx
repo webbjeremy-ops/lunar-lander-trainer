@@ -205,6 +205,10 @@ function PlayClient() {
   // drops to a background level (never off) so the crew is intelligible.
   const [missionDuck, setMissionDuck] = useState(1);
 
+  // M4.57 — cabin tape player. While a tape plays it replaces the procedural
+  // score outright; sound effects stay, a little quieter.
+  const cabinMusic = useCabinMusic(missionDuck);
+
   const musicScore = useDescentScore({
     sinceIgnitionSec: session.descentClock.sinceIgnitionUs / 1_000_000,
     altitudeM: session.orbit.altitudeM,
@@ -216,8 +220,9 @@ function PlayClient() {
     crewAborted: session.aborted,
     terminal: session.flight.terminalState !== null,
     running: session.running,
-    duck: missionDuck,
+    duck: cabinMusic.playing ? 0 : missionDuck,
   });
+
 
   // M4.43 — cockpit audio only exists once the crew is actually flying. The
   // session simulates behind the mission-select screen, so without the
