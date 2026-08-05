@@ -48,7 +48,7 @@ export const CABIN_TRACKS: readonly CabinTrack[] = [
   {
     id: "everyone-gone-to-the-moon",
     title: "Everyone's Gone to the Moon",
-    artist: "Jonathan King",
+    artist: "Chad & Jeremy",
     url: everyoneGone.url,
   },
   {
@@ -56,6 +56,13 @@ export const CABIN_TRACKS: readonly CabinTrack[] = [
     title: "Fly Me to the Moon",
     artist: "Frank Sinatra",
     url: flyMeToTheMoon.url,
+  },
+  { id: "moon-moods", title: "Moon Moods", artist: "Les Baxter", url: moonMoods.url },
+  {
+    id: "new-world-mvmt4",
+    title: "Symphony No. 9 (From the New World), Mvmt 4",
+    artist: "Antonín Dvořák",
+    url: newWorld.url,
   },
   { id: "mist-o-the-moon", title: "Mist o' the Moon", artist: "Les Baxter", url: mistOTheMoon.url },
 ];
