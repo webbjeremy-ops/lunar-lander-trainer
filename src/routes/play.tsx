@@ -33,6 +33,9 @@ import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
 import { useDescentSfx } from "@/ui/play/useDescentSfx";
 import { useMissionAudio } from "@/ui/play/useMissionAudio";
+import { useCabinMusic } from "@/ui/play/useCabinMusic";
+import { CabinTapePlayer } from "@/ui/play/CabinTapePlayer";
+
 import eagleLandedAudio from "@/assets/eagle-has-landed.mp3.asset.json";
 
 
