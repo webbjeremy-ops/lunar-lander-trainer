@@ -18,6 +18,8 @@ import spinningWheel from "@/assets/spinning-wheel.mp3.asset.json";
 import everyoneGone from "@/assets/everyone-gone-to-the-moon.mp3.asset.json";
 import flyMeToTheMoon from "@/assets/fly-me-to-the-moon.mp3.asset.json";
 import mistOTheMoon from "@/assets/mist-o-the-moon.mp3.asset.json";
+import moonMoods from "@/assets/moon-moods.mp3.asset.json";
+import newWorld from "@/assets/dvorak-new-world-mvmt4.mp3.asset.json";
 
 export interface CabinTrack {
   readonly id: string;
