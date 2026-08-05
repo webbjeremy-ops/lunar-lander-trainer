@@ -95,6 +95,7 @@ export function FlightInstruments({
   limits,
   assistance,
   initialPropellantKg,
+  manualControl = false,
 }: {
   flight: LunarFlightState;
   orbit: LunarOrbitalValues;
@@ -105,6 +106,8 @@ export function FlightInstruments({
   limits: LandingLimits;
   assistance: AssistanceLevel;
   initialPropellantKg: number;
+  /** M4.66 — show the hover mark once the crew has the vehicle. */
+  manualControl?: boolean;
 }) {
   const sink = -orbit.radialSpeedMps;
   const lateral = Math.abs(orbit.tangentialSpeedMps);
