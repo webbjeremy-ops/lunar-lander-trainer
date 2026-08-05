@@ -33,6 +33,9 @@ import { HoustonOverlay } from "@/ui/play/HoustonOverlay";
 import { useDescentScore } from "@/ui/play/useDescentScore";
 import { useDescentSfx } from "@/ui/play/useDescentSfx";
 import { useMissionAudio } from "@/ui/play/useMissionAudio";
+import { useCabinMusic } from "@/ui/play/useCabinMusic";
+import { CabinTapePlayer } from "@/ui/play/CabinTapePlayer";
+
 import eagleLandedAudio from "@/assets/eagle-has-landed.mp3.asset.json";
 
 
@@ -205,6 +208,10 @@ function PlayClient() {
   // drops to a background level (never off) so the crew is intelligible.
   const [missionDuck, setMissionDuck] = useState(1);
 
+  // M4.57 — cabin tape player. While a tape plays it replaces the procedural
+  // score outright; sound effects stay, a little quieter.
+  const cabinMusic = useCabinMusic(missionDuck);
+
   const musicScore = useDescentScore({
     sinceIgnitionSec: session.descentClock.sinceIgnitionUs / 1_000_000,
     altitudeM: session.orbit.altitudeM,
@@ -216,8 +223,9 @@ function PlayClient() {
     crewAborted: session.aborted,
     terminal: session.flight.terminalState !== null,
     running: session.running,
-    duck: missionDuck,
+    duck: cabinMusic.playing ? 0 : missionDuck,
   });
+
 
   // M4.43 — cockpit audio only exists once the crew is actually flying. The
   // session simulates behind the mission-select screen, so without the
@@ -245,7 +253,7 @@ function PlayClient() {
     alarmActive: session.alarms.lampOn,
     contact: session.orbit.altitudeM <= 1.7 && session.flight.terminalState !== "crashed",
     running: session.running,
-    duck: missionDuck,
+    duck: missionDuck * (cabinMusic.playing ? 0.75 : 1),
   });
 
   // M4.56 — descent propellant remaining as a fraction of the load. The
@@ -288,6 +296,18 @@ function PlayClient() {
   useEffect(() => {
     setMissionDuck(missionAudio.duck);
   }, [missionAudio.duck]);
+
+  // M4.57 — the tape is stowed the moment the crew takes the vehicle: from
+  // there the game score carries the landing.
+  const manualUnlocked = session.manualUnlocked;
+  const stopCabinMusic = cabinMusic.stop;
+  const setCabinOpen = cabinMusic.setOpen;
+  useEffect(() => {
+    if (!manualUnlocked) return;
+    stopCabinMusic();
+    setCabinOpen(false);
+  }, [manualUnlocked, stopCabinMusic, setCabinOpen]);
+
 
 
   const agc = useAgcSession();
@@ -810,6 +830,15 @@ function PlayClient() {
           )}
         </>
       )}
+
+      <CabinTapePlayer
+        music={cabinMusic}
+        available={
+          musicScore.enabled &&
+          !session.manualUnlocked &&
+          session.flight.terminalState === null
+        }
+      />
 
 
       <p className="text-[10px] leading-snug text-neutral-600">
