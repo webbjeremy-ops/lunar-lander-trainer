@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 //
-// M4.57 — Cabin tape player UI: swings into frame from the right edge on a
+// M4.57 — Cabin tape player UI: swings into frame from the left edge on a
 // gloved hand, lists the tapes carried aboard, and plays the crew's choice.
 
 import tapePlayerArt from "@/assets/cabin-tape-player.png.asset.json";
@@ -18,16 +18,37 @@ export function CabinTapePlayer({ music, available }: CabinTapePlayerProps) {
 
   return (
     <div
-      className="pointer-events-none fixed right-0 top-1/2 z-40 -translate-y-1/2"
+      className="pointer-events-none fixed left-0 top-1/2 z-40 -translate-y-1/2"
       data-testid="cabin-tape-player"
     >
       <div
         className={`pointer-events-auto flex items-center transition-transform duration-700 ease-out ${
-          music.open ? "translate-x-0" : "translate-x-[calc(100%-92px)]"
+          music.open ? "translate-x-0" : "translate-x-[calc(-100%+92px)]"
         }`}
       >
+        <button
+          onClick={() => music.setOpen(!music.open)}
+          data-testid="cabin-tape-handle"
+          title={
+            music.open ? "Stow the cabin tape player" : "Cabin tape player — play music in the LM"
+          }
+          className="relative block w-[150px] shrink-0 drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)]"
+        >
+          <img
+            src={tapePlayerArt.url}
+            alt="Gloved hand holding a portable cabin tape player"
+            className="w-full select-none"
+            draggable={false}
+          />
+          {music.playing && (
+            <span className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-emerald-500/90 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-widest text-black">
+              Playing
+            </span>
+          )}
+        </button>
+
         {music.open && (
-          <div className="mr-[-18px] w-60 rounded-l-lg border border-neutral-700 border-r-0 bg-neutral-950/95 p-3 shadow-2xl backdrop-blur">
+          <div className="ml-[-18px] w-60 rounded-r-lg border border-neutral-700 border-l-0 bg-neutral-950/95 p-3 shadow-2xl backdrop-blur">
             <div className="mb-2 flex items-center justify-between">
               <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">
                 Cabin tapes
@@ -77,27 +98,6 @@ export function CabinTapePlayer({ music, available }: CabinTapePlayerProps) {
             )}
           </div>
         )}
-
-        <button
-          onClick={() => music.setOpen(!music.open)}
-          data-testid="cabin-tape-handle"
-          title={
-            music.open ? "Stow the cabin tape player" : "Cabin tape player — play music in the LM"
-          }
-          className="relative block w-[150px] shrink-0 drop-shadow-[0_10px_25px_rgba(0,0,0,0.7)]"
-        >
-          <img
-            src={tapePlayerArt.url}
-            alt="Gloved hand holding a portable cabin tape player"
-            className="w-full select-none"
-            draggable={false}
-          />
-          {music.playing && (
-            <span className="absolute left-1/2 top-2 -translate-x-1/2 rounded bg-emerald-500/90 px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-widest text-black">
-              Playing
-            </span>
-          )}
-        </button>
       </div>
     </div>
   );
