@@ -4,6 +4,7 @@
 
 import type { LunarFlightState, LunarGuidanceCue, LunarOrbitalValues } from "@/simulation/lunar2d";
 import type { AssistanceLevel, LandingLimits } from "@/game/play";
+import { hoverThrottleFraction, hoverThrottleIsCommandable } from "@/game/play";
 import { useAppSettings } from "@/settings/SettingsProvider";
 import { formatDistance, formatMass, speedUnitLabel, M_PER_FT } from "@/settings/units";
 
