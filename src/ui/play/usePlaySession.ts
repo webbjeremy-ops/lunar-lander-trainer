@@ -1148,6 +1148,7 @@ export function usePlaySession(
       alarmActive: alarmsRef.current.active !== null,
       sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
       highGateReady:
+        forceHighGateRef.current ||
         highGateStatus(
           descentClockRef.current.sinceIgnitionUs,
           o.altitudeM,
