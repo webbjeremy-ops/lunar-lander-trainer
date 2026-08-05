@@ -434,6 +434,10 @@ export function usePlaySession(
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   // M4.31 — easy program acceptance.
   const keyInjectorRef = useRef<((code: number | "PRO") => void) | null>(null);
+  // M4.58 — P64 is taken no later than 30 s after Houston's "thirty seconds to
+  // P64" call. Once that clock is past, the high-gate gate is satisfied so the
+  // automatic entry (and a hand entry) is accepted rather than held.
+  const forceHighGateRef = useRef(false);
   const acceptanceTimersRef = useRef<number[]>([]);
   const [assistedProgramEntries, setAssistedProgramEntries] = useState(0);
 
