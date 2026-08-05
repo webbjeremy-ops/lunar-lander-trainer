@@ -86,24 +86,34 @@ export function useCabinMusic(duck = 1): CabinMusicApi {
     setPlaying(false);
   }, []);
 
-  const play = useCallback(
-    (id: string) => {
-      const track = CABIN_TRACKS.find((t) => t.id === id);
-      if (!track || typeof window === "undefined") return;
-      elRef.current?.pause();
-      const el = new Audio(track.url);
-      el.loop = true;
-      el.volume = 0.7;
-      elRef.current = el;
-      setTrackId(id);
-      setPlaying(true);
-      void el.play().catch(() => {
-        if (elRef.current !== el) return;
-        setPlaying(false);
-      });
-    },
-    [],
-  );
+  const playRef = useRef<(id: string) => void>(() => {});
+
+  const play = useCallback((id: string) => {
+    const index = CABIN_TRACKS.findIndex((t) => t.id === id);
+    const track = CABIN_TRACKS[index];
+    if (!track || typeof window === "undefined") return;
+    elRef.current?.pause();
+    const el = new Audio(track.url);
+    // The tape runs on: when a song ends the next one on the reel starts.
+    el.loop = false;
+    el.volume = 0.7;
+    elRef.current = el;
+    setTrackId(id);
+    setPlaying(true);
+    el.addEventListener("ended", () => {
+      if (elRef.current !== el) return;
+      const next = CABIN_TRACKS[(index + 1) % CABIN_TRACKS.length];
+      if (next) playRef.current(next.id);
+    });
+    void el.play().catch(() => {
+      if (elRef.current !== el) return;
+      setPlaying(false);
+    });
+  }, []);
+
+  useEffect(() => {
+    playRef.current = play;
+  }, [play]);
 
   // Duck under the air-to-ground loop rather than cutting out.
   useEffect(() => {

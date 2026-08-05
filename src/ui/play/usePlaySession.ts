@@ -434,6 +434,10 @@ export function usePlaySession(
   const [hapticsEnabled, setHapticsEnabled] = useState(true);
   // M4.31 — easy program acceptance.
   const keyInjectorRef = useRef<((code: number | "PRO") => void) | null>(null);
+  // M4.58 — P64 is taken no later than 30 s after Houston's "thirty seconds to
+  // P64" call. Once that clock is past, the high-gate gate is satisfied so the
+  // automatic entry (and a hand entry) is accepted rather than held.
+  const forceHighGateRef = useRef(false);
   const acceptanceTimersRef = useRef<number[]>([]);
   const [assistedProgramEntries, setAssistedProgramEntries] = useState(0);
 
@@ -499,6 +503,7 @@ export function usePlaySession(
     escalationRef.current = createHoustonEscalationState();
     setEscalation(escalationRef.current);
     crewHasVehicleRef.current = false;
+    forceHighGateRef.current = false;
   }, [makeInitial, script, generation, windowsUpAtStart, startsUnderPower, coastsToTig]);
 
   // --- Keyboard -------------------------------------------------------------
@@ -1143,6 +1148,7 @@ export function usePlaySession(
       alarmActive: alarmsRef.current.active !== null,
       sinceIgnitionUs: descentClockRef.current.sinceIgnitionUs,
       highGateReady:
+        forceHighGateRef.current ||
         highGateStatus(
           descentClockRef.current.sinceIgnitionUs,
           o.altitudeM,
@@ -1261,6 +1267,12 @@ export function usePlaySession(
       }
       const step = currentStep(script, state);
       if (step?.id !== "p64-monitor") return;
+      // M4.58 — Houston's "thirty seconds to P64" call goes out at T+487 s;
+      // the computer takes the approach program thirty seconds later whether
+      // or not the geometry box has closed by then.
+      const overdue =
+        descentClockRef.current.sinceIgnitionUs >= (487 + 30) * 1_000_000;
+      if (overdue) forceHighGateRef.current = true;
       if (!readGates().highGateReady) return;
       fired = true;
       acceptProgramRef.current();

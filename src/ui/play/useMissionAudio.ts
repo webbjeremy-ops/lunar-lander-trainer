@@ -201,6 +201,10 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
   const currentRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<number | null>(null);
   const startedRef = useRef<Set<MissionAudioBeat>>(new Set());
+  // M4.58 — altitude calls are one-way: they belong to the descent, not to a
+  // player who throttles back up through the same height. The lowest altitude
+  // ever reached is what the beat table sees, so nothing can re-arm.
+  const lowestAltRef = useRef<number>(Infinity);
   const [speaking, setSpeaking] = useState(false);
   const [played, setPlayed] = useState<Set<MissionAudioBeat>>(new Set());
 
@@ -270,6 +274,9 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
+    if (altitudeM !== undefined && altitudeM < lowestAltRef.current) {
+      lowestAltRef.current = altitudeM;
+    }
     const due = dueBeats({
       enabled,
       engineOn,
@@ -277,7 +284,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       activeAlarmId,
       calloutId,
       rollComplete,
-      altitudeM,
+      altitudeM: altitudeM === undefined ? undefined : lowestAltRef.current,
       burnTimeRemainingSec,
       propellantFraction,
       contact,

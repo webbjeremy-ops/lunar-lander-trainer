@@ -182,7 +182,8 @@ export function FlightControls({
 
       <p className="mt-2 text-[10px] leading-snug text-neutral-500">
         Touch: hold ▲/▼ to run the throttle, hold ◀/▶ to command pitch. Keyboard:
-        ↑/↓ thrust · ←/→ pitch · Space engine · , / . rate-of-descent trim.
+        ↑/↓ throttle · ←/→ pitch · Space engine on/off · , / . rate-of-descent
+        trim · F window view · D pop out the DSKY.
         Gamepad: left stick pitch, triggers thrust. The DSKY keypad keeps its own
         bindings (V, N, digits, ENTR, PRO).
       </p>
