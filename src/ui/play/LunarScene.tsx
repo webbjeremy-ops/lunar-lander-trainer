@@ -430,11 +430,8 @@ function drawProfile(
 
   // Header: altitude and the deviation from the reference profile, so the
   // picture and the altimeter can be read against each other directly.
-  const refAlt = referenceAltitudeM(
-    Math.abs(downrangeM),
-    mission.initial.rangeToLandingZoneM,
-    mission.initial.altitudeM,
-  );
+  const refAlt = referenceAltitudeM(Math.abs(downrangeM));
+
   const deviation = orbit.altitudeM - refAlt;
 
   // M4.20 — scripted-timeline readout: where the flown descent sits against
