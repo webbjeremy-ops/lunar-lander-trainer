@@ -289,11 +289,8 @@ function drawProfile(
   ctx.beginPath();
   for (let i = 0; i <= 48; i++) {
     const range = (rangeSpan * i) / 48;
-    const alt = referenceAltitudeM(
-      range,
-      mission.initial.rangeToLandingZoneM,
-      mission.initial.altitudeM,
-    );
+    const alt = referenceAltitudeM(range);
+
     const px = xFor(range);
     const py = yFor(Math.min(alt, altSpan));
     if (i === 0) ctx.moveTo(px, py);
