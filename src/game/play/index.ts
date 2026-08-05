@@ -13,6 +13,7 @@ export * from "./descentPhase";
 export * from "./windowLandmarks";
 export * from "./descentTimeline";
 export * from "./descentMonitor";
+export * from "./hoverThrottle";
 export * from "./descentCallouts";
 export * from "./houstonAdvisory";
 export * from "./houstonEscalation";
