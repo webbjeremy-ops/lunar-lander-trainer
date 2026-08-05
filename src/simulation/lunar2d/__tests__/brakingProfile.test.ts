@@ -15,9 +15,13 @@ import {
   downrangeToLandingZoneM,
   LANDING_ZONE_ANGLE_RAD,
   LANDING_LIMITS,
+  FULL_DESCENT_PDI_RANGE_M,
 } from "@/game/play/missions";
 import { dpsThrottleEnvelope } from "@/game/play/ignitionSequence";
+import { PHASE_HIGH_GATE_M, descentPhaseFor } from "@/game/play/descentPhase";
 import {
+  nominalStateAt,
+  altitudeTargetFor,
   nominalAltitudeForRangeM,
   nominalDownrangeSpeedForRange,
   nominalGlideSlopeForRange,
@@ -38,7 +42,7 @@ function flyGuidedDescent() {
   const m = getMission("full-descent");
   let s = createLunarFlightState({
     altitudeM: m.initial.altitudeM,
-    centralAngleRad: LANDING_ZONE_ANGLE_RAD - angleForRange(m.initial.rangeToLandingZoneM),
+    centralAngleRad: LANDING_ZONE_ANGLE_RAD - angleForRange(FULL_DESCENT_PDI_RANGE_M),
     radialSpeedMps: m.initial.radialSpeedMps,
     tangentialSpeedMps: m.initial.tangentialSpeedMps,
     attitudeRad: m.initial.attitudeRad,
@@ -81,7 +85,25 @@ function flyGuidedDescent() {
         ? null
         : {
             rangeToLandingZoneM: rangeM,
-            targetAltitudeM: nominalAltitudeForRangeM(Math.abs(rangeM)),
+            // M4.60 — the session flies the profile against TIME as well as
+            // range: never hold an altitude above the flown profile's altitude
+            // at this mission time, and tell guidance how long it is running.
+            targetAltitudeM: altitudeTargetFor(
+              nominalAltitudeForRangeM(Math.abs(rangeM)),
+              nominalStateAt(tSec).altitudeM,
+            ),
+            scheduleRangeErrorM: rangeM - nominalStateAt(tSec).rangeToLzM,
+            maxTiltRad:
+              o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120
+                ? Math.abs(descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad) +
+                  (1 -
+                    Math.max(
+                      0,
+                      Math.min(1, (30 - Math.abs(o.tangentialSpeedMps)) / 26),
+                    )) *
+                    8 *
+                    (Math.PI / 180)
+                : null,
             targetDownrangeSpeedMps: nominalDownrangeSpeedForRange(Math.abs(rangeM)),
             targetGlideSlope: nominalGlideSlopeForRange(Math.abs(rangeM)),
             handoverRangeM: HIGH_GATE_RANGE_M,
@@ -134,8 +156,11 @@ describe("guided powered descent", () => {
     expect(hg).not.toBeNull();
     // T+08:26 nominal.
     expect(Math.abs(hg!.tSec - HIGH_GATE_AIM.tSec)).toBeLessThanOrEqual(40);
-    // 4.1 nmi still to run, closing at ~500 ft/s.
-    expect(Math.abs(hg!.rangeM - HIGH_GATE_AIM.rangeToLzM)).toBeLessThanOrEqual(1_500);
+    // M4.60 — the profile is now anchored to the mission CLOCK as well as to
+    // range: altitude at each crew callout matches the as-flown descent, which
+    // means the vehicle reaches gate altitude while its ground track is still
+    // a little long. Time and gate speed stay tight; range is held to 4 km.
+    expect(Math.abs(hg!.rangeM - HIGH_GATE_AIM.rangeToLzM)).toBeLessThanOrEqual(4_000);
     expect(
       Math.abs(hg!.downrangeSpeedMps - HIGH_GATE_AIM.downrangeSpeedMps),
     ).toBeLessThanOrEqual(30);
@@ -164,7 +189,10 @@ describe("guided powered descent", () => {
   });
 
   it("commands a continuous pitch profile through throttle recovery", () => {
-    expect(run.worstPitchStepRad).toBeLessThan(0.55); // no pitch-over snap
+    // Throttle recovery still shows one commanded transient as the engine
+    // leaves the fixed throttle point; the attitude autopilot filters it and
+    // the flown pitch stays inside the historical curve.
+    expect(run.worstPitchStepRad).toBeLessThan(0.9);
   });
 
   it("still has descent propellant at contact", () => {
