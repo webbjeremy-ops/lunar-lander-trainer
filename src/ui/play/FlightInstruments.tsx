@@ -161,7 +161,16 @@ export function FlightInstruments({
           fraction={fuelFraction}
           tone={fuelFraction < 0.08 ? "bg-red-500" : fuelFraction < 0.2 ? "bg-amber-500" : "bg-emerald-500"}
         />
-        <Bar label="Throttle" fraction={throttle} tone="bg-sky-500" />
+        <Bar
+          label="Throttle"
+          fraction={throttle}
+          tone="bg-sky-500"
+          markerFraction={showHover ? hoverFraction : null}
+          markerLabel={
+            showHover ? `hover ${(hoverFraction * 100).toFixed(0)}%` : undefined
+          }
+          testid="inst-hover-mark"
+        />
       </div>
 
       <div className="rounded border border-neutral-800 bg-black/40 px-2 py-1.5 text-[11px]">
