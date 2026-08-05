@@ -283,9 +283,11 @@ export function computeReferenceGuidance(
       targetRadial = Math.max(targetRadial, targetSinkRate(orbit.altitudeM) - slack);
       // Terminal picture (P66): low down with translation still on, ease the
       // sink so the vehicle flies the last few hundred metres to the site
-      // instead of settling short of it.
+      // instead of settling short of it. M4.64 — this relief starts BELOW the
+      // hand-over: at 500 ft Eagle was still coming down at 12-15 ft/s, and
+      // arresting the sink there handed the commander a near-level vehicle.
       const residual = Math.abs(v);
-      if (orbit.altitudeM < 150 && residual > 1.5) {
+      if (orbit.altitudeM < 60 && residual > 1.5) {
         targetRadial = Math.max(targetRadial, -Math.max(0.8, 3 - residual * 0.3));
       }
     } else {
