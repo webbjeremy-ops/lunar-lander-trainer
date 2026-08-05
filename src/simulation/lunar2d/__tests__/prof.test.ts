@@ -17,7 +17,7 @@ it("profile", () => {
   for (let i = 0; i*DT < 800e6; i++) {
     const tSec = (i*DT)/1e6;
     o = computeOrbitalValues(s);
-    if (o.altitudeM <= 0) { console.log("touchdown", tSec|0); break; }
+    if (s.terminalState !== null) { console.log("touchdown", tSec|0); break; }
     const rangeM = downrangeToLandingZoneM(o.centralAngleRad, LANDING_ZONE_ANGLE_RAD);
     const sched = nominalStateAt(tSec);
     const env = dpsThrottleEnvelope(i*DT);
@@ -41,9 +41,12 @@ it("profile", () => {
       scheduleRangeErrorM: rangeM - sched.rangeToLzM,
       maxTiltRad,
     });
-    if ([300,400,487,507,510,526,543,578,617].includes(Math.round(tSec)))
+    if (Math.abs(tSec - Math.round(tSec)) < 1e-9 && [300,400,487,507,510,526,543,578,617].includes(Math.round(tSec)))
       console.log("T+"+Math.round(tSec), "alt ft", (o.altitudeM*3.28084)|0, "rng nmi", (rangeM/1852).toFixed(1), "pitch", (s.attitudeRad*180/Math.PI).toFixed(0));
     const err = cue.recommendedAttitudeRad - s.attitudeRad;
-    s = stepLunarFlight(s, { throttle: cue.recommendedThrottle, engineCommand: "on", attitudeCommand: Math.max(-1, Math.min(1, err*3 - s.angularRateRadPerSec*2.5)) }, DT);
+    let th = cue.recommendedThrottle;
+    if (th > env.max) th = env.max;
+    if (th > 0 && th < env.min) th = env.min;
+    s = stepLunarFlight(s, { throttle: th, engineCommand: th > 0 ? "descent" : "off", attitudeCommand: Math.max(-1, Math.min(1, err*3 - s.angularRateRadPerSec*2.5)) }, DT);
   }
 });
