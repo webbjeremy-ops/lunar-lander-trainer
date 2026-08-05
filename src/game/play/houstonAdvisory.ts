@@ -113,7 +113,10 @@ export function houstonDeviations(
     );
   }
 
-  if (pitchDeg > 100) {
+  // M4.58 — attitude is the computer's business until the crew takes the
+  // vehicle. No safety call is made against a profile the player is not
+  // flying; only the procedural conditions below survive auto-guidance.
+  if (!input.autoGuidanceActive && pitchDeg > 100) {
     out.push(
       call(
         "attitude-inverted",
