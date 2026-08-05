@@ -294,7 +294,17 @@ export function computeReferenceGuidance(
         Math.min(5, altitudeError / altitudeTau),
       );
     }
+    // M4.62 — terminal descent must SETTLE, never hover. Above the surface the
+    // guided law always keeps a positive sink: ~2 ft/s inside 100 ft and
+    // ~1 ft/s inside 40 ft, so the vehicle flies down onto the probes instead
+    // of holding a lunar hover equilibrium until the propellant runs out.
+    if (orbit.altitudeM > 0.2) {
+      const floorSink =
+        orbit.altitudeM < 12 ? 0.25 : orbit.altitudeM < 30 ? 0.55 : 0.75;
+      targetRadial = Math.min(targetRadial, -floorSink);
+    }
     aRadial = netG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
+
   } else {
     targetRadial = targetSinkRate(orbit.altitudeM);
     // Terminal descent (P66 picture): the last hundred metres are flown by
