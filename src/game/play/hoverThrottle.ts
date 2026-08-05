@@ -11,7 +11,13 @@
 import {
   DESCENT_ENGINE,
   LUNAR_ENVIRONMENT,
+  LUNAR_TERRAIN,
 } from "@/simulation/lunar2d/LunarMissionConstants";
+
+/** Surface gravity from the published GM and mean radius (~1.62 m/s²). */
+export const LUNAR_SURFACE_GRAVITY_MPS2 =
+  LUNAR_ENVIRONMENT.gravitationalParameterM3S2.value /
+  (LUNAR_TERRAIN.meanRadiusM.value * LUNAR_TERRAIN.meanRadiusM.value);
 
 /**
  * Throttle fraction that exactly cancels weight: T = m·g  =>  f = m·g / Tmax.
@@ -19,7 +25,7 @@ import {
  */
 export function hoverThrottleFraction(
   massKg: number,
-  gravityMps2: number = LUNAR_ENVIRONMENT.surfaceGravityMps2.value,
+  gravityMps2: number = LUNAR_SURFACE_GRAVITY_MPS2,
   maxThrustN: number = DESCENT_ENGINE.maxThrustN.value,
 ): number {
   if (!Number.isFinite(massKg) || massKg <= 0) return 0;
