@@ -1267,6 +1267,12 @@ export function usePlaySession(
       }
       const step = currentStep(script, state);
       if (step?.id !== "p64-monitor") return;
+      // M4.58 — Houston's "thirty seconds to P64" call goes out at T+487 s;
+      // the computer takes the approach program thirty seconds later whether
+      // or not the geometry box has closed by then.
+      const overdue =
+        descentClockRef.current.sinceIgnitionUs >= (487 + 30) * 1_000_000;
+      if (overdue) forceHighGateRef.current = true;
       if (!readGates().highGateReady) return;
       fired = true;
       acceptProgramRef.current();
