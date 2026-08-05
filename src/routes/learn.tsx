@@ -154,7 +154,9 @@ type AttemptPhase = "idle" | "gating" | "opening" | "ready" | "error";
 
 function LearnPage() {
   const rope = useMemo(() => ropeById("Luminary099"), []);
-  const [selectedId, setSelectedId] = useState<string>(ALL_LESSONS[0]!.id);
+  const [selectedId, setSelectedId] = useState<string>(
+    LEARNING_TRACKS[0]?.lessonIds[0] ?? ALL_LESSONS[0]!.id,
+  );
   const [states, setStates] = useState<Record<string, LessonState>>(() => {
     const init: Record<string, LessonState> = {};
     for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
