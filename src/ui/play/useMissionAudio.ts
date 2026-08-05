@@ -129,11 +129,8 @@ const BEATS: ReadonlyArray<{
   { id: "p64-thirty-out", due: (i) => (i.sinceIgnitionSec ?? 0) >= 487 },
   // T+510 s (08:30) — P64 has taken over automatically; Armstrong calls it.
   { id: "p64-activated", due: (i) => (i.sinceIgnitionSec ?? 0) >= 510 },
-  // T+526 s / 5,000 ft — P64 pitch-over and the manual attitude check.
-  {
-    id: "p64-5000",
-    due: (i) => (i.altitudeM ?? Infinity) <= 1_524 || (i.sinceIgnitionSec ?? 0) >= 526,
-  },
+  // T+526 s / 5,000 ft — beat removed at the crew's request.
+
   // T+543 s / 3,500 ft — "Eagle, Houston, you're go for landing".
   {
     id: "go-for-landing-1201",
