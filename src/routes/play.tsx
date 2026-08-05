@@ -831,6 +831,15 @@ function PlayClient() {
         </>
       )}
 
+      <CabinTapePlayer
+        music={cabinMusic}
+        available={
+          musicScore.enabled &&
+          !session.manualUnlocked &&
+          session.flight.terminalState === null
+        }
+      />
+
 
       <p className="text-[10px] leading-snug text-neutral-600">
         The Apollo Guidance Computer shown here runs authentic Luminary 099 and
