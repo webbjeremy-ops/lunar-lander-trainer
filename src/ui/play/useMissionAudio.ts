@@ -18,7 +18,6 @@ import radarLockClip from "@/assets/a11-radar-lock.mp3.asset.json";
 import earthWindowClip from "@/assets/a11-earth-window.mp3.asset.json";
 import p64ThirtyOutClip from "@/assets/p64_30secsout.mp3.asset.json";
 import p64ActivatedClip from "@/assets/p64activated.mp3.asset.json";
-import p64Clip from "@/assets/a11-p64-5000.mp3.asset.json";
 import goForLandingClip from "@/assets/EagleHoustonGoForLanding.mp3.asset.json";
 import alarm1201Clip from "@/assets/1201Alarm.mp3.asset.json";
 import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
@@ -37,7 +36,6 @@ export type MissionAudioBeat =
   | "earth-window"
   | "p64-thirty-out"
   | "p64-activated"
-  | "p64-5000"
   | "go-for-landing-1201"
   | "alarm-1201"
   | "sixty-seconds"
@@ -56,7 +54,6 @@ export const MISSION_AUDIO_URLS: Record<MissionAudioBeat, string> = {
   "earth-window": earthWindowClip.url,
   "p64-thirty-out": p64ThirtyOutClip.url,
   "p64-activated": p64ActivatedClip.url,
-  "p64-5000": p64Clip.url,
   "go-for-landing-1201": goForLandingClip.url,
   "alarm-1201": alarm1201Clip.url,
   "sixty-seconds": sixtySecondsClip.url,
