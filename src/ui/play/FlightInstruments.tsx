@@ -114,6 +114,11 @@ export function FlightInstruments({
   const tiltDeg = (-flight.attitudeRad * 180) / Math.PI;
   const fuelFraction = initialPropellantKg > 0 ? flight.descentPropellantKg / initialPropellantKg : 0;
 
+  // M4.66 — the throttle that balances weight at the CURRENT mass. It falls as
+  // propellant burns off, which is why a fixed setting eventually climbs.
+  const hoverFraction = hoverThrottleFraction(massKg);
+  const showHover = manualControl && hoverThrottleIsCommandable(hoverFraction);
+
   const units = useAppSettings().units;
   const speedUnit = speedUnitLabel(units);
   const conv = (mps: number) => (units === "apollo" ? mps / M_PER_FT : mps);
