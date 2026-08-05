@@ -82,6 +82,9 @@ import {
   highGateStatus,
   milestoneSec,
   nominalStateAt,
+  approachPitchRadAt,
+  APPROACH_PITCH_START_SEC,
+
 
   type HighGateStatus,
   usesApollo11Timeline,
