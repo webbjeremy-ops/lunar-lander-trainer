@@ -37,9 +37,8 @@ export const DESCENT_LANDMARKS = {
 
 /**
  * Ground track still to run to the aim point AT IGNITION (259 nmi), and the
- * pre-TIG coast the scenario opens with. The mission's initial range is the
- * sum: the vehicle is continuously advancing during the countdown, so it must
- * start further out to cross PDI at the historical range.
+ * pre-TIG coast the scenario opens with. The mission's initial state IS the
+ * ignition state; the opening state is back-propagated along the coast.
  */
 export const FULL_DESCENT_PDI_RANGE_M = 480_000;
 export const FULL_DESCENT_COAST_SEC = 150;
@@ -117,16 +116,16 @@ export const MISSIONS: Readonly<Record<MissionId, MissionDefinition>> = {
       altitudeM: DESCENT_LANDMARKS.poweredDescentInitiationM,
       radialSpeedMps: -3,
       // Apollo 11 crossed PDI at about 5,570 ft/s inertial, 259 nmi of ground
-      // track still to run to the aim point. The scenario starts 150 s before
-      // TIG, and the vehicle coasts that whole time at ~1,698 m/s, so the
-      // initial range is 259 nmi PLUS the 150-second coast (~137 nmi) —
-      // ~397 nmi at T-150, ~314 nmi at T-60, 259 nmi at ignition.
+      // track still to run to the aim point. This IS the ignition state:
+      // insertionStateForMission back-propagates it along the engine-off coast,
+      // so the scenario opens ~137 nmi uprange at T-150 and crosses PDI at the
+      // historical range exactly at TIG. (Adding the coast here as well pushed
+      // the whole descent 137 nmi long and left Eagle ~30,000 ft high at the
+      // P64 callouts.)
       tangentialSpeedMps: 1_698,
       attitudeRad: -1.35,
       descentPropellantKg: 8_200,
-      rangeToLandingZoneM:
-        FULL_DESCENT_PDI_RANGE_M +
-        Math.round(FULL_DESCENT_COAST_SPEED_MPS * FULL_DESCENT_COAST_SEC),
+      rangeToLandingZoneM: FULL_DESCENT_PDI_RANGE_M,
     },
     defaultControlMode: "agc-assisted",
     availableControlModes: ["agc-assisted", "training", "quick-manual"],
