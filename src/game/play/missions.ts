@@ -40,7 +40,7 @@ export const DESCENT_LANDMARKS = {
  * pre-TIG coast the scenario opens with. The mission's initial state IS the
  * ignition state; the opening state is back-propagated along the coast.
  */
-export const FULL_DESCENT_PDI_RANGE_M = 476_300;
+export const FULL_DESCENT_PDI_RANGE_M = 475_400;
 export const FULL_DESCENT_COAST_SEC = 150;
 export const FULL_DESCENT_COAST_SPEED_MPS = 1_698;
 

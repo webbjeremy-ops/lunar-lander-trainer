@@ -968,14 +968,9 @@ export function usePlaySession(
           // low gate the vehicle has to eat a long ground track, which needs
           // more tilt than the flown walk; the extra authority is faded out
           // before the hand-over so the commander is still given ~19 deg.
-          const headroom =
-            corridorSec <= 530
-              ? 6
-              : corridorSec >= 612
-                ? 4
-                : 12 - 8 * Math.max(0, (corridorSec - 585) / 27);
+          const headroom = corridorSec <= 530 ? 4 : 3;
           maxTiltRad = walk + headroom * (Math.PI / 180);
-          minTiltRad = Math.max(0, walk - 6 * (Math.PI / 180));
+          minTiltRad = Math.max(0, walk - 3 * (Math.PI / 180));
         } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
           // Non-Apollo-11 scenarios have no mission clock: fall back to the
           // altitude-keyed phase curve as a ceiling only.

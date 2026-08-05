@@ -75,10 +75,9 @@ describe("sample descent", () => {
         schedSec >= APPROACH_PITCH_START_SEC && o.altitudeM > 60 ? schedSec : null;
       if (corridorSec !== null) {
         const walk = approachPitchRadAt(corridorSec);
-        const headroom =
-          corridorSec <= 530 ? 6 : corridorSec >= 612 ? 4 : 12 - 8 * Math.max(0, (corridorSec - 585) / 27);
+        const headroom = corridorSec <= 530 ? 4 : 3;
         maxTiltRad = walk + headroom * (Math.PI / 180);
-        minTiltRad = Math.max(0, walk - 6 * (Math.PI / 180));
+        minTiltRad = Math.max(0, walk - 3 * (Math.PI / 180));
       } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
         const phasePitch = Math.abs(descentPhaseFor(o.altitudeM, { p64Selected: true }).pitchRad);
         const blend = Math.max(0, Math.min(1, (30 - Math.abs(o.tangentialSpeedMps)) / 26));
