@@ -75,7 +75,12 @@ describe("sample descent", () => {
         schedSec >= APPROACH_PITCH_START_SEC && o.altitudeM > 60 ? schedSec : null;
       if (corridorSec !== null) {
         const walk = approachPitchRadAt(corridorSec);
-        const headroom = corridorSec <= 530 ? 4 : 3;
+        const headroom =
+          corridorSec <= 530
+            ? 4
+            : corridorSec >= 610
+              ? 3
+              : 7 - 4 * Math.max(0, (corridorSec - 590) / 20);
         maxTiltRad = walk + headroom * (Math.PI / 180);
         minTiltRad = Math.max(0, walk - 3 * (Math.PI / 180));
       } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
