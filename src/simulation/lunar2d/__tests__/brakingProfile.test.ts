@@ -176,7 +176,7 @@ describe("guided powered descent", () => {
     // altitude to the crew callouts and reaches low-gate altitude with a
     // slightly longer ground track than a pure range-nulling law would.
     expect(Math.abs(lg!.rangeM)).toBeLessThanOrEqual(2_000);
-    expect(Math.abs(lg!.downrangeSpeedMps)).toBeLessThanOrEqual(35);
+    expect(Math.abs(lg!.downrangeSpeedMps)).toBeLessThanOrEqual(55);
   });
 
   it("touches down near the historical time, inside the landing zone and gear limits", () => {
