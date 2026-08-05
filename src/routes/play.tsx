@@ -181,13 +181,20 @@ function PlayClient() {
   // the surface actually moving (crater field sweeping aft) during braking.
   const [firstPerson, setFirstPerson] = useState(true);
 
-  // "V" toggles the commander's window view without leaving the controls.
+  // M4.58 — the DSKY can be pulled into the middle of the cockpit with "D".
+  const [dskyPopup, setDskyPopup] = useState(false);
+
+  // "V" or "F" toggles the commander's window view; "D" the DSKY pop-up.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "KeyV" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code !== "KeyV" && e.code !== "KeyF" && e.code !== "KeyD" && e.code !== "Escape")
+        return;
       const el = e.target as HTMLElement | null;
       if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
-      setFirstPerson((v) => !v);
+      if (e.code === "KeyD") setDskyPopup((v) => !v);
+      else if (e.code === "Escape") setDskyPopup(false);
+      else setFirstPerson((v) => !v);
     };
     const onPadToggle = () => setFirstPerson((v) => !v);
     window.addEventListener("keydown", onKey);
@@ -197,6 +204,7 @@ function PlayClient() {
       window.removeEventListener("tranquility:toggle-view", onPadToggle);
     };
   }, []);
+
 
 
 
