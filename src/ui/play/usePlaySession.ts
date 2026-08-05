@@ -73,6 +73,7 @@ import {
   dpsThrottleEnvelope,
   isBurning,
   nominalAltitudeForRangeM,
+  altitudeTargetFor,
   nominalDownrangeSpeedForRange,
   HIGH_GATE_RANGE_M,
   HIGH_GATE_AIM,
