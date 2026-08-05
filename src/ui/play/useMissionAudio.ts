@@ -274,6 +274,9 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined") return;
+    if (altitudeM !== undefined && altitudeM < lowestAltRef.current) {
+      lowestAltRef.current = altitudeM;
+    }
     const due = dueBeats({
       enabled,
       engineOn,
@@ -281,7 +284,7 @@ export function useMissionAudio(input: MissionAudioInput): MissionAudioApi {
       activeAlarmId,
       calloutId,
       rollComplete,
-      altitudeM,
+      altitudeM: altitudeM === undefined ? undefined : lowestAltRef.current,
       burnTimeRemainingSec,
       propellantFraction,
       contact,
