@@ -15,8 +15,10 @@ import {
   currentMilestone,
   formatT,
   nextMilestone,
+  nominalAltitudeForRangeM,
   nominalStateAt,
 } from "@/game/play/descentTimeline";
+
 
 export function LunarScene({
   flight,
@@ -174,33 +176,16 @@ function metresLabel(m: number): string {
 }
 
 /**
- * Reference descent profile: altitude as a function of range-to-go, anchored
- * on the published Apollo 11 gates (PDI ~8.5 nmi slant, high gate 7,600 ft at
- * ~4.5 nmi to go, low gate 500 ft at ~2,000 ft to go, touchdown at 0).
- * Advisory only — the vehicle is never steered onto it.
+ * Reference descent profile: altitude as a function of range-to-go, sampled
+ * from the same as-flown Apollo 11 milestone table the vehicle is flown
+ * against (PDI, high gate, low gate, touchdown). Advisory only — the vehicle
+ * is never steered onto it, but the curve and the flown path now share one
+ * source of truth so the dotted line is not an independent approximation.
  */
-function referenceAltitudeM(
-  rangeM: number,
-  initialRangeM: number,
-  initialAltitudeM: number,
-): number {
-  const knots: [number, number][] = [
-    [0, 0],
-    [600, 152],
-    [8_300, 2_316],
-    [Math.max(9_000, initialRangeM), Math.max(2_400, initialAltitudeM)],
-  ];
-  const r = Math.max(0, rangeM);
-  for (let i = 1; i < knots.length; i++) {
-    const [r0, a0] = knots[i - 1]!;
-    const [r1, a1] = knots[i]!;
-    if (r <= r1) {
-      const t = r1 === r0 ? 0 : (r - r0) / (r1 - r0);
-      return a0 + (a1 - a0) * t;
-    }
-  }
-  return knots[knots.length - 1]![1];
+function referenceAltitudeM(rangeM: number): number {
+  return nominalAltitudeForRangeM(Math.max(0, rangeM));
 }
+
 
 function rollLabel(rollDeg: number): string {
   if (rollDeg <= 5) return "WINDOWS UP \u00b7 RADAR AT SURFACE";
@@ -304,11 +289,8 @@ function drawProfile(
   ctx.beginPath();
   for (let i = 0; i <= 48; i++) {
     const range = (rangeSpan * i) / 48;
-    const alt = referenceAltitudeM(
-      range,
-      mission.initial.rangeToLandingZoneM,
-      mission.initial.altitudeM,
-    );
+    const alt = referenceAltitudeM(range);
+
     const px = xFor(range);
     const py = yFor(Math.min(alt, altSpan));
     if (i === 0) ctx.moveTo(px, py);
@@ -448,11 +430,8 @@ function drawProfile(
 
   // Header: altitude and the deviation from the reference profile, so the
   // picture and the altimeter can be read against each other directly.
-  const refAlt = referenceAltitudeM(
-    Math.abs(downrangeM),
-    mission.initial.rangeToLandingZoneM,
-    mission.initial.altitudeM,
-  );
+  const refAlt = referenceAltitudeM(Math.abs(downrangeM));
+
   const deviation = orbit.altitudeM - refAlt;
 
   // M4.20 — scripted-timeline readout: where the flown descent sits against
