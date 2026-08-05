@@ -995,14 +995,18 @@ export function usePlaySession(
                   nominalAltitudeForRangeM(Math.abs(rangeM)),
                   Math.max(0, sched.altitudeM + approachAltitudeLeadM(schedSec ?? 0)),
                 ),
-          targetDownrangeSpeedMps: Math.min(
-                nominalDownrangeSpeedForRange(Math.abs(rangeM)),
-                nominalDownrangeSpeedAt((schedSec ?? 0)) *
-                  Math.max(
-                    1,
-                    Math.min(1.8, Math.abs(rangeM) / Math.max(200, sched.rangeToLzM)),
-                  ),
-              ),
+          targetDownrangeSpeedMps:
+            sched === null
+              ? nominalDownrangeSpeedForRange(Math.abs(rangeM))
+              : Math.min(
+                  nominalDownrangeSpeedForRange(Math.abs(rangeM)),
+                  nominalDownrangeSpeedAt(schedSec ?? 0) *
+                    Math.max(
+                      1,
+                      Math.min(1.8, Math.abs(rangeM) / Math.max(200, sched.rangeToLzM)),
+                    ),
+                ),
+
           handoverRangeM: HIGH_GATE_RANGE_M,
           fixedThrottle:
             guidanceEnv && guidanceEnv.min === guidanceEnv.max ? guidanceEnv.min : null,
