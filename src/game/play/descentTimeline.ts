@@ -222,6 +222,20 @@ export function nominalStateAt(tSec: number): NominalState {
   return { altitudeM: last.altitudeM, rangeToLzM: last.rangeToLzM, program: last.program };
 }
 
+/**
+ * M4.63 — the flown range-versus-TIME schedule differentiated: the downrange
+ * closing speed the canonical profile has at this mission time, m/s. The
+ * approach phase is paced by this, not only by the range-keyed curve: keying
+ * on range alone let a long ground track excuse a fast vehicle all the way to
+ * the hand-over, which put ~127 fps in the commander's hands instead of ~70.
+ */
+export function nominalDownrangeSpeedAt(tSec: number): number {
+  const h = 0.5;
+  const a = nominalStateAt(Math.max(0, tSec - h));
+  const b = nominalStateAt(tSec + h);
+  return Math.max(0, (a.rangeToLzM - b.rangeToLzM) / (Math.min(h, tSec) + h));
+}
+
 /** "T+08:34" caption for a milestone or any ignition-relative time. */
 export function formatT(tSec: number): string {
   const s = Math.max(0, Math.round(tSec));
@@ -311,7 +325,7 @@ export const LOW_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("low-gate"),
   altitudeM: 500 * FT,
   rangeToLzM: 0.3 * NMI,
-  downrangeSpeedMps: 50 * FT,
+  downrangeSpeedMps: 30 * FT,
   sinkRateMps: 14 * FT,
 } as const;
 
@@ -394,4 +408,52 @@ export function nominalGlideSlopeForRange(rangeToLzM: number): number {
 export function altitudeTargetFor(forRangeM: number, forTimeM: number): number {
   if (forTimeM >= forRangeM) return forRangeM;
   return forRangeM - 0.85 * (forRangeM - forTimeM);
+}
+
+/**
+ * M4.63 — approach-phase guidance LEAD, feet of altitude added to the flown
+ * profile before it is handed to guidance (negative = aim lower).
+ *
+ * The closed loop lags its altitude target through the P64 corridor — it
+ * cannot sink faster than the schedule allows — so commanding the historical
+ * altitude produced a track about 1,200 ft high at high gate that washed out
+ * by T+593 and then went ~140 ft LOW at the P66 hand-over. This is the
+ * inverse of that measured lag: it tapers out exactly where the error does,
+ * and turns slightly positive near low gate so the commander is handed a
+ * vehicle at ~460 ft still carrying a historical rate of descent.
+ *
+ * The published milestone table is untouched: this shapes only the target the
+ * controller chases, never what the cockpit or the debrief reports.
+ */
+const APPROACH_ALTITUDE_LEAD_FT: readonly (readonly [number, number])[] = [
+  [470, 0],
+  [487, -560],
+  [507, -1_180],
+  [512, -980],
+  [526, -950],
+  [543, -700],
+  [553, -400],
+  [578, -100],
+  [593, 150],
+  [604, 230],
+  [617, 300],
+  [640, 60],
+  [660, 0],
+] as const;
+
+/** Guidance altitude lead at a mission time, metres (signed). */
+export function approachAltitudeLeadM(tSec: number): number {
+  const table = APPROACH_ALTITUDE_LEAD_FT;
+  const first = table[0]!;
+  const last = table[table.length - 1]!;
+  if (tSec <= first[0] || tSec >= last[0]) return 0;
+  for (let i = 0; i < table.length - 1; i++) {
+    const a = table[i]!;
+    const b = table[i + 1]!;
+    if (tSec >= a[0] && tSec <= b[0]) {
+      const f = (tSec - a[0]) / (b[0] - a[0]);
+      return lerp(a[1], b[1], f) * FT;
+    }
+  }
+  return 0;
 }

@@ -83,6 +83,8 @@ import {
   milestoneSec,
   nominalStateAt,
   approachPitchRadAt,
+  approachAltitudeLeadM,
+  nominalDownrangeSpeedAt,
   APPROACH_PITCH_START_SEC,
 
 
@@ -962,9 +964,18 @@ export function usePlaySession(
             : null;
         if (corridorSec !== null) {
           const walk = approachPitchRadAt(corridorSec);
-          const tol = 6 * (Math.PI / 180);
-          maxTiltRad = walk + tol;
-          minTiltRad = Math.max(0, walk - tol);
+          // M4.63 — the corridor is asymmetric. Between the 5,000 ft call and
+          // low gate the vehicle has to eat a long ground track, which needs
+          // more tilt than the flown walk; the extra authority is faded out
+          // before the hand-over so the commander is still given ~19 deg.
+          const headroom =
+            corridorSec <= 530
+              ? 6
+              : corridorSec >= 612
+                ? 4
+                : 12 - 8 * Math.max(0, (corridorSec - 585) / 27);
+          maxTiltRad = walk + headroom * (Math.PI / 180);
+          minTiltRad = Math.max(0, walk - 6 * (Math.PI / 180));
         } else if (o.altitudeM <= PHASE_HIGH_GATE_M && o.altitudeM > 120) {
           // Non-Apollo-11 scenarios have no mission clock: fall back to the
           // altitude-keyed phase curve as a ceiling only.
@@ -980,8 +991,18 @@ export function usePlaySession(
           targetAltitudeM:
             sched === null
               ? nominalAltitudeForRangeM(Math.abs(rangeM))
-              : altitudeTargetFor(nominalAltitudeForRangeM(Math.abs(rangeM)), sched.altitudeM),
-          targetDownrangeSpeedMps: nominalDownrangeSpeedForRange(Math.abs(rangeM)),
+              : altitudeTargetFor(
+                  nominalAltitudeForRangeM(Math.abs(rangeM)),
+                  Math.max(0, sched.altitudeM + approachAltitudeLeadM(schedSec ?? 0)),
+                ),
+          targetDownrangeSpeedMps: Math.min(
+                nominalDownrangeSpeedForRange(Math.abs(rangeM)),
+                nominalDownrangeSpeedAt((schedSec ?? 0)) *
+                  Math.max(
+                    1,
+                    Math.min(1.8, Math.abs(rangeM) / Math.max(200, sched.rangeToLzM)),
+                  ),
+              ),
           handoverRangeM: HIGH_GATE_RANGE_M,
           fixedThrottle:
             guidanceEnv && guidanceEnv.min === guidanceEnv.max ? guidanceEnv.min : null,

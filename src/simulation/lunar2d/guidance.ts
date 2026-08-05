@@ -64,8 +64,8 @@ const SCHEDULE_RELIEF_SCALE_M = 4_000;
 /** Closing deceleration used to fly the last kilometres onto the site, m/s². */
 const APPROACH_CLOSING_ACCEL = 0.6;
 /** Schedule catch-up trim: time constant and authority limit. */
-const SCHEDULE_TRIM_TAU_S = 30;
-const SCHEDULE_TRIM_MAX_MPS2 = 0.35;
+const SCHEDULE_TRIM_TAU_S = 18;
+const SCHEDULE_TRIM_MAX_MPS2 = 0.55;
 /** Time constant for the approach-phase downrange velocity loop, seconds. */
 const APPROACH_TAU_S = 8;
 /** Vertical error is flown out on this time constant after high gate, seconds. */
@@ -303,7 +303,13 @@ export function computeReferenceGuidance(
         orbit.altitudeM < 12 ? 0.25 : orbit.altitudeM < 30 ? 0.55 : 0.75;
       targetRadial = Math.min(targetRadial, -floorSink);
     }
-    aRadial = netG + (targetRadial - orbit.radialSpeedMps) / (VERTICAL_TAU_S * 2);
+    // M4.63 — the vertical loop has to be crisp through the approach. An
+    // eight-second time constant let the sink rate run ~15 fps fast from the
+    // 3,000 ft call downward, which is what dropped the vehicle several
+    // hundred feet below the flown profile before the hand-over.
+    const tauBlend = Math.max(0, Math.min(1, (4_000 - orbit.altitudeM) / 2_000));
+    const verticalTau = VERTICAL_TAU_S * (2 - 1.4 * tauBlend);
+    aRadial = netG + (targetRadial - orbit.radialSpeedMps) / verticalTau;
 
   } else {
     targetRadial = targetSinkRate(orbit.altitudeM);
@@ -319,8 +325,12 @@ export function computeReferenceGuidance(
     // Horizontal acceleration needed: null the tangential velocity.
     aHorizontal = -orbit.tangentialSpeedMps / TERMINAL_HORIZONTAL_TAU_S;
   }
-  // Thrust can only push: never ask for a negative vertical component.
-  if (aRadial < 0) aRadial = 0;
+  // Thrust can only push: never ask for a negative vertical component. The
+  // floor is a small positive fraction of local gravity rather than zero, so a
+  // momentarily satisfied vertical demand cannot snap the commanded attitude
+  // flat to the horizon and back within a couple of control cycles.
+  const radialFloor = 0.13 * localG;
+  if (aRadial < radialFloor) aRadial = radialFloor;
 
 
   const radialError = orbit.radialSpeedMps - targetRadial;

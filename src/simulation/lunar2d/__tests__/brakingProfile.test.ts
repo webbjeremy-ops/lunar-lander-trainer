@@ -117,6 +117,8 @@ function flyGuidedDescent() {
     );
     // Commanded pitch must be continuous — no step at throttle recovery.
     if (previousCommandRad !== null && !terminal) {
+      if (Math.abs(cue.recommendedAttitudeRad - previousCommandRad) > 0.5)
+        console.log("STEP", tSec, cue.recommendedAttitudeRad, previousCommandRad, s.altitudeMDebug ?? "");
       worstPitchStepRad = Math.max(
         worstPitchStepRad,
         Math.abs(cue.recommendedAttitudeRad - previousCommandRad),
