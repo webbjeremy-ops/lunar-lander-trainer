@@ -297,19 +297,63 @@ export interface GateAimPoint {
 
 export const HIGH_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("high-gate"),
-  altitudeM: 6_200 * FT,
+  altitudeM: 7_129 * FT,
   rangeToLzM: 4.1 * NMI,
   downrangeSpeedMps: 500 * FT,
-  sinkRateMps: 145 * FT,
+  sinkRateMps: 125 * FT,
 } as const;
 
 export const LOW_GATE_AIM: GateAimPoint = {
   tSec: milestoneSec("low-gate"),
-  altitudeM: 490 * FT,
+  altitudeM: 500 * FT,
   rangeToLzM: 0.3 * NMI,
   downrangeSpeedMps: 50 * FT,
-  sinkRateMps: 16 * FT,
+  sinkRateMps: 14 * FT,
 } as const;
+
+/**
+ * M4.62 — the as-flown P64 pitch walk, degrees of tilt from local vertical as
+ * a function of ignition-relative time. Eagle entered the approach phase near
+ * 55° and walked MONOTONICALLY upright to about 18° at low gate; it never
+ * snapped near-vertical at the gate and never pitched back. Guidance is given
+ * this curve as a corridor so the commanded attitude follows the flight record
+ * instead of whatever the braking law would like instant by instant.
+ */
+const APPROACH_PITCH_DEG: readonly (readonly [number, number])[] = [
+  [487, 55],
+  [507, 55],
+  [512, 45],
+  [526, 40],
+  [543, 32],
+  [560, 26],
+  [578, 22],
+  [593, 19],
+  [617, 18],
+  [660, 12],
+] as const;
+
+/** Scheduled tilt from local vertical at a mission time, radians (>= 0). */
+export function approachPitchRadAt(tSec: number): number {
+  const first = APPROACH_PITCH_DEG[0]!;
+  const last = APPROACH_PITCH_DEG[APPROACH_PITCH_DEG.length - 1]!;
+  if (tSec <= first[0]) return (first[1] * Math.PI) / 180;
+  if (tSec >= last[0]) return (last[1] * Math.PI) / 180;
+  for (let i = 0; i < APPROACH_PITCH_DEG.length - 1; i++) {
+    const a = APPROACH_PITCH_DEG[i]!;
+    const b = APPROACH_PITCH_DEG[i + 1]!;
+    if (tSec >= a[0] && tSec <= b[0]) {
+      const f = (tSec - a[0]) / (b[0] - a[0]);
+      return (lerp(a[1], b[1], f) * Math.PI) / 180;
+    }
+  }
+  return (last[1] * Math.PI) / 180;
+}
+
+/** First and last mission time covered by the P64 pitch corridor, seconds. */
+export const APPROACH_PITCH_START_SEC = APPROACH_PITCH_DEG[0]![0];
+export const APPROACH_PITCH_END_SEC =
+  APPROACH_PITCH_DEG[APPROACH_PITCH_DEG.length - 1]![0];
+
 
 /**
  * Slope of the canonical altitude-versus-range profile at a given range to go
