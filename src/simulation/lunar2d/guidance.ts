@@ -329,7 +329,7 @@ export function computeReferenceGuidance(
   // floor is a small positive fraction of local gravity rather than zero, so a
   // momentarily satisfied vertical demand cannot snap the commanded attitude
   // flat to the horizon and back within a couple of control cycles.
-  const radialFloor = 0.13 * localG;
+  const radialFloor = 0.07 * localG;
   if (aRadial < radialFloor) aRadial = radialFloor;
 
 
