@@ -157,6 +157,19 @@ function LearnPage() {
   const [selectedId, setSelectedId] = useState<string>(
     LEARNING_TRACKS[0]?.lessonIds[0] ?? ALL_LESSONS[0]!.id,
   );
+  // Mobile: the lesson list collapses so the lesson body is the first thing
+  // on screen. Picking a lesson closes the list and scrolls back to the top.
+  const [navOpen, setNavOpen] = useState(false);
+  const lessonSectionRef = useRef<HTMLElement | null>(null);
+  const selectLessonForMobile = useCallback(() => {
+    setNavOpen(false);
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      requestAnimationFrame(() => {
+        lessonSectionRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+      });
+    }
+  }, []);
+
   const [states, setStates] = useState<Record<string, LessonState>>(() => {
     const init: Record<string, LessonState> = {};
     for (const l of ALL_LESSONS) init[l.id] = initialLessonState(l);
