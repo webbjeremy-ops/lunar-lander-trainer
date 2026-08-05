@@ -389,5 +389,5 @@ export function nominalGlideSlopeForRange(rangeToLzM: number): number {
  */
 export function altitudeTargetFor(forRangeM: number, forTimeM: number): number {
   if (forTimeM >= forRangeM) return forRangeM;
-  return forRangeM - 0.6 * (forRangeM - forTimeM);
+  return forRangeM - 0.85 * (forRangeM - forTimeM);
 }
