@@ -1286,10 +1286,16 @@ export function usePlaySession(
       const step = currentStep(script, state);
       if (step?.id !== "p64-monitor") return;
       // M4.58 — Houston's "thirty seconds to P64" call goes out at T+487 s;
-      // the computer takes the approach program thirty seconds later whether
-      // or not the geometry box has closed by then.
+      // the computer takes the approach program thirty seconds later.
+      // M4.61 — but P64 is the APPROACH program: it may never be keyed while
+      // the vehicle is still in the braking-phase sky. The overdue clock only
+      // forces the gate once the vehicle is inside twice the high-gate
+      // altitude (~12,400 ft); higher than that the game waits for the
+      // geometry instead of pitching over at 30,000 ft.
       const overdue =
-        descentClockRef.current.sinceIgnitionUs >= (487 + 30) * 1_000_000;
+        descentClockRef.current.sinceIgnitionUs >= (487 + 30) * 1_000_000 &&
+        computeOrbitalValues(flightRef.current).altitudeM <=
+          HIGH_GATE_AIM.altitudeM * 2;
       if (overdue) forceHighGateRef.current = true;
       if (!readGates().highGateReady) return;
       fired = true;
