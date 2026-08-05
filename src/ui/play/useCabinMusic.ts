@@ -17,7 +17,6 @@ import everydayPeople from "@/assets/everyday-people.mp3.asset.json";
 import spinningWheel from "@/assets/spinning-wheel.mp3.asset.json";
 import everyoneGone from "@/assets/everyone-gone-to-the-moon.mp3.asset.json";
 import flyMeToTheMoon from "@/assets/fly-me-to-the-moon.mp3.asset.json";
-import mistOTheMoon from "@/assets/mist-o-the-moon.mp3.asset.json";
 import moonMoods from "@/assets/moon-moods.mp3.asset.json";
 import newWorld from "@/assets/dvorak-new-world-mvmt4.mp3.asset.json";
 
@@ -42,7 +41,7 @@ export const CABIN_TRACKS: readonly CabinTrack[] = [
   {
     id: "spinning-wheel",
     title: "Spinning Wheel",
-    artist: "Blood, Sweat & Tears",
+    artist: "Peggy Lee",
     url: spinningWheel.url,
   },
   {
@@ -64,7 +63,6 @@ export const CABIN_TRACKS: readonly CabinTrack[] = [
     artist: "Antonín Dvořák",
     url: newWorld.url,
   },
-  { id: "mist-o-the-moon", title: "Mist o' the Moon", artist: "Les Baxter", url: mistOTheMoon.url },
 ];
 
 export interface CabinMusicApi {
