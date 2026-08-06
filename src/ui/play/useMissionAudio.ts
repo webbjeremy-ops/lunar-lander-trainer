@@ -18,7 +18,7 @@ import radarLockClip from "@/assets/a11-radar-lock.mp3.asset.json";
 import earthWindowClip from "@/assets/a11-earth-window.mp3.asset.json";
 import p64ThirtyOutClip from "@/assets/p64_30secsout.mp3.asset.json";
 import p64ActivatedClip from "@/assets/p64activated.mp3.asset.json";
-import goForLandingClip from "@/assets/EagleHoustonGoForLanding.mp3.asset.json";
+import goForLandingClip from "@/assets/goforlanding.mp3.asset.json";
 import alarm1201Clip from "@/assets/1201Alarm.mp3.asset.json";
 import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
 import final100Clip from "@/assets/a11-final-100ft.mp3.asset.json";
@@ -128,12 +128,16 @@ const BEATS: ReadonlyArray<{
   { id: "p64-activated", due: (i) => (i.sinceIgnitionSec ?? 0) >= 510 },
   // T+526 s / 5,000 ft — beat removed at the crew's request.
 
-  // T+543 s / 3,500 ft — "Eagle, Houston, you're go for landing".
+  // "Eagle, Houston, you're go for landing". The restored clip runs 8 s, and
+  // the vehicle is sinking ~27 m/s (~90 fps) through the approach, so it keys
+  // up ~720 ft high — 3,720 ft (1,134 m), T+539 — and the last word lands as
+  // the altimeter passes 3,000 ft, where the cue card comes up.
   {
     id: "go-for-landing-1201",
     due: (i) =>
-      (i.altitudeM ?? Infinity) <= 1_067 || (i.sinceIgnitionSec ?? 0) >= 543,
+      (i.altitudeM ?? Infinity) <= 1_134 || (i.sinceIgnitionSec ?? 0) >= 539,
   },
+
   // T+554 s (09:14) — the first approach-phase 1201.
   {
     id: "alarm-1201",

@@ -47,9 +47,10 @@ describe("mission audio story beats", () => {
     expect(due.indexOf("earth-window")).toBeGreaterThan(due.indexOf("radar-lock"));
   });
 
-  it("fires the go-for-landing call at 3 500 ft", () => {
+  it("keys the go-for-landing clip up early so it ends at 3 000 ft", () => {
     expect(dueBeats({ ...base, altitudeM: 1_500 })).not.toContain("go-for-landing-1201");
-    expect(dueBeats({ ...base, altitudeM: 1_000 })).toContain("go-for-landing-1201");
+    expect(dueBeats({ ...base, altitudeM: 1_130 })).toContain("go-for-landing-1201");
+
   });
 
   it("fires the sixty-second call on one minute of burn time, not altitude", () => {

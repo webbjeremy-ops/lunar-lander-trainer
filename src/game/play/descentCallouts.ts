@@ -176,8 +176,9 @@ export const APOLLO11_DESCENT_CALLOUTS: readonly DescentCallout[] = [
     "Nothing to key. P64 is flying the approach — watch the site come up in the window and stand by for P66.",
     "The go-for-landing call is Houston clearing the crew to continue through the approach phase on the computer's guidance.",
     "none",
-    543,
-    3_500,
+    547,
+    3_000,
+
     "P64",
   ),
   c(
