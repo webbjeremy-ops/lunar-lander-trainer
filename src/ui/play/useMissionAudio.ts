@@ -18,7 +18,7 @@ import radarLockClip from "@/assets/a11-radar-lock.mp3.asset.json";
 import earthWindowClip from "@/assets/a11-earth-window.mp3.asset.json";
 import p64ThirtyOutClip from "@/assets/p64_30secsout.mp3.asset.json";
 import p64ActivatedClip from "@/assets/p64activated.mp3.asset.json";
-import goForLandingClip from "@/assets/EagleHoustonGoForLanding.mp3.asset.json";
+import goForLandingClip from "@/assets/goforlanding.mp3.asset.json";
 import alarm1201Clip from "@/assets/1201Alarm.mp3.asset.json";
 import sixtySecondsClip from "@/assets/a11-sixty-seconds.mp3.asset.json";
 import final100Clip from "@/assets/a11-final-100ft.mp3.asset.json";
