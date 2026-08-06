@@ -443,13 +443,13 @@ export function nearFieldPocks(
   for (let i = first; i <= last; i += 1) {
     for (let j = -8; j <= 8; j += 1) {
       const r = hash2(i, j);
-      if (r < 0.45) continue;
+      if (r < 0.62) continue;
       out.push({
         id: `pock-${i}-${j}`,
         kind: r > 0.93 ? "boulder-field" : "crater",
         trackRangeM: (i + hash2(i, j + 91)) * cell,
         lateralM: (j + hash2(i + 17, j)) * cell,
-        radiusM: 1.5 + hash2(i + 5, j + 5) * (r > 0.93 ? 4 : 9),
+        radiusM: 1.2 + hash2(i + 5, j + 5) * (r > 0.93 ? 3 : 5.5),
         albedo: 0.25 + hash2(i, j + 3) * 0.5,
       });
     }
@@ -486,7 +486,7 @@ export function trackFieldFeatures(
   for (let i = centre - 20; i <= centre + spanCells; i += 1) {
     for (let j = -18; j <= 18; j += 1) {
       const r = hash2(i * 7 + 13, j * 11 + 5);
-      if (r < 0.62) continue;
+      if (r < 0.78) continue;
       const kind: LandmarkKind = r > 0.965 ? "rille" : "crater";
       out.push({
         id: `field-${i}-${j}`,
@@ -496,7 +496,7 @@ export function trackFieldFeatures(
         radiusM:
           kind === "rille"
             ? cell * (0.5 + hash2(i + 2, j) * 1.2)
-            : cell * (0.08 + hash2(i + 9, j + 4) * 0.34),
+            : cell * (0.06 + hash2(i + 9, j + 4) * 0.2),
         albedo: 0.3 + hash2(i, j + 7) * 0.55,
       });
     }
