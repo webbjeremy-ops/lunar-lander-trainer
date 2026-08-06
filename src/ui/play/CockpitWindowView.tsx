@@ -588,17 +588,54 @@ function drawLandmark(
     ctx.stroke();
     return;
   }
-  // Crater: shadowed far wall, lit near rim.
-  ctx.fillStyle = `rgba(28,28,26,${0.3 + mark.albedo * 0.3})`;
+  // Crater. Sun is low from the left, so the bowl reads as: a shadowed left
+  // inner wall, a sunlit right inner wall, a soft lit outer rim on the sun
+  // side and a faint ejecta halo. No hard outline ring — an unbroken bright
+  // ellipse is what made these look like drawn circles rather than terrain.
+  const ry = Math.max(0.6, r * flat);
+  ctx.save();
+
+  // Ejecta blanket: very soft brightening around the rim, kills the "sticker"
+  // look where craters overlap by letting neighbours blend.
+  if (r > 3) {
+    const halo = ctx.createRadialGradient(x, y, r * 0.75, x, y, r * 1.6);
+    halo.addColorStop(0, `rgba(206,196,178,${0.13 + mark.albedo * 0.1})`);
+    halo.addColorStop(1, "rgba(206,196,178,0)");
+    ctx.fillStyle = halo;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 1.6, ry * 1.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Bowl: cross-lit gradient, dark on the sun side wall, bright opposite.
+  const bowl = ctx.createLinearGradient(x - r, y - ry, x + r, y + ry);
+  bowl.addColorStop(0, `rgba(24,23,21,${0.5 + mark.albedo * 0.35})`);
+  bowl.addColorStop(0.45, `rgba(46,44,40,${0.34 + mark.albedo * 0.2})`);
+  bowl.addColorStop(0.72, `rgba(150,142,126,${0.22 + mark.albedo * 0.22})`);
+  bowl.addColorStop(1, `rgba(196,186,167,${0.26 + mark.albedo * 0.3})`);
+  ctx.fillStyle = bowl;
   ctx.beginPath();
-  ctx.ellipse(x, y, r, r * flat, 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y, r, ry, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = `rgba(226,216,196,${0.35 + mark.albedo * 0.5})`;
-  ctx.lineWidth = Math.max(1.1, r * 0.12);
-  ctx.beginPath();
-  ctx.ellipse(x, y, r, r * flat, 0, Math.PI * 0.05, Math.PI * 0.95);
-  ctx.stroke();
+
+  // Sunlit outer rim: a crescent on the sun side only, feathered at the ends.
+  if (r > 2) {
+    ctx.strokeStyle = `rgba(228,219,200,${0.28 + mark.albedo * 0.35})`;
+    ctx.lineWidth = Math.max(0.8, r * 0.09);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 1.02, ry * 1.02, 0, Math.PI * 0.62, Math.PI * 1.42);
+    ctx.stroke();
+    // Shadowed rim opposite, weaker still.
+    ctx.strokeStyle = `rgba(30,28,25,${0.22 + mark.albedo * 0.22})`;
+    ctx.lineWidth = Math.max(0.7, r * 0.07);
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 1.02, ry * 1.02, 0, Math.PI * 1.72, Math.PI * 0.36);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
+
 
 /**
  * The LPD scale etched on the commander's window: numbered degree marks the
