@@ -657,23 +657,23 @@ function PlayClient() {
               flight. Fly the abort, or restart the descent.
             </div>
           )}
-          {!session.scriptTerminated && (
-            <ProcedureCoach
-              script={session.script}
-              state={session.procedure}
-              step={session.step}
-              manual={session.manualUnlocked}
-              sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
-              highGateReady={session.highGateStatus === "ready"}
-            />
-          )}
-          {/* M4.60 — cue cards float centred over the viewport instead of
-              pushing the flight view down the page, so the crew can answer
-              them without scrolling back up. */}
+          {/* M4.60 — every cue card floats centred over the viewport instead
+              of pushing the flight view down the page, so the crew can answer
+              without scrolling. */}
           <div
             data-testid="cue-card-layer"
-            className="pointer-events-none fixed inset-x-0 top-1/2 z-50 mx-auto flex w-full max-w-xl -translate-y-1/2 flex-col gap-2 px-4"
+            className="pointer-events-none fixed inset-x-0 top-1/2 z-50 mx-auto flex max-h-[86vh] w-full max-w-xl -translate-y-1/2 flex-col gap-2 overflow-y-auto px-4"
           >
+            {!session.scriptTerminated && (
+              <ProcedureCoach
+                script={session.script}
+                state={session.procedure}
+                step={session.step}
+                manual={session.manualUnlocked}
+                sinceIgnitionSec={session.descentClock.sinceIgnitionUs / 1_000_000}
+                highGateReady={session.highGateStatus === "ready"}
+              />
+            )}
             <HoustonOverlay
               call={session.houston}
               onAcknowledge={session.actions.acknowledgeHouston}
@@ -688,6 +688,7 @@ function PlayClient() {
               proAccepted={session.ignition.proAccepted}
             />
           </div>
+
 
 
 
