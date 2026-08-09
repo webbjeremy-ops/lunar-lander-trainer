@@ -26,40 +26,76 @@ interface BridgedRegisters {
   readonly caption: string;
 }
 
-const LAMP_LAYOUT: readonly { name: LampName; label: string; color: string }[] = [
-  { name: "UPLINK_ACTY", label: "UPLINK ACTY", color: "amber" },
-  { name: "TEMP", label: "TEMP", color: "amber" },
-  { name: "AGC_WARN", label: "GIMBAL LOCK", color: "amber" },
-  { name: "COMP_ACTY", label: "COMP ACTY", color: "green" },
-  { name: "STBY", label: "STBY", color: "amber" },
-  { name: "KEY_REL", label: "KEY REL", color: "amber" },
-  { name: "OPER_ERR", label: "OPR ERR", color: "amber" },
-  { name: "RESTART", label: "RESTART", color: "amber" },
-  { name: "VERB_NOUN_FLASH", label: "VERB/NOUN FLASH", color: "green" },
-  { name: "EL_OFF", label: "EL OFF", color: "amber" },
+type LampCell = { name: LampName; label: string; color: "amber" | "green" };
+type StaticCell = { label: string };
+type AnnCell = LampCell | StaticCell | null;
+
+/** Left-hand placard block, read row by row exactly as on the flown DSKY:
+ *  column 1 is the caution/status set, column 2 the caution/warning set.
+ *  Placards that this configuration cannot drive are rendered dark. */
+const ANNUNCIATOR_ROWS: readonly AnnCell[] = [
+  { name: "UPLINK_ACTY", label: "UPLINK ACTY", color: "amber" }, { name: "TEMP", label: "TEMP", color: "amber" },
+  { label: "NO ATT" }, { name: "AGC_WARN", label: "GIMBAL LOCK", color: "amber" },
+  { name: "STBY", label: "STBY", color: "amber" }, { label: "PROG" },
+  { name: "KEY_REL", label: "KEY REL", color: "amber" }, { name: "RESTART", label: "RESTART", color: "amber" },
+  { name: "OPER_ERR", label: "OPR ERR", color: "amber" }, { label: "TRACKER" },
+  { name: "VERB_NOUN_FLASH", label: "V/N FLASH", color: "green" }, { label: "ALT" },
+  { name: "EL_OFF", label: "EL OFF", color: "amber" }, { label: "VEL" },
 ];
 
-const KEY_LAYOUT: readonly { label: string; code: number | "PRO" }[] = [
-  { label: "VERB", code: DSKY_KEYS.VERB },
-  { label: "NOUN", code: DSKY_KEYS.NOUN },
-  { label: "+", code: DSKY_KEYS.PLUS },
-  { label: "-", code: DSKY_KEYS.MINUS },
-  { label: "0", code: DSKY_KEYS.ZERO },
-  { label: "7", code: DSKY_KEYS.SEVEN },
-  { label: "8", code: DSKY_KEYS.EIGHT },
-  { label: "9", code: DSKY_KEYS.NINE },
-  { label: "4", code: DSKY_KEYS.FOUR },
-  { label: "5", code: DSKY_KEYS.FIVE },
-  { label: "6", code: DSKY_KEYS.SIX },
-  { label: "CLR", code: DSKY_KEYS.CLR },
-  { label: "1", code: DSKY_KEYS.ONE },
-  { label: "2", code: DSKY_KEYS.TWO },
-  { label: "3", code: DSKY_KEYS.THREE },
-  { label: "PRO", code: "PRO" },
-  { label: "KEY\u00A0REL", code: DSKY_KEYS.KEY_REL },
-  { label: "ENTR", code: DSKY_KEYS.ENTR },
-  { label: "RSET", code: DSKY_KEYS.RSET },
+const KEY_LAYOUT: readonly { label: string; code: number | "PRO"; cls?: string }[] = [
+  // Row 1
+  { label: "VERB", code: DSKY_KEYS.VERB, cls: "row-start-1 col-start-1" },
+  { label: "+", code: DSKY_KEYS.PLUS, cls: "row-start-1 col-start-2" },
+  { label: "7", code: DSKY_KEYS.SEVEN, cls: "row-start-1 col-start-3" },
+  { label: "8", code: DSKY_KEYS.EIGHT, cls: "row-start-1 col-start-4" },
+  { label: "9", code: DSKY_KEYS.NINE, cls: "row-start-1 col-start-5" },
+  { label: "CLR", code: DSKY_KEYS.CLR, cls: "row-start-1 col-start-6" },
+  { label: "ENTR", code: DSKY_KEYS.ENTR, cls: "row-start-1 col-start-7" },
+  // Row 2
+  { label: "NOUN", code: DSKY_KEYS.NOUN, cls: "row-start-2 col-start-1" },
+  { label: "-", code: DSKY_KEYS.MINUS, cls: "row-start-2 col-start-2" },
+  { label: "4", code: DSKY_KEYS.FOUR, cls: "row-start-2 col-start-3" },
+  { label: "5", code: DSKY_KEYS.FIVE, cls: "row-start-2 col-start-4" },
+  { label: "6", code: DSKY_KEYS.SIX, cls: "row-start-2 col-start-5" },
+  { label: "PRO", code: "PRO", cls: "row-start-2 col-start-6" },
+  { label: "RSET", code: DSKY_KEYS.RSET, cls: "row-start-2 col-start-7 row-span-2" },
+  // Row 3
+  { label: "0", code: DSKY_KEYS.ZERO, cls: "row-start-3 col-start-2" },
+  { label: "1", code: DSKY_KEYS.ONE, cls: "row-start-3 col-start-3" },
+  { label: "2", code: DSKY_KEYS.TWO, cls: "row-start-3 col-start-4" },
+  { label: "3", code: DSKY_KEYS.THREE, cls: "row-start-3 col-start-5" },
+  { label: "KEY\u00A0REL", code: DSKY_KEYS.KEY_REL, cls: "row-start-3 col-start-6 text-[9px]" },
 ];
+
+function Placard({ label, on, color, testid }: {
+  label: string;
+  on: boolean;
+  color: "amber" | "green";
+  testid?: string;
+}) {
+  const lit = color === "green"
+    ? { background: "linear-gradient(180deg,#9dfca6,#4bd45f)", color: "#04270a" }
+    : { background: "linear-gradient(180deg,#ffdf7a,#f2b41c)", color: "#2b1d00" };
+  const dark = { background: "linear-gradient(180deg,#b9bcbd,#8f9294)", color: "#3a3d3f" };
+  return (
+    <div
+      data-testid={testid}
+      data-on={on ? "1" : "0"}
+      aria-label={label ? `${label} lamp ${on ? "on" : "off"}` : undefined}
+      className="flex min-h-[1.6rem] items-center justify-center rounded-[2px] px-1 text-center font-sans text-[8px] font-semibold uppercase leading-[1.05] tracking-tight"
+      style={{
+        ...(on ? lit : dark),
+        boxShadow: on
+          ? "inset 0 0 0 1px rgba(0,0,0,.35), 0 0 8px rgba(255,200,60,.28)"
+          : "inset 0 0 0 1px rgba(0,0,0,.35)",
+      }}
+    >
+      {label}
+    </div>
+  );
+}
+
 
 const WATCH_CHANNELS = [0o10, 0o11, 0o13, 0o15, 0o32, 0o163] as const;
 
@@ -367,11 +403,8 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
   return (
     <div
       ref={dskyRootRef}
-      className={
-        compact
-          ? "grid gap-3"
-          : "grid gap-4 md:grid-cols-[minmax(0,1fr)_17.5rem]"
-      }
+      className={compact ? "grid gap-3" : "grid gap-4"}
+
       data-testid="agc-dsky"
     >
       <div className="min-w-0 rounded border border-neutral-800 bg-neutral-950 p-3 shadow-inner">
@@ -440,68 +473,130 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-1 md:grid-cols-5">
-          {LAMP_LAYOUT.map(({ name, label, color }) => {
-            const on = (lamps & DSKY_LAMPS[name]) !== 0;
-            const base = "rounded border px-2 py-1 text-center text-[10px] font-mono uppercase tracking-wider transition-colors";
-            const cls = on
-              ? color === "green"
-                ? "border-emerald-500 bg-emerald-500/20 text-emerald-300"
-                : "border-amber-500 bg-amber-500/20 text-amber-200"
-              : "border-neutral-800 bg-neutral-900 text-neutral-600";
-            return (
-              <div key={name} data-testid={`lamp-${name}`} data-on={on ? "1" : "0"} className={`${base} ${cls}`} aria-label={`${label} lamp ${on ? "on" : "off"}`}>
-                {label}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="relative">
-          <RegistersPanel decoded={decoded} patched={bridgedRegisters} />
-          {bridgedRequest && (
+        {/* ---- Authentic DSKY unit: alloy bezel, annunciator panel on the
+             left, electroluminescent display on the right, keypad below. ---- */}
+        <div
+          className="mx-auto w-full max-w-[30rem] rounded-[6px] p-2.5"
+          style={{
+            background: "linear-gradient(180deg,#8d9093 0%,#797c7f 45%,#65686b 100%)",
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(0,0,0,.4), 0 8px 22px rgba(0,0,0,.6)",
+          }}
+        >
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] gap-2">
+            {/* Annunciator placards */}
             <div
-              data-testid="dsky-bridged-request"
-              data-variant={bridgedRequest.variant ?? "request"}
-              className={`pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded px-2 py-1 text-center ring-2 ${
-                bridgedRequest.variant === "alarm"
-                  ? "bg-[#180404] ring-red-500"
-                  : "bg-[#141207] ring-amber-400/80"
-              }`}
+              className="rounded-[3px] p-[5px]"
+              style={{ background: "#6b6e71", boxShadow: "inset 0 0 0 2px #4b4e51, inset 0 2px 4px rgba(0,0,0,.45)" }}
             >
-              <span
-                className={`text-[8px] uppercase leading-none tracking-[0.16em] ${
-                  bridgedRequest.variant === "alarm" ? "text-red-400/80" : "text-amber-400/80"
-                }`}
-              >
-                Bridged overlay — not rope output
-              </span>
-              <span
-                className={`font-mono text-xl leading-none tabular-nums ${
-                  bridgedRequest.variant === "alarm" ? "text-red-300" : "text-amber-300"
-                } ${bridgedRequest.flashing ? "animate-pulse" : ""}`}
-              >
-                V{bridgedRequest.verb} N{bridgedRequest.noun}
-              </span>
-              {bridgedRequest.code !== undefined && (
-                <span
-                  data-testid="dsky-alarm-code"
-                  className="font-mono text-2xl leading-none tabular-nums text-red-100"
-                >
-                  {bridgedRequest.code}
-                </span>
-              )}
-              <span
-                className={`text-[9px] uppercase leading-tight tracking-[0.12em] ${
-                  bridgedRequest.variant === "alarm" ? "text-red-100" : "text-amber-100"
-                }`}
-              >
-                {bridgedRequest.label}
-              </span>
+              <div className="grid grid-cols-2 gap-[3px]">
+                {ANNUNCIATOR_ROWS.map((cell, i) =>
+                  cell === null ? (
+                    <Placard key={`blank-${i}`} label="" on={false} color="amber" />
+                  ) : "name" in cell ? (
+                    <Placard
+                      key={cell.name}
+                      testid={`lamp-${cell.name}`}
+                      label={cell.label}
+                      on={(lamps & DSKY_LAMPS[cell.name]) !== 0}
+                      color={cell.color}
+                    />
+                  ) : (
+                    <Placard key={cell.label} label={cell.label} on={false} color="amber" />
+                  ),
+                )}
+              </div>
             </div>
-          )}
 
+            {/* Electroluminescent display */}
+            <div className="relative">
+              <RegistersPanel
+                decoded={decoded}
+                patched={bridgedRegisters}
+                compActy={(lamps & DSKY_LAMPS.COMP_ACTY) !== 0}
+              />
+              {bridgedRequest && (
+                <div
+                  data-testid="dsky-bridged-request"
+                  data-variant={bridgedRequest.variant ?? "request"}
+                  className={`pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-0.5 overflow-hidden rounded-[3px] px-2 py-1 text-center ring-2 ${
+                    bridgedRequest.variant === "alarm"
+                      ? "bg-[#180404] ring-red-500"
+                      : "bg-[#141207] ring-amber-400/80"
+                  }`}
+                >
+                  <span
+                    className={`text-[8px] uppercase leading-none tracking-[0.16em] ${
+                      bridgedRequest.variant === "alarm" ? "text-red-400/80" : "text-amber-400/80"
+                    }`}
+                  >
+                    Bridged overlay — not rope output
+                  </span>
+                  <span
+                    className={`font-mono text-xl leading-none tabular-nums ${
+                      bridgedRequest.variant === "alarm" ? "text-red-300" : "text-amber-300"
+                    } ${bridgedRequest.flashing ? "animate-pulse" : ""}`}
+                  >
+                    V{bridgedRequest.verb} N{bridgedRequest.noun}
+                  </span>
+                  {bridgedRequest.code !== undefined && (
+                    <span
+                      data-testid="dsky-alarm-code"
+                      className="font-mono text-2xl leading-none tabular-nums text-red-100"
+                    >
+                      {bridgedRequest.code}
+                    </span>
+                  )}
+                  <span
+                    className={`text-[9px] uppercase leading-tight tracking-[0.12em] ${
+                      bridgedRequest.variant === "alarm" ? "text-red-100" : "text-amber-100"
+                    }`}
+                  >
+                    {bridgedRequest.label}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Keypad */}
+          <div
+            className="mt-2 grid grid-cols-7 grid-rows-3 gap-[5px]"
+            data-testid="dsky-keypad"
+            onPointerLeave={releaseAll}
+            onBlur={releaseAll}
+          >
+            {KEY_LAYOUT.map(({ label, code, cls }) => (
+              <button
+                key={label}
+                data-testid={`dsky-key-${label.replace(/\s|\u00A0/g, "").toUpperCase()}`}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                  sendKey(code);
+                }}
+                onPointerUp={(e) => {
+                  try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
+                  if (code === "PRO") clientRef.current?.proceedKey(false);
+                }}
+                onPointerCancel={releaseAll}
+                disabled={phase !== "ready" || disabled}
+                className={`flex items-center justify-center rounded-[4px] px-1 py-2 text-center font-mono text-[11px] leading-tight text-neutral-100 disabled:opacity-50 ${cls ?? ""}`}
+                style={{
+                  background: "linear-gradient(180deg,#2b2b2d 0%,#161617 60%,#0d0d0e 100%)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,.14), 0 2px 3px rgba(0,0,0,.55)",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-[10px] leading-snug text-neutral-800">
+            Keyboard: 0–9, V, N, +, −, Enter, C, R, K, P (PRO).
+          </p>
+          <DskyLiveRegion decoded={decoded} patched={bridgedRegisters} />
         </div>
+
 
         <div className={compact ? "hidden" : undefined}>
         <div className="mt-3 flex flex-wrap items-center gap-1">
@@ -648,38 +743,8 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
         </div>
         </div>
       </div>
-
-
-      <div className="min-w-0 rounded border border-neutral-800 bg-neutral-950 p-3" data-testid="dsky-keypad">
-        <div className="grid w-full max-w-[16rem] grid-cols-4 gap-1" onPointerLeave={releaseAll} onBlur={releaseAll}>
-
-          {KEY_LAYOUT.map(({ label, code }) => (
-            <button
-              key={label}
-              data-testid={`dsky-key-${label.replace(/\s/g, "").toUpperCase()}`}
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-                sendKey(code);
-              }}
-              onPointerUp={(e) => {
-                try { e.currentTarget.releasePointerCapture(e.pointerId); } catch { /* ignore */ }
-                if (code === "PRO") clientRef.current?.proceedKey(false);
-              }}
-              onPointerCancel={releaseAll}
-              disabled={phase !== "ready" || disabled}
-              className="rounded border border-neutral-700 bg-neutral-800 px-2 py-3 font-mono text-xs text-neutral-100 hover:border-emerald-500 hover:bg-neutral-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-40"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <p className="mt-2 text-[10px] leading-snug text-neutral-500">
-          Keyboard: 0–9, V, N, +, −, Enter, C, R, K, P (PRO). All key events
-          are forwarded to the AGC worker over the typed protocol.
-        </p>
-        <DskyLiveRegion decoded={decoded} patched={bridgedRegisters} />
-      </div>
     </div>
+
   );
 }
 
@@ -702,85 +767,149 @@ function seg7Path(seg: number): string {
   ].join(" ");
 }
 
-function DigitCell({ seg, blank }: { seg: number; blank?: boolean }) {
+function DigitCell({ seg, blank, scale = 1 }: { seg: number; blank?: boolean; scale?: number }) {
   return (
-    <svg viewBox="0 0 22 36" width="18" height="30" aria-hidden="true">
+    <svg
+      viewBox="0 0 22 36"
+      width={18 * scale}
+      height={30 * scale}
+      aria-hidden="true"
+      style={{ filter: blank ? undefined : "drop-shadow(0 0 4px rgba(140,255,140,.55))" }}
+    >
       <rect x="0" y="0" width="22" height="36" fill="transparent" />
-      <path d={seg7Path(seg)} fill={blank ? "#1a1a1a" : "#8fff8f"} />
+      <path d={seg7Path(seg)} fill={blank ? "#12301a" : "#8fff8f"} />
     </svg>
   );
 }
 
-function Register({ label, reg, testid }: { label: string; reg: DskyRegister; testid: string }) {
+/** Green electroluminescent legend, dark lettering — as on the flown panel. */
+function ElLabel({ text }: { text: string }) {
   return (
-    <div className="flex items-center gap-1" data-testid={testid}>
-      <span className="w-10 text-right font-mono text-[10px] uppercase tracking-widest text-neutral-500">{label}</span>
+    <span
+      className="block rounded-[1px] px-1 text-center font-sans text-[9px] font-bold uppercase leading-[1.3] tracking-wide"
+      style={{ background: "#7dfb8a", color: "#062b0c", boxShadow: "0 0 6px rgba(125,251,138,.45)" }}
+    >
+      {text}
+    </span>
+  );
+}
+
+function DigitRow({ reg, testid, scale = 1 }: { reg: DskyRegister; testid: string; scale?: number }) {
+  return (
+    <div className="flex items-center justify-center" data-testid={testid}>
       {reg.sign && (
         <span
           data-testid={`${testid}-sign`}
-          className="w-3 text-center font-mono text-sm"
-          style={{ color: reg.sign.plus || reg.sign.minus ? "#8fff8f" : "#333" }}
+          className="w-3 text-center font-mono text-base leading-none"
+          style={{ color: reg.sign.plus || reg.sign.minus ? "#8fff8f" : "#12301a" }}
         >
           {reg.sign.plus && reg.sign.minus ? "±" : reg.sign.plus ? "+" : reg.sign.minus ? "−" : "·"}
         </span>
       )}
       {reg.digits.map((d, i) => (
-        <DigitCell key={i} seg={d.segments} blank={d.value === null} />
+        <DigitCell key={i} seg={d.segments} blank={d.value === null} scale={scale} />
       ))}
     </div>
   );
 }
 
-function PatchedRegister({ label, value, unit, testid }: {
-  label: string;
-  value: string;
-  unit?: string;
-  testid: string;
-}) {
+function PatchedRow({ value, testid, unit }: { value: string; testid: string; unit?: string }) {
   return (
-    <div className="flex min-h-7 items-center gap-1" data-testid={testid}>
-      <span className="w-10 text-right font-mono text-[10px] uppercase tracking-widest text-neutral-500">{label}</span>
-      <span className="min-w-[6.5rem] font-mono text-xl tabular-nums tracking-[0.12em] text-emerald-300">{value}</span>
-      {unit && <span className="text-[8px] uppercase tracking-wider text-neutral-600">{unit}</span>}
+    <div className="flex items-center justify-center" data-testid={testid}>
+      <span
+        className="font-mono text-lg leading-none tabular-nums tracking-[0.18em]"
+        style={{ color: "#8fff8f", textShadow: "0 0 6px rgba(140,255,140,.55)" }}
+      >
+        {value}
+      </span>
+      {unit && <span className="ml-1 text-[7px] uppercase tracking-wider text-emerald-700">{unit}</span>}
     </div>
   );
 }
 
-function RegistersPanel({ decoded, patched }: { decoded: DecodedDsky; patched: BridgedRegisters | null }) {
-  if (patched) {
-    return (
-      <div className="mt-3 rounded border border-neutral-800 bg-black p-3" data-testid="dsky-registers" data-output="flight-patched">
-        <div className="grid gap-1.5">
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <PatchedRegister label="PROG" value={patched.program} testid="reg-prog" />
-            <PatchedRegister label="VERB" value={patched.verb} testid="reg-verb" />
-            <PatchedRegister label="NOUN" value={patched.noun} testid="reg-noun" />
-          </div>
-          <PatchedRegister label="R1" value={patched.r1} unit={patched.units[0]} testid="reg-r1" />
-          <PatchedRegister label="R2" value={patched.r2} unit={patched.units[1]} testid="reg-r2" />
-          <PatchedRegister label="R3" value={patched.r3} unit={patched.units[2]} testid="reg-r3" />
-          <div data-testid="dsky-flight-output" className="pl-11 text-[8px] uppercase tracking-wider text-amber-500/70">
-            {patched.caption} · flight-data patch
-          </div>
-        </div>
-      </div>
-    );
-  }
+const EL_FACE: React.CSSProperties = {
+  background: "linear-gradient(180deg,#08120b 0%,#050a06 100%)",
+  boxShadow: "inset 0 0 0 2px #4b4e51, inset 0 0 18px rgba(0,0,0,.9)",
+};
+const EL_RULE = "my-[3px] h-px w-full" as const;
+const RULE_STYLE: React.CSSProperties = {
+  background: "#7dfb8a",
+  boxShadow: "0 0 5px rgba(125,251,138,.5)",
+};
+
+function RegistersPanel({ decoded, patched, compActy = false }: {
+  decoded: DecodedDsky;
+  patched: BridgedRegisters | null;
+  compActy?: boolean;
+}) {
   return (
-    <div className="mt-3 rounded border border-neutral-800 bg-black p-3" data-testid="dsky-registers">
-      <div className="grid gap-1.5">
-        <div className="flex gap-4">
-          <Register label="PROG" reg={decoded.program} testid="reg-prog" />
-          <Register label="VERB" reg={decoded.verb} testid="reg-verb" />
-          <Register label="NOUN" reg={decoded.noun} testid="reg-noun" />
+    <div
+      className="h-full rounded-[3px] p-2"
+      style={EL_FACE}
+      data-testid="dsky-registers"
+      {...(patched ? { "data-output": "flight-patched" } : {})}
+    >
+      {/* COMP ACTY + PROG header */}
+      <div className="grid grid-cols-2 items-start gap-2">
+        <div
+          data-testid="lamp-COMP_ACTY"
+          data-on={compActy ? "1" : "0"}
+          aria-label={`COMP ACTY lamp ${compActy ? "on" : "off"}`}
+          className="flex h-[2.4rem] items-center justify-center rounded-[2px] text-center font-sans text-[9px] font-bold uppercase leading-[1.15]"
+          style={
+            compActy
+              ? { background: "#7dfb8a", color: "#062b0c", boxShadow: "0 0 8px rgba(125,251,138,.5)" }
+              : { background: "#0c170f", color: "#1f4a2a" }
+          }
+        >
+          COMP
+          <br />
+          ACTY
         </div>
-        <Register label="R1" reg={decoded.r1} testid="reg-r1" />
-        <Register label="R2" reg={decoded.r2} testid="reg-r2" />
-        <Register label="R3" reg={decoded.r3} testid="reg-r3" />
+        <div>
+          <ElLabel text="PROG" />
+          {patched ? (
+            <PatchedRow value={patched.program} testid="reg-prog" />
+          ) : (
+            <DigitRow reg={decoded.program} testid="reg-prog" scale={0.85} />
+          )}
+        </div>
       </div>
+
+      <div className="mt-1 grid grid-cols-2 gap-2">
+        <div>
+          <ElLabel text="VERB" />
+          {patched ? (
+            <PatchedRow value={patched.verb} testid="reg-verb" />
+          ) : (
+            <DigitRow reg={decoded.verb} testid="reg-verb" scale={0.85} />
+          )}
+        </div>
+        <div>
+          <ElLabel text="NOUN" />
+          {patched ? (
+            <PatchedRow value={patched.noun} testid="reg-noun" />
+          ) : (
+            <DigitRow reg={decoded.noun} testid="reg-noun" scale={0.85} />
+          )}
+        </div>
+      </div>
+
+      <div className={EL_RULE} style={RULE_STYLE} />
+      {patched ? <PatchedRow value={patched.r1} unit={patched.units[0]} testid="reg-r1" /> : <DigitRow reg={decoded.r1} testid="reg-r1" scale={0.8} />}
+      <div className={EL_RULE} style={RULE_STYLE} />
+      {patched ? <PatchedRow value={patched.r2} unit={patched.units[1]} testid="reg-r2" /> : <DigitRow reg={decoded.r2} testid="reg-r2" scale={0.8} />}
+      <div className={EL_RULE} style={RULE_STYLE} />
+      {patched ? <PatchedRow value={patched.r3} unit={patched.units[2]} testid="reg-r3" /> : <DigitRow reg={decoded.r3} testid="reg-r3" scale={0.8} />}
+      {patched && (
+        <div data-testid="dsky-flight-output" className="mt-1 text-center text-[7px] uppercase tracking-wider text-amber-500/70">
+          {patched.caption} · flight-data patch
+        </div>
+      )}
     </div>
   );
 }
+
 
 function DskyLiveRegion({ decoded, patched }: { decoded: DecodedDsky; patched: BridgedRegisters | null }) {
   // Consolidated ARIA live region — the only accessible mirror of DSKY output.

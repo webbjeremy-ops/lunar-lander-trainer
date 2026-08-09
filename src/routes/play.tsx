@@ -99,13 +99,14 @@ function PlayPage() {
         <h1 className="lm-legend text-sm font-semibold uppercase">
           Lunar descent · fly the landing
         </h1>
-        <p className="mt-1 text-xs text-neutral-200/80">
+        <p className="mt-1 hidden text-xs text-neutral-200/80 md:block">
           Fly the descent with the real Apollo Guidance Computer beside you.{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/missions">All missions</Link> ·{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/sim">AGC Lab</Link> ·{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/learn">Learn</Link> ·{" "}
           <Link className="text-emerald-200 underline underline-offset-2" to="/sources">Sources</Link>
         </p>
+
       </header>
       <p className="orientation-hint border-b border-amber-900/60 bg-amber-950/30 px-4 py-2 text-xs text-amber-200">
         Rotate your device to landscape — the cockpit needs the width.
@@ -183,6 +184,10 @@ function PlayClient() {
 
   // M4.58 — the DSKY can be pulled into the middle of the cockpit with "D".
   const [dskyPopup, setDskyPopup] = useState(false);
+  /** Mobile only: the secondary instrument stack (caution, FDAI, procedure,
+   *  DSKY) is collapsed so the viewer + hand controls own the screen. */
+  const [sidePanelsOpen, setSidePanelsOpen] = useState(false);
+
 
   // "V" or "F" toggles the commander's window view; "D" the DSKY pop-up.
   useEffect(() => {
@@ -642,7 +647,10 @@ function PlayClient() {
       <div
         className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]"
       >
-        <div className="relative space-y-3">
+        {/* Mobile priority order: the viewer first, the hand controls
+            immediately under it, everything else after. */}
+        <div className="relative flex flex-col gap-3">
+
           {session.scriptTerminated && session.flight.terminalState === null && (
             <div
               data-testid="script-terminated"
@@ -707,7 +715,8 @@ function PlayClient() {
 
 
             return (
-              <div className="relative">
+              <div className="relative order-1 md:order-none">
+
                 {windowAvailable && (
                   <button
                     type="button"
@@ -753,37 +762,60 @@ function PlayClient() {
             );
           })()}
 
-          <FlightInstruments
-            flight={session.flight}
-            orbit={session.orbit}
-            guidance={session.guidance}
-            massKg={session.massKg}
-            downrangeM={session.downrangeM}
-            throttle={session.controls.throttle}
-            limits={limits}
-            assistance={assistance}
-            initialPropellantKg={mission.initial.descentPropellantKg}
-            manualControl={session.manualUnlocked}
-          />
-          <FlightControls
-            manual={session.manualUnlocked}
-            throttle={session.controls.throttle}
-            engineOn={session.controls.engineOn}
-            onAttitude={session.actions.setAttitudeCommand}
-            onThrottle={session.actions.adjustThrottle}
-            onEngine={session.actions.setEngine}
-            onRod={session.actions.trimRod}
-          />
-          <GamepadLegend
-            haptics={hapticsPref}
-            onHaptics={(on) => setHapticsPref(on)}
-            phase={session.manualUnlocked ? "manual" : "guided"}
-          />
+          <div className="order-2 md:order-none">
+            <FlightControls
+              manual={session.manualUnlocked}
+              throttle={session.controls.throttle}
+              engineOn={session.controls.engineOn}
+              onAttitude={session.actions.setAttitudeCommand}
+              onThrottle={session.actions.adjustThrottle}
+              onEngine={session.actions.setEngine}
+              onRod={session.actions.trimRod}
+            />
+          </div>
+          <div className="order-3 md:order-none">
+            <FlightInstruments
+              flight={session.flight}
+              orbit={session.orbit}
+              guidance={session.guidance}
+              massKg={session.massKg}
+              downrangeM={session.downrangeM}
+              throttle={session.controls.throttle}
+              limits={limits}
+              assistance={assistance}
+              initialPropellantKg={mission.initial.descentPropellantKg}
+              manualControl={session.manualUnlocked}
+            />
+          </div>
+          <div className="order-4 md:order-none">
+            <GamepadLegend
+              haptics={hapticsPref}
+              onHaptics={(on) => setHapticsPref(on)}
+              phase={session.manualUnlocked ? "manual" : "guided"}
+            />
+          </div>
+
 
 
         </div>
 
-        <div className="space-y-3">
+        <div>
+          <button
+            type="button"
+            data-testid="side-panels-toggle"
+            aria-expanded={sidePanelsOpen}
+            onClick={() => setSidePanelsOpen((v) => !v)}
+            className="mb-2 w-full rounded border border-neutral-700 bg-neutral-900 px-2 py-2 font-mono text-[10px] uppercase tracking-widest text-neutral-300 md:hidden"
+          >
+            {sidePanelsOpen ? "Hide panels — caution · FDAI · DSKY" : "Show panels — caution · FDAI · DSKY"}
+          </button>
+          <div
+            className={
+              "space-y-3 " +
+              (sidePanelsOpen || dskyPopup ? "" : "hidden md:block")
+            }
+          >
+
           <CautionWarningPanel lamps={cautionLamps} />
 
           <ContactLight on={contact.on} />
@@ -878,8 +910,10 @@ function PlayClient() {
               <div className="p-3 text-xs text-neutral-500">Starting the AGC…</div>
             )}
           </div>
+          </div>
         </div>
       </div>
+
 
       {session.summary && session.score && (
         <>
