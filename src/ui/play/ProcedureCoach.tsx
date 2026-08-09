@@ -64,7 +64,7 @@ export function ProcedureCoach({
       role="dialog"
       aria-label="Procedure coach"
       data-testid="procedure-coach"
-      className="pointer-events-auto absolute left-1/2 top-6 z-30 w-[min(30rem,calc(100%-2rem))] -translate-x-1/2 lm-panel rounded-md p-4 shadow-[0_18px_40px_rgba(0,0,0,0.65)]"
+      className="pointer-events-auto w-full lm-panel rounded-md p-4 shadow-[0_18px_40px_rgba(0,0,0,0.65)]"
     >
       <div className="flex items-center justify-between gap-2">
         <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-emerald-300">
