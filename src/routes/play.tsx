@@ -652,19 +652,28 @@ function PlayClient() {
               highGateReady={session.highGateStatus === "ready"}
             />
           )}
-          <HoustonOverlay
-            call={session.houston}
-            onAcknowledge={session.actions.acknowledgeHouston}
-          />
-          <CalloutOverlay
-            callout={session.callout}
-            onAcknowledge={session.actions.acknowledgeCallout}
-          />
-          <V99CueOverlay
-            flashing={session.ignition.requestFlashing}
-            engineArmed={session.ignition.engineArmed}
-            proAccepted={session.ignition.proAccepted}
-          />
+          {/* M4.60 — cue cards float centred over the viewport instead of
+              pushing the flight view down the page, so the crew can answer
+              them without scrolling back up. */}
+          <div
+            data-testid="cue-card-layer"
+            className="pointer-events-none fixed inset-x-0 top-1/2 z-50 mx-auto flex w-full max-w-xl -translate-y-1/2 flex-col gap-2 px-4"
+          >
+            <HoustonOverlay
+              call={session.houston}
+              onAcknowledge={session.actions.acknowledgeHouston}
+            />
+            <CalloutOverlay
+              callout={session.callout}
+              onAcknowledge={session.actions.acknowledgeCallout}
+            />
+            <V99CueOverlay
+              flashing={session.ignition.requestFlashing}
+              engineArmed={session.ignition.engineArmed}
+              proAccepted={session.ignition.proAccepted}
+            />
+          </div>
+
 
 
           {(() => {
