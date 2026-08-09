@@ -192,6 +192,36 @@ export function CockpitStation({
         </span>
       </div>
 
+      {/* EVENT TIMER — time from PDI ignition, directly under the mission
+          clock exactly as the panel stacks them in the vehicle. */}
+      {eventElapsedSec !== undefined && (
+        <div
+          className="pointer-events-none absolute flex items-center justify-center"
+          style={{
+            left: `${LED.left + LED.width * 0.24}%`,
+            top: `${LED.top + LED.height + 0.7}%`,
+            width: `${LED.width * 0.76}%`,
+            height: `${LED.height}%`,
+            background: "#050705",
+          }}
+        >
+          <span
+            data-testid="station-event-timer"
+            className="font-mono tabular-nums leading-none"
+            style={{
+              fontSize: "clamp(8px, 1.5vw, 18px)",
+              letterSpacing: "0.04em",
+              color: "#5cff62",
+              textShadow: "0 0 6px rgba(92,255,98,0.6)",
+            }}
+          >
+            {eventTimerText(eventElapsedSec)}
+          </span>
+        </div>
+      )}
+
+
+
       {/* Live attitude ball in the console's gimbal well. */}
       <div
         className="pointer-events-none absolute"
