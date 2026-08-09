@@ -75,6 +75,8 @@ export interface CabinMusicApi {
   readonly playing: boolean;
   readonly play: (id: string) => void;
   readonly stop: () => void;
+  /** Ramp the tape down over `ms` and then stow it. */
+  readonly fadeOut: (ms?: number) => void;
 }
 
 /** Cabin music sits under the crew loop when a recording keys up. */
@@ -82,41 +84,81 @@ const DUCKED = 0.28;
 
 export function useCabinMusic(duck = 1): CabinMusicApi {
   const elRef = useRef<HTMLAudioElement | null>(null);
+  const fadeRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [trackId, setTrackId] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
 
+  const clearFade = useCallback(() => {
+    if (fadeRef.current !== null && typeof window !== "undefined") {
+      window.clearInterval(fadeRef.current);
+    }
+    fadeRef.current = null;
+  }, []);
+
   const stop = useCallback(() => {
+    clearFade();
     elRef.current?.pause();
     elRef.current = null;
     setTrackId(null);
     setPlaying(false);
-  }, []);
+  }, [clearFade]);
+
+  // M4.59 — the tape doesn't get yanked off the reel: it rides down to silence
+  // over a couple of seconds as the landing sequence takes the cabin.
+  const fadeOut = useCallback(
+    (ms = 2_500) => {
+      const el = elRef.current;
+      if (!el || typeof window === "undefined" || ms <= 0) {
+        stop();
+        return;
+      }
+      clearFade();
+      const stepMs = 50;
+      const start = el.volume;
+      const steps = Math.max(1, Math.round(ms / stepMs));
+      let n = 0;
+      fadeRef.current = window.setInterval(() => {
+        if (elRef.current !== el) {
+          clearFade();
+          return;
+        }
+        n += 1;
+        el.volume = Math.max(0, start * (1 - n / steps));
+        if (n >= steps) stop();
+      }, stepMs);
+    },
+    [clearFade, stop],
+  );
 
   const playRef = useRef<(id: string) => void>(() => {});
 
-  const play = useCallback((id: string) => {
-    const index = CABIN_TRACKS.findIndex((t) => t.id === id);
-    const track = CABIN_TRACKS[index];
-    if (!track || typeof window === "undefined") return;
-    elRef.current?.pause();
-    const el = new Audio(track.url);
-    // The tape runs on: when a song ends the next one on the reel starts.
-    el.loop = false;
-    el.volume = 0.7;
-    elRef.current = el;
-    setTrackId(id);
-    setPlaying(true);
-    el.addEventListener("ended", () => {
-      if (elRef.current !== el) return;
-      const next = CABIN_TRACKS[(index + 1) % CABIN_TRACKS.length];
-      if (next) playRef.current(next.id);
-    });
-    void el.play().catch(() => {
-      if (elRef.current !== el) return;
-      setPlaying(false);
-    });
-  }, []);
+  const play = useCallback(
+    (id: string) => {
+      const index = CABIN_TRACKS.findIndex((t) => t.id === id);
+      const track = CABIN_TRACKS[index];
+      if (!track || typeof window === "undefined") return;
+      clearFade();
+      elRef.current?.pause();
+      const el = new Audio(track.url);
+      // The tape runs on: when a song ends the next one on the reel starts.
+      el.loop = false;
+      el.volume = 0.7;
+      elRef.current = el;
+      setTrackId(id);
+      setPlaying(true);
+      el.addEventListener("ended", () => {
+        if (elRef.current !== el) return;
+        const next = CABIN_TRACKS[(index + 1) % CABIN_TRACKS.length];
+        if (next) playRef.current(next.id);
+      });
+      void el.play().catch(() => {
+        if (elRef.current !== el) return;
+        setPlaying(false);
+      });
+    },
+    [clearFade],
+  );
 
   useEffect(() => {
     playRef.current = play;
@@ -125,17 +167,18 @@ export function useCabinMusic(duck = 1): CabinMusicApi {
   // Duck under the air-to-ground loop rather than cutting out.
   useEffect(() => {
     const el = elRef.current;
-    if (!el) return;
+    if (!el || fadeRef.current !== null) return;
     el.volume = 0.7 * (duck < 1 ? DUCKED : 1);
   }, [duck, trackId]);
 
   useEffect(
     () => () => {
+      clearFade();
       elRef.current?.pause();
       elRef.current = null;
     },
-    [],
+    [clearFade],
   );
 
-  return { open, setOpen, trackId, playing, play, stop };
+  return { open, setOpen, trackId, playing, play, stop, fadeOut };
 }
