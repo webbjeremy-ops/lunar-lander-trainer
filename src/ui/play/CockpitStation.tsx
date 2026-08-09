@@ -26,7 +26,10 @@ const PANE_CLIP =
 
 
 export interface CockpitStationProps extends CockpitWindowViewProps {
+  /** MISSION TIMER: ground elapsed time for the whole flight, seconds. */
   missionElapsedSec: number;
+  /** EVENT TIMER: time from PDI ignition, seconds (negative before TIG). */
+  eventElapsedSec?: number;
 }
 
 /** MISSION TIMER columns: hours, minutes, seconds. */
@@ -38,6 +41,14 @@ function timerText(totalSec: number) {
     s % 60,
   ).padStart(2, "0")}`;
 }
+
+/** EVENT TIMER columns: minutes and seconds, signed about ignition. */
+function eventTimerText(totalSec: number) {
+  const s = Math.floor(Math.abs(totalSec));
+  const sign = totalSec < 0 ? "-" : "+";
+  return `${sign}${String(Math.floor(s / 60)).padStart(2, "0")} ${String(s % 60).padStart(2, "0")}`;
+}
+
 
 /** Minimal 8-ball face: pitch ladder scrolls with attitude, whole ball rolls. */
 function StationBall({ pitchDeg, rollDeg }: { pitchDeg: number; rollDeg: number }) {
