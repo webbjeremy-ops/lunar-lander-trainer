@@ -289,12 +289,27 @@ function PlayClient() {
     touchdownOnly: missionId !== "full-descent",
   });
 
+  // M4.60 — the two panel clocks.
+  //
+  // MISSION TIMER is ground elapsed time for the whole Apollo 11 flight: it
+  // counts up through the coast, PDI and the landing, anchored on the as-flown
+  // PDI ignition at GET 102:33:05. EVENT TIMER is the descent clock the game
+  // has always flown — signed about ignition, so it runs the countdown down
+  // and the powered descent up.
+  const PDI_GET_SEC = 102 * 3600 + 33 * 60 + 5;
+  const eventTimerSec =
+    session.descentClock.mode === "running"
+      ? session.descentClock.sinceIgnitionUs / 1_000_000
+      : -(session.ignition.tigOffsetUs / 1_000_000);
+  const missionGetSec = PDI_GET_SEC + eventTimerSec;
+
   // The PDI card keys up with Houston's "Go for PDI" call and stays up for the
   // whole countdown, so the crew can arm whenever they are ready.
   const pdiCardReady =
     !audioLive ||
     missionId !== "full-descent" ||
     missionAudio.played.has("go-for-pdi");
+
 
 
 
@@ -652,19 +667,28 @@ function PlayClient() {
               highGateReady={session.highGateStatus === "ready"}
             />
           )}
-          <HoustonOverlay
-            call={session.houston}
-            onAcknowledge={session.actions.acknowledgeHouston}
-          />
-          <CalloutOverlay
-            callout={session.callout}
-            onAcknowledge={session.actions.acknowledgeCallout}
-          />
-          <V99CueOverlay
-            flashing={session.ignition.requestFlashing}
-            engineArmed={session.ignition.engineArmed}
-            proAccepted={session.ignition.proAccepted}
-          />
+          {/* M4.60 — cue cards float centred over the viewport instead of
+              pushing the flight view down the page, so the crew can answer
+              them without scrolling back up. */}
+          <div
+            data-testid="cue-card-layer"
+            className="pointer-events-none fixed inset-x-0 top-1/2 z-50 mx-auto flex w-full max-w-xl -translate-y-1/2 flex-col gap-2 px-4"
+          >
+            <HoustonOverlay
+              call={session.houston}
+              onAcknowledge={session.actions.acknowledgeHouston}
+            />
+            <CalloutOverlay
+              callout={session.callout}
+              onAcknowledge={session.actions.acknowledgeCallout}
+            />
+            <V99CueOverlay
+              flashing={session.ignition.requestFlashing}
+              engineArmed={session.ignition.engineArmed}
+              proAccepted={session.ignition.proAccepted}
+            />
+          </div>
+
 
 
           {(() => {
@@ -703,7 +727,9 @@ function PlayClient() {
                       manual={session.manualUnlocked}
                       rollDeg={session.roll.rollDeg}
                       p64Selected={p64Selected}
-                      missionElapsedSec={session.flight.missionTimeUs / 1_000_000}
+                      missionElapsedSec={missionGetSec}
+                      eventElapsedSec={eventTimerSec}
+
                     />
                   </div>
                 ) : (
