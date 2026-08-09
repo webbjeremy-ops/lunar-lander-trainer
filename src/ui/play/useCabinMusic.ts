@@ -75,6 +75,8 @@ export interface CabinMusicApi {
   readonly playing: boolean;
   readonly play: (id: string) => void;
   readonly stop: () => void;
+  /** Ramp the tape down over `ms` and then stow it. */
+  readonly fadeOut: (ms?: number) => void;
 }
 
 /** Cabin music sits under the crew loop when a recording keys up. */
