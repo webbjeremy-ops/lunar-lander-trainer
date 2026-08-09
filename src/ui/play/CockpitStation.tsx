@@ -18,6 +18,8 @@ import { wrapDeg } from "@/ui/play/FdaiBall";
 const APERTURE = { left: 12.62, top: 23.07, right: 62.34, bottom: 71.82 };
 /** MISSION TIMER LED window. */
 const LED = { left: 79.0, top: 17.1, width: 14.6, height: 2.8 };
+/** EVENT TIMER LED window, traced from the same artwork. */
+const EVENT_LED = { left: 78.9, top: 23.05, width: 14.7, height: 2.2 };
 /** Attitude-ball well: centre and radius as a share of the artwork width. */
 const BALL = { cx: 79.19, cy: 52.49, r: 5.52 };
 /** Pane outline inside the aperture box, traced from the artwork's alpha hole. */
@@ -192,16 +194,16 @@ export function CockpitStation({
         </span>
       </div>
 
-      {/* EVENT TIMER — time from PDI ignition, directly under the mission
-          clock exactly as the panel stacks them in the vehicle. */}
+      {/* EVENT TIMER — registered on the console's second LED window, the
+          one the artwork labels EVENT TIMER / HOURS MIN SEC. */}
       {eventElapsedSec !== undefined && (
         <div
           className="pointer-events-none absolute flex items-center justify-center"
           style={{
-            left: `${LED.left + LED.width * 0.24}%`,
-            top: `${LED.top + LED.height + 0.7}%`,
-            width: `${LED.width * 0.76}%`,
-            height: `${LED.height}%`,
+            left: `${EVENT_LED.left}%`,
+            top: `${EVENT_LED.top}%`,
+            width: `${EVENT_LED.width}%`,
+            height: `${EVENT_LED.height}%`,
             background: "#050705",
           }}
         >
