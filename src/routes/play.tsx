@@ -308,13 +308,13 @@ function PlayClient() {
   // M4.57 — the tape is stowed the moment the crew takes the vehicle: from
   // there the game score carries the landing.
   const manualUnlocked = session.manualUnlocked;
-  const stopCabinMusic = cabinMusic.stop;
+  const fadeCabinMusic = cabinMusic.fadeOut;
   const setCabinOpen = cabinMusic.setOpen;
   useEffect(() => {
     if (!manualUnlocked) return;
-    stopCabinMusic();
+    fadeCabinMusic(3_000);
     setCabinOpen(false);
-  }, [manualUnlocked, stopCabinMusic, setCabinOpen]);
+  }, [manualUnlocked, fadeCabinMusic, setCabinOpen]);
 
 
 
