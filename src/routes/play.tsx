@@ -321,17 +321,24 @@ function PlayClient() {
   const agc = useAgcSession();
 
   // "The Eagle has landed" — plays once on a successful touchdown.
+  //
+  // Training missions get this call from the air-to-ground loop itself (the
+  // "eagle-landed" beat), so playing it here as well doubled the recording.
+  // Only the full descent, whose loop ends on the contact call, needs it.
   const landedAudioRef = useRef<HTMLAudioElement | null>(null);
   const landedPlayedRef = useRef(false);
   const landed = session.flight.terminalState === "landed";
+  const loopHandlesLanded = missionId !== "full-descent";
   useEffect(() => {
     if (!landed || landedPlayedRef.current || !musicScore.enabled) return;
+    if (loopHandlesLanded) return;
     landedPlayedRef.current = true;
     const el = landedAudioRef.current ?? new Audio(eagleLandedAudio.url);
     landedAudioRef.current = el;
     el.volume = 0.85;
     void el.play().catch(() => undefined);
-  }, [landed, musicScore.enabled]);
+  }, [landed, musicScore.enabled, loopHandlesLanded]);
+
   useEffect(
     () => () => {
       landedAudioRef.current?.pause();
