@@ -124,7 +124,12 @@ function StationBall({ pitchDeg, rollDeg }: { pitchDeg: number; rollDeg: number 
   );
 }
 
-export function CockpitStation({ missionElapsedSec, ...view }: CockpitStationProps) {
+export function CockpitStation({
+  missionElapsedSec,
+  eventElapsedSec,
+  ...view
+}: CockpitStationProps) {
+
   // Same drive signal as the FDAI card so both balls read identically in real
   // time. The kernel signs attitude negative for retrograde (braking) tilt, so
   // it is negated into the display convention where + is pitched back.
