@@ -712,7 +712,9 @@ function PlayClient() {
                       manual={session.manualUnlocked}
                       rollDeg={session.roll.rollDeg}
                       p64Selected={p64Selected}
-                      missionElapsedSec={session.flight.missionTimeUs / 1_000_000}
+                      missionElapsedSec={missionGetSec}
+                      eventElapsedSec={eventTimerSec}
+
                     />
                   </div>
                 ) : (
