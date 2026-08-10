@@ -65,7 +65,7 @@ const KEY_LAYOUT: readonly { label: string; code: number | "PRO"; cls?: string }
   { label: "1", code: DSKY_KEYS.ONE, cls: "row-start-3 col-start-3" },
   { label: "2", code: DSKY_KEYS.TWO, cls: "row-start-3 col-start-4" },
   { label: "3", code: DSKY_KEYS.THREE, cls: "row-start-3 col-start-5" },
-  { label: "KEY\u00A0REL", code: DSKY_KEYS.KEY_REL, cls: "row-start-3 col-start-6 text-[9px]" },
+  { label: "KEY\u00A0REL", code: DSKY_KEYS.KEY_REL, cls: "row-start-3 col-start-6" },
 ];
 
 function Placard({ label, on, color, testid }: {
