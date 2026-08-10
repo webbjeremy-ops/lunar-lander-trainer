@@ -563,6 +563,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
           <div
             className="mt-2 grid grid-cols-7 grid-rows-3 gap-[5px]"
             data-testid="dsky-keypad"
+            style={{ containerType: "inline-size" }}
             onPointerLeave={releaseAll}
             onBlur={releaseAll}
           >
@@ -580,8 +581,14 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
                 }}
                 onPointerCancel={releaseAll}
                 disabled={phase !== "ready" || disabled}
-                className={`flex items-center justify-center rounded-[4px] px-1 py-2 text-center font-mono text-[11px] leading-tight text-neutral-100 disabled:opacity-50 ${cls ?? ""}`}
+                className={`flex min-w-0 items-center justify-center overflow-hidden rounded-[4px] px-[2px] py-2 text-center font-mono leading-[1.05] text-neutral-100 disabled:opacity-50 ${cls ?? ""}`}
                 style={{
+                  fontSize:
+                    label.length > 3
+                      ? "clamp(6px, 2.05cqw, 11px)"
+                      : "clamp(7px, 2.6cqw, 12px)",
+                  hyphens: "none",
+                  wordBreak: "keep-all",
                   background: "linear-gradient(180deg,#2b2b2d 0%,#161617 60%,#0d0d0e 100%)",
                   boxShadow:
                     "inset 0 1px 0 rgba(255,255,255,.14), 0 2px 3px rgba(0,0,0,.55)",
@@ -591,6 +598,7 @@ export function Dsky({ rope, onClient, onSnapshot, onReady, disabled = false, sh
               </button>
             ))}
           </div>
+
           <p className="mt-2 text-[10px] leading-snug text-neutral-800">
             Keyboard: 0–9, V, N, +, −, Enter, C, R, K, P (PRO).
           </p>
