@@ -35,6 +35,10 @@ export interface DescentMonitorInput {
   readonly sinceIgnitionUs: number;
   readonly burning: boolean;
   readonly terminal: boolean;
+  /** True while the flashing V99 N62 ignition request is up (TIG-35 s → PRO). */
+  readonly ignitionRequestFlashing?: boolean;
+  /** Accumulated ΔV since the burn started, m/s (N62 R3). */
+  readonly accumulatedDvMps?: number;
 }
 
 export interface DescentMonitorView {
@@ -58,7 +62,26 @@ export function formatRegister(value: number, signed = true): string {
   return `${value < 0 ? "-" : "+"}${digits}`;
 }
 
-/** MMSS clock text used by the time registers (N62 R2, N64 R1). */
+/**
+ * Luminary VEL3 scaling: XXXX.X ft/s shown as five digits with an implied
+ * tenths place, e.g. 5569.0 ft/s → "+55690".
+ */
+export function formatTenths(value: number): string {
+  return formatRegister(value * 10);
+}
+
+/**
+ * Luminary MIN/SEC format: D1-D2 minutes, D3 blank, D4-D5 seconds
+ * — e.g. 150 s → "+02 30".
+ */
+export function formatMinSec(seconds: number): string {
+  const s = Math.max(0, Math.min(59 * 60 + 59, Math.round(Math.abs(seconds))));
+  const mm = Math.floor(s / 60);
+  const ss = s - mm * 60;
+  return `${seconds < 0 ? "-" : "+"}${String(mm).padStart(2, "0")} ${String(ss).padStart(2, "0")}`;
+}
+
+/** MMSS clock text used by the time registers (N64 R1). */
 export function formatClockRegister(seconds: number): string {
   const s = Math.max(0, Math.min(59 * 60 + 59, Math.round(Math.abs(seconds))));
   const mm = Math.floor(s / 60);
@@ -74,17 +97,21 @@ export function descentMonitorFor(input: DescentMonitorInput): DescentMonitorVie
   const fwdFt = ft(input.tangentialSpeedMps);
 
   if (!input.burning && input.sinceIgnitionUs <= 0) {
-    // Pre-ignition monitoring: V06 N62.
+    // Pre-ignition monitoring: V16 N62, or the flashing V99 N62 ignition
+    // request once P63 raises it ahead of TIG.
     const tfiS = -input.tigOffsetUs / 1_000_000;
+    const flashing = input.ignitionRequestFlashing === true;
     return {
       program: "63",
-      verb: "06",
+      verb: flashing ? "99" : "16",
       noun: "62",
-      r1: formatRegister(totalFt),
-      r2: formatClockRegister(tfiS),
-      r3: formatRegister(0),
-      units: ["ft/s velocity", "TFI mm:ss", "ft/s ΔV"],
-      caption: "Pre-ignition monitor — V06 N62",
+      r1: formatTenths(totalFt),
+      r2: formatMinSec(tfiS),
+      r3: formatTenths(ft(input.accumulatedDvMps ?? 0)),
+      units: ["ft/s velocity", "TFI mm ss", "ft/s ΔV"],
+      caption: flashing
+        ? "Ignition request — flashing V99 N62"
+        : "Pre-ignition monitor — V16 N62",
     };
   }
 
@@ -93,13 +120,14 @@ export function descentMonitorFor(input: DescentMonitorInput): DescentMonitorVie
       program: "63",
       verb: "06",
       noun: "63",
-      r1: formatRegister(totalFt),
-      r2: formatRegister(rateFt),
+      r1: formatTenths(totalFt),
+      r2: formatTenths(rateFt),
       r3: formatRegister(altFt),
       units: ["ft/s velocity", "ft/s alt rate", "ft altitude"],
       caption: "P63 braking — V06 N63",
     };
   }
+
 
   if (input.altitudeM > LOW_GATE_M) {
     // Approach phase: time-to-go is estimated from the current sink rate.
