@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import { descentMonitorFor, formatRegister, formatClockRegister } from "../descentMonitor";
+import { descentMonitorFor, formatRegister, formatClockRegister, formatMinSec } from "../descentMonitor";
 
 const base = {
   altitudeM: 3_000,
@@ -23,10 +23,24 @@ describe("descent monitor registers", () => {
     expect(formatClockRegister(65)).toBe("+01050");
   });
 
-  it("shows V06 N62 before ignition", () => {
-    const v = descentMonitorFor({ ...base, burning: false, sinceIgnitionUs: 0, tigOffsetUs: 35_000_000 });
+  it("formats MIN/SEC with the blank middle digit", () => {
+    expect(formatMinSec(150)).toBe("+02 30");
+  });
+
+  it("shows V16 N62 before ignition, flashing V99 with the request up", () => {
+    const v = descentMonitorFor({ ...base, burning: false, sinceIgnitionUs: 0, tigOffsetUs: 150_000_000 });
+    expect(v.verb).toBe("16");
     expect(v.noun).toBe("62");
-    expect(v.r2).toBe("-00350");
+    expect(v.r2).toBe("-02 30");
+    expect(v.r3).toBe("+00000");
+    const f = descentMonitorFor({ ...base, burning: false, sinceIgnitionUs: 0, tigOffsetUs: 5_000_000, ignitionRequestFlashing: true });
+    expect(f.verb).toBe("99");
+  });
+
+  it("scales N63 velocity and rate to tenths", () => {
+    const v = descentMonitorFor({ ...base, altitudeM: 6_000 });
+    expect(v.noun).toBe("63");
+    expect(v.r1).toBe(formatRegister(Math.hypot(-20, 150) / 0.3048 * 10));
   });
 
   it("shows N63 above high gate and N64 below it", () => {
