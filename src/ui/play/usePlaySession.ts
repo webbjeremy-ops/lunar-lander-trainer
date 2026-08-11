@@ -118,6 +118,13 @@ import {
   LUNAR_ENVIRONMENT,
 } from "@/simulation/lunar2d/LunarMissionConstants";
 
+/** DPS effective exhaust velocity, m/s (Isp x g0) — used only to integrate
+ *  the ΔV the crew reads in N62 R3. */
+const DPS_EXHAUST_VELOCITY_MPS =
+  DESCENT_ENGINE.specificImpulseS.value *
+  LUNAR_ENVIRONMENT.standardGravityMps2.value;
+
+
 import {
   createGamepadEdgeState,
   NEUTRAL_INPUT,
