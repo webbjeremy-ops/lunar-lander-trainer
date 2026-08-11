@@ -52,6 +52,8 @@ import {
   type ControlSchemeId,
 } from "@/ui/play/controlScheme";
 import { usePlaySession, PLAY_TIME_SCALES } from "@/ui/play/usePlaySession";
+import { useAgcSensorFeed, type AgcSensorSample } from "@/ui/play/useAgcSensorFeed";
+import { DESCENT_ENGINE } from "@/simulation/lunar2d/LunarMissionConstants";
 import {
   decodeChallengeRequest,
   publishChallengeResult,
@@ -339,6 +341,41 @@ function PlayClient() {
 
 
   const agc = useAgcSession();
+
+  // ---- M5.0 SENSORS IN --------------------------------------------------
+  // The flown trajectory is published to the AGC Worker, where the M3.3E
+  // hardware-interface lab turns it into real PIPA pulse trains and real
+  // landing-radar transactions applied to the running Luminary 099.
+  const sensorSampleRef = useRef<AgcSensorSample>({
+    bodySpecificForceMps2: null,
+    altitudeMeters: null,
+    engineArmed: false,
+    engineBurning: false,
+    radarAcquired: false,
+  });
+  const engineBurning = session.flight.mainEngine !== "off";
+  sensorSampleRef.current = {
+    bodySpecificForceMps2:
+      engineBurning && session.massKg > 0
+        ? [
+            (session.controls.throttle * DESCENT_ENGINE.maxThrustN.value) /
+              session.massKg,
+            0,
+            0,
+          ]
+        : [0, 0, 0],
+    altitudeMeters: session.orbit.altitudeM,
+    engineArmed: session.ignition.engineArmed,
+    engineBurning,
+    radarAcquired: session.radarAvailable && session.orbit.altitudeM < 12_000,
+  };
+  const sensorFeed = useAgcSensorFeed(
+    agc.client,
+    agc.simReady,
+    agc.missionSnapshot,
+    sensorSampleRef,
+    true,
+  );
 
   // "The Eagle has landed" — plays once on a successful touchdown.
   //
