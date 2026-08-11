@@ -24,6 +24,7 @@ interface BridgedRegisters {
   readonly r3: string;
   readonly units: readonly [string, string, string];
   readonly caption: string;
+  readonly flashing?: boolean;
 }
 
 type LampCell = { name: LampName; label: string; color: "amber" | "green" };
@@ -821,12 +822,12 @@ function DigitRow({ reg, testid, scale = 1 }: { reg: DskyRegister; testid: strin
   );
 }
 
-function PatchedRow({ value, testid, unit }: { value: string; testid: string; unit?: string }) {
+function PatchedRow({ value, testid, unit, flashing = false }: { value: string; testid: string; unit?: string; flashing?: boolean }) {
   return (
-    <div className="flex items-center justify-center" data-testid={testid}>
+    <div className="flex items-center justify-center" data-testid={testid} data-flashing={flashing ? "1" : undefined}>
       <span
-        className="font-mono text-lg leading-none tabular-nums tracking-[0.18em]"
-        style={{ color: "#8fff8f", textShadow: "0 0 6px rgba(140,255,140,.55)" }}
+        className={`font-mono text-lg leading-none tabular-nums tracking-[0.18em] ${flashing ? "animate-pulse" : ""}`}
+        style={{ color: "#8fff8f", textShadow: "0 0 6px rgba(140,255,140,.55)", whiteSpace: "pre" }}
       >
         {value}
       </span>
@@ -888,7 +889,7 @@ function RegistersPanel({ decoded, patched, compActy = false }: {
         <div>
           <ElLabel text="VERB" />
           {patched ? (
-            <PatchedRow value={patched.verb} testid="reg-verb" />
+            <PatchedRow value={patched.verb} testid="reg-verb" flashing={patched.flashing} />
           ) : (
             <DigitRow reg={decoded.verb} testid="reg-verb" scale={0.85} />
           )}
@@ -896,7 +897,7 @@ function RegistersPanel({ decoded, patched, compActy = false }: {
         <div>
           <ElLabel text="NOUN" />
           {patched ? (
-            <PatchedRow value={patched.noun} testid="reg-noun" />
+            <PatchedRow value={patched.noun} testid="reg-noun" flashing={patched.flashing} />
           ) : (
             <DigitRow reg={decoded.noun} testid="reg-noun" scale={0.85} />
           )}

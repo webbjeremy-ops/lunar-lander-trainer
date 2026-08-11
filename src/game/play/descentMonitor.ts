@@ -51,6 +51,8 @@ export interface DescentMonitorView {
   /** Unit captions for R1/R2/R3, in the same order. */
   readonly units: readonly [string, string, string];
   readonly caption: string;
+  /** True while the AGC is requesting a response (flashing verb/noun). */
+  readonly flashing?: boolean;
 }
 
 /** Apollo-style 5-digit signed register text, e.g. "+00427". */
@@ -112,6 +114,7 @@ export function descentMonitorFor(input: DescentMonitorInput): DescentMonitorVie
       caption: flashing
         ? "Ignition request — flashing V99 N62"
         : "Pre-ignition monitor — V16 N62",
+      flashing,
     };
   }
 
