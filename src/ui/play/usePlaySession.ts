@@ -1478,6 +1478,7 @@ export function usePlaySession(
         sinceIgnitionUs: ignition.sinceIgnitionUs,
         burning: flight.mainEngine !== "off" || ignition.phase === "burning",
         terminal: flight.terminalState !== null,
+        ignitionRequestFlashing: ignition.requestFlashing,
       }),
     [orbit, ignition, flight.mainEngine, flight.terminalState],
   );
