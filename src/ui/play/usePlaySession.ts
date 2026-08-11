@@ -364,6 +364,10 @@ export function usePlaySession(
 
   const flightRef = useRef(flight);
   flightRef.current = flight;
+  // N62 R3 — ΔV actually accumulated by the DPS, integrated from the flown
+  // mass history with the rocket equation (zero until ignition, by definition).
+  const accumulatedDvRef = useRef(0);
+  const [accumulatedDvMps, setAccumulatedDvMps] = useState(0);
   const procedureRef = useRef(procedure);
   procedureRef.current = procedure;
   const ignitionRef = useRef(ignition);
@@ -479,6 +483,8 @@ export function usePlaySession(
     setRunning(true);
     throttleRef.current = 0;
     attitudeRef.current = 0;
+    accumulatedDvRef.current = 0;
+    setAccumulatedDvMps(0);
     engineRef.current = startsUnderPower;
 
     rodTargetRef.current = -1;
@@ -667,13 +673,19 @@ export function usePlaySession(
           )
         ) {
           const input = resolveInput(state);
+          const m0 = totalMassKg(state);
           state = stepLunarFlight(state, input, STEP_US);
+          const m1 = totalMassKg(state);
+          if (m1 > 0 && m0 > m1) {
+            accumulatedDvRef.current += DPS_EXHAUST_VELOCITY_MPS * Math.log(m0 / m1);
+          }
         }
       }
       if (steps > 0) {
         flightRef.current = state;
         updateHaptics(state);
         setFlight(state);
+        setAccumulatedDvMps(accumulatedDvRef.current);
         setDescentClock(descentClockRef.current);
         setEscalation(escalationRef.current);
         if (state.terminalState !== null) setRunning(false);
@@ -1479,8 +1491,9 @@ export function usePlaySession(
         burning: flight.mainEngine !== "off" || ignition.phase === "burning",
         terminal: flight.terminalState !== null,
         ignitionRequestFlashing: ignition.requestFlashing,
+        accumulatedDvMps,
       }),
-    [orbit, ignition, flight.mainEngine, flight.terminalState],
+    [orbit, ignition, flight.mainEngine, flight.terminalState, accumulatedDvMps],
   );
 
   // M4.18 — deviation snapshot feeding the improvised Houston calls and the
