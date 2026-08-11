@@ -957,6 +957,22 @@ function PlayClient() {
             ) : (
               <div className="p-3 text-xs text-neutral-500">Starting the AGC…</div>
             )}
+            {/* M5.0 — proof the flown trajectory is reaching the rope as real
+                hardware input (PIPA counters + landing-radar RADARUPT). */}
+            <div
+              data-testid="agc-sensor-feed"
+              className="mt-1 rounded border border-neutral-800 bg-black/40 px-2 py-1 font-mono text-[9px] uppercase tracking-widest text-neutral-500"
+            >
+              <span className={sensorFeed.live ? "text-emerald-400" : "text-neutral-600"}>
+                {sensorFeed.live ? "AGC sensors live" : `AGC sensors ${sensorFeed.status}`}
+              </span>
+              {" · PIPA "}
+              {sensorFeed.pipaPulsesDelivered}
+              {" · LR "}
+              {sensorFeed.radarResponsesDelivered}/{sensorFeed.chan13RequestsObserved}
+              {sensorFeed.interlocked ? " · INTERLOCK" : ""}
+            </div>
+
           </div>
           </div>
         </div>
