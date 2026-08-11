@@ -114,6 +114,7 @@ export function descentMonitorFor(input: DescentMonitorInput): DescentMonitorVie
       caption: flashing
         ? "Ignition request — flashing V99 N62"
         : "Pre-ignition monitor — V16 N62",
+      flashing,
     };
   }
 
