@@ -70,7 +70,7 @@ function avionicsFor(sample: AgcSensorSample): LmDiscreteSensorState {
     imuCduHealthy: true,
     pipaHealthy: true,
     landingRadarStatus: sample.radarAcquired ? "acquired-valid" : "not-acquired",
-    landingRadarAntenna: sample.radarAcquired ? "descent" : "transit",
+    landingRadarAntenna: sample.radarAcquired ? "pos1" : "transit",
     landingRadarRangeLowScale: (sample.altitudeMeters ?? Infinity) < 762,
   };
 }
