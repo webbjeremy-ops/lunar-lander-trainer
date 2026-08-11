@@ -76,6 +76,25 @@ export interface ApplyImuBootstrapCommand {
   readonly manifestId: "luminary099-fixed-attitude-descent-padload-v1";
 }
 
+/**
+ * M5.0 — external flight-state feed.
+ *
+ * The /play descent physics runs on the main thread. This command hands the
+ * Worker the SAME body-axis specific force and altitude the player's vehicle
+ * is experiencing, so the hardware-interface lab encodes REAL PIPA pulse
+ * trains and REAL landing-radar transactions from the flown trajectory
+ * instead of the Worker's internal scenario. It carries physical quantities
+ * only — never AGC words, addresses, or register content.
+ */
+export interface SetExternalFlightStateCommand {
+  readonly type: "sim:set-external-flight-state";
+  readonly simulationEpoch: number;
+  /** Body-axis specific force (thrust/mass, NO gravity), m/s^2. */
+  readonly bodySpecificForceMps2: readonly [number, number, number] | null;
+  /** Radar altitude above the surface, metres. */
+  readonly altitudeMeters: number | null;
+}
+
 export interface ImuBootstrapResultEvent {
   readonly type: "sim:imu-bootstrap-result";
   readonly commandId: number;
@@ -96,7 +115,8 @@ export type SimulationCommand =
   | SetMonitorProfileCommand
   | SetAvionicsStateCommand
   | RequestMonitorTraceCommand
-  | ApplyImuBootstrapCommand;
+  | ApplyImuBootstrapCommand
+  | SetExternalFlightStateCommand;
 
 export interface SimReadyPayload {
   simulationProtocolVersion: typeof SIMULATION_PROTOCOL_VERSION;

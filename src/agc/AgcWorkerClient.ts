@@ -186,6 +186,21 @@ export class AgcWorkerClient {
       commandId, simulationEpoch, applyAtMissionTimeUs, profile,
     });
   }
+  /** M5.0 — publish the live flown specific force / altitude so the
+   *  hardware-interface lab encodes real PIPA and landing-radar traffic
+   *  from the player's trajectory. Physical quantities only. */
+  setExternalFlightState(
+    simulationEpoch: number,
+    bodySpecificForceMps2: readonly [number, number, number] | null,
+    altitudeMeters: number | null,
+  ): void {
+    this.postSim({
+      type: "sim:set-external-flight-state",
+      simulationEpoch,
+      bodySpecificForceMps2,
+      altitudeMeters,
+    });
+  }
   /** Retrieve the Worker-retained monitor diagnostic window. Never rides on
    *  ordinary mission snapshots. */
   requestMonitorTrace(requestId: number, simulationEpoch: number): void {
