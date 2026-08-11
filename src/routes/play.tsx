@@ -900,9 +900,20 @@ function PlayClient() {
                 onKeyInjector={session.actions.registerKeyInjector}
                 bridgedRequest={session.bridgedAlarm ?? session.bridgedDskyRequest}
                 bridgedRegisters={
-                  session.procedure.completedStepIds.includes("p63-select")
+                  session.procedure.completedStepIds.includes("p63-monitor")
                     ? session.descentMonitor
-                    : null
+                    : session.procedure.completedStepIds.includes("p63-select")
+                      ? {
+                          program: "63",
+                          verb: "  ",
+                          noun: "  ",
+                          r1: "     ",
+                          r2: "     ",
+                          r3: "     ",
+                          units: ["", "", ""] as const,
+                          caption: "P63 selected — call V16 N62",
+                        }
+                      : null
                 }
                 compact
               />
