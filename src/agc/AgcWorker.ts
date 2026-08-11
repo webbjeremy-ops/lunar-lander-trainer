@@ -229,6 +229,13 @@ interface WorkerState {
   /** Operator-declared avionics discretes. NEVER invented by the Worker;
    *  monitor entry is blocked until a complete state is supplied. */
   avionics: LmDiscreteSensorState | null;
+  /** M5.0 — live flown specific force / altitude published by the /play
+   *  descent loop. When present it REPLACES the Worker's internal scenario
+   *  as the sensor source, so the AGC feels the trajectory being flown. */
+  externalFlight: {
+    bodySpecificForceMps2: readonly [number, number, number] | null;
+    altitudeMeters: number | null;
+  } | null;
   /** Epoch-bound, tick-aligned profile commands awaiting their boundary. */
   monitorCommandQueue: SetMonitorProfileCommand[];
   /** Lossless CHAN11/CHAN14 output events captured during the CURRENT AGC
@@ -379,6 +386,7 @@ const state: WorkerState = {
   simReadyPublished: false,
   monitor: null,
   avionics: null,
+  externalFlight: null,
   monitorCommandQueue: [],
   imuBootstrapAgcEpoch: null,
   tickChannelEvents: [],
@@ -612,6 +620,7 @@ function runMissionTickPipeline(steps: number): void {
       state.monitor.isActive()) {
     state.monitor.onSimulationEpochChanged(epochNow);
     state.avionics = null;
+    state.externalFlight = null;
     state.monitorCommandQueue.length = 0;
   }
   // ---- Phase 1 (cont.): monitor-profile commands, same boundary rule ----
@@ -627,7 +636,9 @@ function runMissionTickPipeline(steps: number): void {
       missionTimeUs: tickStartUs,
       avionics: state.avionics,
       // Scenario-derived specific force (thrust / mass, NO lunar gravity).
-      bodySpecificForceMps2: state.missionRuntime.getBodySpecificForceMps2(),
+      bodySpecificForceMps2:
+        state.externalFlight?.bodySpecificForceMps2 ??
+        state.missionRuntime.getBodySpecificForceMps2(),
       dtUs: MISSION_TICK_US,
     });
   }
@@ -640,7 +651,9 @@ function runMissionTickPipeline(steps: number): void {
   if (monitor?.isActive()) {
     monitor.postAgcTick(tickIndex, tickEndUs, state.tickChannelEvents, {
       chan13Writes: state.tickChan13Writes,
-      altitudeMeters: state.missionRuntime.getAltitudeMeters(),
+      altitudeMeters:
+        state.externalFlight?.altitudeMeters ??
+        state.missionRuntime.getAltitudeMeters(),
       // RANGE DATA GOOD is derived from the SAME operator-declared discrete
       // that drives the CHAN33 radar bits — never independently invented.
       rangeDataGood: state.avionics?.landingRadarStatus === "acquired-valid",
@@ -1582,6 +1595,22 @@ function handleSimulationCommand(
         type: "sim:commandAck",
         payload: { accepted: true, commandId: cmd.commandId },
       }, requestId);
+      return;
+    }
+    case "sim:set-external-flight-state": {
+      // Epoch-bound like every other sim command: a stale epoch can never
+      // leak flight state across a scenario reset.
+      if (cmd.simulationEpoch !== state.missionRuntime.getSimulationEpoch()) return;
+      const f = cmd.bodySpecificForceMps2;
+      const finite = (v: number) => Number.isFinite(v);
+      state.externalFlight = {
+        bodySpecificForceMps2:
+          f && f.length === 3 && f.every(finite) ? [f[0], f[1], f[2]] : null,
+        altitudeMeters:
+          typeof cmd.altitudeMeters === "number" && finite(cmd.altitudeMeters)
+            ? cmd.altitudeMeters
+            : null,
+      };
       return;
     }
     case "sim:set-monitor-profile": {
